@@ -1,0 +1,8 @@
+.claude/
+*.png
+*.svg
+app/android/
+app/ios/
+app/web/icons/
+website/public/
+graphify-out/

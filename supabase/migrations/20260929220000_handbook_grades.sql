@@ -1,0 +1,9 @@
+-- Evidence grades on every evidence note, and the full ACSM 2026 citation (Currier et al.). Generated from data/build_handbook.py.
+update public.handbook_chapters set blocks = jsonb_set(blocks, '{blocks,5,grade}', '"strong"') where slug = 'how-training-works';
+update public.handbook_chapters set blocks = jsonb_set(blocks, '{blocks,4,grade}', '"moderate"') where slug = 'effort-and-rir';
+update public.handbook_chapters set blocks = jsonb_set(blocks, '{blocks,4,grade}', '"strong"') where slug = 'warm-up';
+update public.handbook_chapters set blocks = jsonb_set(blocks, '{blocks,5,grade}', '"consensus"') where slug = 'sets-reps-progress';
+update public.handbook_chapters set blocks = jsonb_set(blocks, '{blocks,5,grade}', '"strong"') where slug = 'food-basics';
+update public.handbook_chapters set blocks = jsonb_set(blocks, '{blocks,5,grade}', '"consensus"') where slug = 'sleep-recovery';
+update public.handbook_chapters set blocks = jsonb_set(blocks, '{blocks,4,grade}', '"strong"') where slug = 'supplements';
+update public.handbook_chapters set blocks = jsonb_set(blocks, '{sources,acsm2026}', to_jsonb('Currier BS, D''Souza AC, Fiatarone Singh MA et al. American College of Sports Medicine position stand: Resistance training prescription for muscle function, hypertrophy, and physical performance in healthy adults: an overview of reviews. Med Sci Sports Exerc 2026.'::text)), sources = array_replace(sources, 'American College of Sports Medicine. Position Stand: Resistance training prescription for muscle function, hypertrophy and physical performance in healthy adults. Med Sci Sports Exerc 2026.', 'Currier BS, D''Souza AC, Fiatarone Singh MA et al. American College of Sports Medicine position stand: Resistance training prescription for muscle function, hypertrophy, and physical performance in healthy adults: an overview of reviews. Med Sci Sports Exerc 2026.') where blocks->'sources' ? 'acsm2026';
