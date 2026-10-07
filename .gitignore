@@ -1,0 +1,44 @@
+# Flutter / Dart
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/build/
+app/.pub-cache/
+app/.pub/
+**/android/local.properties
+**/android/.gradle/
+**/ios/Pods/
+**/ios/.symlinks/
+**/*.iml
+
+# Next.js website
+website/node_modules/
+website/.next/
+website/out/
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+
+# Env / secrets
+.env
+.env.local
+**/.env
+**/.env.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
+
+# Raw exercise media (large; provenance in media/SOURCES.md)
+media/raw/
+
+# Tool state and generated caches
+.claude-flow/
+graphify-out/
+**/__pycache__/

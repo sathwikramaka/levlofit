@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The reminder sound is referenced only by name from Dart, so stop resource shrinking from removing it. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/levlo_chime" />

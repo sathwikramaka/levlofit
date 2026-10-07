@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* Tokens from DESIGN.md section 2. Change them there first. */
+:root {
+  --bg: #f0eee9;
+  --surface: #ffffff;
+  --surface-2: #e6e3dc;
+  --ink: #0e0e10;
+  --on-ink: #f0eee9;
+  --muted: #5b5953;
+  --border: #d9d5cc;
+  --accent: #ff6a1a;
+  --on-accent: #0e0e10;
+  --accent-text: #b8420b;
+  --success: #2f7d4f;
+  --danger: #b3261e;
+  --spring: cubic-bezier(0.32, 0.72, 0, 1);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e0e10; --surface: #18181b; --surface-2: #222226; --ink: #f0eee9; --on-ink: #0e0e10;
+    --muted: #9a9690; --border: #2a2a2e; --accent-text: #ff8a4c; --success: #5fb482; --danger: #f2766b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e0e10; --surface: #18181b; --surface-2: #222226; --ink: #f0eee9; --on-ink: #0e0e10;
+  --muted: #9a9690; --border: #2a2a2e; --accent-text: #ff8a4c; --success: #5fb482; --danger: #f2766b;
+  color-scheme: dark;
+}
+
+/* Theme toggle icon follows the active scheme without JS state. */
+.icon-sun { display: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .icon-sun { display: inline; } :root:not([data-theme="light"]) .icon-moon { display: none; } }
+:root[data-theme="dark"] .icon-sun { display: inline; }
+:root[data-theme="dark"] .icon-moon { display: none; }
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-on-ink: var(--on-ink);
+  --color-muted: var(--muted);
+  --color-line: var(--border);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-accent-text: var(--accent-text);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-geist);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-unbounded);
+  --ease-spring: var(--spring);
+}
+
+html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-geist), system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+::selection { background: var(--accent); color: var(--on-accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+/* Grain: fixed, non-interactive, so it never repaints with scroll. */
+body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 60; opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Legal pages: readable rhythm for prose written as plain JSX. */
+.legal p + p, .legal p + ul, .legal ul + p { margin-top: 1em; }
+.legal ul { list-style: disc; padding-left: 1.25em; }
+.legal li + li { margin-top: 0.4em; }
+.legal strong { color: var(--ink); font-weight: 600; }
+.legal a { color: var(--accent-text); text-underline-offset: 4px; text-decoration: underline; }
+
+/* Scroll reveal: elements start low and soft, then settle on the brand ease. */
+[data-reveal] { opacity: 0; transform: translateY(28px); filter: blur(6px); transition: opacity 0.9s var(--spring), transform 0.9s var(--spring), filter 0.9s var(--spring); transition-delay: calc(var(--i, 0) * 80ms); }
+[data-reveal].is-in { opacity: 1; transform: none; filter: none; }
+
+/* Hero words rise one by one out of a mask. */
+.word { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 0.08em; }
+.word > span { display: inline-block; transform: translateY(105%); animation: rise 1s var(--spring) forwards; animation-delay: calc(var(--i) * 70ms + 150ms); }
+@keyframes rise { to { transform: none; } }
+
+/* The brand bubble settles like a spirit level (DESIGN.md section 4). */
+.bubble { animation: settle 1.1s var(--spring) both 0.2s; }
+@keyframes settle { 0% { transform: translateX(-140%); } 70% { transform: translateX(12%); } 100% { transform: none; } }
+
+/* Spirit-level vial: the bubble runs in, overshoots, settles on centre, then breathes. */
+.vial-bubble { transform: translate(-50%, -50%); animation: vial 1.6s var(--spring) both 0.35s, sway 6s ease-in-out 2.2s infinite; }
+@keyframes vial { 0% { transform: translate(-280%, -50%); } 55% { transform: translate(10%, -50%); } 78% { transform: translate(-70%, -50%); } 100% { transform: translate(-50%, -50%); } }
+@keyframes sway { 0%, 100% { transform: translate(-50%, -50%); } 30% { transform: translate(-38%, -50%); } 65% { transform: translate(-60%, -50%); } }
+
+/* First-visit loader: the wordmark settles, then the curtain lifts. Skipped for the rest of the session. */
+.intro { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: var(--bg); animation: lift 0.7s var(--spring) forwards 1.05s; pointer-events: none; }
+.intro > * { animation: introIn 0.6s var(--spring) both; }
+@keyframes lift { to { opacity: 0; transform: translateY(-3%); visibility: hidden; } }
+@keyframes introIn { from { opacity: 0; transform: translateY(10px); } }
+.no-intro .intro { display: none; }
+
+.float { animation: float 7s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-10px); } }
+
+.pulse { animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(255 106 26 / 0.45); } 50% { box-shadow: 0 0 0 7px rgb(255 106 26 / 0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .intro { display: none; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  [data-reveal] { opacity: 1; transform: none; filter: none; }
+  .word > span { transform: none; }
+}
+
+@media print {
+  body::after, header, .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+  [data-reveal] { opacity: 1; transform: none; filter: none; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.8em; }
+}
