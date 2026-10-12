@@ -139,8 +139,8 @@ class _Menu extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
             child: Column(children: [
-              item(LvIcons.timer, 'Reminders', _Tab.settings),
-              item(LvIcons.userCircle, 'Profile and settings', _Tab.profile),
+              item(LvIcons.timer, 'Reminders', _Tab.reminders),
+              item(LvIcons.userCircle, 'Profile', _Tab.profile),
             ]),
           ),
         ]),
@@ -264,11 +264,12 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
     final t = Theme.of(context).textTheme;
     final data = widget.data;
     final plan = data.plan;
-    final dayGoal = _schedule(plan);
     final now = DateTime.now();
     final monday = _monday(now);
     final today = _day(now);
     final minutes = data.input['sessionMinutes'] as int?;
+    final week = weekPlan(plan, sessionMinutes: minutes);
+    final dayGoal = week.days;
     final goals = (plan['goals'] as List).cast<_Json>();
     final phase = plan['phase'] as _Json?;
     final roadmap = plan['roadmap'] as _Json?;
@@ -299,8 +300,19 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
           const SizedBox(height: 8),
         ],
         const SizedBox(height: 20),
-        Text('THIS WEEK  ·  ${plan['trainingDaysPerWeek']} DAYS${minutes == null ? '' : '  ·  $minutes MIN'}', style: monoLabel(context)),
+        Text('THIS WEEK  ·  ${dayGoal.length} DAYS${minutes == null ? '' : '  ·  $minutes MIN'}', style: monoLabel(context)),
         const SizedBox(height: 8),
+        for (final a in week.addOns)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Text(addOnLine(a), style: t.bodyMedium),
+          ),
+        for (final n in week.notices)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Text(n, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          ),
+        if (week.addOns.isNotEmpty || week.notices.isNotEmpty) const SizedBox(height: 8),
         for (var i = 0; i < 7; i++) ...[
           Builder(builder: (context) {
             final day = monday.add(Duration(days: i));
@@ -321,7 +333,7 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
             final name = (g['name'] ?? g['goal']) as String;
             final level = g['startLevel'] as int;
             final nth = seen.update(g['goal'] as String, (n) => n + 1, ifAbsent: () => 0);
-            final ids = sessionIds(g['kind'] as String? ?? 'strength', data.tier, level, nth);
+            final ids = sessionIds(g['kind'] as String? ?? 'strength', data.tier, level, nth, goal: g['goal'] as String?);
             final levelRow = data.levels[g['goal']];
             return _Tile(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
@@ -337,7 +349,7 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(name, style: t.titleMedium),
                       Text(
-                        ['Level $level', if (levelRow != null) levelRow['title'] as String, if (minutes != null) '$minutes min'].join('  ·  '),
+                        [g['levelAssessed'] == false ? 'Level not assessed, lightest dose' : 'Level $level', if (levelRow != null) levelRow['title'] as String, if (minutes != null) '$minutes min'].join('  ·  '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: t.bodySmall?.copyWith(color: c.onSurfaceVariant),
@@ -562,6 +574,7 @@ class _DietScreenState extends State<_DietScreen> {
         if (_error != null) ErrorLine(_error!) else const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: LevloMark(size: 48, animate: true))),
       ]);
     }
+    final supps = ((food['supplements'] as List?) ?? const []).cast<_Json>();
     final plan = planDay(
       foods: foods,
       kcal: kcal,
@@ -571,9 +584,9 @@ class _DietScreenState extends State<_DietScreen> {
       tier: _tier,
       day: _day,
       soyaCapG: ((food['maxSoyaChunksDryG'] as num?) ?? 50).toDouble(),
+      proteinPowder: supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')),
     );
     final short = protein - plan.protein;
-    final supps = ((food['supplements'] as List?) ?? const []).cast<_Json>();
     Widget macro(String label, double v, double? target, String unit) => Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(label, style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.6), fontSize: 10)),
@@ -629,13 +642,26 @@ class _DietScreenState extends State<_DietScreen> {
             ]),
           ),
         ),
-        if (short > protein * 0.05) ...[
+        // The planner reports when a day cannot meet both targets with this person's foods; say so plainly and
+        // offer only changes that respect their settings (never a food they exclude).
+        if (!plan.check.feasible) ...[
+          const SizedBox(height: 10),
+          _Tile(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('THIS DAY MISSES YOUR TARGETS', style: monoLabel(context)),
+              const SizedBox(height: 6),
+              for (final line in [...plan.check.issues, ...plan.check.options])
+                Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(line, style: t.bodyMedium)),
+            ]),
+          ),
+        ] else if (short > protein * 0.05) ...[
           const SizedBox(height: 10),
           _Tile(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Text(
               'Food in this plan gives ${plan.protein.round()} g of your ${protein.round()} g protein. '
-              '${supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')) ? 'Close the gap of about ${short.round()} g with the protein powder in your plan.' : 'Add an extra katori of dal or a glass of milk to close the gap of about ${short.round()} g.'}',
+              '${supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')) ? 'The protein powder in your plan can cover the last ${short.round()} g.' : 'A slightly bigger portion of the protein foods above covers the last ${short.round()} g.'}',
               style: t.bodyMedium,
             ),
           ),

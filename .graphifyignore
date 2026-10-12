@@ -6,3 +6,37 @@ app/ios/
 app/web/icons/
 website/public/
 graphify-out/
+
+# Generated build output and dependencies (also gitignored; repeated so graphify skips them regardless)
+app/build/
+app/.dart_tool/
+**/.dart_tool/
+website/node_modules/
+website/.next/
+website/out/
+**/node_modules/
+**/__pycache__/
+supabase/.temp/
+supabase/.branches/
+
+# Tool state and caches
+.claude-flow/
+.playwright/
+.playwright-cli/
+
+# Binaries and media
+*.wav
+*.mp3
+*.mp4
+*.gif
+*.jpg
+*.jpeg
+*.webp
+*.ttf
+*.otf
+*.ico
+
+# Third-party data and reference material (not Levlofit source)
+data/ifct2017/
+media/raw/
+Refrence/

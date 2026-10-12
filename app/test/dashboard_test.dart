@@ -121,7 +121,7 @@ Eat **150 g** protein.
     expect(find.text('2.'), findsOneWidget);
   });
 
-  for (final tab in ['workout', 'hydration', 'habits', 'foods', 'settings']) {
+  for (final tab in ['workout', 'hydration', 'habits', 'foods', 'reminders', 'settings']) {
     testWidgets('$tab tab lays out at phone size', (tester) async {
       tester.view.physicalSize = const Size(390, 844) * 3;
       tester.view.devicePixelRatio = 3;

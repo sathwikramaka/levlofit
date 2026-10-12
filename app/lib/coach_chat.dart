@@ -1,12 +1,13 @@
 // Levlofit AI: a full-screen chat in the shape people know from ChatGPT. Chats in a side list, one memory
 // across them, replies that write themselves in, and any sent message can be edited or a reply regenerated.
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'icons.dart';
 import 'main.dart';
-import 'mark.dart';
 import 'theme.dart';
 
 /// Opens Levlofit AI as a floating panel over the current screen, rising from the corner where the
@@ -59,7 +60,7 @@ Future<void> openCoach(BuildContext context, {String? prompt}) => showGeneralDia
       },
     );
 
-/// Floating entry point for the assistant. Sits over the dashboard, not in its flow.
+/// Floating entry point for the assistant: Levlofit's fitness bot, bobbing gently in the corner.
 class CoachLauncher extends StatefulWidget {
   const CoachLauncher({super.key});
 
@@ -68,7 +69,7 @@ class CoachLauncher extends StatefulWidget {
 }
 
 class _CoachLauncherState extends State<CoachLauncher> with SingleTickerProviderStateMixin {
-  late final _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))..repeat(reverse: true);
+  late final _idle = AnimationController(vsync: this, duration: const Duration(milliseconds: 4200))..repeat();
   bool _pressed = false;
   bool _shown = false;
 
@@ -81,13 +82,14 @@ class _CoachLauncherState extends State<CoachLauncher> with SingleTickerProvider
 
   @override
   void dispose() {
-    _pulse.dispose();
+    _idle.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
+    final still = MediaQuery.disableAnimationsOf(context);
     return AnimatedSlide(
       offset: _shown ? Offset.zero : const Offset(0, 1.5),
       duration: motion(context, 520),
@@ -96,40 +98,33 @@ class _CoachLauncherState extends State<CoachLauncher> with SingleTickerProvider
         opacity: _shown ? 1 : 0,
         duration: motion(context, 380),
         child: AnimatedScale(
-          scale: _pressed ? 0.96 : 1,
+          scale: _pressed ? 0.92 : 1,
           duration: motion(context, 120),
           curve: Curves.easeOutCubic,
-          child: Semantics(
-            button: true,
-            label: 'Ask Levlofit AI',
-            child: Material(
-              color: c.secondary,
-              shape: const StadiumBorder(),
-              child: InkWell(
-                customBorder: const StadiumBorder(),
-                onHighlightChanged: (v) => setState(() => _pressed = v),
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  openCoach(context);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 20, 12),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    AnimatedBuilder(
-                      animation: _pulse,
-                      builder: (_, _) => Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: c.primary,
-                          shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: c.primary.withValues(alpha: 0.5 * (1 - _pulse.value)), blurRadius: 4 + 10 * _pulse.value, spreadRadius: 2 * _pulse.value)],
-                        ),
-                      ),
+          child: Tooltip(
+            message: 'Ask Levlofit AI',
+            child: Semantics(
+              button: true,
+              label: 'Ask Levlofit AI, your fitness bot',
+              child: Material(
+                color: c.secondary,
+                shape: const CircleBorder(),
+                elevation: 6,
+                shadowColor: Colors.black45,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onHighlightChanged: (v) => setState(() => _pressed = v),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    openCoach(context);
+                  },
+                  child: SizedBox.square(
+                    dimension: 64,
+                    child: AnimatedBuilder(
+                      animation: _idle,
+                      builder: (_, _) => CustomPaint(painter: FitBotPainter(t: still ? 0 : _idle.value, face: c.surface, ink: c.secondary)),
                     ),
-                    const SizedBox(width: 10),
-                    Text('Ask Levlofit AI', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: c.onSecondary)),
-                  ]),
+                  ),
                 ),
               ),
             ),
@@ -138,6 +133,60 @@ class _CoachLauncherState extends State<CoachLauncher> with SingleTickerProvider
       ),
     );
   }
+}
+
+/// Levlofit's fitness bot: a rounded head with a sweatband, a dark visor with two eyes that blink, and an
+/// antenna tipped in Levlofit orange. [t] runs 0 to 1 over one idle loop (bob, blink, antenna glow).
+class FitBotPainter extends CustomPainter {
+  const FitBotPainter({required this.t, required this.face, required this.ink});
+  final double t;
+  final Color face, ink;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final u = size.width / 64; // drawn on a 64-unit grid
+    final bob = math.sin(t * 2 * math.pi) * 1.6 * u;
+    canvas.translate(0, bob);
+    final fill = Paint()..isAntiAlias = true;
+
+    // Antenna with a glowing tip.
+    fill.color = face;
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(31 * u, 12 * u, 2 * u, 7 * u), Radius.circular(u)), fill);
+    final glow = 0.5 + 0.5 * math.sin(t * 4 * math.pi);
+    canvas.drawCircle(Offset(32 * u, 11 * u), (3.2 + 1.6 * glow) * u, Paint()..color = accent.withValues(alpha: 0.25 * glow));
+    canvas.drawCircle(Offset(32 * u, 11 * u), 2.6 * u, fill..color = accent);
+
+    // Head and side bolts (ears).
+    fill.color = face;
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(13 * u, 21 * u, 4 * u, 12 * u), Radius.circular(2 * u)), fill);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(47 * u, 21 * u, 4 * u, 12 * u), Radius.circular(2 * u)), fill);
+    final head = RRect.fromRectAndRadius(Rect.fromLTWH(16 * u, 18 * u, 32 * u, 28 * u), Radius.circular(10 * u));
+    canvas.drawRRect(head, fill);
+
+    // Sweatband across the forehead.
+    canvas.save();
+    canvas.clipRRect(head);
+    canvas.drawRect(Rect.fromLTWH(16 * u, 22.5 * u, 32 * u, 4.5 * u), fill..color = accent);
+    canvas.restore();
+
+    // Visor with two eyes; a blink near the end of each loop.
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(20 * u, 29 * u, 24 * u, 12 * u), Radius.circular(6 * u)), fill..color = ink);
+    final blink = t > 0.9 && t < 0.95 ? 0.15 : 1.0;
+    final eyeH = 5 * u * blink;
+    for (final x in [25.5 * u, 34.5 * u]) {
+      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x, 35 * u - eyeH / 2, 4 * u, eyeH), Radius.circular(2 * u)), fill..color = accent);
+    }
+    // A small smile under the visor.
+    canvas.drawArc(Rect.fromLTWH(28.5 * u, 41.5 * u, 7 * u, 3 * u), 0.2, math.pi - 0.4, false,
+        Paint()
+          ..color = ink
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6 * u
+          ..strokeCap = StrokeCap.round);
+  }
+
+  @override
+  bool shouldRepaint(FitBotPainter old) => old.t != t || old.face != face || old.ink != ink;
 }
 
 class _Msg {
@@ -529,7 +578,15 @@ class _Empty extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
       children: staggered([
-        const Align(alignment: Alignment.centerLeft, child: LevloMark(size: 52, animate: true)),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.secondary, shape: BoxShape.circle),
+            child: CustomPaint(painter: FitBotPainter(t: 0, face: Theme.of(context).colorScheme.surface, ink: Theme.of(context).colorScheme.secondary)),
+          ),
+        ),
         const SizedBox(height: 20),
         Text(first.isEmpty ? 'What are we working on?' : 'What are we working on, $first?', style: t.headlineMedium),
         const SizedBox(height: 8),
