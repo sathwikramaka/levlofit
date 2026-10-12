@@ -21,7 +21,8 @@ Widget tabForTest(String tab, Map<String, dynamic> plan) {
     'hydration' => _HydrationScreen(data: d),
     'habits' => _HabitsScreen(data: d, logged: const {}),
     'foods' => _FoodsScreen(data: d),
-    'settings' => _SettingsScreen(onRemindersChanged: () {}),
+    'reminders' => _SettingsScreen(onRemindersChanged: () {}),
+    'settings' => _AppSettingsScreen(onOpen: (_) {}),
     'workout' => _WorkoutScreen(data: d, logged: const {}, onEditGoals: () {}, onToggleToday: (_, _) async {}, onPlanChanged: () {}),
     _ => throw ArgumentError(tab),
   };
@@ -1369,13 +1370,49 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
   }
 }
 
-// ---------------------------------------------------------------- profile
+// ---------------------------------------------------------------- profile and settings
+
+/// A tappable list row used by Profile and Settings.
+Widget _row(BuildContext context, IconData icon, String label, VoidCallback onTap, {String? trailing, Color? color}) {
+  final c = Theme.of(context).colorScheme;
+  final t = Theme.of(context).textTheme;
+  return InkWell(
+    borderRadius: BorderRadius.circular(14),
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+      child: Row(children: [
+        Icon(icon, size: 20, color: color ?? c.onSurface),
+        const SizedBox(width: 14),
+        Expanded(child: Text(label, style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: color))),
+        if (trailing != null) Flexible(child: Text(trailing, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))),
+        const SizedBox(width: 6),
+        Icon(LvIcons.caretRight, size: 16, color: c.onSurfaceVariant),
+      ]),
+    ),
+  );
+}
+
+Widget _section(BuildContext context, String title, List<Widget> rows) => Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: _Tile(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [if (title.isNotEmpty) Text(title, style: monoLabel(context)), ...rows]),
+      ),
+    );
 
 class _ProfileScreen extends StatelessWidget {
-  const _ProfileScreen({required this.data, required this.onOpen, required this.onSignOut, required this.onDelete, required this.onEditDetails});
+  const _ProfileScreen({
+    required this.data,
+    required this.onOpen,
+    required this.onSignOut,
+    required this.onDelete,
+    required this.onEditDetails,
+    required this.onAvatarChanged,
+  });
   final _Data data;
   final ValueChanged<_Tab> onOpen;
-  final VoidCallback onSignOut, onDelete, onEditDetails;
+  final VoidCallback onSignOut, onDelete, onEditDetails, onAvatarChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1383,28 +1420,78 @@ class _ProfileScreen extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     final name = data.name ?? 'You';
     final email = supabase.auth.currentUser?.email ?? '';
-    Widget row(IconData icon, String label, VoidCallback onTap, {String? trailing, Color? color}) => InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
-            child: Row(children: [
-              Icon(icon, size: 20, color: color ?? c.onSurface),
-              const SizedBox(width: 14),
-              Expanded(child: Text(label, style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: color))),
-              if (trailing != null) Flexible(child: Text(trailing, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))),
-              const SizedBox(width: 6),
-              Icon(LvIcons.caretRight, size: 16, color: c.onSurfaceVariant),
-            ]),
-          ),
-        );
-    Widget section(String title, List<Widget> rows) => Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: _Tile(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [if (title.isNotEmpty) Text(title, style: monoLabel(context)), ...rows]),
-          ),
-        );
+    final avatar = data.profile['avatar'] as String?;
+    Future<void> change() async {
+      if (await pickAvatar(context, name: name, current: avatar)) onAvatarChanged();
+    }
+
+    return _Page(
+      eyebrow: 'PROFILE',
+      title: name,
+      subtitle: email.isEmpty ? null : email,
+      children: [
+        _Tile(
+          child: Row(children: [
+            Semantics(
+              button: true,
+              label: 'Change profile picture',
+              child: GestureDetector(
+                onTap: change,
+                child: Stack(clipBehavior: Clip.none, children: [
+                  UserAvatar(name: name, avatar: avatar, photoUrl: data.profile['avatar_url'] as String?, size: 64),
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(color: c.surface, shape: BoxShape.circle, border: Border.all(color: c.outline)),
+                      child: Icon(LvIcons.camera, size: 13, color: c.onSurface),
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Wrap(spacing: 18, runSpacing: 8, children: [
+                for (final (label, value) in [
+                  ('HEIGHT', data.profile['height_cm'] == null ? null : '${data.profile['height_cm']} cm'),
+                  ('WEIGHT', data.profile['weight_kg'] == null ? null : '${data.profile['weight_kg']} kg'),
+                  ('PHASE', (data.plan['phase'] as _Json?)?['title'] as String?),
+                ])
+                  if (value != null)
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: monoLabel(context).copyWith(fontSize: 10)), Text(value, style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600))]),
+              ]),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 14),
+        _section(context, 'YOU', [
+          _row(context, LvIcons.userCircle, 'Profile picture', change, trailing: 'Avatar or your photo'),
+          _row(context, LvIcons.pencilSimple, 'Edit name, height and weight', onEditDetails),
+          _row(context, LvIcons.notePencil, 'Protocol', () => onOpen(_Tab.protocol), trailing: 'Goals, days, diet, budget'),
+        ]),
+        _section(context, 'MORE', [
+          _row(context, LvIcons.timer, 'Reminders', () => onOpen(_Tab.reminders)),
+          _row(context, LvIcons.gear, 'Settings', () => onOpen(_Tab.settings), trailing: 'Theme, help, privacy'),
+        ]),
+        _section(context, '', [
+          _row(context, LvIcons.signOut, 'Sign out', onSignOut),
+          _row(context, LvIcons.trash, 'Delete account', onDelete, color: c.error),
+        ]),
+      ],
+    );
+  }
+}
+
+class _AppSettingsScreen extends StatelessWidget {
+  const _AppSettingsScreen({required this.onOpen});
+  final ValueChanged<_Tab> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
     void sheet(String title, List<(String, String)> points) => showModalBottomSheet<void>(
           context: context,
           isScrollControlled: true,
@@ -1430,39 +1517,9 @@ class _ProfileScreen extends StatelessWidget {
           ),
         );
     return _Page(
-      eyebrow: 'PROFILE AND SETTINGS',
-      title: name,
-      subtitle: email.isEmpty ? null : email,
+      eyebrow: 'SETTINGS',
+      title: 'Settings',
       children: [
-        _Tile(
-          child: Row(children: [
-            Container(
-              width: 56,
-              height: 56,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: c.primary, shape: BoxShape.circle),
-              child: Text(name.isEmpty ? 'L' : name[0].toUpperCase(), style: t.headlineMedium?.copyWith(color: c.onPrimary)),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Wrap(spacing: 18, runSpacing: 8, children: [
-                for (final (label, value) in [
-                  ('HEIGHT', data.profile['height_cm'] == null ? null : '${data.profile['height_cm']} cm'),
-                  ('WEIGHT', data.profile['weight_kg'] == null ? null : '${data.profile['weight_kg']} kg'),
-                  ('PHASE', (data.plan['phase'] as _Json?)?['title'] as String?),
-                ])
-                  if (value != null)
-                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: monoLabel(context).copyWith(fontSize: 10)), Text(value, style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600))]),
-              ]),
-            ),
-          ]),
-        ),
-        const SizedBox(height: 14),
-        section('ACCOUNT', [
-          row(LvIcons.pencilSimple, 'Edit name, height and weight', onEditDetails),
-          row(LvIcons.notePencil, 'Protocol', () => onOpen(_Tab.protocol), trailing: 'Goals, days, diet, budget'),
-          row(LvIcons.timer, 'Reminders', () => onOpen(_Tab.settings), trailing: 'Training, water, weigh-in'),
-        ]),
         Padding(
           padding: const EdgeInsets.only(bottom: 14),
           child: _Tile(
@@ -1492,21 +1549,17 @@ class _ProfileScreen extends StatelessWidget {
             ]),
           ),
         ),
-        section('HELP', [
-          row(LvIcons.chatCircle, 'Contact support', () => launchUrl(Uri.parse('mailto:$supportEmail?subject=Levlofit%20support')), trailing: supportEmail),
-          row(LvIcons.notePencil, 'Send feedback', () => launchUrl(Uri.parse('mailto:$supportEmail?subject=Levlofit%20feedback')), trailing: 'Ideas, bugs, praise'),
-          row(LvIcons.lightbulb, 'Glossary of training terms', () => onOpen(_Tab.glossary)),
+        _section(context, 'HELP', [
+          _row(context, LvIcons.chatCircle, 'Contact support', _contactSupport, trailing: supportEmail),
+          _row(context, LvIcons.notePencil, 'Send feedback', () => _sendFeedback(context), trailing: 'Ideas, bugs, praise'),
+          _row(context, LvIcons.lightbulb, 'Glossary of training terms', () => onOpen(_Tab.glossary)),
         ]),
-        section('PRIVACY', [
-          row(LvIcons.brain, 'How we use your data', () => sheet('How we use your data', _dataUse)),
-          row(LvIcons.bookOpen, 'Privacy policy', () => sheet('Privacy policy', _privacyPolicy)),
+        _section(context, 'PRIVACY', [
+          _row(context, LvIcons.brain, 'How we use your data', () => sheet('How we use your data', _dataUse)),
+          _row(context, LvIcons.bookOpen, 'Privacy policy', () => sheet('Privacy policy', _privacyPolicy)),
         ]),
-        section('ABOUT', [
-          row(LvIcons.sparkle, 'Levlofit 1.0', () => showLicensePage(context: context, applicationName: 'Levlofit', applicationVersion: '1.0.0'), trailing: 'Licences'),
-        ]),
-        section('', [
-          row(LvIcons.signOut, 'Sign out', onSignOut),
-          row(LvIcons.trash, 'Delete account', onDelete, color: c.error),
+        _section(context, 'ABOUT', [
+          _row(context, LvIcons.sparkle, 'Levlofit 1.0', () => showLicensePage(context: context, applicationName: 'Levlofit', applicationVersion: '1.0.0'), trailing: 'Licences'),
         ]),
         Text('$exerciseMediaCredit. Food values: IFCT 2017, ICMR-NIN.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ],
@@ -1515,6 +1568,80 @@ class _ProfileScreen extends StatelessWidget {
 }
 
 const supportEmail = 'levlofit.app@gmail.com';
+
+/// Opens a new Gmail message to support. On the web that is Gmail's compose page; on phones the mail link
+/// opens the Gmail app (or the default mail app), falling back to Gmail on the web.
+Future<void> _contactSupport() async {
+  final gmail = Uri.https('mail.google.com', '/mail/', {'view': 'cm', 'fs': '1', 'to': supportEmail, 'su': 'Levlofit support'});
+  if (kIsWeb) {
+    await launchUrl(gmail, webOnlyWindowName: '_blank');
+    return;
+  }
+  final mail = Uri(scheme: 'mailto', path: supportEmail, query: 'subject=Levlofit%20support');
+  if (!await launchUrl(mail)) await launchUrl(gmail, mode: LaunchMode.externalApplication);
+}
+
+/// In-app feedback box: the message is saved to app_feedback, which only the Levlofit team can read.
+Future<void> _sendFeedback(BuildContext context) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final text = TextEditingController();
+  final sent = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    builder: (sheet) {
+      var sending = false;
+      String? error;
+      return StatefulBuilder(
+        builder: (sheet, setSheet) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheet).bottom),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Send feedback', style: Theme.of(sheet).textTheme.titleLarge),
+                const SizedBox(height: 4),
+                Text('Ideas, bugs, things you love. The Levlofit team reads every message.',
+                    style: Theme.of(sheet).textTheme.bodyMedium?.copyWith(color: Theme.of(sheet).colorScheme.onSurfaceVariant)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: text,
+                  autofocus: true,
+                  minLines: 4,
+                  maxLines: 8,
+                  maxLength: 2000,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: InputDecoration(hintText: 'Tell us what you think...', errorText: error),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: sending
+                        ? null
+                        : () async {
+                            final msg = text.text.trim();
+                            if (msg.length < 3) return setSheet(() => error = 'Write a little more.');
+                            setSheet(() => (sending, error) = (true, null));
+                            try {
+                              await supabase.from('app_feedback').insert({'message': msg});
+                              if (sheet.mounted) Navigator.pop(sheet, true);
+                            } catch (_) {
+                              setSheet(() => (sending, error) = (false, 'Could not send. Check your connection.'));
+                            }
+                          },
+                    child: Text(sending ? 'Sending...' : 'Send'),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+  text.dispose();
+  if (sent == true) messenger.showSnackBar(const SnackBar(content: Text('Thanks! Your feedback reached the Levlofit team.')));
+}
 
 /// "How we use your data", in plain words.
 const _dataUse = [

@@ -7,7 +7,7 @@ Content is a list of visual blocks, rendered natively by app/lib/handbook.dart. 
 60% of blocks in every chapter are true visuals (see VISUAL), so the Handbook teaches
 by showing. The build fails if a chapter breaks that rule or cites a source it does not list.
 
-Run: python data/build_handbook.py  -> supabase/migrations/20261003300000_handbook_v2.sql
+Run: python data/build_handbook.py  -> supabase/migrations/20261007400000_handbook_v3.sql
 """
 import json
 from pathlib import Path
@@ -39,9 +39,34 @@ SRC = {
     "lally2010": "Lally P, van Jaarsveld CHM, Potts HWW, Wardle J. How are habits formed: modelling habit formation in the real world. Eur J Soc Psychol 2010;40(6):998-1009.",
     "efsa2010": "EFSA Panel on Dietetic Products, Nutrition and Allergies. Scientific opinion on dietary reference values for water. EFSA Journal 2010;8(3):1459.",
     "zheng2015": "Zheng Y et al. Self-weighing in weight management: a systematic literature review. Obesity 2015;23(2):256-265.",
+    "usda174275": "U.S. Department of Agriculture, Agricultural Research Service. FoodData Central: Soy flour, defatted (FDC ID 174275, SR Legacy 16117).",
+    "mifflin1990": "Mifflin MD, St Jeor ST et al. A new predictive equation for resting energy expenditure in healthy individuals. Am J Clin Nutr 1990;51(2):241-247.",
+    "aragon2017": "Aragon AA et al. International Society of Sports Nutrition position stand: diets and body composition. J Int Soc Sports Nutr 2017;14:16.",
+    "helms2014": "Helms ER, Aragon AA, Fitschen PJ. Evidence-based recommendations for natural bodybuilding contest preparation: nutrition and supplementation. J Int Soc Sports Nutr 2014;11:20.",
+    "iraki2019": "Iraki J, Fitschen P, Espinar S, Helms E. Nutrition recommendations for bodybuilders in the off-season: a narrative review. Sports 2019;7(7):154.",
+    "morton2018": "Morton RW et al. A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults. Br J Sports Med 2018;52(6):376-384.",
+    "whocarb2023": "World Health Organization. Carbohydrate intake for adults and children: WHO guideline. Geneva: WHO, 2023.",
+    "whofat2023": "World Health Organization. Saturated fatty acid and trans-fatty acid intake for adults and children: WHO guideline. Geneva: WHO, 2023.",
+    "kerksick2017": "Kerksick CM et al. International Society of Sports Nutrition position stand: nutrient timing. J Int Soc Sports Nutr 2017;14:33.",
+    "schoenfeld2017v": "Schoenfeld BJ, Ogborn D, Krieger JW. Dose-response relationship between weekly resistance training volume and increases in muscle mass: a systematic review and meta-analysis. J Sports Sci 2017;35(11):1073-1082.",
+    "schoenfeld2017l": "Schoenfeld BJ, Grgic J, Ogborn D, Krieger JW. Strength and hypertrophy adaptations between low- vs. high-load resistance training: a systematic review and meta-analysis. J Strength Cond Res 2017;31(12):3508-3523.",
+    "kotarsky2018": "Kotarsky CJ et al. Effect of progressive calisthenic push-up training on muscle strength and thickness. J Strength Cond Res 2018;32(3):651-659.",
+    "seiler2010": "Seiler S. What is best practice for training intensity and duration distribution in endurance athletes? Int J Sports Physiol Perform 2010;5(3):276-291.",
+    "nielsen2014": "Nielsen RO et al. Excessive progression in weekly running distance and risk of running-related injuries: an association which varies according to type of injury. J Orthop Sports Phys Ther 2014;44(10):739-747.",
+    "hyrox": "HYROX. Official rulebook, race format and station standards. hyrox.com.",
+    "afonso2021": "Afonso J et al. Strength training versus stretching for improving range of motion: a systematic review and meta-analysis. Healthcare 2021;9(4):427.",
+    "meigh2019": "Meigh NJ et al. Kettlebell training in clinical practice: a scoping review. BMC Sports Sci Med Rehabil 2019;11:19.",
+    "lake2012": "Lake JP, Lauder MA. Kettlebell swing training improves maximal and explosive strength. J Strength Cond Res 2012;26(8):2228-2233.",
+    "mandsager2018": "Mandsager K et al. Association of cardiorespiratory fitness with long-term mortality among adults undergoing exercise treadmill testing. JAMA Netw Open 2018;1(6):e183605.",
+    "lauersen2014": "Lauersen JB, Bertelsen DM, Andersen LB. The effectiveness of exercise interventions to prevent sports injuries: a systematic review and meta-analysis of randomised controlled trials. Br J Sports Med 2014;48(11):871-877.",
+    "bickel2011": "Bickel CS, Cross JM, Bamman MM. Exercise dosing to retain resistance training adaptations in young and older adults. Med Sci Sports Exerc 2011;43(7):1177-1187.",
+    "lopes2019": "Lopes JSS et al. Effects of training with elastic resistance versus conventional resistance on muscular strength: a systematic review and meta-analysis. SAGE Open Med 2019;7:2050312119831116.",
+    "mcnulty2020": "McNulty KL et al. The effects of menstrual cycle phase on exercise performance in eumenorrheic women: a systematic review and meta-analysis. Sports Med 2020;50(10):1813-1827.",
+    "mottola2018": "Mottola MF et al. 2019 Canadian guideline for physical activity throughout pregnancy. Br J Sports Med 2018;52(21):1339-1346.",
+    "noetel2024": "Noetel M et al. Effect of exercise for depression: systematic review and network meta-analysis of randomised controlled trials. BMJ 2024;384:e075847.",
 }
 
-PARTS = {"A": "Foundations", "B": "Getting better"}
+PARTS = {"A": "Foundations", "B": "Getting better", "C": "Food and body", "D": "Train for your goal", "E": "Staying with it"}
 
 # Blocks that teach by showing. Lead lines, rules and evidence notes are prose, so they do not count.
 VISUAL = {"stats", "steps", "compare", "bars", "scale", "week", "plate", "cycle", "table", "flow", "band"}
@@ -251,7 +276,6 @@ CHAPTERS = [
                 ("0.83", "g per kg", "is the Indian RDA for a healthy, inactive adult", "icmr2020"),
             ]),
             table(["Food, per 100 g raw", "Protein", "Energy"], [
-                ["Soya bean, white", "37.8 g", "377 kcal"],
                 ["Masoor dal", "24.4 g", "322 kcal"],
                 ["Moong, whole", "22.5 g", "294 kcal"],
                 ["Chicken breast, skinless", "21.8 g", "168 kcal"],
@@ -528,6 +552,760 @@ CHAPTERS = [
             evidence("Missing a single day did not meaningfully slow habit formation in the study.", "lally2010", "moderate"),
         ],
     },
+    # ================================================================ Part C: Food and body
+    {
+        "slug": "calories",
+        "part": "C",
+        "title": "Calories and energy balance",
+        "summary": "How Levlofit estimates what you burn, and how eating above or below it changes your weight.",
+        "minutes": 4,
+        "sources": ["mifflin1990", "aragon2017"],
+        "blocks": [
+            lead("Your weight trend follows energy balance: eat less than you burn and you lose, eat more and you gain. Levlofit estimates your burn, then sets food to match your goal."),
+            steps("How your calorie target is built", [
+                ("Resting burn (BMR)", "The Mifflin-St Jeor equation: weight, height, age and sex give the energy you use at complete rest."),
+                ("Activity", "BMR is multiplied by 1.2 for a desk day up to 1.725 for a very active life, using your job or your training, whichever is higher."),
+                ("Goal", "Fat loss eats about 15% below that, muscle gain about 10% above, everything else at maintenance."),
+                ("Floor", "Your target never goes below your BMR."),
+            ]),
+            table(["Mifflin-St Jeor", "Formula, kcal a day"], [
+                ["Men", "10 x kg + 6.25 x cm - 5 x age + 5"],
+                ["Women", "10 x kg + 6.25 x cm - 5 x age - 161"],
+            ], "mifflin1990"),
+            bars("Activity multipliers", "x BMR", [
+                ("Desk day, little walking", 1.2, "1.2"),
+                ("Light activity or 1 to 3 sessions", 1.375, "1.375"),
+                ("Active, 4 to 5 sessions", 1.55, "1.55"),
+                ("Very active, 6+ sessions or physical job", 1.725, "1.725"),
+            ], None),
+            cycle("Why scale weight jumps day to day", ["Salt and carbs hold water", "Weight up 0.5 to 1 kg", "Water settles", "The trend shows the truth"]),
+            evidence("A moderate deficit preserves muscle and training quality better than a crash diet; maintenance with high protein suits beginners trying to lose fat and gain muscle together.", "aragon2017", "strong"),
+            stats([("2 to 3", "weeks", "of weight trend in Progress beat any formula; adjust from real data")]),
+        ],
+    },
+    {
+        "slug": "fat-loss",
+        "part": "C",
+        "title": "Losing fat, keeping muscle",
+        "summary": "The pace that protects muscle, the protein that helps, and what to do when progress stalls.",
+        "minutes": 4,
+        "sources": ["helms2014", "aragon2017", "issnprotein"],
+        "blocks": [
+            lead("Fat loss is a slow, steady deficit with heavy training and high protein. Lose too fast and you lose muscle and strength with the fat."),
+            band("Weekly weight loss", "% of body weight", [
+                (0, 0.5, "Slow and very safe", "good"),
+                (0.5, 1.0, "Target pace", "good"),
+                (1.0, 1.5, "Fast, muscle at risk", "warn"),
+                (1.5, 2.5, "Too fast", "bad"),
+            ], "helms2014"),
+            stats([
+                ("0.5 to 1", "% a week", "weight loss keeps the most muscle", "helms2014"),
+                ("2.0", "g per kg", "protein a day while dieting, the top of the ISSN range", "issnprotein"),
+            ]),
+            compare("Keeps muscle", [
+                "Lifting heavy 2 to 4 times a week",
+                "Protein at every meal",
+                "Losing about 0.35 to 0.7 kg a week if you weigh 70 kg",
+                "7 or more hours of sleep",
+            ], "Costs muscle", [
+                "Crash diets and skipped meals",
+                "Swapping lifting for only cardio",
+                "Dropping protein to save calories",
+            ]),
+            flow("Weight not moving?", [
+                ("Has the weekly average been flat for 3 weeks or more?", "Go to the next question.", "Wait. Water can hide fat loss for a week or two."),
+                ("Are you logging food honestly, including oil and snacks?", "Cut about 100 to 200 kcal a day, or add 2000 daily steps.", "Track for one week first; most stalls are hidden intake."),
+            ], source="aragon2017"),
+            evidence("Reviews of contest preparation find slower loss rates protect lean mass, and protein above normal needs helps most when lean and in a deficit.", "helms2014", "moderate"),
+        ],
+    },
+    {
+        "slug": "muscle-gain",
+        "part": "C",
+        "title": "Gaining muscle and weight",
+        "summary": "How big a surplus to eat, how fast to gain, and why more food is not more muscle.",
+        "minutes": 3,
+        "sources": ["iraki2019", "morton2018"],
+        "blocks": [
+            lead("Muscle is built slowly. A small surplus plus hard training adds muscle; a big surplus mostly adds fat."),
+            band("Weekly weight gain, beginners and intermediates", "% of body weight", [
+                (0, 0.25, "Slow, lean", "good"),
+                (0.25, 0.5, "Target pace", "good"),
+                (0.5, 1.0, "Mostly fat", "warn"),
+            ], "iraki2019"),
+            stats([
+                ("10 to 20", "% surplus", "above maintenance; Levlofit starts at 10%", "iraki2019"),
+                ("1.6", "g per kg", "protein a day, where extra protein stops adding muscle on average", "morton2018"),
+            ]),
+            steps("Eating more when you are never hungry", [
+                ("Add a meal", "Milk and a banana, or curd and poha, between meals."),
+                ("Use dense foods", "Peanuts, a little ghee on roti, paneer, dry fruits."),
+                ("Drink some calories", "Milk, lassi or a banana shake."),
+                ("Weigh weekly", "If the trend is off pace for 3 weeks, adjust by 150 to 200 kcal a day."),
+            ]),
+            evidence("In a meta-analysis of 49 trials, protein beyond about 1.6 g per kg a day gave no further average gain in muscle from training.", "morton2018", "strong"),
+            compare("Lean gain", [
+                "Small surplus, weight up slowly",
+                "Hard training 3 to 5 days a week",
+                "Advanced lifters: aim for the lower end",
+            ], "Dirty bulk", [
+                "Eating everything in sight",
+                "Gaining over 1% a week",
+                "Long fat-loss diet needed afterwards",
+            ]),
+        ],
+    },
+    {
+        "slug": "carbs-fibre-fats",
+        "part": "C",
+        "title": "Carbs, fibre and fats",
+        "summary": "Which carbs to choose, how much fibre to aim for, and the fats to keep and to limit.",
+        "minutes": 4,
+        "sources": ["whocarb2023", "whofat2023", "icmr2024", "ifct2017"],
+        "blocks": [
+            lead("Carbs fuel training and fats keep hormones and cells healthy. Quality matters more than cutting either one out."),
+            stats([
+                ("25", "g or more", "naturally occurring fibre a day", "whocarb2023"),
+                ("400", "g or more", "vegetables and fruit a day", "whocarb2023"),
+                ("40 to 70", "% of energy", "from carbs fits a healthy diet when quality is good", "whocarb2023"),
+            ]),
+            compare("Choose most days", [
+                "Whole wheat atta, brown rice, millets like ragi, jowar and bajra",
+                "Dals, chana, rajma and sprouts",
+                "Whole fruit and plenty of vegetables",
+                "Nuts, seeds, mustard and groundnut oil",
+            ], "Limit", [
+                "Maida, sugar, sweets and sugary drinks",
+                "Vanaspati and reused frying oil (trans fats)",
+                "Lots of ghee, butter and coconut oil (saturated fat)",
+                "Fried snacks most days",
+            ]),
+            bars("Upper limits for fat, share of daily energy", "% of energy", [
+                ("All fat", 30, "30% or less"),
+                ("Saturated fat", 10, "10% or less"),
+                ("Trans fat", 1, "1% or less"),
+            ], "whofat2023"),
+            table(["Fibre in everyday food, per 100 g raw", "Fibre"], [
+                ["Kala chana", "25.2 g"],
+                ["Whole moong", "17.0 g"],
+                ["Rajma", "16.6 g"],
+                ["Wheat atta", "11.4 g"],
+                ["Ragi", "11.2 g"],
+                ["Guava", "8.6 g"],
+            ], "ifct2017"),
+            rule("Add fibre slowly over a week or two and drink water with it, so your gut can adjust."),
+        ],
+    },
+    {
+        "slug": "veg-protein",
+        "part": "C",
+        "title": "Vegetarian and vegan protein",
+        "summary": "Hitting protein without meat: the best Indian sources, combining foods, and soya chunks.",
+        "minutes": 3,
+        "sources": ["ifct2017", "usda174275", "soy2021", "issnprotein"],
+        "blocks": [
+            lead("You can build muscle on a vegetarian or vegan diet. It takes planning: protein-dense foods at every meal and a mix of sources."),
+            stats([("51.5", "g protein", "in 100 g of dry soya chunks, the richest common vegetarian source", "usda174275")]),
+            table(["Food, per 100 g raw", "Protein", "Energy"], [
+                ["Masoor dal", "24.4 g", "322 kcal"],
+                ["Moong dal", "23.9 g", "326 kcal"],
+                ["Peanuts", "23.7 g", "520 kcal"],
+                ["Chana dal", "21.6 g", "329 kcal"],
+                ["Paneer", "18.9 g", "258 kcal"],
+            ], "ifct2017"),
+            steps("A high-protein vegetarian day", [
+                ("Breakfast", "Moong chilla or besan cheela, or poha with peanuts and curd."),
+                ("Lunch", "Dal plus rajma or chana with roti; pulses and grains cover each other's gaps."),
+                ("Snack", "Roasted chana, sprouts chaat or a glass of milk."),
+                ("Dinner", "Soya chunk curry, paneer bhurji or tofu with vegetables."),
+            ]),
+            evidence("Soy did not change male hormones across clinical studies, at any dose tested.", "soy2021", "strong"),
+            compare("Vegetarian staples", [
+                "Paneer, curd and milk",
+                "Dals, chana and rajma",
+                "Soya chunks",
+            ], "Vegan staples", [
+                "Tofu and soya chunks",
+                "Dals, chana, rajma and sprouts",
+                "Peanuts; aim for the upper end of your protein range",
+            ]),
+        ],
+    },
+    {
+        "slug": "meal-timing",
+        "part": "C",
+        "title": "When to eat around training",
+        "summary": "What matters about meal timing, and what does not.",
+        "minutes": 3,
+        "sources": ["kerksick2017", "issnprotein"],
+        "blocks": [
+            lead("Total daily food matters most. Timing is fine-tuning: spread protein through the day and do not train on an empty tank."),
+            scale("What matters most", [
+                ("1", "Total calories", "Sets whether you gain, lose or hold weight."),
+                ("2", "Total protein", "Drives muscle repair across the day."),
+                ("3", "Protein spread", "20 to 40 g every 3 to 4 hours."),
+                ("4", "Meals around training", "Helps how you feel and recover."),
+                ("5", "Exact minutes", "Barely matters for most people."),
+            ], "kerksick2017"),
+            steps("Around a session", [
+                ("2 to 3 h before", "A normal meal: roti or rice, dal or paneer, vegetables."),
+                ("30 to 60 min before", "If hungry: a banana or a small bowl of poha."),
+                ("Within a few hours after", "A protein-rich meal; no need to rush a shake."),
+            ]),
+            stats([("20 to 40", "g", "protein per meal, every 3 to 4 hours", "issnprotein")]),
+            evidence("When daily protein and energy are met, the exact timing after a session matters little for most people; it matters more for long or twice-daily sessions.", "kerksick2017", "moderate"),
+        ],
+    },
+    # ================================================================ Part D: Train for your goal
+    {
+        "slug": "build-muscle",
+        "part": "D",
+        "title": "Building muscle",
+        "summary": "How many sets per muscle, how heavy, and how close to failure to grow.",
+        "minutes": 4,
+        "sources": ["schoenfeld2017v", "schoenfeld2017l"],
+        "blocks": [
+            lead("Muscle grows from enough hard sets per muscle each week, repeated for months. Load can vary; effort and consistency cannot."),
+            bars("Weekly sets per muscle and growth", "sets a week", [
+                ("Under 5 sets", 4, "least growth"),
+                ("5 to 9 sets", 7, "more"),
+                ("10 or more sets", 10, "most"),
+            ], "schoenfeld2017v"),
+            stats([
+                ("10+", "sets", "per muscle a week gave the most growth", "schoenfeld2017v"),
+                ("Light or heavy", "", "loads both build muscle when sets end close to failure", "schoenfeld2017l"),
+            ]),
+            week("Example: 4-day upper and lower", [
+                ("Mon", "Upper", "strength"),
+                ("Tue", "Lower", "strength"),
+                ("Wed", "Walk", "cardio"),
+                ("Thu", "Upper", "strength"),
+                ("Fri", "Lower", "strength"),
+                ("Sat", "Mobility", "mobility"),
+                ("Sun", "Rest", "rest"),
+            ]),
+            compare("Grows muscle", [
+                "Sets ending 1 to 3 reps from failure",
+                "Adding reps or weight over time",
+                "Training each muscle twice a week",
+            ], "Wastes effort", [
+                "Easy sets far from failure",
+                "Changing exercises every week",
+                "Endless sets with poor form",
+            ]),
+            evidence("Low and high loads built similar muscle when sets went close to failure; heavier loads built more maximal strength.", "schoenfeld2017l", "strong"),
+        ],
+    },
+    {
+        "slug": "get-stronger",
+        "part": "D",
+        "title": "Getting stronger and powerlifting",
+        "summary": "Heavy, practised lifts: squat, bench and deadlift, and how strength is built.",
+        "minutes": 4,
+        "sources": ["schoenfeld2017l", "grgic2018", "zourdos2016"],
+        "blocks": [
+            lead("Strength is a skill as well as muscle. Lift heavy, practise the same lifts often, and rest long enough to lift well."),
+            stats([
+                ("Heavy", "loads", "build more maximal strength than light loads", "schoenfeld2017l"),
+                ("2+", "min rest", "between heavy sets helps strength", "grgic2018"),
+            ]),
+            table(["Lift", "What it trains", "Key cue"], [
+                ["Squat", "Legs, hips, trunk", "Brace, knees track over toes"],
+                ["Bench press", "Chest, shoulders, triceps", "Shoulder blades pinned, feet planted"],
+                ["Deadlift", "Back, hips, grip", "Bar close, back flat, push the floor away"],
+                ["Overhead press", "Shoulders, triceps", "Glutes tight, bar over mid-foot"],
+            ]),
+            scale("Effort for strength work, reps in reserve", [
+                ("RIR 4+", "Technique", "Warm-up and practice sets."),
+                ("RIR 2 to 3", "Most work sets", "Bar speed stays good."),
+                ("RIR 0 to 1", "Rarely", "Tests and the last set of a block."),
+            ], "zourdos2016"),
+            steps("A strength block", [
+                ("Weeks 1 to 3", "Build: add 2.5 to 5 kg when every rep is clean."),
+                ("Week 4", "A lighter week to recover."),
+                ("Then", "Retest, or start the next block a little heavier."),
+            ]),
+            rule("Powerlifting meets need a coach for technique and peaking. Levlofit's Strength path builds the base."),
+        ],
+    },
+    {
+        "slug": "physique",
+        "part": "D",
+        "title": "Building an aesthetic physique",
+        "summary": "Proportions, which muscles shape the look, and pairing training with body-fat changes.",
+        "minutes": 3,
+        "sources": ["schoenfeld2017v", "helms2014"],
+        "blocks": [
+            lead("An aesthetic look is muscle in the right places plus low enough body fat to see it. Build first, then lean out."),
+            table(["Area", "Why it matters", "Key moves"], [
+                ["Side delts", "Width, V-taper", "Lateral raise, overhead press"],
+                ["Upper back, lats", "Width and posture", "Pull-up, lat pulldown, rows"],
+                ["Upper chest", "A fuller chest", "Incline press"],
+                ["Arms", "Proportion", "Curls, pushdowns, dips"],
+                ["Legs", "Balance with the upper body", "Squat, lunge, Romanian deadlift"],
+            ]),
+            cycle("The physique year", ["Build muscle", "Lean out", "Maintain", "Build again"]),
+            stats([
+                ("10+", "sets", "per muscle a week for lagging areas", "schoenfeld2017v"),
+                ("0.5 to 1", "% a week", "loss pace when leaning out", "helms2014"),
+            ]),
+            compare("Helps the look", [
+                "Extra sets for lagging muscles",
+                "Patience: months, not weeks",
+                "Photos and tape every 2 to 4 weeks",
+            ], "Hurts it", [
+                "Only training mirror muscles",
+                "Skipping legs",
+                "Cutting before you have built muscle",
+            ]),
+        ],
+    },
+    {
+        "slug": "calisthenics",
+        "part": "D",
+        "title": "Calisthenics",
+        "summary": "Bodyweight strength: progressions from push-ups to pull-ups, dips and holds.",
+        "minutes": 4,
+        "sources": ["kotarsky2018"],
+        "blocks": [
+            lead("Your body is the barbell. You progress by making the move harder: more leverage, fewer points of support, more range."),
+            table(["Skill", "Start", "Next", "Goal"], [
+                ["Push", "Incline push-up", "Full push-up", "Archer, then one-arm push-up"],
+                ["Pull", "Inverted row", "Negative pull-up", "Strict pull-ups, then weighted"],
+                ["Squat", "Box squat", "Split squat", "Pistol squat"],
+                ["Hold", "Plank", "Hollow hold", "L-sit"],
+                ["Dip", "Bench dip", "Negative dip", "Parallel bar dips"],
+            ]),
+            steps("How to move up a step", [
+                ("Hit the target", "3 sets of 8 to 12 clean reps, or 3 holds of 30 s."),
+                ("Step up", "Move to the next variation, even if reps drop to 3 to 5."),
+                ("Build again", "Climb back to the target, then step up again."),
+            ]),
+            stats([("Similar", "", "strength and muscle gains from progressive push-ups as from bench press", "kotarsky2018")]),
+            evidence("A controlled trial found progressive push-ups matched the bench press for strength and muscle thickness gains.", "kotarsky2018", "moderate"),
+            cycle("Your first pull-up", ["Inverted rows", "Band-assisted pull-ups", "Slow negatives", "First strict pull-up"]),
+        ],
+    },
+    {
+        "slug": "running",
+        "part": "D",
+        "title": "Running",
+        "summary": "Easy miles, safe weekly increases, and the 80/20 way to run faster.",
+        "minutes": 4,
+        "sources": ["seiler2010", "nielsen2014"],
+        "blocks": [
+            lead("Most of your running should feel easy. You get faster by running more, gradually, with a little hard work on top."),
+            plate("How endurance athletes mix intensity", [
+                ("Easy, can talk in sentences", 80, "about 80%"),
+                ("Hard, intervals or tempo", 20, "about 20%"),
+            ], "seiler2010"),
+            band("Weekly distance increase, new runners", "% more than last week", [
+                (0, 10, "Safer", "good"),
+                (10, 30, "Watch for niggles", "warn"),
+                (30, 50, "Higher injury risk", "bad"),
+            ], "nielsen2014"),
+            steps("From zero to 5 km", [
+                ("Weeks 1 to 2", "Run 1 min, walk 2 min, 8 rounds, 3 days a week."),
+                ("Weeks 3 to 5", "Run 3 to 5 min, walk 1 to 2 min."),
+                ("Weeks 6 to 8", "Run 10 to 20 min without stopping."),
+                ("Week 9 on", "Run 5 km easy, then add one faster session a week."),
+            ]),
+            scale("The talk test", [
+                ("Easy", "Full sentences", "Most runs."),
+                ("Steady", "Short phrases", "Tempo runs."),
+                ("Hard", "A few words", "Intervals only."),
+            ], "seiler2010"),
+            evidence("Novice runners who raised weekly distance by more than 30% over two weeks had more overuse injuries than those who added under 10%.", "nielsen2014", "moderate"),
+        ],
+    },
+    {
+        "slug": "hyrox",
+        "part": "D",
+        "title": "HYROX and functional fitness",
+        "summary": "The race format, the eight stations, and how to train running and strength together.",
+        "minutes": 4,
+        "sources": ["hyrox", "wilson2012"],
+        "blocks": [
+            lead("HYROX is 8 km of running split by 8 workout stations. It rewards a strong engine and strength that holds up while tired."),
+            table(["Station, after each 1 km run", "Standard"], [
+                ["1. SkiErg", "1000 m"],
+                ["2. Sled push", "50 m"],
+                ["3. Sled pull", "50 m"],
+                ["4. Burpee broad jumps", "80 m"],
+                ["5. Rowing", "1000 m"],
+                ["6. Farmers carry", "200 m"],
+                ["7. Sandbag lunges", "100 m"],
+                ["8. Wall balls", "100 reps"],
+            ], "hyrox"),
+            week("Example HYROX week", [
+                ("Mon", "Strength", "strength"),
+                ("Tue", "Easy run", "cardio"),
+                ("Wed", "Stations", "strength"),
+                ("Thu", "Rest", "rest"),
+                ("Fri", "Intervals", "cardio"),
+                ("Sat", "Race sim", "cardio"),
+                ("Sun", "Mobility", "mobility"),
+            ]),
+            compare("Race smart", [
+                "Run the first km easier than you want",
+                "Practise wall balls and lunges when tired",
+                "Pace the sleds; walk them if needed",
+            ], "Common mistakes", [
+                "Sprinting the first run",
+                "Only running, no station practice",
+                "Skipping strength work",
+            ]),
+            evidence("Running and lifting in one plan works; keeping hard runs and leg sessions apart limits interference with strength.", "wilson2012", "moderate"),
+        ],
+    },
+    {
+        "slug": "mobility",
+        "part": "D",
+        "title": "Mobility and yoga",
+        "summary": "How to gain range of motion, when to stretch, and what yoga adds.",
+        "minutes": 3,
+        "sources": ["afonso2021", "behm2016"],
+        "blocks": [
+            lead("Range of motion improves with regular practice. Stretching works, and so does strength training through a full range."),
+            stats([("Same", "", "range of motion gains from full-range strength training as from stretching", "afonso2021")]),
+            compare("Builds mobility", [
+                "Full-range lifts: deep squats, RDLs, full push-ups",
+                "Holding stretches 30 to 60 s, most days",
+                "Yoga 2 to 3 times a week",
+            ], "Does little", [
+                "Stretching only once a week",
+                "Forcing into pain",
+                "Bouncing in a stretch",
+            ]),
+            steps("10-minute daily routine", [
+                ("Hips", "Deep squat hold, 60 s."),
+                ("Hamstrings", "Standing forward fold, 60 s."),
+                ("Upper back", "Thread the needle, 5 each side."),
+                ("Shoulders", "Wall slides, 10."),
+                ("Ankles", "Knee-to-wall, 10 each side."),
+            ]),
+            evidence("Static stretches under 60 s before training barely affect strength; long holds right before heavy lifting can reduce force a little.", "behm2016", "strong"),
+            table(["Practice", "Best for"], [
+                ["Yoga", "Mobility, balance, calm"],
+                ["Yoga flow in Levlofit", "Sphinx, butterfly, frog and twists"],
+                ["Full-range lifting", "Strength and range together"],
+            ]),
+        ],
+    },
+    {
+        "slug": "kettlebells",
+        "part": "D",
+        "title": "Kettlebell training",
+        "summary": "Swings, goblet squats and carries: big results from one bell.",
+        "minutes": 3,
+        "sources": ["lake2012", "meigh2019"],
+        "blocks": [
+            lead("One kettlebell trains strength, power and conditioning. The swing is the centre of it all."),
+            table(["Move", "Trains", "Start with"], [
+                ["Swing", "Hips, back, power, heart", "3 x 10"],
+                ["Goblet squat", "Legs, trunk", "3 x 8"],
+                ["Press", "Shoulders", "3 x 5 each arm"],
+                ["Row", "Back, grip", "3 x 8 each arm"],
+                ["Farmers carry", "Grip, trunk", "3 x 30 m"],
+            ]),
+            steps("The swing", [
+                ("Hinge", "Hips back, flat back, bell between the forearms."),
+                ("Snap", "Drive the hips forward hard, glutes tight."),
+                ("Float", "Arms only guide; the bell rises to chest height."),
+                ("Return", "Let it fall, then hinge again."),
+            ]),
+            stats([("6", "weeks", "of swings improved maximal and explosive strength", "lake2012")]),
+            evidence("Reviews find kettlebell training improves strength and fitness, but most studies are small.", "meigh2019", "moderate"),
+        ],
+    },
+    {
+        "slug": "general-fitness",
+        "part": "D",
+        "title": "General fitness and heart health",
+        "summary": "The mix of cardio, strength and movement that keeps you healthy for life.",
+        "minutes": 3,
+        "sources": ["who2020", "mandsager2018"],
+        "blocks": [
+            lead("For lifelong health, do some of everything: lift twice a week, move your heart most days, and sit less."),
+            week("A balanced week", [
+                ("Mon", "Full body", "strength"),
+                ("Tue", "Brisk walk", "cardio"),
+                ("Wed", "Cycle or swim", "cardio"),
+                ("Thu", "Full body", "strength"),
+                ("Fri", "Walk", "cardio"),
+                ("Sat", "Sport or yoga", "mobility"),
+                ("Sun", "Rest", "rest"),
+            ]),
+            stats([
+                ("150 to 300", "min", "of moderate cardio a week", "who2020"),
+                ("2", "days", "of strength training a week", "who2020"),
+                ("About 5x", "", "higher risk of death with the lowest fitness versus the highest", "mandsager2018"),
+            ]),
+            compare("Builds heart fitness", [
+                "Brisk walking, cycling, swimming",
+                "Sports and games",
+                "Stairs instead of the lift",
+            ], "Easy to forget", [
+                "Long sitting without breaks",
+                "Only lifting, no cardio",
+            ]),
+            evidence("In 122,007 adults, low cardiorespiratory fitness carried a mortality risk as large as smoking or diabetes, with no upper limit of benefit.", "mandsager2018", "strong"),
+        ],
+    },
+    # ================================================================ Part E: Staying with it
+    {
+        "slug": "soreness-pain-injury",
+        "part": "E",
+        "title": "Soreness, pain and injuries",
+        "summary": "Normal soreness versus pain that needs care, and how training prevents injury.",
+        "minutes": 3,
+        "sources": ["lauersen2014"],
+        "blocks": [
+            lead("Soreness after a new workout is normal. Sharp, joint or worsening pain is not. Strength training is one of the best ways to prevent injuries."),
+            compare("Normal soreness", [
+                "Dull ache in the muscle, 1 to 3 days after",
+                "Both sides feel the same",
+                "Eases as you warm up",
+            ], "Pain to respect", [
+                "Sharp or stabbing, in a joint",
+                "Swelling, or a joint giving way",
+                "Gets worse during the session",
+                "Lasts more than a week",
+            ]),
+            band("Pain during exercise, a common physio guide", "pain out of 10", [
+                (0, 3, "OK to train", "good"),
+                (3, 5, "Reduce load or range", "warn"),
+                (5, 10, "Stop, see a physio or doctor", "bad"),
+            ], None),
+            stats([("Under 1/3", "", "of sports injuries remained with strength training", "lauersen2014")]),
+            steps("Coming back from a niggle", [
+                ("Calm it", "Swap to pain-free moves for a few days; keep moving."),
+                ("Reload", "Return at about half the weight; add a little each session."),
+                ("Rebuild", "Back to full once it stays pain-free the next day."),
+            ]),
+            evidence("Across 25 trials, strength training cut sports injuries to under a third, while stretching alone did not prevent injury.", "lauersen2014", "strong"),
+        ],
+    },
+    {
+        "slug": "plateaus-deloads",
+        "part": "E",
+        "title": "Plateaus and lighter weeks",
+        "summary": "Why progress stalls, how to break through, and when to take a deload week.",
+        "minutes": 3,
+        "sources": ["bell2023"],
+        "blocks": [
+            lead("Every lifter stalls. Usually the fix is recovery, food or a small change in the plan, not a whole new program."),
+            flow("Stuck for 3 weeks or more?", [
+                ("Are you sleeping under 7 hours, or eating in a deficit?", "Fix sleep and food first; progress slows when recovery is short.", "Go to the next question."),
+                ("Have you trained hard for many weeks without a lighter week?", "Take a deload week.", "Go to the next question."),
+                ("Same exercises and reps for months?", "Change the rep range or swap one exercise per muscle.", "Add one set per muscle a week."),
+            ], source="bell2023"),
+            steps("A deload week", [
+                ("Same lifts", "Keep the exercises."),
+                ("Less work", "Cut sets by about half, or use lighter weights."),
+                ("Easy effort", "Stop sets well before failure."),
+                ("Come back", "Return to normal training the week after."),
+            ]),
+            cycle("A training block", ["Build for several weeks", "Deload", "Start a little stronger"]),
+            evidence("Coaches agree deloads lower fatigue and support long-term progress; timing is set by how you feel and perform, not a fixed calendar.", "bell2023", "consensus"),
+        ],
+    },
+    {
+        "slug": "busy-weeks",
+        "part": "E",
+        "title": "Missed sessions, travel and busy weeks",
+        "summary": "How little training keeps your progress, and what to do when life gets in the way.",
+        "minutes": 3,
+        "sources": ["bickel2011"],
+        "blocks": [
+            lead("Missing a week does not erase months of work. A little training keeps most of what you built."),
+            stats([("1/3", "", "of the usual training dose kept muscle size in young adults over 32 weeks", "bickel2011")]),
+            flow("Missed sessions?", [
+                ("Missed one session?", "Carry on with the next one. Do not double up.", "Go to the next question."),
+                ("Missed a week or more?", "Restart at about 80% of your last weights for one week.", "Carry on as planned."),
+            ]),
+            steps("20-minute hotel room workout", [
+                ("Squats", "3 x 15 to 20."),
+                ("Push-ups", "3 sets close to failure."),
+                ("Backpack rows", "3 x 12 each arm, bag filled with books."),
+                ("Lunges", "3 x 10 each leg."),
+                ("Plank", "3 x 30 to 45 s."),
+            ]),
+            compare("Busy-week rules", [
+                "Keep 1 or 2 short full-body sessions",
+                "Walk more: calls on foot, stairs",
+                "Protect sleep",
+            ], "Avoid", [
+                "All-or-nothing thinking",
+                "Making up missed sessions in one day",
+            ]),
+            evidence("In a 32-week trial, one-third of the training dose kept muscle size in young adults; older adults needed more to keep size, though their strength held well.", "bickel2011", "moderate"),
+        ],
+    },
+    {
+        "slug": "home-training",
+        "part": "E",
+        "title": "Training at home",
+        "summary": "Building strength with bodyweight, bands and dumbbells when there is no gym.",
+        "minutes": 3,
+        "sources": ["lopes2019", "schoenfeld2017l"],
+        "blocks": [
+            lead("You do not need a gym to get strong. Muscles respond to effort, not to where the weight came from."),
+            table(["Gym move", "At home"], [
+                ["Barbell squat", "Goblet squat, Bulgarian split squat"],
+                ["Bench press", "Push-up, dumbbell floor press"],
+                ["Lat pulldown", "Band pulldown, door-frame row"],
+                ["Romanian deadlift", "Single-leg dumbbell RDL"],
+                ["Leg curl", "Sliding towel curl"],
+            ]),
+            stats([
+                ("Same", "", "strength gains with elastic bands as with weights", "lopes2019"),
+                ("Light loads", "", "build muscle too when sets end close to failure", "schoenfeld2017l"),
+            ]),
+            steps("Making light weights hard", [
+                ("Slow down", "3 seconds down on every rep."),
+                ("Go one-sided", "Single-leg and single-arm moves double the load."),
+                ("Pause", "Hold 2 s at the hardest point."),
+                ("More reps", "Take sets close to failure."),
+            ]),
+            evidence("Eight trials found bands and conventional weights gave similar strength gains.", "lopes2019", "moderate"),
+        ],
+    },
+    {
+        "slug": "women",
+        "part": "E",
+        "title": "Training as a woman",
+        "summary": "Lifting, the menstrual cycle and pregnancy: what the evidence says.",
+        "minutes": 4,
+        "sources": ["mcnulty2020", "mottola2018"],
+        "blocks": [
+            lead("Women respond to training the same way men do. Lifting builds strength and shape, not bulk, unless that is the goal."),
+            compare("Myths", [
+                "Lifting makes women bulky",
+                "You must train differently in each cycle phase",
+                "Avoid exercise when pregnant",
+            ], "Evidence", [
+                "Muscle builds slowly; heavy lifting builds strength and shape",
+                "Cycle effects on performance are small and individual",
+                "Exercise is safe and helpful in most pregnancies",
+            ]),
+            stats([
+                ("Trivial", "", "average effect of cycle phase on performance", "mcnulty2020"),
+                ("150", "min a week", "of moderate activity during a healthy pregnancy", "mottola2018"),
+            ]),
+            steps("Training with your cycle", [
+                ("Track", "Note energy and mood in Habits."),
+                ("Adjust", "On low days lower the load a little; on good days push."),
+                ("Keep going", "No phase needs you to stop training."),
+            ]),
+            evidence("A meta-analysis of 78 studies found performance may be slightly lower in the early follicular phase, but effects were trivial and varied, so general phase-based rules are not supported.", "mcnulty2020", "moderate"),
+            compare("Pregnant: usually fine", [
+                "Get your doctor's go-ahead first",
+                "Walking, cycling, swimming, light lifting",
+                "Moderate effort: you can still talk",
+            ], "Stop and seek care", [
+                "Bleeding or fluid leaking",
+                "Dizziness, chest pain or headache",
+                "Painful contractions",
+            ]),
+        ],
+    },
+    {
+        "slug": "over-40",
+        "part": "E",
+        "title": "Training after 40",
+        "summary": "Why strength and balance matter more with age, and how to train safely.",
+        "minutes": 3,
+        "sources": ["who2020", "bickel2011"],
+        "blocks": [
+            lead("Muscle and balance fade with age unless you train them. It is never too late: older adults gain strength well."),
+            stats([
+                ("3+", "days a week", "of balance and strength work for adults 65 and over", "who2020"),
+                ("More", "training", "is needed by older adults to keep muscle size", "bickel2011"),
+            ]),
+            week("Example week after 40", [
+                ("Mon", "Strength", "strength"),
+                ("Tue", "Walk", "cardio"),
+                ("Wed", "Balance", "mobility"),
+                ("Thu", "Strength", "strength"),
+                ("Fri", "Walk", "cardio"),
+                ("Sat", "Strength", "strength"),
+                ("Sun", "Rest", "rest"),
+            ]),
+            steps("Smart changes", [
+                ("Longer warm-up", "10 minutes, gradually heavier."),
+                ("Moderate reps", "8 to 15 reps with good control."),
+                ("Balance every week", "Single-leg stands, step-ups, heel-to-toe walking."),
+                ("Recover", "48 hours between hard sessions for the same muscles."),
+            ]),
+            evidence("WHO advises older adults to do varied balance and strength work on 3 or more days a week to prevent falls.", "who2020", "strong"),
+        ],
+    },
+    {
+        "slug": "mind-motivation",
+        "part": "E",
+        "title": "Mood, stress and motivation",
+        "summary": "Exercise as medicine for the mind, and how to keep going on low days.",
+        "minutes": 3,
+        "sources": ["noetel2024", "lally2010"],
+        "blocks": [
+            lead("Training lifts mood, eases stress and improves sleep. Motivation comes and goes; routines carry you through."),
+            table(["Exercise", "Eased depression in trials"], [
+                ["Walking or jogging", "Yes, among the best"],
+                ["Yoga", "Yes, among the best"],
+                ["Strength training", "Yes, among the best"],
+                ["Mixed aerobic", "Yes"],
+            ], "noetel2024"),
+            stats([
+                ("Harder", "", "sessions eased depression more than easy ones", "noetel2024"),
+                ("66", "days", "median time for a new habit to feel automatic", "lally2010"),
+            ]),
+            steps("On a low day", [
+                ("Shrink it", "Do just the warm-up. Often you will keep going."),
+                ("Go outside", "A 10-minute walk counts."),
+                ("Tick it", "Log it in Habits; the streak matters more than the size."),
+            ]),
+            evidence("A network meta-analysis of 218 trials found walking, jogging, yoga and strength training eased depression, with effects comparable to therapy. Exercise adds to medical care; it does not replace it.", "noetel2024", "moderate"),
+            flow("When exercise is not enough", [
+                ("Feeling low most days for two weeks or more?", "Talk to a doctor; exercise works best alongside care.", "Keep moving and keep logging."),
+                ("Any thoughts of self-harm?", "Call Tele-MANAS on 14416 now, free and confidential.", "Reach out to someone you trust whenever it feels heavy."),
+            ]),
+        ],
+    },
+    {
+        "slug": "how-levlofit-works",
+        "part": "E",
+        "title": "How Levlofit builds your plan",
+        "summary": "Levels, level checks, the foundation phase and why goals unlock one at a time.",
+        "minutes": 3,
+        "sources": ["acsm2026"],
+        "blocks": [
+            lead("Levlofit is built level first. You train your main goal until the basics are solid, then new goals unlock."),
+            scale("The Levlofit ladder", [
+                ("0", "Starting out", "Learn the moves, build the habit."),
+                ("1", "Foundation", "Basic strength and fitness in place."),
+                ("2", "Building", "Steady progress on your main goal."),
+                ("3", "Solid", "A good level for most people."),
+                ("4", "Advanced", "Specialised training pays off."),
+                ("5", "Expert", "Coach-led territory."),
+            ], None),
+            cycle("How you move up", ["Train the plan", "Log your sets", "Take the level check", "Unlock the next level"]),
+            steps("What decides your plan", [
+                ("Your answers", "Health check, body numbers, days, time and equipment."),
+                ("Your level", "From the level check in Workout."),
+                ("Rules, not AI", "Numbers come from cited rules; Levlofit AI explains them, never invents them."),
+            ]),
+            evidence("Going from no resistance training to regular training gives the biggest gains, so Levlofit builds the basics before adding goals.", "acsm2026", "strong"),
+            compare("Change anytime in Protocol", [
+                "Goals and main goal",
+                "Training days and time",
+                "Diet, allergies and budget",
+            ], "Earned, not edited", [
+                "Your level",
+                "When new goals unlock",
+            ]),
+        ],
+    },
 ]
 
 
@@ -584,7 +1362,7 @@ def main():
             f"({i}, {q(c['slug'])}, {q(c['part'])}, {q(PARTS[c['part']])}, {q(c['title'])}, {q(c['summary'])}, {c['minutes']}, "
             f"{q(body)}, {sources}, {q(blocks)}::jsonb)"
         )
-    sql = f"""-- Handbook v2: Part A, Foundations; Part B, Getting better. Generated by data/build_handbook.py; edit that file, not this one.
+    sql = f"""-- Handbook v3: Parts A to E, 40 chapters. Generated by data/build_handbook.py; edit that file, not this one.
 alter table public.handbook_chapters
   add column if not exists slug text unique,
   add column if not exists part_title text,
@@ -596,7 +1374,7 @@ delete from public.handbook_chapters;
 insert into public.handbook_chapters (id, slug, part, part_title, title, summary, minutes, body_md, sources, blocks) values
 {",\n".join(rows)};
 """
-    out = root / "supabase" / "migrations" / "20261003300000_handbook_v2.sql"
+    out = root / "supabase" / "migrations" / "20261007400000_handbook_v3.sql"
     out.write_text(sql, encoding="utf-8")
     print(f"wrote {out.name}, {len(CHAPTERS)} chapters")
 

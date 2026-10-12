@@ -43,6 +43,18 @@ const _endurance = ['ealLwvX', 'DFGXwZr', 'oLrKqDH', 'bJYHBIN', '0mB6wHO']; // d
 const _hybridKit = ['UHJlbu3', 'IZVHb27', 'dK9394r', 'qPEzJjA', 'oLrKqDH']; // swing, lunge, burpee, carry, run
 const _hybridBody = ['LIlE5Tn', 'IZVHb27', 'dK9394r', 'RJgzwny', 'oLrKqDH']; // jump squat, lunge, burpee, climber, run
 const _mobility = ['DFGXwZr', '0mB6wHO', '99rWm7w', 'DeDThfG', 'f38OEuO', 'JbC2iaV'];
+// Yoga: real asanas from the catalogue, ordered as a floor flow (backbends, hip openers, then twists to finish).
+const _yoga = ['DIVyqrU', '01qpYSe', 'bWlZvXh', 'HIgYKAB', '2Dk4xQV', 'K5xgdvI', '2jl9K55', '6sYyrRX'];
+const _poseNames = {
+  'DIVyqrU': 'Sphinx pose (Salamba Bhujangasana)',
+  '01qpYSe': 'Upward-facing dog (Urdhva Mukha Svanasana)',
+  'bWlZvXh': 'Butterfly pose (Baddha Konasana)',
+  'HIgYKAB': 'Seated wide-angle fold (Upavistha Konasana)',
+  '2Dk4xQV': 'Frog pose (Mandukasana)',
+  'K5xgdvI': 'Reclining big toe pose (Supta Padangusthasana), use a strap or towel',
+  '2jl9K55': 'Seated twist (Ardha Matsyendrasana)',
+  '6sYyrRX': 'Reclining twist (Supta Matsyendrasana)',
+};
 
 const _stretches = {'DFGXwZr', '0mB6wHO', '99rWm7w', 'DeDThfG', 'f38OEuO', 'JbC2iaV'};
 const _drills = {'ealLwvX'};
@@ -57,7 +69,8 @@ const _compounds = {'qXTaZnJ', 'EIeI8Vf', 'fUBheHs', 'wQ2c4XD', 'ila4NZS', 'znQU
 int restFor(String id) => _compounds.contains(id) ? 120 : 90;
 
 /// Exercise ids for one session of [kind] at [level]. [index] is which session of that goal this is in the week.
-List<String> sessionIds(String kind, Tier tier, int level, int index) => switch (kind) {
+List<String> sessionIds(String kind, Tier tier, int level, int index, {String? goal}) => switch (kind) {
+      _ when goal == 'yoga' => _yoga,
       'skill' => level <= 1 ? _skillBasics : _skillBuilt,
       'endurance' => _endurance,
       'hybrid' => tier == Tier.none ? _hybridBody : _hybridKit,
@@ -83,13 +96,14 @@ String nextStep(List<SetLog> last) {
 }
 
 /// Sets to tick on the session screen; 0 when the move is done once (run, stretch, drill).
-int setsFor(String id, int level) => _stretches.contains(id) || _drills.contains(id) || id == _run ? 0 : (level <= 1 ? 2 : 3);
+int setsFor(String id, int level) => _stretches.contains(id) || _poseNames.containsKey(id) || _drills.contains(id) || id == _run ? 0 : (level <= 1 ? 2 : 3);
 
 /// How much of a move, in words. Lifting doses: Handbook "Sets, reps and progress" (ACSM 2026).
 /// Stretch holds stay under the 60 s that can blunt strength for a while (Behm 2016).
 String doseFor(String id, int level) {
   final sets = setsFor(id, level);
   if (id == _run) return 'Main block at an easy pace you can talk at';
+  if (_poseNames.containsKey(id)) return 'Hold for 5 slow breaths, each side if one-sided';
   if (_stretches.contains(id)) return 'Hold 30 s or less, each side';
   if (_drills.contains(id)) return 'Warm-up, until you feel loose';
   if (_carries.contains(id)) return '$sets walks, stop before grip or posture fades';
@@ -111,7 +125,7 @@ Future<List<Map<String, dynamic>>> loadMoves(List<String> ids) async {
   return [for (final i in ids) ?_cache[i]];
 }
 
-String moveName(Map<String, dynamic> m) => (m['name'] as String).split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
+String moveName(Map<String, dynamic> m) => _poseNames[m['id']] ?? (m['name'] as String).split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
 
 /// A horizontal strip of animated moves with names and doses. Tapping a move opens its detail.
 class MoveStrip extends StatelessWidget {

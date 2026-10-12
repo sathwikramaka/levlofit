@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'avatar.dart';
 import 'coach_chat.dart';
 import 'diet_plan.dart';
 import 'exercises.dart';
@@ -23,6 +24,7 @@ import 'reminders.dart';
 import 'session.dart';
 import 'theme.dart';
 import 'tools.dart';
+import 'week_schedule.dart' show addOnLine, weekPlan;
 
 part 'dashboard_menu.dart';
 part 'dashboard_tabs.dart';
@@ -33,40 +35,14 @@ const _bmiLabels = {'underweight': 'Underweight', 'normal': 'Normal', 'overweigh
 const _days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// Suggested training weekdays (1 = Monday) for each number of days a week: spread out, rest between hard days.
-const _pattern = {
-  1: [3],
-  2: [2, 5],
-  3: [1, 3, 5],
-  4: [1, 2, 4, 5],
-  5: [1, 2, 3, 5, 6],
-  6: [1, 2, 3, 4, 5, 6],
-  7: [1, 2, 3, 4, 5, 6, 7],
-};
-
 DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
 DateTime _monday(DateTime d) => _day(d).subtract(Duration(days: d.weekday - 1));
 String _iso(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 
-/// Weekday (1 = Monday) to the goal trained that day; rest days are absent.
-/// Spreads sessions across the suggested days, primary goal first, one goal per day in turn.
-Map<int, _Json?> _schedule(_Json plan) {
-  final goals = (plan['goals'] as List).cast<_Json>();
-  final trainingDays = _pattern[(plan['trainingDaysPerWeek'] as int).clamp(1, 7)]!;
-  final queue = <_Json>[];
-  final remaining = {for (final g in goals) g['goal']: g['sessionsPerWeek'] as int};
-  while (queue.length < trainingDays.length && remaining.values.any((n) => n > 0)) {
-    for (final g in goals) {
-      if (queue.length < trainingDays.length && remaining[g['goal']]! > 0) {
-        queue.add(g);
-        remaining[g['goal']] = remaining[g['goal']]! - 1;
-      }
-    }
-  }
-  final dayGoal = <int, _Json?>{for (final (i, d) in trainingDays.indexed) d: i < queue.length ? queue[i] : null};
-  return dayGoal;
-}
+/// Weekday (1 = Monday) to the session trained that day; rest days are absent.
+/// Every planned session, including the engine's extra strength sessions, gets a day (week_schedule.dart).
+Map<int, _Json?> _schedule(_Json plan) => weekPlan(plan).days;
 
 typedef _Data = ({
   String? name,
@@ -82,7 +58,7 @@ typedef _Data = ({
 });
 
 /// Every place the side menu can take you. The shell swaps the body; the menu stays the same everywhere.
-enum _Tab { home, workout, protocol, diet, hydration, habits, calendar, progress, foods, bmi, bodyFat, handbook, library, glossary, settings, profile }
+enum _Tab { home, workout, protocol, diet, hydration, habits, calendar, progress, foods, bmi, bodyFat, handbook, library, glossary, reminders, settings, profile }
 
 final _shellKey = GlobalKey<ScaffoldState>();
 
@@ -114,10 +90,11 @@ class _DashboardState extends State<Dashboard> {
   Future<_Data> _load() async {
     final now = DateTime.now();
     final [profile, latest] = await Future.wait([
-      supabase.from('profiles').select('display_name, sex, birth_year, height_cm, weight_kg, waist_cm, equipment, equipment_items, days_per_week, session_minutes, water_target_ml').eq('id', _uid).single(),
+      supabase.from('profiles').select('display_name, sex, birth_year, height_cm, weight_kg, waist_cm, equipment, equipment_items, days_per_week, session_minutes, water_target_ml, avatar').eq('id', _uid).single(),
       supabase.from('generated_plans').select('plan, input').eq('user_id', _uid).order('created_at', ascending: false).limit(1).single(),
     ]);
     final plan = latest['plan'] as _Json;
+    if (profile['avatar'] == 'photo') profile['avatar_url'] = await avatarPhotoUrl(_uid);
     final goals = (plan['goals'] as List).cast<_Json>();
     final results = await Future.wait<Object?>([
       supabase.from('curriculum_levels').select('goal, level, title, practice, advance_when, coach_recommended, source').inFilter('goal', [for (final g in goals) g['goal']]),
@@ -256,6 +233,7 @@ class _DashboardState extends State<Dashboard> {
     return switch (_tab) {
       _Tab.home => _home(context),
       _Tab.glossary => const _GlossaryScreen(),
+      _Tab.settings => _AppSettingsScreen(onOpen: _go),
       _Tab.bmi => BmiScreen(leading: const _ShellMenu(), heightCm: p['height_cm'] as num?, weightKg: p['weight_kg'] as num?),
       _Tab.bodyFat => BodyFatScreen(leading: const _ShellMenu(), male: p['sex'] == null ? null : p['sex'] == 'male', heightCm: p['height_cm'] as num?, waistCm: p['waist_cm'] as num?),
       _Tab.handbook => const HandbookScreen(leading: _ShellMenu()),
@@ -276,13 +254,14 @@ class _DashboardState extends State<Dashboard> {
                 onSignOut: () => supabase.auth.signOut(),
                 onDelete: () => _confirmDelete(context),
                 onEditDetails: () => _editDetails(context, d),
+                onAvatarChanged: () => setState(() => _data = _load()),
               ),
             _Tab.hydration => _HydrationScreen(data: d),
             _Tab.habits => _HabitsScreen(data: d, logged: _logged),
             _Tab.calendar => _CalendarScreen(plan: d.plan),
             _Tab.progress => _ProgressScreen(data: d),
             _Tab.foods => _FoodsScreen(data: d),
-            _Tab.settings => _SettingsScreen(onRemindersChanged: () => _scheduleReminders(d.plan)),
+            _Tab.reminders => _SettingsScreen(onRemindersChanged: () => _scheduleReminders(d.plan)),
             _ => const SizedBox.shrink(),
           }),
     };
@@ -306,7 +285,16 @@ class _DashboardState extends State<Dashboard> {
           titleSpacing: 4,
           title: const LevloWordmark(fontSize: 22),
           actions: [
-            IconButton(tooltip: 'Profile', icon: const Icon(LvIcons.userCircle, size: 24), onPressed: () => _go(_Tab.profile)),
+            FutureBuilder(
+              future: _data,
+              builder: (context, snap) => IconButton(
+                tooltip: 'Profile',
+                onPressed: () => _go(_Tab.profile),
+                icon: snap.data == null
+                    ? const Icon(LvIcons.userCircle, size: 24)
+                    : UserAvatar(name: snap.data!.name ?? '', avatar: snap.data!.profile['avatar'] as String?, photoUrl: snap.data!.profile['avatar_url'] as String?, size: 30),
+              ),
+            ),
             const SizedBox(width: 12),
           ],
         ),
@@ -486,7 +474,7 @@ class _Bento extends StatelessWidget {
     final level = todayGoal['startLevel'] as int;
     // Which session of this goal today is, so A and B alternate through the week.
     final nth = [for (var d = 1; d < now.weekday; d++) if (dayGoal[d]?['goal'] == todayGoal['goal']) d].length;
-    final ids = sessionIds(todayGoal['kind'] as String? ?? 'strength', data.tier, level, nth);
+    final ids = sessionIds(todayGoal['kind'] as String? ?? 'strength', data.tier, level, nth, goal: todayGoal['goal'] as String?);
 
     final first = (data.name ?? '').split(' ').first;
     final hello = now.hour < 12 ? 'Good morning' : (now.hour < 17 ? 'Good afternoon' : 'Good evening');
