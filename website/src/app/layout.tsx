@@ -48,6 +48,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/terms" className="text-muted transition-colors duration-300 hover:text-ink">
                 Terms
               </Link>
+              <Link href="/delete-account" className="text-muted transition-colors duration-300 hover:text-ink">
+                Delete account
+              </Link>
             </nav>
           </div>
         </footer>

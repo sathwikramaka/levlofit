@@ -2,13 +2,20 @@
 // Reads the user's saved answers, protocol settings and assessed goal levels (RLS as the user), runs the plan
 // engine, adds the coach's level-by-level roadmap built from the curriculum checks (rules, no language model),
 // stores an immutable plan snapshot and opens the dashboard gate. Every number comes from the engine.
-import { withSupabase } from 'npm:@supabase/server@^1';
+import { withSupabase } from 'npm:@supabase/server@1.9.1';
 import { buildRoadmap, generatePlan, type LevelRow, validateInput } from '../_shared/plan-engine.ts';
+import { checkLimits, LIMITS } from '../_shared/rate.ts';
+
+// Levels 4 and 5 need a tested pass, which has no server path yet; a client-written level is never trusted above 3.
+export const MAX_SELF_ASSESSED_LEVEL = 3;
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
     if (req.method !== 'POST') return Response.json({ error: 'Method not allowed' }, { status: 405 });
     const userId = ctx.userClaims!.id;
+    if ((await checkLimits(ctx.supabase, [LIMITS.planDay])) === 'limited') {
+      return Response.json({ error: 'You have rebuilt your plan many times today. Try again tomorrow.' }, { status: 429 });
+    }
 
     const [profile, goals, diet, levels] = await Promise.all([
       ctx.supabase.from('profiles').select('display_name, birth_year, sex, height_cm, weight_kg, weight_goal, body_type, waist_cm, days_per_week, session_minutes, daily_activity, sleep_hours, health_flags, injuries, equipment, equipment_items').eq('id', userId).single(),
@@ -23,7 +30,7 @@ export default {
     if (profile.error || goals.error || diet.error) return Response.json({ error: 'Could not read your answers' }, { status: 500 });
     if (!profile.data.birth_year || !diet.data) return Response.json({ error: 'Finish onboarding first' }, { status: 409 });
 
-    const assessed = new Map((levels.data ?? []).map((l) => [l.goal as string, l.level as number]));
+    const assessed = new Map((levels.data ?? []).map((l) => [l.goal as string, Math.min(l.level as number, MAX_SELF_ASSESSED_LEVEL)]));
     const p = profile.data;
     let input;
     try {
@@ -67,6 +74,8 @@ export default {
     const plan = generatePlan(input);
     // The coach's path: curriculum level checks for each goal, assembled by rules.
     const checks = await ctx.supabase.from('curriculum_levels').select('goal, level, title, practice, advance_when').in('goal', plan.goals.map((g) => g.goal));
+    // A failed read would silently store a plan without its level checks; fail before saving instead.
+    if (checks.error) return Response.json({ error: 'Could not build your plan' }, { status: 500 });
     const stored = { ...plan, roadmap: buildRoadmap(plan, (checks.data ?? []) as LevelRow[], new Set(assessed.keys())) };
 
     const saved = await ctx.supabaseAdmin

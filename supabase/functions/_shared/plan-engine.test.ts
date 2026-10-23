@@ -186,6 +186,19 @@ test('review: too many goals, few days, short sleep and injuries are explained',
   assert.equal(plan.snapshot.sleep, 'short');
 });
 
+test('review: a week shorter than the days offered says why (beginner strength: 3 of 4)', () => {
+  const plan = generatePlan({ ...base, goals: [g('strength'), g('mobility')], daysPerWeek: 4 });
+  assert.equal(plan.trainingDaysPerWeek, 3);
+  const f = finding(plan, 'days_fewer');
+  assert.ok(f, 'days_fewer');
+  assert.equal(f.title, '3 of your 4 days');
+  assert.match(f.why, /Strength at Level 1 gets 3 a week/);
+  assert.equal(f.level, 'info');
+  // Using every offered day, or no day count given, says nothing.
+  assert.equal(finding(generatePlan({ ...base, daysPerWeek: 3 }), 'days_fewer'), undefined);
+  assert.equal(finding(generatePlan({ ...base }), 'days_fewer'), undefined);
+});
+
 test('supplements: creatine only when willing and training strength; protein powder type follows the diet', () => {
   assert.ok(generatePlan({ ...base, supplements: ['creatine'] }).nutrition.supplements[0].how.startsWith('3'));
   assert.equal(generatePlan({ ...base, goals: [g('yoga')], supplements: ['creatine'] }).nutrition.supplements.length, 0);

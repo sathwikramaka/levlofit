@@ -1,0 +1,8 @@
+# Release signing template. Copy to android/key.properties (git-ignored) and fill in on your own machine,
+# or set the matching environment variables instead (they take precedence):
+#   LEVLOFIT_KEYSTORE_FILE, LEVLOFIT_KEYSTORE_PASSWORD, LEVLOFIT_KEY_ALIAS, LEVLOFIT_KEY_PASSWORD
+# Keep the keystore outside the repository and back it up safely: losing it means you cannot update the app.
+storeFile=C:/path/outside/the/repo/levlofit-release.jks
+storePassword=
+keyAlias=
+keyPassword=

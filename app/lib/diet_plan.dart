@@ -1,13 +1,21 @@
 // A day of Indian meals with grams for every food, built by rules over IFCT 2017 (Indian Food Composition
 // Tables) values: breakfast, lunch, snack and dinner templates, foods filtered by diet, allergies and budget,
 // rotated by weekday, then portions solved so the day lands on the plan's energy and protein.
-// Cooking oil follows ICMR-NIN Dietary Guidelines for Indians 2024: about 27 g per 2000 kcal, 25 to 30 g a day.
+// Cooking oil: ICMR-NIN Dietary Guidelines for Indians (2024) limit visible fat to 20-50 g a day depending on energy
+// and activity, not more than 27-30 g at 2000 kcal (p.72); its "My Plate" lists 27 g fats and oils at 2000 kcal (p.24).
+// Scaling 27 g per 2000 kcal and keeping it within 20 to 30 g a day are Levlofit's own rules within that range.
 import 'dart:math' as math;
+import 'dart:typed_data';
 
-typedef Food = ({String code, String name, List<String> tags, double kcal, double protein, double carb, double fat, double fiber});
+import 'package:flutter/foundation.dart' show compute;
+
+/// [fatKnown] is false when the food table has no usable fat value: [fat] then reads 0 for the planner's sums,
+/// but no fat percentage is ever shown for a day that includes the food.
+typedef Food = ({String code, String name, List<String> tags, double kcal, double protein, double carb, double fat, double fiber, bool fatKnown});
 
 Food foodFromRow(Map<String, dynamic> r) {
-  double n(Object? v) => v == null ? 0 : (v is num ? v.toDouble() : double.tryParse('$v') ?? 0);
+  double? parse(Object? v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse('$v'));
+  double n(Object? v) => parse(v) ?? 0;
   return (
     code: r['code'] as String,
     name: r['name'] as String,
@@ -17,6 +25,7 @@ Food foodFromRow(Map<String, dynamic> r) {
     carb: n(r['carb_g']),
     fat: n(r['fat_g']),
     fiber: n(r['fiber_g']),
+    fatKnown: parse(r['fat_g']) != null,
   );
 }
 
@@ -111,7 +120,8 @@ int budgetTier(String? tier, int? maxInr) => switch (tier) {
       _ => 2,
     };
 
-/// ICMR-NIN 2024: about 27 g of oil per 2000 kcal, kept within 20 to 30 g a day.
+/// ICMR-NIN 2024: 27 g fats and oils at 2000 kcal ("My Plate", p.24); visible fat 20-50 g a day by energy and
+/// activity (p.72). Scaling with energy and the 20 to 30 g a day range are Levlofit's own rules within that.
 double oilGrams(double kcal) => (27 * kcal / 2000).clamp(20.0, 30.0).roundToDouble();
 
 /// Software acceptance checks for a planned day: energy within ±5% of the plan's target and at least 90% of its
@@ -119,13 +129,52 @@ double oilGrams(double kcal) => (27 * kcal / 2000).clamp(20.0, 30.0).roundToDoub
 const kcalTolerance = 0.05;
 const minProteinShare = 0.90;
 
+/// Total fat at or under 30% of energy for adults: WHO guideline on total fat intake (2023) and ICMR-NIN Dietary
+/// Guidelines for Indians (2024). Used only for a guidance message; it never changes the plan or its pass flag.
+const maxFatEnergyShare = 0.30;
+
+/// The guidance shown for a day's fat, separate from the energy and protein checks. [share] is the share of energy
+/// from fat (9 kcal per g over the day's energy), or null when it cannot be shown; [unknown] names the planned
+/// foods whose fat value is missing, in which case no percentage is given.
+List<String> fatGuidance(double? share, List<String> unknown) => [
+      if (unknown.isNotEmpty)
+        'Fat: not shown for this day, because the fat value is missing for ${unknown.join(', ')}.'
+      else if (share != null && share > maxFatEnergyShare)
+        'Fat: ${fatShareText(share)} of this day\'s energy comes from fat, above the 30% or less that WHO (2023) and '
+            'ICMR-NIN (2024) advise for adults. This is general guidance, not a diagnosis.',
+    ];
+
+/// A fat share for display, to one decimal ("about 30.5%"). A share above the 30% limit that would still read
+/// "30.0%" at that precision is shown as "just over 30%", so a value over the limit never reads as within it.
+String fatShareText(double share) {
+  final tenths = (share * 1000).round() / 10;
+  if (share > maxFatEnergyShare && tenths <= maxFatEnergyShare * 100) return 'just over ${(maxFatEnergyShare * 100).round()}%';
+  return 'about ${tenths.toStringAsFixed(1)}%';
+}
+
 typedef PlanItem = ({String code, String name, double grams, String unit, double kcal, double protein, double carb, double fat, double fiber});
 typedef PlanMeal = ({String name, String time, List<PlanItem> items});
 
 /// Whether the day meets the targets, and if not, why and what the person could change. Never a silent miss.
-/// [proteinCeiling]: the most protein the planner's allowed foods can give within the energy limit (+5%), using
-/// each slot's smallest and largest portions. Below 90% of the target, no arrangement of these foods can pass.
-typedef DayCheck = ({bool feasible, double kcalDeviation, double proteinShare, double proteinCeiling, List<String> issues, List<String> options});
+/// [proteinCeiling]: when computed, the most protein any day the planner can show reaches within the energy limit
+/// (+5%): one allowed food per template slot, portions in the planner's kitchen steps between each slot's floor and
+/// cap, the soya limit and the budget tier (see [templateProteinCeiling]). It is a limit of Levlofit's planning
+/// rules and food list, not a nutritional maximum. Null when the day passed without needing the search.
+/// [hitStepLimit]: the portion adjustment stopped at its step limit, so no claim about smallest or largest portions
+/// is made from it.
+/// [fatEnergyShare]: share of the day's energy from fat (0 to 1), or null when a planned food's fat is unknown.
+/// [guidance]: messages that inform without affecting [feasible] (see [fatGuidance]).
+typedef DayCheck = ({
+  bool feasible,
+  double kcalDeviation,
+  double proteinShare,
+  double? proteinCeiling,
+  bool hitStepLimit,
+  List<String> issues,
+  List<String> options,
+  double? fatEnergyShare,
+  List<String> guidance,
+});
 typedef DayPlan = ({List<PlanMeal> meals, double kcal, double protein, double carb, double fat, double fiber, DayCheck check});
 
 PlanItem _item(Food f, double g) {
@@ -135,6 +184,163 @@ PlanItem _item(Food f, double g) {
 }
 
 typedef _Pick = (int, _Slot, Food); // meal index, slot, food
+
+/// One whole boiled egg is counted as 50 g (a Levlofit kitchen convention), so egg portions move in whole eggs.
+double _stepFor(String code, _Slot s) => code == 'M004' ? 50 : s.step;
+
+/// Largest portion of [code] in slot [s]: fixed slots stop at their usual amount, others at the slot or food cap.
+double _capFor(String code, _Slot s) => s.scale == _Scale.fixed ? s.base : math.min(s.max, _maxPortion[code] ?? double.infinity);
+
+/// Whether a food may be planned: present in the food table, within budget, not excluded by a tag or by the
+/// person's own exclusion words (matched against the IFCT name and the planner's label), and soya allowed.
+bool _allowed(Map<String, Food> foods, String code, {required int tier, required Set<String> excluded, required List<String> custom, required double soyaCapG}) {
+  final f = foods[code];
+  final entry = _catalogue[code];
+  if (f == null || entry == null) return false;
+  if (entry.$2 > tier) return false;
+  if (code == 'X001' && soyaCapG <= 0) return false;
+  if (f.tags.any(excluded.contains)) return false;
+  final text = '${f.name} ${entry.$1}'.toLowerCase();
+  return !custom.any((c) => c.trim().isNotEmpty && text.contains(c.trim().toLowerCase()));
+}
+
+/// The cooking oil: the first of sunflower or mustard oil the person has not excluded by tag or by their own
+/// exclusion words. No oil at all when both are excluded; an excluded oil is never used as a stand-in.
+Food? _oilFor(Map<String, Food> foods, Set<String> excluded, List<String> custom) =>
+    ['T012', 'T006'].where((c) => _allowed(foods, c, tier: 3, excluded: excluded, custom: custom, soyaCapG: 0)).map((c) => foods[c]!).firstOrNull;
+
+/// Oil grams as shown per meal (rounded per meal), summed over the day.
+double _oilShown(double oilG) => _meals.fold(0.0, (s, m) => s + (m.$4 > 0 ? (oilG * m.$4).roundToDouble() : 0.0));
+
+typedef _Layer = ({int meal, _Slot slot, List<(Food, double)> options});
+
+/// Every portion the planner can show, slot by slot: each allowed food from the slot's floor to its cap in that
+/// food's kitchen steps (soya never above the day's limit). Slots with no allowed food drop out, as in planDay.
+List<_Layer> _layers(Map<String, Food> foods, bool Function(String) ok, double soyaCapG) => [
+      for (final (mi, (_, _, slots, _)) in _meals.indexed)
+        for (final slot in slots)
+          if (slot.codes.any(ok))
+            (
+              meal: mi,
+              slot: slot,
+              options: [
+                for (final code in slot.codes.where(ok))
+                  // Soya starts at one step: when the day limit is split between slots, a shown portion can sit
+                  // below the slot floor, and every portion the planner can show must be in the search.
+                  for (var g = slot.floor <= 0 ? 0.0 : (code == 'X001' ? 5.0 : (slot.floor / _stepFor(code, slot)).ceil() * _stepFor(code, slot));
+                      g <= _capFor(code, slot) + 1e-9 && (code != 'X001' || g <= soyaCapG + 1e-9);
+                      g += _stepFor(code, slot))
+                    (foods[code]!, g),
+              ],
+            ),
+    ];
+
+typedef _Grid = ({double ceiling, List<_Pick> picks, List<double> grams, bool found});
+
+/// Which kind of food a slot holds, for varying searched days: the top-up, a meal's main protein, the snack,
+/// the lunch dal, a staple, fruit, or vegetables (milk and salad have a single food, so they never vary).
+String _group(_Slot s) => s.dense
+    ? 'topup'
+    : switch (s.scale) {
+        _Scale.energy => 'staples',
+        _Scale.protein => s.codes.contains('H012') ? 'snack' : (s.codes.first == 'B021' ? 'dal' : 'main'),
+        _Scale.fixed => s.codes.first.startsWith('E') ? 'fruit' : 'veg',
+      };
+
+/// The order in which a searched day gives up the weekday's own food, one slot at a time, to stay within the
+/// checks: least valued variety first (main protein, then vegetables, fruit, staples, snack; later meals before
+/// earlier ones within a kind), so the dal rotates longest, then the snack, staples, fruit and vegetables.
+const _releaseOrder = ['main', 'veg', 'fruit', 'staples', 'snack', 'dal'];
+
+/// Exhaustive search over every day the planner can show (dynamic programming over energy and soya): the most
+/// protein for each energy total, with each food's energy rounded down so the result is an upper bound for real
+/// days. Returns that ceiling and, for choosing a plan, the day whose energy is closest to [targetFoodKcal] among
+/// those that reach [wantProtein] (or the most protein when none do). Protein per state is exact; energy per state
+/// is rounded down by under 1 kcal per slot, so a day is preferred only when its energy stays inside
+/// [lowFoodKcal, budget] even after that rounding. Deterministic: ties keep the first option.
+_Grid _gridSearch(List<_Layer> layers,
+    {required double budgetKcal, required double soyaCapG, required double targetFoodKcal, required double wantProtein, double lowFoodKcal = 0}) {
+  final b = budgetKcal.floor();
+  if (b < 0 || layers.isEmpty) return (ceiling: 0, picks: const [], grams: const [], found: false);
+  final ns = soyaCapG > 0 ? (soyaCapG / 5).floor() + 1 : 1;
+  final size = (b + 1) * ns;
+  var val = Float64List(size)..fillRange(0, size, double.negativeInfinity);
+  val[0] = 0;
+  final choice = <Int32List>[], prev = <Int32List>[];
+  for (final layer in layers) {
+    final next = Float64List(size)..fillRange(0, size, double.negativeInfinity);
+    final ch = Int32List(size), pv = Int32List(size);
+    final ok = [for (final (f, g) in layer.options) (f.kcal * g / 100).floor()];
+    final op = [for (final (f, g) in layer.options) f.protein * g / 100];
+    final os = [for (final (f, g) in layer.options) f.code == 'X001' ? (g / 5).round() : 0];
+    for (var k = 0; k <= b; k++) {
+      for (var s = 0; s < ns; s++) {
+        final v = val[k * ns + s];
+        if (v == double.negativeInfinity) continue;
+        for (var o = 0; o < ok.length; o++) {
+          final kk = k + ok[o], ss = s + os[o];
+          if (kk > b || ss >= ns) continue;
+          final at = kk * ns + ss, p = v + op[o];
+          if (p > next[at]) {
+            next[at] = p;
+            ch[at] = o;
+            pv[at] = k * ns + s;
+          }
+        }
+      }
+    }
+    val = next;
+    choice.add(ch);
+    prev.add(pv);
+  }
+  var ceiling = double.negativeInfinity, best = -1, bestScore = double.infinity;
+  final n = layers.length; // the real energy of a state lies in [k, k + n)
+  for (var at = 0; at < size; at++) {
+    final v = val[at];
+    if (v == double.negativeInfinity) continue;
+    if (v > ceiling) ceiling = v;
+    // Prefer, in order: protein reached with energy safely inside the band; protein reached; neither. Within a
+    // group, energy closest to the target, then more protein.
+    final k = at ~/ ns;
+    final reach = v >= wantProtein;
+    final safe = k >= lowFoodKcal && k + n <= b;
+    final group = reach && safe ? 0 : (reach ? 1 : 2);
+    final score = group * 1e9 + (k - (targetFoodKcal - n / 2)).abs() * 1000 - v;
+    if (score < bestScore) {
+      bestScore = score;
+      best = at;
+    }
+  }
+  if (best < 0) return (ceiling: 0, picks: const [], grams: const [], found: false);
+  final picks = <_Pick>[], grams = <double>[];
+  var at = best;
+  for (var li = layers.length - 1; li >= 0; li--) {
+    final (food, g) = layers[li].options[choice[li][at]];
+    picks.add((layers[li].meal, layers[li].slot, food));
+    grams.add(g);
+    at = prev[li][at];
+  }
+  return (ceiling: ceiling, picks: picks.reversed.toList(), grams: grams.reversed.toList(), found: true);
+}
+
+/// The most protein (g) any day the planner can show reaches within the energy limit (target +5%), for these foods
+/// and settings: one allowed food per template slot, portions in kitchen steps between each slot's floor and cap,
+/// the soya limit and the budget tier, plus the day's oil. A limit of Levlofit's food list and planning rules,
+/// not a nutritional maximum: other foods or meal patterns could give more.
+double templateProteinCeiling({
+  required Map<String, Food> foods,
+  required double kcal,
+  required Set<String> excluded,
+  List<String> custom = const [],
+  int tier = 2,
+  double soyaCapG = 50,
+}) {
+  bool ok(String c) => _allowed(foods, c, tier: tier, excluded: excluded, custom: custom, soyaCapG: soyaCapG);
+  final oil = _oilFor(foods, excluded, custom);
+  final oilKcal = oil == null ? 0.0 : oil.kcal * _oilShown(oilGrams(kcal)) / 100;
+  final layers = _layers(foods, ok, soyaCapG);
+  return _gridSearch(layers, budgetKcal: kcal * (1 + kcalTolerance) - oilKcal, soyaCapG: soyaCapG, targetFoodKcal: kcal - oilKcal, wantProtein: double.infinity).ceiling;
+}
 
 /// Builds one day. [day] (0 = Monday) rotates the foods so the week has variety.
 /// [excluded] holds the plan's excluded food tags; [custom] free-text exclusions; [soyaCapG] the plan's soya limit.
@@ -152,28 +358,28 @@ DayPlan planDay({
   double soyaCapG = 50,
   bool proteinPowder = false,
 }) {
-  bool allowed(String code, int maxTier) {
-    final f = foods[code];
-    if (f == null) return false;
-    final (label, cost, _) = _catalogue[code]!;
-    if (cost > maxTier) return false;
-    if (code == 'X001' && soyaCapG <= 0) return false;
-    if (f.tags.any(excluded.contains)) return false;
-    final text = '${f.name} $label'.toLowerCase();
-    return !custom.any((c) => c.isNotEmpty && text.contains(c.toLowerCase()));
-  }
-
+  bool allowed(String code, int maxTier) => _allowed(foods, code, tier: maxTier, excluded: excluded, custom: custom, soyaCapG: soyaCapG);
   bool ok(String code) => allowed(code, tier);
   double density(Food f) => f.kcal <= 0 ? 0 : f.protein / f.kcal;
 
-  DayCheck check(double k, double p, bool hasFood) {
+  DayCheck check(double k, double p, bool hasFood, {double? ceiling, bool hitStepLimit = false, double? fatShare, List<String> fatUnknown = const []}) {
     final dev = kcal > 0 ? (k - kcal) / kcal : 0.0;
     final share = protein > 0 ? p / protein : 1.0;
-    return (feasible: hasFood && dev.abs() <= kcalTolerance && share >= minProteinShare, kcalDeviation: dev, proteinShare: share, proteinCeiling: 0.0, issues: const <String>[], options: const <String>[]);
+    return (
+      feasible: hasFood && dev.abs() <= kcalTolerance && share >= minProteinShare,
+      kcalDeviation: dev,
+      proteinShare: share,
+      proteinCeiling: ceiling,
+      hitStepLimit: hitStepLimit,
+      issues: const <String>[],
+      options: const <String>[],
+      fatEnergyShare: fatShare,
+      guidance: hasFood ? fatGuidance(fatShare, fatUnknown) : const <String>[],
+    );
   }
 
-  // Two ways to fill the slots: the weekday rotation (variety first), and, for a day the rotation cannot make
-  // work, the most protein-dense allowed food in each protein slot. The rotation is kept whenever it passes.
+  // Two quick ways to fill the slots: the weekday rotation (variety first), and the most protein-dense allowed
+  // food in each protein slot. If neither passes, an exhaustive search over the templates takes over below.
   List<_Pick> choose({required bool denseProtein}) {
     final picks = <_Pick>[];
     for (final (mi, (_, _, slots, _)) in _meals.indexed) {
@@ -196,8 +402,42 @@ DayPlan planDay({
     return picks;
   }
 
-  final oil = [foods['T012'], foods['T006']].whereType<Food>().where((f) => !f.tags.any(excluded.contains)).firstOrNull;
+  final oil = _oilFor(foods, excluded, custom);
   final oilG = oil == null ? 0.0 : oilGrams(kcal);
+  final oilKcal = oil == null ? 0.0 : oil.kcal * _oilShown(oilG) / 100;
+
+  // Portions in kitchen steps (soya rounded down so the day limit holds, eggs in whole eggs), totals from what is shown.
+  DayPlan assemble(List<_Pick> picks, List<double> grams, {double? ceiling, bool hitStepLimit = false}) {
+    final meals = <PlanMeal>[];
+    for (final (mi, (name, time, _, oilShare)) in _meals.indexed) {
+      final items = <PlanItem>[
+        for (final (i, p) in picks.indexed)
+          if (p.$1 == mi && grams[i] >= _stepFor(p.$3.code, p.$2) / 2)
+            _item(
+              p.$3,
+              p.$3.code == 'X001'
+                  ? (grams[i] / 5).floor() * 5.0
+                  : math.max(_stepFor(p.$3.code, p.$2), (grams[i] / _stepFor(p.$3.code, p.$2)).round() * _stepFor(p.$3.code, p.$2)),
+            ),
+        if (oil != null && oilShare > 0) _item(oil, (oilG * oilShare).roundToDouble()),
+      ]..removeWhere((it) => it.grams <= 0);
+      if (items.isNotEmpty) meals.add((name: name, time: time, items: items));
+    }
+    double sum(double Function(PlanItem) f) => meals.fold(0.0, (s, m) => s + m.items.fold(0.0, (a, it) => a + f(it)));
+    final k = sum((i) => i.kcal), pr = sum((i) => i.protein), fat = sum((i) => i.fat);
+    // Fat is shown only when every food on the day has a known fat value; a missing value never counts as zero.
+    final unknown = <String>{for (final m in meals) for (final it in m.items) if (!(foods[it.code]?.fatKnown ?? true)) it.name}.toList();
+    return (
+      meals: meals,
+      kcal: k,
+      protein: pr,
+      carb: sum((i) => i.carb),
+      fat: fat,
+      fiber: sum((i) => i.fiber),
+      check: check(k, pr, picks.isNotEmpty,
+          ceiling: ceiling, hitStepLimit: hitStepLimit, fatShare: unknown.isEmpty && k > 0 ? 9 * fat / k : null, fatUnknown: unknown),
+    );
+  }
 
   DayPlan build(List<_Pick> picks) {
     final grams = [for (final p in picks) p.$2.base];
@@ -208,7 +448,7 @@ DayPlan planDay({
       return math.min(picks[i].$2.max, cap);
     }
 
-    double totalKcal() => (oil == null ? 0.0 : oil.kcal * oilG / 100) + [for (final (i, p) in picks.indexed) p.$3.kcal * grams[i] / 100].fold(0.0, (s, v) => s + v);
+    double totalKcal() => oilKcal + [for (final (i, p) in picks.indexed) p.$3.kcal * grams[i] / 100].fold(0.0, (s, v) => s + v);
     double totalProtein() => [for (final (i, p) in picks.indexed) p.$3.protein * grams[i] / 100].fold(0.0, (s, v) => s + v);
 
     // 1. Proportional rounds: protein foods close the protein gap, staples then close the energy gap.
@@ -234,7 +474,7 @@ DayPlan planDay({
       }
     }
 
-    // 2. Greedy trade-offs in small steps, aiming inside the acceptance band so rounding cannot push a day out:
+    // 2. Greedy trade-offs in kitchen steps, aiming inside the acceptance band so rounding cannot push a day out:
     //    raise protein with the densest foods, pay for it by trimming less protein-dense portions, then settle
     //    energy. Every portion stays between its slot's floor and cap, and soya within the day's limit.
     final kLo = kcal * (1 - 0.03), kHi = kcal * (1 + 0.03), pMin = protein * 0.93;
@@ -247,15 +487,15 @@ DayPlan planDay({
       return best;
     }
 
-    double stepOf(int i) => picks[i].$2.step;
+    double stepOf(int i) => _stepFor(picks[i].$3.code, picks[i].$2);
     bool canTrim(int i) => grams[i] - stepOf(i) >= picks[i].$2.floor - 1e-9;
     double d(int i) => density(picks[i].$3);
-    var moves = 3000; // hard bound: the loops always end
+    var moves = 3000; // hard bound: the loops always end; reaching it is reported in the check
     for (var pass = 0; pass < 4 && moves > 0; pass++) {
       while (totalProtein() < pMin && moves-- > 0) {
-        final up = pickBy((i) => picks[i].$2.scale == _Scale.protein && grams[i] + 5 <= maxFor(i) + 1e-9, d);
+        final up = pickBy((i) => picks[i].$2.scale == _Scale.protein && grams[i] + stepOf(i) <= maxFor(i) + 1e-9, d);
         if (up == null) break;
-        grams[up] += 5;
+        grams[up] += stepOf(up);
         // Pay for the extra energy with less protein-dense food, never with an equally dense one.
         while (totalKcal() > kHi && moves-- > 0) {
           final down = pickBy((i) => i != up && canTrim(i) && d(i) < d(up), d, lowest: true);
@@ -263,7 +503,7 @@ DayPlan planDay({
           grams[down] -= stepOf(down);
         }
         if (totalKcal() > kHi) {
-          grams[up] -= 5; // no room left to pay for more protein
+          grams[up] -= stepOf(up); // no room left to pay for more protein
           break;
         }
       }
@@ -276,73 +516,106 @@ DayPlan planDay({
         grams[down] -= stepOf(down);
       }
       while (totalKcal() < kLo && moves-- > 0) {
-        final up = pickBy((i) => picks[i].$2.scale == _Scale.energy && grams[i] + 5 <= picks[i].$2.max, (i) => -i.toDouble()) ??
+        final up = pickBy((i) => picks[i].$2.scale == _Scale.energy && grams[i] + stepOf(i) <= picks[i].$2.max, (i) => -i.toDouble()) ??
             pickBy((i) => picks[i].$2.scale == _Scale.fixed && grams[i] + stepOf(i) <= picks[i].$2.base, (i) => -i.toDouble()) ??
-            pickBy((i) => picks[i].$2.scale == _Scale.protein && !picks[i].$2.dense && grams[i] + 5 <= maxFor(i), d);
+            pickBy((i) => picks[i].$2.scale == _Scale.protein && !picks[i].$2.dense && grams[i] + stepOf(i) <= maxFor(i), d);
         if (up == null) break;
-        grams[up] += picks[up].$2.scale == _Scale.fixed ? stepOf(up) : 5;
+        grams[up] += stepOf(up);
       }
     }
-
-    // 3. Portions in kitchen steps (soya rounded down so the day limit holds), then totals from what is shown.
-    final meals = <PlanMeal>[];
-    for (final (mi, (name, time, _, oilShare)) in _meals.indexed) {
-      final items = <PlanItem>[
-        for (final (i, p) in picks.indexed)
-          if (p.$1 == mi && grams[i] >= p.$2.step / 2)
-            _item(p.$3, p.$3.code == 'X001' ? (grams[i] / 5).floor() * 5.0 : math.max(p.$2.step, (grams[i] / p.$2.step).round() * p.$2.step)),
-        if (oil != null && oilShare > 0) _item(oil, (oilG * oilShare).roundToDouble()),
-      ]..removeWhere((it) => it.grams <= 0);
-      if (items.isNotEmpty) meals.add((name: name, time: time, items: items));
-    }
-    double sum(double Function(PlanItem) f) => meals.fold(0.0, (s, m) => s + m.items.fold(0.0, (a, it) => a + f(it)));
-    final k = sum((i) => i.kcal), pr = sum((i) => i.protein);
-    return (meals: meals, kcal: k, protein: pr, carb: sum((i) => i.carb), fat: sum((i) => i.fat), fiber: sum((i) => i.fiber), check: check(k, pr, picks.isNotEmpty));
+    return assemble(picks, grams, hitStepLimit: moves <= 0);
   }
 
-  // Exact upper bound for one set of picks: start every portion at its floor, then spend the energy allowance on
-  // the most protein-dense foods first, each up to its cap (a fractional knapsack, which is optimal here).
-  double proteinCeiling(List<_Pick> picks) {
-    final budget = kcal * (1 + kcalTolerance) - (oil == null ? 0.0 : oil.kcal * oilG / 100);
-    final g = [for (final p in picks) p.$2.scale == _Scale.fixed ? p.$2.floor : math.min(p.$2.floor, p.$2.min)];
-    double used() => [for (final (i, p) in picks.indexed) p.$3.kcal * g[i] / 100].fold(0.0, (s, v) => s + v);
-    final order = [for (var i = 0; i < picks.length; i++) i]..sort((a, b) => density(picks[b].$3).compareTo(density(picks[a].$3)));
-    var soya = [for (final (i, p) in picks.indexed) if (p.$3.code == 'X001') g[i]].fold(0.0, (s, v) => s + v);
-    for (final i in order) {
-      final p = picks[i];
-      if (p.$3.kcal <= 0) continue;
-      var cap = math.min(p.$2.max, _maxPortion[p.$3.code] ?? double.infinity);
-      if (p.$2.scale == _Scale.fixed) cap = p.$2.base;
-      if (p.$3.code == 'X001') cap = math.min(cap, g[i] + math.max(0.0, soyaCapG - soya));
-      final room = (budget - used()) * 100 / p.$3.kcal;
-      if (room <= 0) break;
-      final add = math.max(0.0, math.min(cap - g[i], room));
-      g[i] += add;
-      if (p.$3.code == 'X001') soya += add;
-    }
-    return [for (final (i, p) in picks.indexed) p.$3.protein * g[i] / 100].fold(0.0, (s, v) => s + v);
-  }
-
-  // The rotation first. Only if it misses is the protein-dense variant tried; the closer of the two is kept.
+  // The rotation first, then the protein-dense variant: both keep the planner's usual portions and variety.
   final rotation = build(choose(denseProtein: false));
   if (rotation.check.feasible) return rotation;
   final dense = build(choose(denseProtein: true));
   if (dense.check.feasible) return dense;
-  double miss(DayPlan p) => math.max(p.check.kcalDeviation.abs() / kcalTolerance, (minProteinShare - p.check.proteinShare) / (1 - minProteinShare));
-  final best = miss(dense) < miss(rotation) ? dense : rotation;
 
-  // Explain the miss and offer only changes that respect the person's settings.
+  // Neither passed: search every day the planner can show. Its best day is used when it passes; its protein
+  // ceiling makes any impossibility statement exact for the planner's rules.
+  final layers = _layers(foods, ok, soyaCapG);
+  final grid = _gridSearch(layers,
+      budgetKcal: kcal * (1 + kcalTolerance) - oilKcal,
+      soyaCapG: soyaCapG,
+      targetFoodKcal: kcal - oilKcal,
+      lowFoodKcal: kcal * (1 - kcalTolerance) - oilKcal,
+      wantProtein: protein * minProteinShare + 1e-6);
+  // Null when no template day fits within the energy limit at all: then there is no protein figure to give.
+  final ceiling = grid.found ? grid.ceiling : null;
+  final searched = grid.found ? assemble(grid.picks, grid.grams, ceiling: ceiling) : null;
+  if (searched != null && searched.check.feasible) {
+    // A passing day exists. Vary the week: keep this weekday's rotation food in every slot, freeing slots one
+    // at a time (least valued variety first) only while no passing day keeps them. The first passing day
+    // wins; the fully free search above is the last resort. The top-up slot is always free.
+    String? weekdayFood(_Layer l) {
+      final si = _meals[l.meal].$3.indexOf(l.slot);
+      final all = l.slot.codes.where(ok).toList();
+      if (all.isEmpty) return null;
+      final preferred = l.slot.codes.take(l.slot.prefer).where(ok).toList();
+      final pool = preferred.isEmpty ? all : preferred;
+      return pool[(day + si + l.meal) % pool.length];
+    }
+
+    // Slots that can vary, in release order; the top-up and single-food slots are never restricted.
+    final varying = [
+      for (var i = 0; i < layers.length; i++)
+        if (_group(layers[i].slot) != 'topup' && layers[i].options.map((o) => o.$1.code).toSet().length > 1) i,
+    ]..sort((a, b) {
+        final byKind = _releaseOrder.indexOf(_group(layers[a].slot)).compareTo(_releaseOrder.indexOf(_group(layers[b].slot)));
+        return byKind != 0 ? byKind : layers[b].meal.compareTo(layers[a].meal);
+      });
+    for (var free = 0; free < varying.length; free++) {
+      final freed = varying.take(free).toSet();
+      final restricted = [
+        for (final (i, l) in layers.indexed)
+          if (!varying.contains(i) || freed.contains(i))
+            l
+          else
+            (meal: l.meal, slot: l.slot, options: l.options.where((o) => o.$1.code == weekdayFood(l)).toList()),
+      ];
+      if (restricted.any((l) => l.options.isEmpty)) continue;
+      final g = _gridSearch(restricted,
+          budgetKcal: kcal * (1 + kcalTolerance) - oilKcal,
+          soyaCapG: soyaCapG,
+          targetFoodKcal: kcal - oilKcal,
+          lowFoodKcal: kcal * (1 - kcalTolerance) - oilKcal,
+          wantProtein: protein * minProteinShare + 1e-6);
+      if (!g.found) continue;
+      final varied = assemble(g.picks, g.grams, ceiling: ceiling);
+      if (varied.check.feasible) return varied;
+    }
+    return searched;
+  }
+
+  double miss(DayPlan p) => math.max(p.check.kcalDeviation.abs() / kcalTolerance, (minProteinShare - p.check.proteinShare) / (1 - minProteinShare));
+  final best = [rotation, dense, ?searched].reduce((a, b) => miss(b) < miss(a) ? b : a);
+
+  // Energy limits of the templates themselves: verified sums of every slot's smallest and largest allowed portion,
+  // so "even the smallest/largest portions" is said only when it is true for every day the planner can show.
+  final minKcal = oilKcal + layers.fold(0.0, (s, l) => s + l.options.map((o) => o.$1.kcal * o.$2 / 100).reduce(math.min));
+  final maxKcal = oilKcal + layers.fold(0.0, (s, l) => s + l.options.map((o) => o.$1.kcal * o.$2 / 100).reduce(math.max));
+
+  // Explain the miss, scoped to the planner, and offer only changes that respect the person's settings.
   final c = best.check;
-  final ceiling = math.max(proteinCeiling(choose(denseProtein: true)), proteinCeiling(choose(denseProtein: false)));
+  const scope = 'Levlofit\'s food list, meal templates, portion limits and your budget';
   final issues = <String>[
-    if (best.meals.isEmpty) 'None of the planner\'s foods fit your diet, allergies, exclusions and budget together.',
-    if (c.proteinShare < minProteinShare)
-      'Protein: this day reaches ${best.protein.round()} g of your ${protein.round()} g target (${(c.proteinShare * 100).round()}%). Within your energy target, these foods can give at most about ${ceiling.round()} g.',
+    if (layers.isEmpty) 'None of the planner\'s foods fit your diet, allergies, exclusions and budget together.',
+    if (c.proteinShare < minProteinShare && layers.isNotEmpty)
+      ceiling == null
+          ? 'Protein: this day reaches ${best.protein.round()} g of your ${protein.round()} g target (${(c.proteinShare * 100).round()}%). '
+              'No day built from $scope stays within your energy limit, so the planner has no protein figure to compare.'
+          : 'Protein: this day reaches ${best.protein.round()} g of your ${protein.round()} g target (${(c.proteinShare * 100).round()}%). '
+              'Within your energy target, no day built from $scope reaches more than about ${ceiling.round()} g.',
     if (c.kcalDeviation > kcalTolerance)
-      'Energy: ${best.kcal.round()} kcal, ${(c.kcalDeviation * 100).round()}% above your ${kcal.round()} kcal target, with portions already at their smallest sensible sizes.',
+      minKcal > kcal * (1 + kcalTolerance)
+          ? 'Energy: even the smallest portions $scope allow add up to about ${minKcal.round()} kcal, more than 5% above your ${kcal.round()} kcal target.'
+          : 'Energy: ${best.kcal.round()} kcal, ${(c.kcalDeviation * 100).round()}% above your ${kcal.round()} kcal target.',
     if (c.kcalDeviation < -kcalTolerance)
-      'Energy: ${best.kcal.round()} kcal, ${(-c.kcalDeviation * 100).round()}% below your ${kcal.round()} kcal target, with portions already at their largest sensible sizes.',
-    'With your diet type, allergies, exclusions and budget, the foods Levlofit plans cannot meet both targets on this day.',
+      maxKcal < kcal * (1 - kcalTolerance)
+          ? 'Energy: even the largest portions $scope allow add up to about ${maxKcal.round()} kcal, more than 5% below your ${kcal.round()} kcal target.'
+          : 'Energy: ${best.kcal.round()} kcal, ${(-c.kcalDeviation * 100).round()}% below your ${kcal.round()} kcal target.',
+    'Levlofit\'s planner could not build a day that meets both targets from $scope. These are limits of the planner, not of nutrition: other foods or meal patterns could do better.',
   ];
   final upgrade = tier >= 3 ? const <String>[] : [for (final code in _catalogue.keys) if (!ok(code) && allowed(code, 3) && density(foods[code]!) >= 0.08) _catalogue[code]!.$1];
   final options = <String>[
@@ -357,7 +630,17 @@ DayPlan planDay({
     carb: best.carb,
     fat: best.fat,
     fiber: best.fiber,
-    check: (feasible: false, kcalDeviation: c.kcalDeviation, proteinShare: c.proteinShare, proteinCeiling: ceiling, issues: issues, options: options),
+    check: (
+      feasible: false,
+      kcalDeviation: c.kcalDeviation,
+      proteinShare: c.proteinShare,
+      proteinCeiling: ceiling,
+      hitStepLimit: c.hitStepLimit,
+      issues: issues,
+      options: options,
+      fatEnergyShare: c.fatEnergyShare,
+      guidance: c.guidance,
+    ),
   );
 }
 
@@ -430,3 +713,84 @@ const libraryFoods = <(String, String, String)>[
   ('T005', 'Groundnut oil', 'Fats'),
   ('T013', 'Ghee', 'Fats'),
 ];
+
+// ---- a week of days, computed once and cached ---------------------------------------------------------------
+
+/// Everything that decides a week of meal plans. All plain data, so it can be sent to a background isolate.
+typedef WeekRequest = ({
+  Map<String, Food> foods,
+  double kcal,
+  double protein,
+  Set<String> excluded,
+  List<String> custom,
+  int tier,
+  double soyaCapG,
+  bool proteinPowder,
+});
+
+/// A key over every input that changes a week: each food's full values and whether its fat is known (name included, since exclusion words
+/// match names), the targets, the excluded tags and exclusion words (order, case and spacing ignored, as the
+/// planner ignores them), the budget tier, the soya limit and the protein-powder flag.
+String weekKey(WeekRequest r) {
+  final foods = (r.foods.keys.toList()..sort()).map((c) {
+    final f = r.foods[c]!;
+    return [c, f.name, (f.tags.toList()..sort()).join('+'), f.kcal, f.protein, f.carb, f.fat, f.fiber, f.fatKnown].join(':');
+  }).join(',');
+  final custom = r.custom.map((c) => c.trim().toLowerCase()).where((c) => c.isNotEmpty).toSet().toList()..sort();
+  return [foods, r.kcal, r.protein, (r.excluded.toList()..sort()).join('+'), custom.join('+'), r.tier, r.soyaCapG, r.proteinPowder].join('|');
+}
+
+/// The seven days (index 0 = Monday) for one request. Top-level and pure, so it can run in a background isolate.
+List<DayPlan> planWeek(WeekRequest r) => [
+      for (var day = 0; day < 7; day++)
+        planDay(
+          foods: r.foods,
+          kcal: r.kcal,
+          protein: r.protein,
+          excluded: r.excluded,
+          custom: r.custom,
+          tier: r.tier,
+          day: day,
+          soyaCapG: r.soyaCapG,
+          proteinPowder: r.proteinPowder,
+        ),
+    ];
+
+/// [planWeek] off the UI thread: Flutter's compute() uses a background isolate on mobile and desktop, and runs
+/// the work in the same thread on the web, where isolates are not available.
+Future<List<DayPlan>> planWeekInBackground(WeekRequest r) => compute(planWeek, r);
+
+/// A small least-recently-used store of computed weeks, keyed by [weekKey].
+class WeekCache {
+  WeekCache({this.capacity = 8});
+  final int capacity;
+  final _weeks = <String, List<DayPlan>>{};
+
+  int get length => _weeks.length;
+
+  /// The cached week for [key], marking it most recently used; null when not cached.
+  List<DayPlan>? get(String key) {
+    final week = _weeks.remove(key);
+    if (week != null) _weeks[key] = week;
+    return week;
+  }
+
+  void put(String key, List<DayPlan> week) {
+    _weeks.remove(key);
+    _weeks[key] = week;
+    while (_weeks.length > capacity) {
+      _weeks.remove(_weeks.keys.first);
+    }
+  }
+
+  /// The cached week, or [make]'s result stored under [key].
+  List<DayPlan> getOrPut(String key, List<DayPlan> Function() make) {
+    final hit = get(key);
+    if (hit != null) return hit;
+    final week = make();
+    put(key, week);
+    return week;
+  }
+
+  void clear() => _weeks.clear();
+}

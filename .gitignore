@@ -42,3 +42,6 @@ media/raw/
 .claude-flow/
 graphify-out/
 **/__pycache__/
+
+# Local-only visual-check account for the local Supabase stack (never commit)
+tools/local-test-user.txt

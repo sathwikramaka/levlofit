@@ -4,7 +4,9 @@ part of 'dashboard.dart';
 
 /// Renders a tab from a plan without Supabase calls succeeding, so layouts can be tested at phone size.
 @visibleForTesting
-Widget tabForTest(String tab, Map<String, dynamic> plan) {
+Widget tabForTest(String tab, Map<String, dynamic> plan, {VoidCallback? onBack}) => _BackScope(onBack: onBack, child: _tabForTest(tab, plan));
+
+Widget _tabForTest(String tab, Map<String, dynamic> plan) {
   final d = (
     name: 'Asha Rao',
     profile: const <String, dynamic>{'sex': 'female', 'birth_year': 1995, 'height_cm': 160, 'weight_kg': 58, 'days_per_week': 3, 'session_minutes': 45, 'equipment': 'home'},
@@ -23,7 +25,7 @@ Widget tabForTest(String tab, Map<String, dynamic> plan) {
     'foods' => _FoodsScreen(data: d),
     'reminders' => _SettingsScreen(onRemindersChanged: () {}),
     'settings' => _AppSettingsScreen(onOpen: (_) {}),
-    'workout' => _WorkoutScreen(data: d, logged: const {}, onEditGoals: () {}, onToggleToday: (_, _) async {}, onPlanChanged: () {}),
+    'workout' => _WorkoutScreen(data: d, logged: const {}, onEditGoals: () {}, onToggleToday: (_, _) async => true, onPlanChanged: () {}),
     _ => throw ArgumentError(tab),
   };
 }
@@ -576,7 +578,7 @@ class _FoodsScreenState extends State<_FoodsScreen> {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     final q = _search.text.trim().toLowerCase();
-    final rows = _rows?.where((f) => (_group == null || f['group'] == _group) && '${f['label']} ${f['name_hi'] ?? ''}'.toLowerCase().contains(q)).toList();
+    final rows = _rows?.where((f) => (_group == null || f['group'] == _group) && matchesFoodQuery('${f['label']} ${f['name_hi'] ?? ''}', q)).toList();
     // Each group is ranked by what it is for, so the best sources sit on top.
     final key = switch (_group) { 'Fibre' => 'fiber_g', 'Carbs' => 'carb_g', 'Fats' => 'fat_g', _ => 'protein_g' };
     final unit = switch (_group) { 'Fibre' => 'fibre', 'Carbs' => 'carbs', 'Fats' => 'fat', _ => 'protein' };
@@ -664,23 +666,99 @@ class _SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<_SettingsScreen> {
   ReminderPrefs? _prefs;
+  List<CustomReminder>? _custom; // null while loading
+  bool _customFailed = false;
+  bool _prefsFailed = false;
+  ReminderTiming? _timing; // null on the web or until known: nothing about timing is shown
+  bool? _notifications; // null on the web or until known
+  // Coming back from Android's Alarms & reminders page: read the answer and reschedule if it changed.
+  late final _lifecycle = AppLifecycleListener(onResume: _checkTiming);
+
+  Future<void> _checkTiming() async {
+    // Read independently: a slow answer about one never holds back the other.
+    Reminders.notificationsEnabled().then((n) {
+      if (mounted && n != _notifications) setState(() => _notifications = n);
+    });
+    final t = await Reminders.timing();
+    if (!mounted || t == _timing) return;
+    final changed = _timing != null;
+    setState(() => _timing = t);
+    if (changed) widget.onRemindersChanged(); // exact <-> inexact: alarms are re-registered in the new mode
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
+    _lifecycle; // start listening
+    _checkTiming();
+    _loadPrefs();
+    loadCustomReminders().then(
+      (l) => mounted ? setState(() => _custom = l) : null,
+      onError: (Object _) => mounted ? setState(() {
+        _custom = const [];
+        _customFailed = true;
+      }) : null,
+    );
+  }
+
+  /// Adds, edits or deletes one of the user's own reminders, then re-arms every reminder.
+  Future<void> _edit(CustomReminder? r) async {
+    final result = await showModalBottomSheet<Object>(context: context, isScrollControlled: true, showDragHandle: true, builder: (_) => CustomReminderEditor(initial: r));
+    if (result == null || !mounted) return;
+    try {
+      if (result == 'delete') {
+        await deleteCustomReminder(r!.id!);
+        setState(() => _custom = [for (final x in _custom!) if (x.id != r.id) x]);
+      } else {
+        await _store(result as CustomReminder);
+      }
+      widget.onRemindersChanged();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save that reminder.')));
+    }
+  }
+
+  Future<void> _store(CustomReminder r) async {
+    if (r.enabled && (_prefs?.enabled ?? false)) await Reminders.requestPermissionOnce();
+    final saved = await saveCustomReminder(r);
+    if (!mounted) return;
+    setState(() => _custom = r.id == null ? [..._custom!, saved] : [for (final x in _custom!) x.id == saved.id ? saved : x]);
+  }
+
+  Future<void> _toggle(CustomReminder r, bool on) async {
+    try {
+      await _store((id: r.id, name: r.name, at: r.at, weekdays: r.weekdays, enabled: on));
+      widget.onRemindersChanged();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save that reminder.')));
+    }
+  }
+
+  /// A failed read shows an error, never the defaults: one tap on a default would save it over the real settings.
+  void _loadPrefs() {
+    if (_prefsFailed) setState(() => _prefsFailed = false); // also runs from initState, where setState is not allowed
     loadReminderPrefs().then(
       (p) => mounted ? setState(() => _prefs = p) : null,
-      onError: (Object _) => mounted ? setState(() => _prefs = defaultPrefs) : null,
+      onError: (Object _) => mounted ? setState(() => _prefsFailed = true) : null,
     );
   }
 
   Future<void> _save(ReminderPrefs p) async {
+    final before = _prefs;
     setState(() => _prefs = p);
     try {
-      if (p.enabled) await Reminders.requestPermission();
+      if (p.enabled) await Reminders.requestPermissionOnce();
       await saveReminderPrefs(p);
       widget.onRemindersChanged();
     } catch (_) {
+      // Show what is really saved, not the change that failed.
+      if (mounted) setState(() => _prefs = before);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save your reminders.')));
     }
   }
@@ -710,15 +788,35 @@ class _SettingsScreenState extends State<_SettingsScreen> {
       children: [
         _Tile(
           child: prefs == null
-              ? const Padding(padding: EdgeInsets.all(12), child: LinearProgressIndicator(minHeight: 2))
+              ? (_prefsFailed
+                  ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        Expanded(child: Text('Your reminder settings could not be loaded. Check your connection.', style: t.bodySmall?.copyWith(color: c.error))),
+                        TextButton(onPressed: _loadPrefs, child: const Text('Retry')),
+                      ]),
+                      // The phone's notification and timing switches do not depend on the saved settings, so they still show.
+                      if (_notifications == false)
+                        _NotificationsOffRow(onTurnOn: () async {
+                          await Reminders.requestPermission();
+                          await _checkTiming();
+                        }),
+                      if (_timing != null) _ExactTimingRow(timing: _timing!, onAllow: Reminders.requestExactTiming),
+                    ])
+                  : const Padding(padding: EdgeInsets.all(12), child: LinearProgressIndicator(minHeight: 2)))
               : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
                     const Expanded(child: _Label('REMINDERS')),
-                    Switch(value: prefs.enabled, onChanged: (on) => _save(with_(enabled: on))),
+                    Semantics(label: 'Reminders', child: Switch(value: prefs.enabled, onChanged: (on) => _save(with_(enabled: on)))),
                   ]),
                   if (kIsWeb)
                     Text('On the web, reminders appear inside the app while it is open. The phone app sends them even when Levlofit is closed.',
                         style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                  if (_notifications == false && prefs.enabled)
+                    _NotificationsOffRow(onTurnOn: () async {
+                      await Reminders.requestPermission();
+                      await _checkTiming();
+                    }),
+                  if (_timing != null && prefs.enabled) _ExactTimingRow(timing: _timing!, onAllow: Reminders.requestExactTiming),
                   AnimatedOpacity(
                     opacity: prefs.enabled ? 1 : 0.4,
                     duration: motion(context, 200),
@@ -768,6 +866,41 @@ class _SettingsScreenState extends State<_SettingsScreen> {
                     ),
                   ),
                 ]),
+        ),
+        // Timing experiment, test builds only: never in a release build, never touches saved reminders.
+        if (!kReleaseMode && !kIsWeb && defaultTargetPlatform == TargetPlatform.android) ...[
+          const SizedBox(height: 14),
+          const _AlarmClockTestTile(),
+        ],
+        const SizedBox(height: 14),
+        _Tile(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const _Label('YOUR OWN'),
+            const SizedBox(height: 6),
+            if (_custom == null)
+              const Padding(padding: EdgeInsets.all(12), child: LinearProgressIndicator(minHeight: 2))
+            else if (_customFailed)
+              Text('Your own reminders could not be loaded. Check your connection.', style: t.bodySmall?.copyWith(color: c.error))
+            else ...[
+              if (_custom!.isEmpty) Text('Add anything you want a nudge for: creatine, a stretch, a walk.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              if (prefs != null && !prefs.enabled && _custom!.isNotEmpty)
+                Text('Reminders are off above, so these are paused too.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              for (final r in _custom!)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(r.name),
+                  subtitle: Text('${r.at.format(context)}  ·  ${describeDays(r.weekdays)}'),
+                  onTap: () => _edit(r),
+                  trailing: Semantics(label: 'Remind me: ${r.name}', child: Switch(value: r.enabled, onChanged: (on) => _toggle(r, on))),
+                ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(_custom!.length >= maxCustomReminders ? 'Limit of $maxCustomReminders reached' : 'Add a reminder'),
+                onPressed: _custom!.length >= maxCustomReminders ? null : () => _edit(null),
+              ),
+            ],
+          ]),
         ),
       ],
     );
@@ -920,15 +1053,21 @@ class _LevelCheckScreenState extends State<_LevelCheckScreen> {
 
   Future<void> _save() async {
     setState(() => _saving = true);
+    var saved = false; // the level is stored; the plan rebuild comes after
     try {
-      await supabase.from('goal_levels').upsert({'goal': widget.goal, 'level': _level, 'assessed_at': DateTime.now().toIso8601String()});
+      await supabase.from('goal_levels').upsert({'goal': widget.goal, 'level': _level, 'assessed_at': utcNow()});
+      saved = true;
       await supabase.functions.invoke('generate-plan');
       HapticFeedback.heavyImpact();
       if (mounted) Navigator.pop(context, true);
     } catch (_) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save. Check your connection and try again.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(saved
+              ? 'Your level is saved, but your plan could not be rebuilt. Tap save again to retry.'
+              : 'Could not save. Check your connection and try again.'),
+        ));
       }
     }
   }
@@ -1244,16 +1383,22 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
       _saving = true;
       _error = null;
     });
+    var saved = false; // settings stored; the plan rebuild comes after
     try {
       await supabase.from('profiles').update(p).eq('id', _uid);
       await supabase.from('dietary_profiles').update(d).eq('user_id', _uid);
+      saved = true;
       await supabase.functions.invoke('generate-plan');
       HapticFeedback.heavyImpact();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Protocol saved. Your plan, meals and Levlofit AI are updated.')));
       widget.onSaved();
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not save. Check your connection and try again.');
+      if (mounted) {
+        setState(() => _error = saved
+            ? 'Your settings are saved, but your plan could not be rebuilt. Save again to retry.'
+            : 'Could not save. Check your connection and try again.');
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1472,7 +1617,6 @@ class _ProfileScreen extends StatelessWidget {
           _row(context, LvIcons.notePencil, 'Protocol', () => onOpen(_Tab.protocol), trailing: 'Goals, days, diet, budget'),
         ]),
         _section(context, 'MORE', [
-          _row(context, LvIcons.timer, 'Reminders', () => onOpen(_Tab.reminders)),
           _row(context, LvIcons.gear, 'Settings', () => onOpen(_Tab.settings), trailing: 'Theme, help, privacy'),
         ]),
         _section(context, '', [
@@ -1492,30 +1636,7 @@ class _AppSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
-    void sheet(String title, List<(String, String)> points) => showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          builder: (s) => DraggableScrollableSheet(
-            expand: false,
-            initialChildSize: 0.75,
-            maxChildSize: 0.95,
-            builder: (s, scroll) => ListView(
-              controller: scroll,
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-              children: [
-                Text(title, style: t.titleLarge),
-                const SizedBox(height: 16),
-                for (final (head, body) in points) ...[
-                  Text(head, style: t.titleMedium),
-                  const SizedBox(height: 4),
-                  Text(body, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant, height: 1.45)),
-                  const SizedBox(height: 16),
-                ],
-                Text('Questions? Write to $supportEmail.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-              ],
-            ),
-          ),
-        );
+    void sheet(String title, List<(String, String)> points) => _policySheet(context, title, points);
     return _Page(
       eyebrow: 'SETTINGS',
       title: 'Settings',
@@ -1553,6 +1674,7 @@ class _AppSettingsScreen extends StatelessWidget {
           _row(context, LvIcons.chatCircle, 'Contact support', _contactSupport, trailing: supportEmail),
           _row(context, LvIcons.notePencil, 'Send feedback', () => _sendFeedback(context), trailing: 'Ideas, bugs, praise'),
           _row(context, LvIcons.lightbulb, 'Glossary of training terms', () => onOpen(_Tab.glossary)),
+          _row(context, LvIcons.timer, 'Notifications and reminders', () => onOpen(_Tab.reminders), trailing: 'Permissions, times'),
         ]),
         _section(context, 'PRIVACY', [
           _row(context, LvIcons.brain, 'How we use your data', () => sheet('How we use your data', _dataUse)),
@@ -1645,34 +1767,112 @@ Future<void> _sendFeedback(BuildContext context) async {
 
 /// "How we use your data", in plain words.
 const _dataUse = [
-  ('What we keep', 'Your sign-up answers (age, height, weight, goals, diet, health check), your plan, the workouts, water and habits you log, '
-      'your progress photos, and your chats with Levlofit AI.'),
+  ('What we keep', 'Your sign-up answers (age, height, weight, goals, diet, health check), your plans, the workouts, sets, water, habits, '
+      'measurements, food diary and recipes you log, your progress photos, your chats with Levlofit AI, and feedback you send.'),
   ('Why we keep it', 'Only to run the app for you: to build your plan, show your progress, send the reminders you switch on, and let '
       'Levlofit AI answer about you, not in general.'),
-  ('Who can see it', 'Only you. Your data is locked to your account by the database itself, so no other user can read it. '
-      'We never sell it and never use it for ads.'),
+  ('Who can see it', 'No other user: your data is locked to your account by the database itself. The Levlofit team reads the feedback '
+      'you send, and our AI provider receives what is listed under "What Levlofit AI sends". We never sell it and never use it for ads.'),
   ('Levlofit AI', 'When you send a message, your question and a summary of your plan and recent training go to our AI provider to write '
-      'the reply. Your chats and the short notes the AI keeps about you are saved in your account so it remembers you. You can delete chats any time.'),
+      'the reply. Your chats are saved in your account. Levlofit AI can suggest facts to remember (your schedule, equipment, likes, goals or an injury); '
+      'it keeps one only if you confirm it, and you can edit or delete each one in Memory. Confirmed facts go to our AI provider with your messages; '
+      'an injury fact only when you ask about training, movement or pain. You can delete chats any time.'),
   ('Your photos', 'Progress photos are stored privately in your account. Nobody else can open them.'),
-  ('You are in control', 'Edit your details any time here in Profile. Delete your account and everything goes with it: answers, plans, logs, chats and photos.'),
+  ('You are in control', 'Edit most of your details in Profile and Protocol; email us to correct the rest. Delete your account in Profile (or '
+      'from the account menu while you set up) and everything goes with it: answers, plans, logs, chats and photos.'),
 ];
 
 /// The privacy policy, short and in plain words. Matches the website policy.
+/// A titled list of points in a bottom sheet (privacy policy, data use).
+Future<void> _policySheet(BuildContext context, String title, List<(String, String)> points) {
+  final c = Theme.of(context).colorScheme;
+  final t = Theme.of(context).textTheme;
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (s) => DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.75,
+      maxChildSize: 0.95,
+      builder: (s, scroll) => ListView(
+        controller: scroll,
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+        children: [
+          Text(title, style: t.titleLarge),
+          const SizedBox(height: 16),
+          for (final (head, body) in points) ...[
+            Text(head, style: t.titleMedium),
+            const SizedBox(height: 4),
+            Text(body, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant, height: 1.45)),
+            const SizedBox(height: 16),
+          ],
+          Text('Questions? Write to $supportEmail.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Health Connect shows the app's privacy policy from its permission screens; that launch lands here.
+Future<void> showPrivacyPolicy(BuildContext context) => _policySheet(context, 'Privacy policy', _privacyPolicy);
+
 const _privacyPolicy = [
   ('Who we are', 'Levlofit is a fitness app made in India. This explains what happens to your information when you use it.'),
-  ('What we collect', 'Your email to sign in (and your name if you use Google). What you tell us at sign-up. What you log in the app. '
-      'Progress photos you add. Your chats with Levlofit AI. We do not collect your location, contacts or data from other apps.'),
+  ('What we collect', 'Your email to sign in and the name you give (Google fills it in if you sign in with Google). What you tell us at '
+      'sign-up and in Protocol, including your weight goal, food budget and exclusions, equipment, water target and the health check. '
+      'What you log: workouts and sets (reps and weight), body weight and measurements, water, habits, your level in each goal and your '
+      'reminder settings (including the names you give your own reminders), the foods and weights you log in the food diary and the recipes you save, and how hard each session felt and whether pain stopped you, if you answer after a session. Progress photos, and your profile picture if you upload your own. Your chats with Levlofit AI, the facts you confirm in its Memory, '
+      'and its suggestions waiting for your OK. Feedback you send. For abuse protection: when you send chat messages or rebuild your plan (times only, no content), and a random ID on each chat message so a resent one is not saved twice; feedback is limited by counting the feedback you have sent. On this phone only: your sign-in session, light or dark choice, dashboard layout and daily goals, which permission prompts you have seen, downloaded fonts and the reminders scheduled on the phone. We do not collect your location, contacts or '
+      'data from other apps.'),
   ('How we use it', 'To build your plan, track your progress, send reminders you choose and answer your questions. Nothing else.'),
-  ('Where it is stored', 'With Supabase, on servers in Mumbai, India. Everything travels over encrypted connections.'),
-  ('Who else handles it', 'Only the services that run the app: Supabase stores your data, Groq runs Levlofit AI (and may process your '
-      'message outside India), and Google if you sign in with Google. Each uses it only for that job. We never sell your data.'),
-  ('Permissions', 'Notifications, only for the reminders you turn on. Photos or camera, only when you add a progress photo.'),
-  ('How long we keep it', 'Until you delete your account. Deleting it removes everything for good.'),
+  ('Where it is stored', 'With Supabase, our database and file storage provider. Photos are kept in private storage only your account '
+      'can open. Everything travels over encrypted connections.'),
+  // REVIEW GATE: the next two sections describe the coach-chat code in this repository. Ship them only after the deployed
+  // coach-chat function is confirmed to match it and LLM_BASE_URL is confirmed unset or pointing at Groq.
+  ('What Levlofit AI sends', 'Groq runs Levlofit AI and may process your messages outside India. Each time you send a message, Groq gets: '
+      'your message as you typed it (trimmed, up to 2,000 characters) and up to 12 earlier messages from that chat; your first name; your equipment, training days, '
+      'session length, daily activity, sleep hours and water target; the date, goal and minutes of workouts logged in the last 14 days; a '
+      'summary of your plan (phase, weight goal, goals and levels, sessions, next steps, calorie and protein targets); the facts you confirmed in Memory (an injury fact only when the chat is about training, movement or pain, at most three; '
+      'suggestions you have not confirmed are never sent); and two yes-or-no flags: whether your '
+      'health check asks you to see a doctor first, and whether you noted an injury (in the health check or as a confirmed Memory fact). Only when the chat is about food, or a reply has to be '
+      'checked against your food settings: your diet type, allergies and intolerances, foods you exclude, food budget and suggested supplements, and your food diary totals '
+      'for each of the last 7 days you logged (energy, protein, carbohydrate, fat and fibre; not the foods themselves). Only when the chat is '
+      'about lifting: for each move you logged in the last 14 days, its name, how many days you trained it, the last day and your best set '
+      '(reps and weight). Only when the chat is about steps or walking, and only if you switched on sharing in Progress: your daily step totals '
+      'for the last 7 days from Health Connect.'),
+  // REVIEW GATE (legal): a second AI provider is used only if the owner sets one up and approves its data terms.
+  ('If Groq is unavailable', 'We may set up a second AI provider that answers when Groq is down or busy. It would receive exactly what Groq '
+      'receives for that message. We name it here before it is switched on.'),
+  ('What Groq does not get', 'Your email, account ID, year of birth, sex, height, weight, waist or other measurements, body type, health '
+      'check answers, the injury you described in the health check (an injury fact you confirm in Memory is sent as above), photos, set logs outside lifting questions, water or habit logs, your effort or pain answers, or feedback. It does get '
+      "passages from Levlofit's Handbook that match your question, which are our text, not yours. Your calorie and protein targets are "
+      'worked out from your weight, height, age and sex, so your approximate weight can be calculated from them. Anything you type in a '
+      'message is sent as written, so leave out details you do not want shared.'),
+  ('Who else handles it', 'Supabase stores your data, and Google handles sign-in if you use Google. Google Fonts supplies the app\'s fonts '
+      'and ExerciseDB hosts the exercise animations; their servers may receive your IP address when the app loads them. Each is used only '
+      'for its job. We never sell your data.'),
+  ('Permissions', 'Notifications, only for the reminders you turn on. On Android, Alarms and reminders, only if you allow it, so reminders arrive at the time you set; without it they can arrive a few minutes late. Photos, only when you add a progress photo or profile picture.'),
+  // REVIEW GATE (legal): Health Connect steps text; ships only with builds made with -Plevlofit.healthConnect=true.
+  ('Steps from Health Connect', 'Only if you connect it in Progress, and only on Android builds that support it. Levlofit reads your daily step '
+      'totals for the last 7 days while you look at Progress. They stay on this phone: they are not stored on our servers. If you switch on '
+      '"Share step totals with Levlofit AI", those 7 totals are sent with your coach messages and pass to the AI provider like the rest of '
+      'the chat context. Disconnect in Progress, or remove access in Health Connect, at any time.'),
+  // REVIEW: backup and log retention periods at Supabase are not verified; replace "may" with the real periods once confirmed.
+  ('How long we keep it', 'Until you delete your account. Every plan built for you is kept, each with a copy of the answers it used (including '
+      'any injury you described); the app shows the latest. Deleting your account first removes your progress photos and profile picture; if that '
+      'fails, your account is not deleted and you can try again. Then your account is deleted, along with the records linked to it in our '
+      'database: profile and answers, goals, plans, logs, food diary and recipes, measurements, chats, AI notes, reminder settings and feedback. '
+      'If deleting the account itself fails after the photos are gone, the photos stay deleted, the rest stays and you can try again. '
+      'Reminders scheduled on this phone are cancelled when you delete your account or sign out. Copies may remain '
+      'in our service providers\' backups and service logs after deletion, under their own retention practices. Messages already sent to '
+      'Groq cannot be deleted by us; Groq handles them under its own terms. Website contact messages are not linked to your account; we '
+      'delete them manually once the matter is handled.'),
   ('Your rights', "Under India's Digital Personal Data Protection Act, 2023, you can see, correct or erase your data, withdraw consent "
-      'and raise a complaint. Most of this you can do in the app; for the rest, email us and we reply within 30 days.'),
+      'and raise a complaint. Most of this you can do in the app: edit most answers in Profile and Protocol, and delete your account in '
+      'Profile. For the rest, email us and we reply within 30 days.'),
   ('Health', 'Levlofit gives general fitness guidance, not medical advice. See a doctor for pain, illness, or before hard training if you have a health condition.'),
   ('Age', 'Levlofit is for adults aged 18 to 80.'),
-  ('Changes', 'If this policy changes in a way that affects your data, we tell you in the app first.'),
+  ('Changes', 'If this policy changes in a way that affects your data, we tell you in the app first. Last updated 16 October 2026.'),
 ];
 
 // ---------------------------------------------------------------- glossary
@@ -1733,6 +1933,120 @@ class _GlossaryScreenState extends State<_GlossaryScreen> {
             ]),
           ),
       ],
+    );
+  }
+}
+
+/// Android only: whether reminders can arrive at the exact time. Asking happens only when the user taps; a "no"
+/// leaves reminders working, just possibly a few minutes late.
+class _ExactTimingRow extends StatelessWidget {
+  const _ExactTimingRow({required this.timing, required this.onAllow});
+  final ReminderTiming timing;
+  final Future<void> Function() onAllow;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final exact = timing == ReminderTiming.exact;
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(exact ? LvIcons.checkCircle : LvIcons.timer, size: 18, color: exact ? c.primary : c.onSurfaceVariant),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(exact ? 'Exact timing: on' : 'Exact timing: off', style: t.titleSmall),
+            const SizedBox(height: 2),
+            Text(
+              exact
+                  ? 'Reminders are set for the exact minute. Some phones, including OnePlus, can still hold them for a minute or more to save battery.'
+                  : 'Reminders may arrive a few minutes late. Allow "Alarms & reminders" for Levlofit to have them on time.',
+              style: t.bodySmall?.copyWith(color: c.onSurfaceVariant),
+            ),
+            if (!exact) TextButton(onPressed: onAllow, style: TextButton.styleFrom(padding: EdgeInsets.zero), child: const Text('Allow exact timing')),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Shown when the phone is blocking Levlofit's notifications. One tap asks Android (it shows its prompt only while
+/// it still allows one); after that the way back is the phone's own settings, said plainly.
+class _NotificationsOffRow extends StatelessWidget {
+  const _NotificationsOffRow({required this.onTurnOn});
+  final Future<void> Function() onTurnOn;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(LvIcons.warningCircle, size: 18, color: c.error),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Notifications: off', style: t.titleSmall),
+            const SizedBox(height: 2),
+            Text('Reminders cannot appear until notifications are allowed. If no prompt appears, turn them on in your phone '
+                'settings: Apps, Levlofit, Notifications.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            TextButton(onPressed: onTurnOn, style: TextButton.styleFrom(padding: EdgeInsets.zero), child: const Text('Turn on notifications')),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Test builds only: schedules one standalone alarm-clock notification at a time you pick, to compare its delivery
+/// with normal reminders on this phone. Saved reminders and their schedules are not touched.
+class _AlarmClockTestTile extends StatefulWidget {
+  const _AlarmClockTestTile();
+
+  @override
+  State<_AlarmClockTestTile> createState() => _AlarmClockTestTileState();
+}
+
+class _AlarmClockTestTileState extends State<_AlarmClockTestTile> {
+  String? _status;
+
+  Future<void> _schedule() async {
+    final soon = TimeOfDay.fromDateTime(DateTime.now().add(const Duration(minutes: 3)));
+    final at = await showTimePicker(context: context, initialTime: soon);
+    if (at == null || !mounted) return;
+    String? error;
+    final when = await Reminders.scheduleAlarmClockTest(at, onError: (m) => error = m);
+    if (!mounted) return;
+    setState(() => _status = when != null
+        ? 'Test alarm set for ${at.format(context)} (alarm-clock mode). Until it fires, expect an alarm icon in the status bar and it may show as your next alarm.'
+        : error ?? 'Not scheduled.');
+  }
+
+  Future<void> _cancel() async {
+    await Reminders.cancelAlarmClockTest();
+    if (mounted) setState(() => _status = 'Test alarm cancelled.');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    return _Tile(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const _Label('TIMING EXPERIMENT  ·  TEST BUILDS ONLY'),
+        const SizedBox(height: 6),
+        Text('Schedules one alarm-clock notification, separate from your reminders, to measure on-time delivery.',
+            style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        if (_status != null) ...[const SizedBox(height: 8), Text(_status!, style: t.bodySmall)],
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, children: [
+          OutlinedButton(onPressed: _schedule, child: const Text('Schedule test alarm')),
+          TextButton(onPressed: _cancel, child: const Text('Cancel test alarm')),
+        ]),
+      ]),
     );
   }
 }

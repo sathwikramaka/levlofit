@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:levlo/tools.dart';
 
 void main() {
@@ -10,14 +12,90 @@ void main() {
     expect(bmiBandIndia(25), 'Obese');
   });
 
-  test('US Navy body fat', () {
-    // Male 178 cm, neck 38, waist 86: about 17.2 % (worked by hand).
-    expect(navyBodyFat(male: true, heightCm: 178, neckCm: 38, waistCm: 86), closeTo(17.2, 0.05));
-    // Female 165 cm, neck 33, waist 72, hips 98: about 26.9 %.
-    expect(navyBodyFat(male: false, heightCm: 165, neckCm: 33, waistCm: 72, hipCm: 98), closeTo(26.9, 0.05));
-    expect(navyBodyFat(male: true, heightCm: 178, neckCm: 90, waistCm: 80), isNull);
-    expect(navyBodyFat(male: false, heightCm: 165, neckCm: 33, waistCm: 72), isNull);
-    expect(bodyFatBand(17.2, male: true), 'Fitness');
-    expect(bodyFatBand(26.9, male: false), 'Average');
+  test('waist to height: banded on the 2 dp value shown, units do not change the ratio', () {
+    expect(whtrCheck(height: 170, waist: 84).value, 0.49);
+    expect(whtrCheck(height: 170, waist: 84).band, 'No increased risk');
+    expect(whtrCheck(height: 170, waist: 84.5).value, 0.5); // 0.497 shows 0.50
+    expect(whtrCheck(height: 170, waist: 84.5).band, 'Increased risk');
+    expect(whtrCheck(height: 170, waist: 101.2).band, 'Very high risk'); // 0.595 shows 0.60
+    expect(whtrCheck(height: 67, waist: 33, inches: true).value, whtrCheck(height: 67 * 2.54, waist: 33 * 2.54).value);
+    expect(whtrCheck(height: 170, waist: 39).errors.keys, ['waist']);
+    expect(whtrCheck(height: 40, waist: 30, inches: true).errors.keys, ['height']); // 40 in = 102 cm
+    expect(whtrCheck(height: 170, waist: null).value, isNull);
+  });
+
+  test('BMI is rounded to 1 dp before banding, as the plan engine does', () {
+    // 22.96 used to show "23.0 Normal" here while the engine called it overweight.
+    for (final (h, w, shown, band) in [
+      (170.0, 66.36, 23.0, 'Overweight'), // 22.962
+      (170.0, 66.33, 23.0, 'Overweight'), // 22.952 rounds up
+      (170.0, 66.30, 22.9, 'Normal'), // 22.941
+      (170.0, 51.89, 18.0, 'Normal'), // 17.955 rounds to 18.0
+      (170.0, 72.14, 25.0, 'Obese'), // 24.962
+    ]) {
+      final r = bmiCheck(heightCm: h, weightKg: w);
+      expect(r.value, shown, reason: '$h $w');
+      expect(r.band, band, reason: '$h $w');
+    }
+  });
+
+  test('BMI input checks match onboarding and the engine', () {
+    expect(bmiCheck(heightCm: 119, weightKg: 60).errors.keys, ['height']);
+    expect(bmiCheck(heightCm: 231, weightKg: 60).errors.keys, ['height']);
+    expect(bmiCheck(heightCm: 170, weightKg: 29).errors.keys, ['weight']);
+    expect(bmiCheck(heightCm: 170, weightKg: 251).errors.keys, ['weight']);
+    expect(bmiCheck(heightCm: 120, weightKg: 30).errors, isEmpty);
+    expect(bmiCheck(heightCm: 230, weightKg: 250).errors, isEmpty);
+    // Not entered yet is not an error, and gives no value.
+    final empty = bmiCheck(heightCm: null, weightKg: 60);
+    expect(empty.errors, isEmpty);
+    expect(empty.value, isNull);
+    // An invalid field gives no value.
+    expect(bmiCheck(heightCm: 50, weightKg: 60).value, isNull);
+  });
+
+  test('BMI under 18 gets no adult band', () {
+    final teen = bmiCheck(heightCm: 160, weightKg: 50, age: 15);
+    expect(teen.value, 19.5);
+    expect(teen.band, isNull);
+    expect(teen.note, contains('under 18'));
+    expect(bmiCheck(heightCm: 160, weightKg: 50, age: 18).band, 'Normal');
+    expect(bmiCheck(heightCm: 160, weightKg: 50, age: 150).errors.keys, ['age']);
+  });
+
+  test('imperial units convert exactly', () {
+    expect(cmFromFeetInches(5, 7), closeTo(170.18, 1e-9));
+    expect(kgFromPounds(150), closeTo(68.0389, 1e-4));
+    expect(bmiCheck(heightCm: cmFromFeetInches(5, 7), weightKg: kgFromPounds(150)).value, 23.5);
+    // Errors speak the units on screen, and every value they name is accepted.
+    expect(bmiCheck(heightCm: cmFromFeetInches(3, 0), weightKg: 60, imperial: true).errors['height'], 'Enter a height between 4 ft 0 in and 7 ft 6 in');
+    expect(bmiCheck(heightCm: 170, weightKg: kgFromPounds(60), imperial: true).errors['weight'], 'Enter a weight between 67 and 551 lb');
+    expect(bmiCheck(heightCm: cmFromFeetInches(4, 0), weightKg: kgFromPounds(67), imperial: true).errors, isEmpty);
+    expect(bmiCheck(heightCm: cmFromFeetInches(7, 6), weightKg: kgFromPounds(551), imperial: true).errors, isEmpty);
+  });
+
+  testWidgets('BMI screen explains a bad value instead of staying blank', (tester) async {
+    GoogleFonts.config.allowRuntimeFetching = false;
+    await tester.pumpWidget(const MaterialApp(home: BmiScreen(heightCm: 170, weightKg: 70, age: 30)));
+    await tester.pumpAndSettle();
+    expect(find.text('24.2'), findsOneWidget);
+    expect(find.text('OVERWEIGHT'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextField, '170'), '90');
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a height between 120 and 230 cm'), findsOneWidget);
+    expect(find.text('Enter your measurements'), findsOneWidget);
+  });
+
+  testWidgets('BMI unit switch carries the values across', (tester) async {
+    GoogleFonts.config.allowRuntimeFetching = false;
+    await tester.pumpWidget(const MaterialApp(home: BmiScreen(heightCm: 170, weightKg: 70)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ft in, lb'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '5'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '7'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '154'), findsOneWidget);
+    // 5 ft 7 in, 154 lb = 24.1 (rounding from the converted values, not the original 24.2).
+    expect(find.text('24.1'), findsOneWidget);
   });
 }

@@ -24,7 +24,9 @@ const hardKinds = {'strength', 'hybrid', 'skill'};
 const addOnMinutes = 20;
 const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-typedef AddOn = ({int day, String name, String kind});
+/// An add-on block on [day]. [session] is the goal (or extra-strength session) whose moves it uses. [standalone]: a
+/// short session of its own on a rest day, because no training day had room for it.
+typedef AddOn = ({int day, String name, String kind, Json session, bool standalone});
 typedef WeekPlan = ({Map<int, Json> days, List<AddOn> addOns, List<String> notices});
 
 bool _isHard(Json s) => hardKinds.contains(s['kind'] ?? 'strength');
@@ -92,8 +94,12 @@ List<Json> _arrange(List<int> days, List<Json> queue) {
   return best;
 }
 
-/// Builds the week from a stored plan. [sessionMinutes] is the person's session length, for the add-on notice.
-WeekPlan weekPlan(Json plan, {int? sessionMinutes}) {
+/// Builds the week from a stored plan. [sessionMinutes] is the person's session length. [estimate] gives a main
+/// session's minutes (null when it cannot be estimated, such as a run); with both, add-on blocks are placed by time:
+/// on a training day with room, else as a short session of their own on a rest day that keeps recovery spacing, else
+/// on the best training day with the overrun reported. Without them the blocks go by recovery and spread only. The
+/// training days themselves never depend on add-ons, so reminders and the calendar see the same days either way.
+WeekPlan weekPlan(Json plan, {int? sessionMinutes, int? Function(Json session, int nth)? estimate}) {
   final goals = ((plan['goals'] as List?) ?? const []).cast<Json>();
   final notices = <String>[];
 
@@ -138,30 +144,88 @@ WeekPlan weekPlan(Json plan, {int? sessionMinutes}) {
   }
 
   // Add-on blocks: the engine's strength blocks, then extra goals that only fit as blocks.
-  final blocks = <({String name, String kind})>[
-    for (var i = 0; i < ((plan['strengthAddOns'] as int?) ?? 0); i++) (name: 'Strength', kind: 'strength'),
+  final blocks = <({String name, String kind, Json session})>[
+    for (var i = 0; i < ((plan['strengthAddOns'] as int?) ?? 0); i++) (name: 'Strength', kind: 'strength', session: _extraStrength(goals)),
     for (final g in goals)
-      for (var i = 0; i < ((g['addOnBlocksPerWeek'] as int?) ?? 0); i++) (name: (g['name'] ?? g['goal']) as String, kind: (g['kind'] ?? 'strength') as String),
+      for (var i = 0; i < ((g['addOnBlocksPerWeek'] as int?) ?? 0); i++)
+        (name: (g['name'] ?? g['goal']) as String, kind: (g['kind'] ?? 'strength') as String, session: g),
   ];
+  final timed = sessionMinutes != null && estimate != null;
+  // Each training day's main session estimate (A and B alternate per goal, as on the dashboard).
+  final mainMinutes = <int, int?>{};
+  if (timed) {
+    for (final d in dayList) {
+      final nth = [for (final x in dayList) if (x < d && days[x]!['goal'] == days[d]!['goal']) x].length;
+      mainMinutes[d] = estimate(days[d]!, nth);
+    }
+  }
   final addOns = <AddOn>[];
   final used = <int, int>{};
+  final overDays = <int, String>{}; // day -> why the add-on could not go elsewhere
+  final recoveryDays = <int, String>{}; // day -> the hard block that made it hard next to hard work
+  bool hardDay(int x) => (days[x] != null && _isHard(days[x]!)) || addOns.any((a) => a.day == x && hardKinds.contains(a.kind));
   for (final b in blocks) {
     final blockHard = hardKinds.contains(b.kind);
     int score(int d) {
       final s = days[d]!;
       final p = d == 1 ? 7 : d - 1, n = d == 7 ? 1 : d + 1;
-      bool hardDay(int x) => (days[x] != null && _isHard(days[x]!)) || addOns.any((a) => a.day == x && hardKinds.contains(a.kind));
       return (used[d] ?? 0) * 10 + // spread blocks over different days first
           (s['kind'] == b.kind ? 4 : 0) + // a block of the same kind adds little to that session
           (blockHard && _isHard(s) ? 2 : 0) + // keep hard blocks off hard days
           (blockHard && (hardDay(p) || hardDay(n)) ? 3 : 0); // and off days next to hard work
     }
 
-    final day = dayList.reduce((a, b) => score(b) < score(a) ? b : a); // first lowest score wins
+    // Room on a training day: its main session plus the blocks already there plus this one. A session that cannot be
+    // estimated (a run, whose main block has no set length) is taken to fill the whole setting.
+    bool room(int d) => (mainMinutes[d] ?? sessionMinutes!) + addOnMinutes * ((used[d] ?? 0) + 1) <= sessionMinutes! + 5;
+
+    final fitting = timed ? dayList.where(room).toList() : dayList;
+    // A rest day can carry one block as its own session (5 min warm-up + the block); a hard block only where neither
+    // neighbour is a hard day, so the 48-hour spacing holds.
+    final restDays = !timed || fitting.isNotEmpty || addOnMinutes > sessionMinutes
+        ? const <int>[]
+        : [
+            for (var d = 1; d <= 7; d++)
+              if (!days.containsKey(d) && !addOns.any((a) => a.day == d) && !(blockHard && (hardDay(d == 1 ? 7 : d - 1) || hardDay(d == 7 ? 1 : d + 1)))) d
+          ];
+    if (restDays.isNotEmpty) {
+      // Furthest from hard work first: a light block on the quietest rest day, ties to the earliest day.
+      int near(int d) => (hardDay(d == 1 ? 7 : d - 1) ? 1 : 0) + (hardDay(d == 7 ? 1 : d + 1) ? 1 : 0);
+      final day = restDays.reduce((a, c) => near(c) < near(a) ? c : a);
+      used[day] = 1;
+      addOns.add((day: day, name: b.name, kind: b.kind, session: b.session, standalone: true));
+      continue;
+    }
+    var pool = fitting.isEmpty ? dayList : fitting;
+    // With the time check, a hard block never makes a light day hard next to hard work when another day avoids it.
+    bool breaksRecovery(int d) => blockHard && !hardDay(d) && (hardDay(d == 1 ? 7 : d - 1) || hardDay(d == 7 ? 1 : d + 1));
+    if (timed && pool.any((d) => !breaksRecovery(d))) pool = pool.where((d) => !breaksRecovery(d)).toList();
+    final day = pool.reduce((a, b) => score(b) < score(a) ? b : a); // first lowest score wins
+    if (timed && breaksRecovery(day)) recoveryDays[day] = b.name;
+    if (timed && !room(day)) {
+      overDays[day] = addOnMinutes > sessionMinutes
+          ? 'a $addOnMinutes-minute add-on does not fit a $sessionMinutes-minute session of its own either'
+          : days.length == 7
+              ? 'there is no rest day to take it'
+              : 'no rest day could take it without breaking recovery or doubling up';
+    }
     used[day] = (used[day] ?? 0) + 1;
-    addOns.add((day: day, name: b.name, kind: b.kind));
+    addOns.add((day: day, name: b.name, kind: b.kind, session: b.session, standalone: false));
   }
-  if (addOns.isNotEmpty && sessionMinutes != null) {
+  for (final a in addOns.where((a) => a.standalone)) {
+    notices.add('${_dayNames[a.day - 1]}: the ${a.name} add-on is its own short session (about ${addOnMinutes + 5} min with a warm-up), '
+        'because no training day had room for it in $sessionMinutes minutes.');
+  }
+  for (final d in overDays.keys.toList()..sort()) {
+    final total = (mainMinutes[d] ?? sessionMinutes!) + addOnMinutes * used[d]!;
+    notices.add('${_dayNames[d - 1]}: the session with its add-on runs about $total min, over your $sessionMinutes-minute setting, '
+        'because ${overDays[d]}. Accessory moves are left out first; the session shows what still fits.');
+  }
+  for (final d in recoveryDays.keys.toList()..sort()) {
+    notices.add('${_dayNames[d - 1]}: the ${recoveryDays[d]} add-on makes this a hard day next to another hard day, because no other day '
+        'had room. Go lighter: stop every set with 3 or more reps left.');
+  }
+  if (!timed && addOns.isNotEmpty && sessionMinutes != null) {
     notices.add('Days with an add-on run about ${sessionMinutes + addOnMinutes} min, '
         '$addOnMinutes min longer than your $sessionMinutes-minute sessions.');
   }
@@ -171,5 +235,14 @@ WeekPlan weekPlan(Json plan, {int? sessionMinutes}) {
   return (days: days, addOns: addOns, notices: notices);
 }
 
-/// One line per add-on, for the week header: "+20 min Strength on Tue".
-String addOnLine(AddOn a) => '+$addOnMinutes min ${a.name} on ${_dayNames[a.day - 1]}';
+/// Reminder sessions: each training weekday's session name, plus a rest day that carries an add-on session of its own.
+Map<int, String> reminderSessions(WeekPlan w) => {
+      for (final e in w.days.entries) e.key: (e.value['name'] ?? e.value['goal'] ?? 'Your session') as String,
+      for (final a in w.addOns)
+        if (a.standalone) a.day: '${a.name} add-on',
+    };
+
+/// One line per add-on, for the week header: "+20 min Strength on Tue", or "Strength, own 25-min session on Thu".
+String addOnLine(AddOn a) => a.standalone
+    ? '${a.name}, own ${addOnMinutes + 5}-min session on ${_dayNames[a.day - 1]}'
+    : '+$addOnMinutes min ${a.name} on ${_dayNames[a.day - 1]}';

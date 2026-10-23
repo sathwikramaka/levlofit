@@ -1,0 +1,3 @@
+# Bash scripts keep LF on every checkout. With core.autocrlf=true they would be checked out CRLF: Linux/WSL/container
+# bash then fails ("set: pipefail\r: invalid option name") and the files no longer match their reviewed SHA-256.
+tools/*.sh text eol=lf

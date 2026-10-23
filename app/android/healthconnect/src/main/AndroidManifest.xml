@@ -1,0 +1,27 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Daily step totals only. Declared only in builds that include this module; Play needs a matching declaration. -->
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
+    <!-- To check whether Health Connect is installed (Android 13 and lower). -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata"/>
+    </queries>
+    <application>
+        <!-- Android 13 and lower: Health Connect opens this to show why the app reads steps (the privacy policy). -->
+        <activity android:name="com.levlofit.app.MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
+            </intent-filter>
+        </activity>
+        <!-- Android 14 and higher: the same, from the system permission usage screen. -->
+        <activity-alias
+            android:name="com.levlofit.app.ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity="com.levlofit.app.MainActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
+            </intent-filter>
+        </activity-alias>
+    </application>
+</manifest>
