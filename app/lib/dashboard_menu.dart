@@ -274,7 +274,6 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
     final goals = (plan['goals'] as List).cast<_Json>();
     final phase = plan['phase'] as _Json?;
     final roadmap = plan['roadmap'] as _Json?;
-    final seen = <String, int>{}; // sessions of each goal so far this week, so A and B alternate
     return _Page(
       eyebrow: 'WORKOUT',
       title: phase == null ? 'Your training week' : phase['title'] as String,
@@ -319,17 +318,22 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
             final day = monday.add(Duration(days: i));
             final done = _logged.contains(day);
             final isToday = day == today;
+            // A session moved with Levlofit AI shows on its new day; the day it left says where it went (swaps.dart).
+            final src = sessionDayFor(i + 1, dayGoal.keys.toSet(), data.moves);
+            final movedTo = data.moves.where((m) => m.$1 == i + 1).map((m) => m.$2).firstOrNull;
             // A rest day may carry an add-on as its own short session; a training day may carry blocks after it.
-            final own = dayGoal[i + 1] == null ? week.addOns.where((a) => a.day == i + 1).firstOrNull : null;
+            final own = src == null && movedTo == null && dayGoal[i + 1] == null ? week.addOns.where((a) => a.day == i + 1).firstOrNull : null;
             final ownBlock = own == null ? null : blocksFor(week, i + 1, data.tier, kitOf(data.profile), const []).first;
-            final g = own == null ? dayGoal[i + 1] : {...own.session, 'name': '${own.name} add-on', 'startLevel': ownBlock!.level};
+            final g = own == null ? dayGoal[src] : {...own.session, 'name': '${own.name} add-on', 'startLevel': ownBlock!.level};
             if (g == null) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                 child: Row(children: [
                   SizedBox(width: 52, child: Text(_days[i], style: monoLabel(context).copyWith(color: isToday ? c.tertiary : null))),
-                  Text(dayGoal.containsKey(i + 1) ? 'Open session' : 'Rest and recover', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
-                  const Spacer(),
+                  Expanded(
+                    child: Text(movedTo != null ? 'Session moved to ${_days[movedTo - 1]}' : dayGoal.containsKey(i + 1) ? 'Open session' : 'Rest and recover',
+                        style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+                  ),
                   if (done) Icon(LvIcons.checkCircle, size: 18, color: c.primary),
                 ]),
               );
@@ -340,7 +344,8 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
             if (ownBlock != null) {
               ids = ownBlock.ids;
             } else {
-              final nth = seen.update(g['goal'] as String, (n) => n + 1, ifAbsent: () => 0);
+              // Which session of this goal it is (by its planned day), so A and B alternate as on the dashboard.
+              final nth = [for (var d = 1; d < src!; d++) if (dayGoal[d]?['goal'] == g['goal']) d].length;
               ids = sessionIds(g['kind'] as String? ?? 'strength', data.tier, level, nth, goal: g['goal'] as String?, kit: kitOf(data.profile));
             }
             final blocks = own != null ? const <AddOnBlock>[] : blocksFor(week, i + 1, data.tier, kitOf(data.profile), ids);

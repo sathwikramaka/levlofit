@@ -299,7 +299,11 @@ String nextStep(List<SetLog> last) {
 }
 
 /// Sets to tick on the session screen; 0 when the move is done once (run, stretch, drill).
-int setsFor(String id, int level) => _stretches.contains(id) || _poseNames.containsKey(id) || _drills.contains(id) || id == _run ? 0 : (level <= 1 ? 2 : 3);
+int setsFor(String id, int level, {bool lighter = false}) {
+  final sets = _stretches.contains(id) || _poseNames.containsKey(id) || _drills.contains(id) || id == _run ? 0 : (level <= 1 ? 2 : 3);
+  // A lighter day the person confirmed with Levlofit AI (batch 3b): one set fewer, never below one.
+  return lighter && sets > 1 ? sets - 1 : sets;
+}
 
 /// Sets the session asks for: every move that loaded, so a missing move never leaves the session unfinishable.
 int totalSets(List<String> ids, List<String> missing, int level) =>
@@ -454,10 +458,13 @@ List<AddOnBlock> blocksFor(WeekPlan week, int day, Tier tier, Set<Kit>? kit, Lis
   return out;
 }
 
+/// The line above a session the person made lighter with Levlofit AI.
+const lighterNotice = 'Lighter day: one set fewer on each move, and finish every set with 3 or more reps in reserve.';
+
 /// How much of a move, in words. Lifting doses: Handbook "Sets, reps and progress" (ACSM 2026).
 /// Stretch holds stay under the 60 s that can blunt strength for a while (Behm 2016).
-String doseFor(String id, int level) {
-  final sets = setsFor(id, level);
+String doseFor(String id, int level, {bool lighter = false}) {
+  final sets = setsFor(id, level, lighter: lighter);
   if (id == _run) return 'Main block at an easy pace you can talk at';
   if (id == '2Dk4xQV') return 'Rock slowly back and forth for 5 slow breaths, within a comfortable stretch';
   if (_poseNames.containsKey(id)) return 'Hold for 5 slow breaths, each side if one-sided';
@@ -465,7 +472,7 @@ String doseFor(String id, int level) {
   if (_drills.contains(id)) return 'Warm-up, until you feel loose';
   if (_carries.contains(id)) return '$sets walks, stop before grip or posture fades';
   if (_core.contains(id)) return '$sets sets, slow and controlled';
-  return '$sets sets × 8–12 reps, 1–3 left in the tank';
+  return lighter ? '$sets sets × 8–12 reps, 3 or more left in the tank' : '$sets sets × 8–12 reps, 1–3 left in the tank';
 }
 
 final _cache = <String, Map<String, dynamic>>{};
@@ -582,7 +589,7 @@ class MoveStrip extends StatelessWidget {
 /// One session, move by move: animation, dose, and a box per set to tick. Finishing logs the day.
 class SessionScreen extends StatefulWidget {
   const SessionScreen(
-      {super.key, required this.title, required this.ids, required this.level, this.onFinish, this.done = false, this.injury, this.sessionMinutes, this.blocks = const [], this.moves});
+      {super.key, required this.title, required this.ids, required this.level, this.onFinish, this.done = false, this.injury, this.sessionMinutes, this.blocks = const [], this.moves, this.lighter = false});
   final String title;
   final List<String> ids;
   final int level;
@@ -592,6 +599,7 @@ class SessionScreen extends StatefulWidget {
   final bool done;
   final String? injury; // the user's injury note (profiles.injuries); null keeps the session as planned
   final int? sessionMinutes; // the person's session length, for the over-time notice
+  final bool lighter; // a lighter day the person confirmed with Levlofit AI: one set fewer, more reps in reserve
 
   @override
   State<SessionScreen> createState() => _SessionScreenState();
@@ -840,7 +848,7 @@ class _SessionScreenState extends State<SessionScreen> {
     super.dispose();
   }
 
-  int get _totalSets => _ids.where((id) => !_missing.contains(id)).fold(0, (s, id) => s + setsFor(id, _levelOf(id)));
+  int get _totalSets => _ids.where((id) => !_missing.contains(id)).fold(0, (s, id) => s + setsFor(id, _levelOf(id), lighter: widget.lighter));
   int get _doneSets => _ids.fold(0, (s, id) => s + (_ticked[id] ?? 0)); // a left-out move's sets stop counting
 
   Future<void> _finish() async {
@@ -933,6 +941,10 @@ class _SessionScreenState extends State<SessionScreen> {
                     Text(note, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
                     const SizedBox(height: 12),
                   ],
+                  if (widget.lighter) ...[
+                    Text(lighterNotice, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                    const SizedBox(height: 12),
+                  ],
                   if (_check.note != null) ...[
                     _InjuryNotice(lines: injuryNotice(_check)),
                     const SizedBox(height: 12),
@@ -947,6 +959,7 @@ class _SessionScreenState extends State<SessionScreen> {
                       number: i + 1,
                       move: m,
                       level: _levelOf(m['id'] as String),
+                      lighter: widget.lighter,
                       ticked: _ticked[m['id']] ?? 0,
                       hint: isLift(m['id'] as String) ? liftHint(_last[m['id']] ?? const [], _advice) : null,
                       care: _check.care[m['id']] == null ? null : careNote(_check.care[m['id']]!),
@@ -1133,7 +1146,8 @@ class _InjuryNotice extends StatelessWidget {
 }
 
 class _MoveCard extends StatelessWidget {
-  const _MoveCard({required this.number, required this.move, required this.level, required this.ticked, required this.hint, required this.onSet, this.care});
+  const _MoveCard({required this.number, required this.move, required this.level, required this.ticked, required this.hint, required this.onSet, this.care, this.lighter = false});
+  final bool lighter;
   final String? care; // injury caution for this move, from the injury check
   final int number;
   final Map<String, dynamic> move;
@@ -1146,7 +1160,7 @@ class _MoveCard extends StatelessWidget {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     final id = move['id'] as String;
-    final sets = setsFor(id, level);
+    final sets = setsFor(id, level, lighter: lighter);
     final complete = sets > 0 && ticked >= sets;
     return AnimatedContainer(
       duration: motion(context, 260),
@@ -1174,7 +1188,7 @@ class _MoveCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(moveName(move), style: t.titleMedium),
             const SizedBox(height: 2),
-            Text(doseFor(id, level), style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            Text(doseFor(id, level, lighter: lighter), style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             if (hint != null) ...[
               const SizedBox(height: 6),
               Text(hint!, style: t.bodySmall?.copyWith(color: c.tertiary, fontWeight: FontWeight.w600)),

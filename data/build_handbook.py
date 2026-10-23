@@ -38,6 +38,7 @@ SRC = {
     "wilson2012": "Wilson JM et al. Concurrent training: a meta-analysis examining interference of aerobic and resistance exercises. J Strength Cond Res 2012;26(8):2293-2307.",
     "lally2010": "Lally P, van Jaarsveld CHM, Potts HWW, Wardle J. How are habits formed: modelling habit formation in the real world. Eur J Soc Psychol 2010;40(6):998-1009.",
     "efsa2010": "EFSA Panel on Dietetic Products, Nutrition and Allergies. Scientific opinion on dietary reference values for water. EFSA Journal 2010;8(3):1459.",
+    "efsa_caffeine": "European Food Safety Authority. Caffeine (topic page, single-dose and daily safety levels). efsa.europa.eu/en/topics/topic/caffeine.",
     "zheng2015": "Zheng Y et al. Self-weighing in weight management: a systematic literature review. Obesity 2015;23(2):256-265.",
     "usda174275": "U.S. Department of Agriculture, Agricultural Research Service. FoodData Central: Soy flour, defatted (FDC ID 174275, SR Legacy 16117).",
     "mifflin1990": "Mifflin MD, St Jeor ST et al. A new predictive equation for resting energy expenditure in healthy individuals. Am J Clin Nutr 1990;51(2):241-247.",
@@ -345,8 +346,7 @@ CHAPTERS = [
             ], "misra2009"),
             band("Waist to height ratio", "ratio", [
                 (0.3, 0.5, "Healthy", "good"),
-                (0.5, 0.6, "Increased risk", "warn"),
-                (0.6, 0.8, "High risk", "bad"),
+                (0.5, 0.8, "Above the healthy range: higher risk", "warn"),
             ], "nice2022"),
             steps("Measure your waist", [
                 ("Find the spot", "Midway between your lowest rib and the top of your hip bone."),
@@ -401,12 +401,12 @@ CHAPTERS = [
         "title": "Supplements that work",
         "summary": "Creatine, caffeine and protein powder: doses, timing and what they really do.",
         "minutes": 4,
-        "sources": ["issncreatine", "issncaffeine", "issnprotein"],
+        "sources": ["issncreatine", "issncaffeine", "issnprotein", "efsa_caffeine"],
         "blocks": [
             lead("Food first. A few supplements have strong evidence and can help. None replaces training, sleep or enough protein from meals."),
             table(["Supplement", "Dose", "Timing"], [
                 ["Creatine monohydrate", "3 to 5 g a day", "Any time, every day"],
-                ["Caffeine", "3 to 6 mg per kg", "About 60 min before"],
+                ["Caffeine", "About 3 mg per kg (about 200 mg at most at once)", "About 60 min before"],
                 ["Protein powder", "20 to 40 g a serving", "When meals fall short"],
             ]),
             stats([
@@ -415,9 +415,9 @@ CHAPTERS = [
                 ("3 to 6", "mg per kg", "of caffeine improves performance, about 60 minutes before", "issncaffeine"),
             ]),
             bars("Caffeine for a 70 kg person", "mg", [
-                ("Effective, low end (3 mg/kg)", 210, "210 mg"),
-                ("Effective, high end (6 mg/kg)", 420, "420 mg"),
-            ], "issncaffeine"),
+                ("Example dose (3 mg/kg)", 210, "210 mg"),
+                ("EU single-dose safety level", 200, "about 200 mg; more at once is above it. Avoid caffeine if pregnant, sensitive or on medication"),
+            ], "efsa_caffeine"),
             evidence("Creatine has been studied for up to 5 years at 0.3 to 0.8 g per kg a day, in healthy people and in patients, with no adverse health risks found. Protein powder is simply protein: a serving counts the same as protein from food.", "issncreatine", "strong"),
             compare("Worth it", [
                 "Creatine monohydrate for strength and muscle",
@@ -455,8 +455,8 @@ CHAPTERS = [
                 "Form on basic lifts is not solid yet",
                 "Lots of running would compete with your strength work",
             ]),
-            stats([("More", "interference", "on strength and size from frequent, long running sessions", "wilson2012")]),
-            evidence("Combining endurance and strength training costs some strength, size and especially power gains, and the cost grows with how often and how long the endurance sessions are.", "wilson2012", "strong"),
+            stats([("Possible", "interference", "with strength and size from frequent, long running sessions", "wilson2012")]),
+            evidence("Adding endurance training mainly reduces power gains. Strength and size gains drop mostly when the endurance is running, and more so the more often and longer you run.", "wilson2012", "moderate"),
         ],
     },
     {
@@ -470,8 +470,8 @@ CHAPTERS = [
             lead("Rest long enough to repeat good reps. Cutting rest short saves minutes but costs quality."),
             bars("Rest to aim for", "minutes", [
                 ("Big lifts for strength", 2, "2 min or more"),
-                ("Muscle building", 1.5, "over 1 min"),
-                ("Light accessory work", 1, "about 1 min"),
+                ("Muscle building (evidence under review)", 1.5, "over 1 min"),
+                ("Other exercises (Levlofit rule)", 1.5, "about 90 s"),
             ], "grgic2018"),
             stats([
                 ("2", "minutes or more", "of rest maximises strength gains", "grgic2018"),
@@ -482,7 +482,7 @@ CHAPTERS = [
                 ("Breathe and reset", "Sip water and think about the next set."),
                 ("Go when ready", "Skip early if you feel fresh, add time if not."),
             ]),
-            evidence("Strength improves with short rests too, but rests of 2 minutes or more give the most strength in both trained and untrained people.", "grgic2018", "moderate"),
+            evidence("Strength improves even with short rests. Trained lifters gain the most strength with rests over 2 minutes; for beginners, 1 to 2 minutes is enough.", "grgic2018", "moderate"),
         ],
     },
     {
@@ -934,7 +934,7 @@ CHAPTERS = [
         "title": "HYROX and functional fitness",
         "summary": "The race format, the eight stations, and how to train running and strength together.",
         "minutes": 4,
-        "sources": ["hyrox", "wilson2012"],
+        "sources": ["hyrox"],
         "blocks": [
             lead("HYROX is 8 km of running split by 8 workout stations. It rewards a strong engine and strength that holds up while tired."),
             table(["Station, after each 1 km run", "Standard"], [
@@ -965,7 +965,7 @@ CHAPTERS = [
                 "Only running, no station practice",
                 "Skipping strength work",
             ]),
-            evidence("Running and lifting in one plan works; keeping hard runs and leg sessions apart limits interference with strength.", "wilson2012", "moderate"),
+            text("Running and lifting can share one plan. Levlofit tip: keep hard runs and leg sessions on different days; the evidence on how much they interfere is mixed."),
         ],
     },
     {
@@ -1212,9 +1212,11 @@ CHAPTERS = [
                 "Walking, cycling, swimming, light lifting",
                 "Moderate effort: you can still talk",
             ], "Stop and seek care", [
-                "Bleeding or fluid leaking",
-                "Dizziness, chest pain or headache",
-                "Painful contractions",
+                "Bleeding, or fluid that keeps leaking",
+                "Dizziness or faintness that does not settle with rest",
+                "Chest pain",
+                "Painful regular contractions",
+                "Breathlessness that does not settle with rest",
             ]),
         ],
     },

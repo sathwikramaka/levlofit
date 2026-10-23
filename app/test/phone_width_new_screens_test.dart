@@ -82,7 +82,7 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
     await tester.pump(const Duration(seconds: 1));
-    expect(find.textContaining('Waist to height 0.65, Very high risk'), findsOneWidget);
+    expect(find.textContaining('Waist to height 0.65, Above the healthy range: higher risk'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

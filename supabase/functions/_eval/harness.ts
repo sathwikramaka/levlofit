@@ -6,7 +6,7 @@ import { register } from 'node:module';
 import { fakeClient } from '../_test/supabase-server-mock.mjs';
 import type { Case, Step } from './cases.ts';
 import { PERSONAS } from './personas.ts';
-import type { Observed, Score } from './score.ts';
+import { laterThisWeek, type Observed, type Score } from './score.ts';
 
 register('../_test/npm-loader.mjs', import.meta.url);
 
@@ -28,7 +28,12 @@ function scriptedFetch(steps: Step[], seen: unknown[]) {
     if (step === 'hang') {
       return new Promise((_, reject) => init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
     }
-    if (typeof step === 'string') return Response.json({ choices: [{ message: { content: step } }], usage: { prompt_tokens: 0, completion_tokens: 0 } });
+    if (typeof step === 'string') {
+      // {restDay}: the first rest day the app offered (move cases), so scripted replies work on any weekday.
+      const restDay = laterThisWeek()[0];
+      const content = restDay ? step.replaceAll('{restDay}', restDay) : step.replace(/\n?MOVE: \{restDay\}/g, ''); // Sunday: no line
+      return Response.json({ choices: [{ message: { content } }], usage: { prompt_tokens: 0, completion_tokens: 0 } });
+    }
     if ('raw' in step) return new Response(step.raw, { status: 200, headers: { 'content-type': 'application/json' } });
     return new Response('{"error":"scripted"}', { status: step.status, headers: step.retryAfter ? { 'retry-after': step.retryAfter } : {} });
   }) as typeof fetch;
@@ -55,6 +60,7 @@ async function runOne(c: Case, opts: { live?: boolean; steps?: Step[] }): Promis
   // Earlier turns of this chat, as the handler reads them: newest first (it reverses them).
   if (c.history) tables.coach_messages = { data: c.history.map((m, i) => ({ id: i + 1, ...m })).reverse() };
   if (c.thread) tables.coach_threads = { data: c.thread };
+  Object.assign(tables, c.tables ?? {}); // not cloned: a table may answer with a function, and the fake never mutates it
   const client = fakeClient(tables, ops);
   (globalThis as any).__supabaseCtx = { userClaims: { id: '00000000-0000-0000-0000-0000000000e1' }, supabase: client, supabaseAdmin: client };
 
@@ -95,7 +101,7 @@ async function runOne(c: Case, opts: { live?: boolean; steps?: Step[] }): Promis
   let status = 0, body: Record<string, unknown> | null = null;
   const started = Date.now();
   try {
-    const res = await handler(new Request('http://local/coach-chat', { method: 'POST', body: JSON.stringify({ message: c.message, threadId: THREAD }) }));
+    const res = await handler(new Request('http://local/coach-chat', { method: 'POST', body: JSON.stringify({ message: c.message, threadId: THREAD, ...(c.today ? { today: { day: new Date().toISOString().slice(0, 10), ids: c.today, restDays: laterThisWeek() } } : {}) }) }));
     status = res.status;
     body = await res.json().catch(() => null);
   } finally {

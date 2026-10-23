@@ -298,10 +298,10 @@ export function bmiCategory(bmi: number): Plan['bmi']['category'] {
   return 'obese';
 }
 
-export function waistToHeightCategory(ratio: number): 'healthy' | 'increased' | 'high' {
-  if (ratio < 0.5) return 'healthy';
-  if (ratio < 0.6) return 'increased';
-  return 'high';
+// One edge at 0.5 (Misra 2025 Indian definition: "over 0.5"); the earlier 0.6 "high" edge had no readable source
+// (owner decision 2026-10-24, awaiting clinician review).
+export function waistToHeightCategory(ratio: number): 'healthy' | 'increased' {
+  return ratio < 0.5 ? 'healthy' : 'increased';
 }
 
 const bmiOf = (input: PlanInput) => Math.round((input.weightKg / (input.heightCm / 100) ** 2) * 10) / 10;

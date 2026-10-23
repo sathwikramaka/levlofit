@@ -96,6 +96,25 @@ export const SYNONYMS: Record<string, string[]> = {
 const SYNONYM_WEIGHT = 0.5;
 
 /**
+ * Questions people word in many ways, recognised by phrase and sent to the chapter that answers them (coach plan
+ * item 4). A match adds the chapter's own words at full weight and ranks that chapter's passages first; everything
+ * else ranks as before. Deliberately narrow: each pattern needs the topic's two halves (a pause word and "sets";
+ * an endurance word and a gains word), so a single everyday word never moves a question.
+ */
+export const TOPICS: { chapter: string; terms: string[]; match: RegExp }[] = [
+  {
+    chapter: 'rest-between-sets',
+    terms: ['rest'],
+    match: /\b(rest|wait|chill|break|pause|recover)\w*\b[^?.!]*\b(between|before|after)\b[^?.!]*\bsets?\b|\bbetween\s+(my\s+)?sets?\b[^?.!]*\b(rest|wait|chill|break|pause)\w*\b/,
+  },
+  {
+    chapter: 'one-step-at-a-time',
+    terms: ['interference', 'endurance'],
+    match: /\b(cardio|running|runs?|jogging|endurance|aerobic)\b[^?.!]*\b(gains?|muscles?|strength|size|growth|lifting|bulk\w*)\b|\b(gains?|muscles?|strength|lifting)\b[^?.!]*\b(cardio|running|runs?|jogging|endurance|aerobic)\b/,
+  },
+];
+
+/**
  * The passages most related to [query], best first (BM25 over the passage text and chapter title).
  * Ranking rule: the question's most specific words (the ones found in the fewest passages) anchor it, and passages
  * containing an anchor word come before passages that do not. So "Is creatine safe?" ranks creatine passages above
@@ -109,13 +128,16 @@ export function retrieve(query: string, corpus: Corpus = HANDBOOK, opts: { k?: n
   const ix = index(corpus);
   const weights = new Map(q.map((t) => [t, 1]));
   for (const t of q) for (const s of SYNONYMS[t] ?? []) if (!weights.has(s)) weights.set(s, SYNONYM_WEIGHT);
+  const topics = TOPICS.filter((t) => t.match.test(query.toLowerCase()));
+  const topicChapters = new Set(topics.map((t) => t.chapter));
+  for (const t of topics) for (const w of t.terms.flatMap(tokens)) weights.set(w, 1);
   // A question word the Handbook never uses stands in through its listed synonyms (e.g. "depressed" -> "depression").
   const known = [...new Set(q.flatMap((t) => (ix.df.has(t) ? [t] : (SYNONYMS[t] ?? []).filter((s) => ix.df.has(s)))))];
   const fewest = Math.min(...known.map((t) => ix.df.get(t)!));
   const anchors = new Set(known.filter((t) => ix.df.get(t) === fewest));
   const banned = exclude.filter(Boolean).map((t) => new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'));
   const n = ix.docs.length;
-  const hits: (Hit & { anchored: boolean })[] = [];
+  const hits: (Hit & { anchored: boolean; topic: boolean })[] = [];
   ix.docs.forEach((d, i) => {
     let score = 0;
     for (const [t, w] of weights) {
@@ -127,10 +149,10 @@ export function retrieve(query: string, corpus: Corpus = HANDBOOK, opts: { k?: n
     }
     const p = ix.usable[i];
     if (score >= minScore && !banned.some((re) => re.test(p.text))) {
-      hits.push({ passage: p, score: Math.round(score * 1000) / 1000, anchored: [...anchors].some((t) => d.tf.has(t)) });
+      hits.push({ passage: p, score: Math.round(score * 1000) / 1000, anchored: [...anchors].some((t) => d.tf.has(t)), topic: topicChapters.has(p.chapter) });
     }
   });
-  hits.sort((a, b) => Number(b.anchored) - Number(a.anchored) || b.score - a.score || a.passage.id.localeCompare(b.passage.id));
+  hits.sort((a, b) => Number(b.topic) - Number(a.topic) || Number(b.anchored) - Number(a.anchored) || b.score - a.score || a.passage.id.localeCompare(b.passage.id));
   return hits.slice(0, k).map(({ passage, score }) => ({ passage, score }));
 }
 

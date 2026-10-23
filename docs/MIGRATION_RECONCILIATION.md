@@ -44,7 +44,7 @@ Cloud history was written by `apply_migration` with apply-time versions; local f
 | 20261007100000_soya_chunks | 20261007072328 | Applied, same SQL |
 | 20261007200000_profile_avatar | 20261007083557 | Applied, same SQL |
 | 20261007300000_app_feedback | 20261007084949 + 20261007085015 app_feedback_user_index | Applied as two records; concatenated SQL identical |
-| 20261007400000_handbook_v3 | none | **Partly applied, unrecorded**: v3 columns exist; 38 chapters hold a pre-correction draft (data hash 432c7c6f; committed daaea96 version fe8b8740; current builder output af1ea000 (fresh local DB, all 34 migrations, 2026-10-18; was 81a79a56 before the 2026-10-18 handbook changes)) |
+| 20261007400000_handbook_v3 | none | **Partly applied, unrecorded**: v3 columns exist; 38 chapters hold a pre-correction draft (data hash 432c7c6f; committed daaea96 version fe8b8740; current builder output af1ea000 [superseded 2026-10-24 by b3b87df6: current builder output after the item 4 and item 5 Handbook edits, computed read-only from the migration's VALUES list with the same md5 expression and the table's generated search column (tools/handbook_fingerprint_sql.py; validated: it reproduces af1ea000 from the commit 1803009 file, which a throwaway DB also returned after applying it); check b3b87df6 after any production apply] (fresh local DB, all 34 migrations, 2026-10-18; was 81a79a56 before the 2026-10-18 handbook changes)) |
 | 20261007500000_remove_pilates | 20261007092712 | Applied, same SQL (0 pilates rows remain) |
 | 20261013100000_reliability_and_limits | none | **Not applied** (all 23 schema differences between cloud and local are this migration's objects plus the old "own levels" policy it replaces) |
 
@@ -91,7 +91,7 @@ No new migration file is proposed: the pending local files are already safe to a
 `supabase db query --project-ref ndeozgxowggkljluaccz -f tools/schema_state.sql` must equal the local result:
 colgrant 447 18aa28f3d534, column 163 37752a1a59a5, constraint 110 5c013aebb422, function 6 4aff81f36859, grant 64
 3751b1e2ab49, index 40 c614a2c5128f, policy 27 16e4c8f9aa56, trigger 2 5c55166e758e. `data` will differ only by the
-cloud's exercise rows; handbook_chapters must hash af1ea000 (fresh local DB, all 34 migrations, 2026-10-18; was 81a79a56 before the 2026-10-18 handbook changes) (check with the handbook line of the query). Then deploy the
+cloud's exercise rows; handbook_chapters must hash af1ea000 [superseded 2026-10-24 by b3b87df6: current builder output after the item 4 and item 5 Handbook edits, computed read-only from the migration's VALUES list with the same md5 expression and the table's generated search column (tools/handbook_fingerprint_sql.py; validated: it reproduces af1ea000 from the commit 1803009 file, which a throwaway DB also returned after applying it); check b3b87df6 after any production apply] (fresh local DB, all 34 migrations, 2026-10-18; was 81a79a56 before the 2026-10-18 handbook changes) (check with the handbook line of the query). Then deploy the
 three functions and run the release smoke test.
 
 ## Forward-only preflight (Option B, recommended 2026-10-14; still not authorised)
@@ -132,7 +132,7 @@ Apply (owner, after approval): run the file wrapped as `begin;` + file + `commit
 Verify:
 - V1 `select count(*), min(id), max(id), left(md5(string_agg(id||':'||slug, ',' order by id)),10) from public.handbook_chapters;` = 38, 1, 38, dfba87e4ff
 - V2 `select count(*) filter (where body_md like '%Vanaspati (trans fats) and oil reused for frying%') as fixed, count(*) filter (where body_md like '%not a week off%') as old_text from public.handbook_chapters;` = 1, 0
-- V3 `select left(md5(string_agg(h::text, '' order by h::text)),8) from public.handbook_chapters h;` = af1ea000 (fresh local DB, all 34 migrations, 2026-10-18; was 81a79a56 before the 2026-10-18 handbook changes) (local result; a different value with V1/V2 passing means a text-search config difference, not a content error: then compare `md5(string_agg(body_md,'' order by id))` with local)
+- V3 `select left(md5(string_agg(h::text, '' order by h::text)),8) from public.handbook_chapters h;` = af1ea000 [superseded 2026-10-24 by b3b87df6: current builder output after the item 4 and item 5 Handbook edits, computed read-only from the migration's VALUES list with the same md5 expression and the table's generated search column (tools/handbook_fingerprint_sql.py; validated: it reproduces af1ea000 from the commit 1803009 file, which a throwaway DB also returned after applying it); check b3b87df6 after any production apply] (fresh local DB, all 34 migrations, 2026-10-18; was 81a79a56 before the 2026-10-18 handbook changes) (local result; a different value with V1/V2 passing means a text-search config difference, not a content error: then compare `md5(string_agg(body_md,'' order by id))` with local)
 Rollback: restore rows from P2 export (or backup).
 
 ### Migration 2: 20261013100000_reliability_and_limits

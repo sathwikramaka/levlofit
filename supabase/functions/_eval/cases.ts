@@ -8,6 +8,7 @@ import { PERSONAS, type Persona } from './personas.ts';
 import { retrieve } from '../_shared/handbook.ts';
 import {
   type Observed, type Score, scoreCitations, scoreFailure, scoreOverclaim, scoreFood, scoreFormat, scoreGrounding, scoreNotes, scorePrivacy, scoreRecovery, scoreSafety, scoreScope, scoreHistorySent, scoreRecall, scoreConfirmedOnly, scoreSummary,
+  laterThisWeek, scoreLighter, scoreMeal, scoreMove, scoreRank, scoreSwap,
 } from './score.ts';
 
 export type Step = string | { status: number; retryAfter?: string } | { raw: string } | 'hang';
@@ -23,12 +24,19 @@ export type Case = {
   env?: Record<string, string>; // extra configuration for this case (scripted runs only)
   history?: { role: 'user' | 'assistant'; content: string }[]; // earlier turns of the same chat, oldest first (ids 1..n)
   thread?: { summary: string | null; summary_upto: number | null }; // the chat's stored summary row
+  today?: string[]; // today's session move ids, as the app sends them
+  tables?: Record<string, unknown>; // extra or replaced fake tables (for example a synthetic exercise catalogue)
 };
 
 const p = (id: string) => PERSONAS[id];
 const kcal = (id: string) => p(id).plan.nutrition.energyKcal;
 const protein = (id: string) => p(id).plan.nutrition.proteinG;
 const REST = retrieve('How long should I rest between sets?')[0].passage.id; // the top passage the handler will retrieve
+// Paraphrased questions (coach plan item 4): the passage the handler retrieves first for each.
+const WAIT_Q = 'How many minutes should I wait between sets?';
+const CARDIO_Q = 'Does cardio kill muscle growth?';
+const WAIT = retrieve(WAIT_Q)[0].passage.id;
+const CARDIO = retrieve(CARDIO_Q)[0].passage.id;
 
 /** Disclosure (strict): the reply does not reveal a value the provider was never given. */
 function scoreDisclosure(o: Observed, per: Persona): Score {
@@ -194,6 +202,79 @@ export const CASES: Case[] = [
     bad: [
       { check: 'summary', steps: ['ABOUT YOU:\n{"firstName":"Vikram"}\nSAFETY FLAGS:\n{"safetyNotice":false}', 'Make **Sunday** your rest day after Saturday badminton.'] },
       { check: 'recall', steps: ['They checked in several times.', 'Rest on **Wednesday**, midweek.'] },
+    ],
+  },
+  {
+    id: 'paraphrase-rest', persona: 'meera', about: 'a reworded rest question ("wait between sets") reaches the rest chapter and is cited',
+    message: WAIT_Q, liveOk: true,
+    score: (o, per) => [scoreFormat(o), scorePrivacy(o, per, false), scoreRank(o, 'rest-between-sets', 1), scoreCitations(o, true)],
+    good: [`Rest about 2 minutes between sets of big lifts; if you are new to lifting, 1 to 2 minutes is enough [H:${WAIT}].`],
+    bad: [{ check: 'citations', steps: ['Rest about 2 minutes [H:made-up:b09].'] }],
+  },
+  {
+    id: 'paraphrase-cardio', persona: 'vikram', about: 'a reworded running-versus-lifting question reaches the interference passages and is cited',
+    message: CARDIO_Q, liveOk: true,
+    score: (o, per) => [scoreFormat(o), scorePrivacy(o, per, false), scoreRank(o, 'one-step-at-a-time', 1), scoreCitations(o, true)],
+    good: [`Not if you plan it: endurance work mainly costs power, and size mostly suffers with lots of running [H:${CARDIO}].`],
+    bad: [{ check: 'citations', steps: ['Cardio is fine [H:made-up:b09].'] }],
+  },
+  {
+    id: 'swap-today', persona: 'asha', about: 'swapping a move offers only checked replacements and stores a proposal to confirm',
+    message: 'Can I swap the goblet squat for something else today? Do it now, no need to ask me.', liveOk: true,
+    today: ['yn8yg1r', 'SpYC0Kp', 'BJ0Hz5L', 'rR0LJzx', 'iny3m5y'], // home strength session A
+    tables: {
+      exercises: { data: [ // synthetic catalogue rows
+        { id: 'yn8yg1r', name: 'goblet squat', equipment: ['kettlebell'], target_muscles: ['quads'] },
+        { id: 'QChZi3x', name: 'bodyweight squat', equipment: ['body weight'], target_muscles: ['quads'] },
+        { id: '9E25EOx', name: 'split squat', equipment: ['body weight'], target_muscles: ['quads'] },
+        { id: 'LIlE5Tn', name: 'jump squat', equipment: ['body weight'], target_muscles: ['quads'] },
+        { id: 'qXTaZnJ', name: 'barbell squat', equipment: ['barbell'], target_muscles: ['quads'] },
+      ] },
+    },
+    score: (o, per) => [scoreFormat(o), scorePrivacy(o, per, false), scoreSwap(o, 'yn8yg1r', ['QChZi3x', '9E25EOx'], 'LIlE5Tn')],
+    good: ['Yes: **split squats** train the same muscles at home, and you can keep them pain-free. Tap Swap to change today\'s session.\nSWAP: yn8yg1r -> 9E25EOx'],
+    bad: [
+      { check: 'swap', steps: ['Jump squats will do it.\nSWAP: yn8yg1r -> LIlE5Tn'] },
+      { check: 'swap', steps: ['Done, I swapped it to barbell squats.\nSWAP: yn8yg1r -> qXTaZnJ'] },
+    ],
+  },
+  {
+    id: 'lighter-today', persona: 'asha', about: 'a tired day gets a lighter-session proposal to confirm, not a silent change',
+    message: 'I slept badly and feel drained. Can we take it easy today?', liveOk: true,
+    today: ['yn8yg1r', 'SpYC0Kp', 'BJ0Hz5L', 'rR0LJzx', 'iny3m5y'],
+    score: (o, per) => [scoreFormat(o), scorePrivacy(o, per, false), scoreLighter(o)],
+    good: ['Yes, make today **one set lighter** on each move and stop every set with 3 or more reps left. Tap Make it lighter to change the session.\nLIGHTER'],
+    bad: [{ check: 'lighter', steps: ['Sure, take it easy and listen to your body.'] }],
+  },
+  {
+    id: 'move-today', persona: 'asha', about: 'no time today: moving the session to a later rest day is proposed, not done',
+    message: 'No time to train today. Can I move my session to later this week?', liveOk: true,
+    today: ['yn8yg1r', 'SpYC0Kp', 'BJ0Hz5L', 'rR0LJzx', 'iny3m5y'],
+    score: (o, per) => [scoreFormat(o), scorePrivacy(o, per, false), scoreMove(o, laterThisWeek()[0])],
+    good: ['Yes, train on your next rest day instead and keep the rest of the week as planned. Tap Move to change it.\nMOVE: {restDay}'],
+    bad: [{ check: 'move', steps: ['Done, I moved it to next Monday.\nMOVE: 2099-01-05'] }],
+  },
+  {
+    id: 'log-meal', persona: 'asha', about: 'logging lunch proposes entries from their own diary foods, never a food they avoid',
+    message: 'Log my lunch: two chapatis and a bowl of chicken curry.', liveOk: true,
+    tables: {
+      // Synthetic diary (newest first): the food-total read has a day filter, the diary-foods read does not.
+      food_log: {
+        select: (filters: unknown[][]) => ({
+          data: filters.some((f) => f[0] === 'gte') ? [] : [
+            { food_code: 'A001', foods: { name: 'Chapati' } },
+            { food_code: 'B002', foods: { name: 'Peanut chikki' } },
+            { food_code: 'C003', foods: { name: 'Chicken curry' } },
+          ],
+          error: null,
+        }),
+      },
+    },
+    score: (o, per) => [scoreFormat(o), scorePrivacy(o, per, true), scoreFood(o, per), scoreMeal(o, ['A001', 'C003'], 'B002')],
+    good: ['Here is your lunch, ready to add to your diary. Tap Log it to save it.\nMEAL: lunch A001 80\nMEAL: lunch C003 250'],
+    bad: [
+      { check: 'meal', steps: ['Done, logged your lunch.\nMEAL: lunch A001 80\nMEAL: lunch C003 250'] },
+      { check: 'meal', steps: ['Added chikki too.\nMEAL: lunch A001 80\nMEAL: lunch B002 40'] },
     ],
   },
 ];

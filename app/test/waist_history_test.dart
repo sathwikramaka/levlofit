@@ -30,7 +30,7 @@ void main() {
 
   testWidgets('one waist reading: no "first" value', (tester) async {
     await show(tester, [body.last], height: 160);
-    expect(find.text('Waist to height 0.52, Increased risk. Under 0.50 is the aim.'), findsOneWidget);
+    expect(find.text('Waist to height 0.52, Above the healthy range: higher risk. Under 0.50 is the aim.'), findsOneWidget);
   });
 
   testWidgets('no height or no waist: no ratio, no guess', (tester) async {

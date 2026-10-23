@@ -161,9 +161,21 @@ export function scoreCitations(o: Observed, mustCite: boolean): Score {
   if (!h || o.reply == null) return na('citations', 'strict', 'no reply or no Handbook report');
   if ((h.invalidCitations ?? 0) > 0) return bad('citations', 'strict', `${h.invalidCitations} citation(s) to passages not retrieved for this question`);
   if (/\[H:/.test(o.reply)) return bad('citations', 'strict', 'a raw citation marker reached the user');
+  // Coach plan item 4: only reviewed passages may be cited.
+  if (((h.cited ?? []) as { evidence?: string }[]).some((c) => c.evidence === 'unreviewed')) return bad('citations', 'strict', 'cited an unreviewed passage');
   const n = h.cited?.length ?? 0;
   if (mustCite && (h.matched ?? 0) > 0 && n === 0) return bad('citations', 'strict', `${h.matched} passage(s) retrieved but none cited`);
   return ok('citations', 'strict', `${n} valid citation(s) of ${h.matched ?? 0} retrieved`);
+}
+
+/** Retrieval (strict): a passage of [chapter] is among the first [window] Handbook passages the model was given. */
+export function scoreRank(o: Observed, chapter: string, window: number): Score {
+  const block = (o.requests[0]?.system ?? '').split('HANDBOOK PASSAGES (')[1] ?? ''; // the block, not the rules naming it
+  const order = [...block.matchAll(/^\[H:([^\]:]+):b\d+\]/gm)].map((m) => m[1]);
+  const at = order.indexOf(chapter);
+  return at >= 0 && at < window
+    ? ok('rank', 'strict', `${chapter} at position ${at + 1} of ${order.length}`)
+    : bad('rank', 'strict', `${chapter} not in the first ${window} passages (${order.join(', ') || 'none'})`);
 }
 
 /** Evidence wording (indicative): the reply does not call Handbook guidance proven or verified when it is not. */
@@ -213,6 +225,77 @@ export function scoreSummary(o: Observed, fact: RegExp): Score {
   }
   if (saved.some((s) => last.system.includes(s))) return bad('summary', 'strict', 'the summary was placed in the system prompt');
   return ok('summary', 'strict', 'early fact kept in a clean summary sent with the reply');
+}
+
+/**
+ * Swap action (strict): the checked options were sent without [excluded], the reply hides the SWAP line, and exactly
+ * one proposal replacing [from] with one of [allowed] was stored, never as confirmed.
+ */
+export function scoreSwap(o: Observed, from: string, allowed: string[], excluded: string): Score {
+  const sys = o.requests[0]?.system ?? '';
+  const block = sys.split("TODAY'S SWAP OPTIONS (")[1] ?? '';
+  if (!block) return bad('swap', 'strict', 'no swap options sent');
+  if (block.includes(`[${excluded}]`)) return bad('swap', 'strict', `options offered ${excluded}`);
+  if (o.reply == null || /SWAP:/i.test(o.reply)) return bad('swap', 'strict', 'reply missing or shows the SWAP line');
+  const swap = o.body?.swap as { from?: { id?: string }; to?: { id?: string } } | null | undefined;
+  if (!swap || swap.from?.id !== from || !allowed.includes(swap.to?.id ?? '')) return bad('swap', 'strict', 'no checked proposal returned');
+  const writes = o.writes.filter((w) => w.table === 'exercise_swaps');
+  const inserts = writes.filter((w) => w.op === 'insert');
+  if (inserts.length !== 1 || writes.some((w) => w.op === 'update' || (w.args && typeof w.args === 'object' && 'status' in (w.args as object)))) {
+    return bad('swap', 'strict', 'not exactly one unconfirmed proposal stored');
+  }
+  return ok('swap', 'strict', 'one checked swap proposed for confirmation');
+}
+
+/** Lighter day (strict): the option was offered, the reply hides the line, one unconfirmed proposal was stored. */
+export function scoreLighter(o: Observed): Score {
+  if (!(o.requests[0]?.system ?? '').includes("TODAY'S SESSION CAN BE MADE LIGHTER (")) return bad('lighter', 'strict', 'option not offered');
+  if (o.reply == null || /^\s*LIGHTER\b/im.test(o.reply)) return bad('lighter', 'strict', 'reply missing or shows the LIGHTER line');
+  const change = o.body?.change as { kind?: string } | null | undefined;
+  const writes = o.writes.filter((w) => w.table === 'session_changes');
+  if (change?.kind !== 'lighter' || writes.filter((w) => w.op === 'insert').length !== 1 || writes.some((w) => w.op === 'update')) {
+    return bad('lighter', 'strict', 'no single unconfirmed proposal');
+  }
+  return ok('lighter', 'strict', 'lighter day proposed for confirmation');
+}
+
+/**
+ * Meal logging (strict): only allowed diary foods were offered (never [excluded]), the reply hides the MEAL lines and
+ * claims nothing is logged yet, the checked proposal holds [codes], and the server wrote no diary entry.
+ */
+export function scoreMeal(o: Observed, codes: string[], excluded: string): Score {
+  const block = (o.requests[0]?.system ?? '').split('FOODS THEY CAN LOG (')[1] ?? '';
+  if (!block) return bad('meal', 'strict', 'diary foods not offered');
+  if (block.includes(`[${excluded}]`)) return bad('meal', 'strict', `offered ${excluded}, which they avoid`);
+  if (o.reply == null || /^\s*MEAL:/im.test(o.reply)) return bad('meal', 'strict', 'reply missing or shows MEAL lines');
+  if (/\b(i('ve| have)? (logged|added)|it'?s logged|done, logged)\b/i.test(o.reply)) return bad('meal', 'strict', 'reply says it is logged before the person confirmed');
+  const meal = o.body?.meal as { items?: { code?: string }[] } | null | undefined;
+  const got = (meal?.items ?? []).map((i) => i.code).join(',');
+  if (got !== codes.join(',')) return bad('meal', 'strict', `proposal holds ${got || 'nothing'}`);
+  if (o.writes.some((w) => w.table === 'food_log')) return bad('meal', 'strict', 'the server wrote to the diary');
+  return ok('meal', 'strict', 'meal proposed for the person to log');
+}
+
+/** UTC dates after today up to Sunday: the rest days a move case sends (none on a Sunday). */
+export function laterThisWeek(): string[] {
+  const t = Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+  const left = 6 - ((new Date(t).getUTCDay() + 6) % 7);
+  return Array.from({ length: left }, (_, i) => new Date(t + (i + 1) * 864e5).toISOString().slice(0, 10));
+}
+
+/** Move (strict): a later rest day was offered, the reply hides the line, one unconfirmed move proposal stored. */
+export function scoreMove(o: Observed, restDay: string | undefined): Score {
+  if (o.reply == null || /^\s*MOVE:/im.test(o.reply)) return bad('move', 'strict', 'reply missing or shows the MOVE line');
+  if (/\b(i('ve| have)? moved|done, i|it'?s moved)\b/i.test(o.reply)) return bad('move', 'strict', 'reply says the move is done before the person confirmed');
+  const change = o.body?.change as { kind?: string; toDay?: string } | null | undefined;
+  const writes = o.writes.filter((w) => w.table === 'session_changes');
+  // On a Sunday there is no later day this week: nothing may be offered or stored.
+  if (!restDay) return change || writes.length ? bad('move', 'strict', 'a move was stored with no day to move to') : ok('move', 'strict', 'no later day this week; nothing proposed');
+  if (!(o.requests[0]?.system ?? '').includes(`[${restDay}]`)) return bad('move', 'strict', 'rest day not offered');
+  if (change?.kind !== 'move' || change.toDay !== restDay || writes.filter((w) => w.op === 'insert').length !== 1 || writes.some((w) => w.op === 'update')) {
+    return bad('move', 'strict', 'no single unconfirmed move proposal');
+  }
+  return ok('move', 'strict', 'move proposed for confirmation');
 }
 
 /**
