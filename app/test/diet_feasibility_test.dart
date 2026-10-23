@@ -356,4 +356,36 @@ void main() {
     expect(d.check.feasible, _withinChecks(d, 4500, 90));
     if (!d.check.feasible) expect(d.check.issues.join(' '), contains('Energy:'));
   });
+
+  // Coach plan item 5: property test over seeded random profiles (energy, protein, budget, diet, restrictions).
+  test('properties: 40 random profiles x 2 days keep every rule, and the feasibility flag always tells the truth', () {
+    var seed = 20261024;
+    double rnd() => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    int between(int lo, int hi) => lo + (rnd() * (hi - lo + 1)).floor();
+    const diets = [<String>{}, _veg, _vegan, {'fish', 'meat', 'poultry', 'shellfish'}]; // non-veg, veg, vegan, eggitarian
+    const restrictions = ['dairy', 'peanut', 'soy', 'tree_nut'];
+    for (var i = 0; i < 40; i++) {
+      final excluded = {'beef', 'pork', ...diets[between(0, diets.length - 1)], for (final r in restrictions) if (rnd() < 0.25) r};
+      final kcal = between(1400, 3200).toDouble(), protein = between(60, 200).toDouble(), tier = between(1, 3);
+      final at = 'case $i: ${kcal.round()} kcal, ${protein.round()} g, tier $tier, ${excluded.toList()..sort()}';
+      for (final day in [0, 3]) {
+        final d = planDay(foods: foodsForTest, kcal: kcal, protein: protein, excluded: excluded, tier: tier, day: day);
+        expect(d.check.feasible, _withinChecks(d, kcal, protein), reason: '$at, day $day: flag disagrees with the numbers');
+        expect(d.check.hitStepLimit, isFalse, reason: '$at, day $day');
+        if (!d.check.feasible) expect(d.check.issues, isNotEmpty, reason: '$at, day $day: infeasible without saying why');
+        final words = _forbiddenWords(excluded);
+        for (final it in _items(d)) {
+          expect(foodsForTest[it.code]!.tags.any(excluded.contains), isFalse, reason: '$at, day $day: ${it.name}');
+          if (tier == 1) expect(_aboveTier1.contains(it.code), isFalse, reason: '$at, day $day: ${it.name} above budget');
+        }
+        for (final o in d.check.options) {
+          for (final w in words) {
+            expect(o.toLowerCase().contains(w), isFalse, reason: '$at, day $day: suggestion "$o" names $w');
+          }
+        }
+        final soya = _items(d).where((it) => it.code == 'X001').fold(0.0, (s, it) => s + it.grams);
+        expect(soya, lessThanOrEqualTo(excluded.contains('soy') ? 0 : 50), reason: '$at, day $day: soya ${soya}g');
+      }
+    }
+  });
 }

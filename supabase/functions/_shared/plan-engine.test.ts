@@ -213,6 +213,9 @@ test('snapshot: strengths, gaps and waist-to-height are reported', () => {
   assert.deepEqual(plan.snapshot.strengths, ['Strength']);
   assert.deepEqual(plan.snapshot.gaps, ['Running']);
   assert.equal(plan.snapshot.waistToHeight?.category, 'increased'); // 90/175 = 0.51
+  // One edge at 0.5 (owner decision 2026-10-24, awaiting clinician review): no separate 0.6 "high" band.
+  assert.equal(generatePlan({ ...base, waistCm: 115 }).snapshot.waistToHeight?.category, 'increased'); // 0.66
+  assert.equal(generatePlan({ ...base, waistCm: 80 }).snapshot.waistToHeight?.category, 'healthy'); // 0.46
 });
 
 test('validateInput: 2.0 fields validated and round-tripped', () => {
@@ -258,4 +261,51 @@ test('coach roadmap: assess first, main goal level by level, then waiting goals;
   assert.match(fresh.steps[3].moveOnWhen, /Strength reaches Level 2/);
   const checked = buildRoadmap(plan, rows, new Set(['strength']));
   assert.equal(checked.steps[0].title, 'Strength, Level 0: S0');
+});
+
+// ---- property tests (coach plan item 5): the cited bounds hold for any valid answers ----------------------------
+
+test('properties: across 600 random valid inputs, energy never falls below BMR, protein stays 1.4-2.0 g/kg, exclusions hold, flags stop hard training', () => {
+  // Small deterministic generator, so a failure always reproduces.
+  let seed = 20261024;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const int = (lo: number, hi: number) => lo + Math.floor(rnd() * (hi - lo + 1));
+  const pick = <T>(xs: readonly T[]): T => xs[int(0, xs.length - 1)];
+  const subset = <T>(xs: readonly T[]): T[] => xs.filter(() => rnd() < 0.25);
+  // Expected exclusions, written out from the plan engine's sources (DIET_EXCLUDES, RESTRICTION_EXCLUDES).
+  const dietEx: Record<string, string[]> = {
+    vegetarian: ['meat', 'poultry', 'fish', 'shellfish', 'egg'], eggitarian: ['meat', 'poultry', 'fish', 'shellfish'],
+    vegan: ['meat', 'poultry', 'fish', 'shellfish', 'egg', 'dairy', 'honey'], non_vegetarian: [],
+  };
+  const restrictionEx: Record<string, string[]> = {
+    lactose: ['dairy'], gluten: ['wheat', 'barley', 'rye'], peanut: ['peanut'], tree_nut: ['tree_nut'], soy: ['soy'], egg: ['egg'], fish: ['fish'], shellfish: ['shellfish'],
+  };
+  const restrictions = ['lactose', 'gluten', 'peanut', 'tree_nut', 'soy', 'egg', 'fish', 'shellfish'] as const;
+  const flags = ['heart_condition', 'chest_pain', 'dizziness', 'pregnancy', 'other_medical'] as const;
+  for (let i = 0; i < 600; i++) {
+    const goals = [...new Set(Array.from({ length: int(1, 3) }, () => pick(CATALOG).goal))].map((id) => g(id, pick(EXPERIENCE)));
+    const sex = pick(['male', 'female'] as const);
+    const input = validateInput({
+      ...base, ageYears: int(18, 80), sex, heightCm: int(145, 205), weightKg: int(42, 140), weightGoal: pick(WEIGHT_GOALS), goals,
+      diet: pick(DIETS), restrictions: subset(restrictions), daysPerWeek: int(1, 7), sessionMinutes: pick([20, 30, 45, 60, 90]),
+      healthFlags: subset(flags).filter((f) => f !== 'pregnancy' || sex === 'female'),
+    });
+    const plan = generatePlan(input);
+    const n = plan.nutrition;
+    const at = `case ${i}: ${JSON.stringify({ age: input.ageYears, sex, h: input.heightCm, w: input.weightKg, goal: input.weightGoal })}`;
+    assert.ok(n.energyKcal >= n.bmrKcal - 5, `${at}: energy ${n.energyKcal} below BMR ${n.bmrKcal}`);
+    assert.ok(n.proteinPerKg >= 1.4 && n.proteinPerKg <= 2.0, `${at}: protein ${n.proteinPerKg} g/kg`);
+    assert.ok(Math.abs(n.proteinG - input.weightKg * n.proteinPerKg) <= 0.5, `${at}: protein grams`);
+    for (const tag of ['beef', 'pork', ...dietEx[input.diet], ...input.restrictions.flatMap((r) => restrictionEx[r])]) {
+      assert.ok(n.excludedFoodTags.includes(tag), `${at}: ${tag} not excluded`);
+    }
+    if (n.excludedFoodTags.includes('soy')) assert.equal(n.maxSoyaChunksDryG, 0, `${at}: soya allowed despite soy exclusion`);
+    const f = input.healthFlags ?? [];
+    if (f.some((x) => x !== 'pregnancy')) assert.ok(plan.review.some((r) => r.id === 'medical_clearance' && r.level === 'stop'), `${at}: no clearance stop`);
+    if (f.includes('pregnancy')) {
+      assert.ok(plan.review.some((r) => r.id === 'pregnancy' && r.level === 'stop'), `${at}: no pregnancy stop`);
+      assert.notEqual(plan.weightGoal, 'cut', `${at}: cutting in pregnancy`);
+    }
+    assert.ok(plan.trainingDaysPerWeek >= 1 && plan.trainingDaysPerWeek <= 7, `${at}: ${plan.trainingDaysPerWeek} days`);
+  }
 });

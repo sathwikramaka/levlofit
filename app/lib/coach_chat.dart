@@ -10,6 +10,7 @@ import 'coach_memory.dart';
 import 'icons.dart';
 import 'main.dart';
 import 'steps.dart' show coachStepsPayload, latestSteps, stepsShareWithCoach;
+import 'swaps.dart';
 import 'theme.dart';
 
 /// Opens Levlofit AI as a floating panel over the current screen, rising from the corner where the
@@ -192,10 +193,13 @@ class FitBotPainter extends CustomPainter {
 }
 
 class _Msg {
-  _Msg(this.role, this.text, {this.id, this.fresh = false, this.suggestions = const []});
+  _Msg(this.role, this.text, {this.id, this.fresh = false, this.suggestions = const [], this.swap, this.change, this.meal});
   final String role;
   final String text;
   final List<Fact> suggestions; // facts the coach suggests remembering; the person decides on the card
+  final SwapProposal? swap; // a checked swap of today's move; nothing changes until the person taps Swap
+  final ChangeProposal? change; // a lighter day for today's session, also only after the person confirms
+  final MealProposal? meal; // diary entries for a meal, logged only after the person taps Log it
   int? id; // set once the server has saved it; only saved messages can be edited
   bool fresh; // a reply that has just arrived writes itself in once
 
@@ -226,10 +230,11 @@ final CoachApi supabaseCoach = (
 );
 
 class CoachScreen extends StatefulWidget {
-  const CoachScreen({super.key, this.prompt, this.api, this.memory});
+  const CoachScreen({super.key, this.prompt, this.api, this.memory, this.swaps});
   final String? prompt;
   final CoachApi? api; // tests only; the app uses Supabase
   final MemoryApi? memory; // tests only
+  final SwapApi? swaps; // tests only
 
   @override
   State<CoachScreen> createState() => _CoachScreenState();
@@ -252,6 +257,7 @@ class _CoachScreenState extends State<CoachScreen> {
 
   late final CoachApi _api = widget.api ?? supabaseCoach;
   late final MemoryApi _memory = widget.memory ?? supabaseMemory;
+  late final SwapApi _swaps = widget.swaps ?? supabaseSwaps;
   bool get _deletingCurrent => _deleting != null && _deleting == _threadId;
 
   static const _starters = [
@@ -363,13 +369,17 @@ class _CoachScreenState extends State<CoachScreen> {
     });
     _toEnd();
     try {
-      final data = await _api.send({'message': text, 'threadId': ?_threadId, 'editFrom': ?editFrom, 'clientMsgId': id, 'activity': ?_sharedSteps()});
+      final today = todaySession;
+      final data = await _api.send({
+        'message': text, 'threadId': ?_threadId, 'editFrom': ?editFrom, 'clientMsgId': id, 'activity': ?_sharedSteps(),
+        if (today != null) 'today': {'day': today.day, 'ids': today.ids, 'restDays': today.restDays},
+      });
       if (!mounted) return;
       final threadId = data['threadId'] as String;
       setState(() {
         _messages.last.id = data['userMessageId'] as int?;
         final suggested = [for (final s in (data['suggestions'] as List?) ?? const []) if (s is Map) factFromRow({...s, 'status': 'suggested'})];
-        _messages.add(_Msg('assistant', data['reply'] as String, id: data['assistantMessageId'] as int?, fresh: true, suggestions: suggested));
+        _messages.add(_Msg('assistant', data['reply'] as String, id: data['assistantMessageId'] as int?, fresh: true, suggestions: suggested, swap: swapFromJson(data['swap']), change: changeFromJson(data['change']), meal: mealFromJson(data['meal'])));
         final known = _threads.where((t) => t.id == threadId).map((t) => t.title).firstOrNull;
         _threadId = threadId;
         _threads = [(id: threadId, title: known ?? (data['title'] as String?) ?? 'Chat', updated: DateTime.now()), ..._threads.where((t) => t.id != threadId)];
@@ -504,7 +514,14 @@ class _CoachScreenState extends State<CoachScreen> {
                                     onRegenerate: i == lastAssistant && !_busy ? _regenerate : null,
                                     onTyped: () => m.fresh = false,
                                     onGrow: () => _toEnd(jump: true),
-                                    below: m.suggestions.isEmpty ? null : FactSuggestions(key: ValueKey('suggest-${m.id ?? i}'), facts: m.suggestions, api: _memory),
+                                    below: m.suggestions.isEmpty && m.swap == null && m.change == null && m.meal == null
+                                        ? null
+                                        : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                            if (m.swap case final s?) SwapCard(key: ValueKey('swap-card-${s.id}'), proposal: s, api: _swaps),
+                                            if (m.change case final c?) LighterCard(key: ValueKey('change-card-${c.id}'), proposal: c, api: _swaps),
+                                            if (m.meal case final meal?) MealCard(key: ValueKey('meal-card-${m.id ?? i}'), proposal: meal, api: _swaps),
+                                            if (m.suggestions.isNotEmpty) FactSuggestions(key: ValueKey('suggest-${m.id ?? i}'), facts: m.suggestions, api: _memory),
+                                          ]),
                                   );
                           },
                         ),

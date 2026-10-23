@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  type Corpus, evidenceNote, HANDBOOK, handbookBlock, MIN_SCORE, type Passage, retrieve, SYNONYMS, tokens, validateCitations,
+  type Corpus, evidenceNote, HANDBOOK, handbookBlock, MIN_SCORE, type Passage, retrieve, SYNONYMS, tokens, TOPICS, validateCitations,
 } from './handbook.ts';
 
 const passage = (id: string, text: string, over: Partial<Passage> = {}): Passage => ({
@@ -218,6 +218,36 @@ test('prompt block: each passage carries its id, chapter, evidence status and ci
   assert.match(block, /\[H:rest:b01\] Rest between sets\. Evidence: checked against its cited source\./);
   const none = handbookBlock([{ passage: passage('x:b00', 'text', { sources: [] }), score: 5 }], FIXTURE);
   assert.match(none, /Sources: none cited in this block/);
+});
+
+test('topics (coach plan item 4): paraphrased rest and running questions rank their chapter first; others are unchanged', () => {
+  const top = (q: string) => retrieve(q).map((h) => h.passage.chapter);
+  for (const q of [
+    'How many minutes should I wait between sets?',
+    'How long should I chill between sets?',
+    'How long a break between sets?',
+    'Should I pause longer between sets?',
+    'How long should I chill before my next set of squats?',
+    'How long should I rest between sets?',
+  ]) assert.equal(top(q)[0], 'rest-between-sets', q);
+  for (const q of ['Does cardio kill muscle growth?', 'Will running ruin my gains?']) assert.equal(top(q)[0], 'one-step-at-a-time', q);
+  // The questions an earlier attempt broke: creatine stays in its chapter, an off-topic safety question never lands there.
+  for (const q of ['Is creatine safe?', 'How much creatine should I take?']) assert.ok(top(q).every((c) => c === 'supplements'), q);
+  assert.ok(!top('Is it safe to drive at night?').includes('supplements'));
+  // A single everyday word is not a topic: both halves are needed.
+  assert.ok(!TOPICS.some((t) => t.match.test('should i take a break from training this week?')));
+  assert.ok(!TOPICS.some((t) => t.match.test('can i go running tomorrow morning?')));
+  assert.ok(!TOPICS.some((t) => t.match.test('how many sets should i do for squats?')));
+});
+
+test('coach plan item 4: every shipped passage the coach can cite has been reviewed (none is "unreviewed")', () => {
+  const open = HANDBOOK.passages.filter((p) => p.evidence === 'unreviewed').map((p) => p.id);
+  assert.deepEqual(open, [], 'review these in data/evidence/claims_register.csv before shipping');
+  // The 2026-10-24 abstract-level review: partly checked (never "checked"), and the HYROX tip cites no source.
+  const by = (id: string) => HANDBOOK.passages.find((p) => p.id === id)!;
+  for (const id of ['one-step-at-a-time:b04', 'one-step-at-a-time:b05', 'rest-between-sets:b01', 'rest-between-sets:b04']) assert.equal(by(id).evidence, 'partly_checked', id);
+  assert.equal(by('hyrox:b04').evidence, 'editorial');
+  assert.deepEqual(by('hyrox:b04').sources, []);
 });
 
 test('evidence notes never overstate: unreviewed says so, clinical flags stay visible', () => {

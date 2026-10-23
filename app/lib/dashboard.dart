@@ -27,6 +27,7 @@ import 'reminders.dart';
 import 'rewards.dart';
 import 'session.dart';
 import 'steps.dart' show StepsCard, healthPermissionScreenRequested, onHealthRationale;
+import 'swaps.dart';
 import 'theme.dart';
 import 'tools.dart';
 import 'week_schedule.dart' show addOnLine, reminderSessions, weekPlan;
@@ -60,6 +61,9 @@ typedef _Data = ({
   Set<String> assessed, // goals with a level check on record
   Map<DateTime, int> water, // ml drunk per day, last 30 days (daily-goal streak)
   Set<(DateTime, String)> habits, // hand-ticked habits, last 30 days
+  Map<String, String> swaps, // today's confirmed coach swaps, move id -> replacement (swaps.dart)
+  bool lighter, // today's session made lighter with Levlofit AI (swaps.dart)
+  List<(int, int)> moves, // this week's sessions moved with Levlofit AI, (from, to) weekday (swaps.dart)
 });
 
 /// Every place the side menu can take you. The shell swaps the body; the menu stays the same everywhere.
@@ -115,6 +119,21 @@ class _DashboardState extends State<Dashboard> {
     onHealthRationale(() {
       if (mounted) showPrivacyPolicy(context);
     });
+    swapsChanged.addListener(_reloadForSwap);
+  }
+
+  // A swap confirmed in Levlofit AI changes today's session: load it again.
+  void _reloadForSwap() {
+    if (!mounted) return;
+    setState(() {
+      _data = _load();
+    });
+  }
+
+  @override
+  void dispose() {
+    swapsChanged.removeListener(_reloadForSwap);
+    super.dispose();
   }
 
   // Device-local, per user: card layout, the tasks that make up the daily goal, the last celebrated day.
@@ -167,6 +186,9 @@ class _DashboardState extends State<Dashboard> {
       supabase.from('goal_levels').select('goal').eq('user_id', _uid),
       supabase.from('water_intake').select('taken_at, ml').eq('user_id', _uid).gte('taken_at', _day(now).subtract(const Duration(days: 29)).toUtc().toIso8601String()),
       supabase.from('habit_logs').select('day, habit').eq('user_id', _uid).gte('day', _iso(_day(now).subtract(const Duration(days: 29)))),
+      loadSwaps(_iso(now)), // never fails: an empty map shows the session as planned
+      loadLighter(_iso(now)), // never fails: false keeps the planned doses
+      loadSessionMoves(_iso(_monday(now)), _iso(_monday(now).add(const Duration(days: 6)))), // never fails: empty keeps the plan's days
     ]);
     final water = <DateTime, int>{};
     for (final r in (results[4] as List).cast<_Json>()) {
@@ -191,6 +213,9 @@ class _DashboardState extends State<Dashboard> {
       assessed: {for (final r in (results[3] as List).cast<_Json>()) r['goal'] as String},
       water: water,
       habits: {for (final r in (results[5] as List).cast<_Json>()) (DateTime.parse(r['day'] as String), r['habit'] as String)},
+      swaps: results[6] as Map<String, String>,
+      lighter: results[7] as bool,
+      moves: results[8] as List<(int, int)>,
     );
     _scheduleReminders(_loaded!);
     return _loaded!;
@@ -519,7 +544,7 @@ class _DashboardState extends State<Dashboard> {
 /// Renders the dashboard body from a plan without Supabase, so layout can be tested at phone size.
 @visibleForTesting
 Widget dashboardBentoForTest(Map<String, dynamic> plan, {Set<DateTime> logged = const {}, List<CardPref>? layout, Set<String>? dailyTasks, ValueChanged<int>? onCelebrated}) => _Bento(
-      data: (name: 'Asha Rao', profile: const {}, plan: plan, input: const {'sessionMinutes': 45}, levels: const {}, proteins: const [], tier: Tier.home, assessed: const {}, water: const {}, habits: const {}),
+      data: (name: 'Asha Rao', profile: const {}, plan: plan, input: const {'sessionMinutes': 45}, levels: const {}, proteins: const [], tier: Tier.home, assessed: const {}, water: const {}, habits: const {}, swaps: const {}, lighter: false, moves: const []),
       logged: logged,
       minutes: {for (final d in logged) d: 45},
       saving: false,
@@ -583,13 +608,23 @@ class _Bento extends StatelessWidget {
     // WHO 2020: 150 to 300 minutes of moderate activity a week; the plan carries the range.
     final moveTarget = ((plan['activityGuideline'] as _Json?)?['moderateMinutesPerWeek'] as List?)?.first as int? ?? 150;
     final streak = _weekStreak(logged, monday, perWeek);
-    final todayGoal = dayGoal[now.weekday] ?? goals.first;
-    final isTrainingDay = dayGoal.containsKey(now.weekday);
+    // A session moved with Levlofit AI shows on its new day and leaves a rest day behind (swaps.dart).
+    final sessionDay = sessionDayFor(now.weekday, dayGoal.keys.toSet(), data.moves);
+    final todayGoal = dayGoal[sessionDay] ?? dayGoal[now.weekday] ?? goals.first;
+    final isTrainingDay = sessionDay != null;
     final sessionMinutes = data.input['sessionMinutes'] as int?;
     final level = todayGoal['startLevel'] as int;
-    // Which session of this goal today is, so A and B alternate through the week.
-    final nth = [for (var d = 1; d < now.weekday; d++) if (dayGoal[d]?['goal'] == todayGoal['goal']) d].length;
-    final ids = sessionIds(todayGoal['kind'] as String? ?? 'strength', data.tier, level, nth, goal: todayGoal['goal'] as String?, kit: kitOf(data.profile));
+    // Which session of this goal it is, so A and B alternate through the week.
+    final nth = [for (var d = 1; d < (sessionDay ?? now.weekday); d++) if (dayGoal[d]?['goal'] == todayGoal['goal']) d].length;
+    final planned = sessionIds(todayGoal['kind'] as String? ?? 'strength', data.tier, level, nth, goal: todayGoal['goal'] as String?, kit: kitOf(data.profile));
+    // Levlofit AI may offer swaps for today's planned moves (confirmed ones replace them), or a move of today's own
+    // session to a later free day this week.
+    final freeLater = [
+      for (var d = now.weekday + 1; d <= 7; d++)
+        if (!dayGoal.containsKey(d) && !data.moves.any((m) => m.$2 == d)) _iso(monday.add(Duration(days: d - 1))),
+    ];
+    todaySession = isTrainingDay ? (day: _iso(now), ids: planned, restDays: sessionDay == now.weekday ? freeLater : const <String>[]) : null;
+    final ids = applySwaps(planned, data.swaps);
     // Add-on blocks today: joined to today's session, or today's own short session on a rest day (week_schedule.dart).
     final week = weekPlan(plan, sessionMinutes: sessionMinutes, estimate: sessionEstimator(data.tier, kitOf(data.profile)));
     final ownAddOn = isTrainingDay ? null : week.addOns.where((a) => a.day == now.weekday).firstOrNull;
@@ -614,6 +649,7 @@ class _Bento extends StatelessWidget {
               ids: ownBlock?.ids ?? ids,
               blocks: ownAddOn == null ? todayBlocks : const [],
               injury: data.profile['injuries'] as String?,
+              lighter: data.lighter,
               done: logged.contains(today),
               saving: saving,
               // An add-on day logs its own length (the block and a warm-up), not the full session setting.
@@ -800,11 +836,12 @@ class _TodayCard extends StatelessWidget {
     required this.ids,
     this.blocks = const [],
     this.injury,
+    this.lighter = false,
     required this.done,
     required this.saving,
     required this.onToggle,
   });
-  final bool isTrainingDay, done, saving;
+  final bool isTrainingDay, done, saving, lighter;
   final _Json goal;
   final _Json? levelRow;
   final int? minutes;
@@ -823,7 +860,7 @@ class _TodayCard extends StatelessWidget {
     void start() => Navigator.push(
           context,
           MaterialPageRoute<void>(
-              builder: (_) => SessionScreen(title: name, ids: ids, level: level, blocks: blocks, done: done, onFinish: done ? null : onToggle, injury: injury, sessionMinutes: minutes)),
+              builder: (_) => SessionScreen(title: name, ids: ids, level: level, blocks: blocks, done: done, onFinish: done ? null : onToggle, injury: injury, sessionMinutes: minutes, lighter: lighter)),
         );
     return _Tile(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

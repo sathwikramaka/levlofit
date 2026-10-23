@@ -48,8 +48,11 @@ const sections: LegalSection[] = [
           private storage that only your account can open.
         </p>
         <p>
-          <strong>Levlofit AI:</strong> your chats, the facts you confirm in Levlofit AI&rsquo;s Memory so it can remember you, and its suggestions waiting
-          for your OK. Levlofit AI keeps a fact only if you confirm it, and you can edit or delete each one in the app.
+          <strong>Levlofit AI:</strong> your chats, a short running summary of each long chat&rsquo;s older messages (deleted with that chat), the facts you
+          confirm in Levlofit AI&rsquo;s Memory so it can remember you, and its suggestions waiting for your OK. Levlofit AI keeps a fact only if you confirm
+          it, and you can edit or delete each one in the app. When Levlofit AI offers to swap a move, make a session lighter or move a session to another day,
+          the offer and, if you confirm it, the change are stored with the day and the moves involved. A meal it offers to log is only saved to your food
+          diary when you tap Log it.
         </p>
         <p>
           <strong>Feedback:</strong> anything you send with Send feedback in the app.
@@ -113,7 +116,7 @@ const sections: LegalSection[] = [
           </li>
           <li>A web hosting provider serves this website. The website&rsquo;s fonts are served with the site itself, not loaded from Google.</li>
         </ul>
-        {/* REVIEW GATE: the two paragraphs below describe the coach-chat code in this repository. Publish them only after the
+        {/* REVIEW GATE: the two paragraphs below (what Levlofit AI sends, and the summary and coach-action paragraph) describe the coach-chat code in this repository. Publish them only after the
             deployed coach-chat function is confirmed to match it and LLM_BASE_URL is confirmed unset or pointing at Groq. */}
         <p>
           <strong>What Levlofit AI sends to Groq.</strong> Each time you send a message, our server sends Groq: your message as you typed it (trimmed, up to 2,000 characters), and up to 12
@@ -127,6 +130,13 @@ const sections: LegalSection[] = [
           logged in the last 14 days, its name, how many days you trained it, the last day and your best set (reps and weight). Only when your chat is about
           steps or walking, and only if you switched on sharing in the app&rsquo;s Progress page, it sends your daily step totals for the last 7 days from
           Health Connect.
+        </p>
+        <p>
+          In a long chat it also sends the running summary of that chat&rsquo;s older messages, as part of the chat. To write that summary, our server sends
+          Groq only the previous summary and the older messages of that chat, nothing else. Only when you ask to change today&rsquo;s session, it sends the
+          names of today&rsquo;s moves and the replacements Levlofit has checked against your equipment and injury notes; when you ask to train on another day,
+          the free days later this week; when you ask for an easier day, only that a lighter session is possible. Only when you ask to log something you
+          ate, it sends the names of up to 30 foods from your own food diary that fit your diet, so it can propose diary entries for you to confirm.
         </p>
         {/* REVIEW GATE: publish only once the owner has decided whether a second provider is configured (LLM_FALLBACK_*). */}
         <p>
@@ -151,7 +161,8 @@ const sections: LegalSection[] = [
         <p>
           Your account data is kept until you delete your account. When you delete it in the app, our server first deletes your progress photos and profile picture.
           If that fails, your account is not deleted, and you can try again. Once they are gone, your account is deleted, and with it the records linked to it in
-          our database: your profile and answers, goals, plans, logs, food diary and recipes, measurements, chats, Levlofit AI memory facts and notes, reminder settings and feedback.
+          our database: your profile and answers, goals, plans, logs, food diary and recipes, measurements, chats and their summaries, Levlofit AI memory facts and notes,
+          the session changes you were offered or confirmed, reminder settings and feedback.
           If deleting the account itself fails after the photos are gone, the photos stay deleted, everything else stays, and you can try again. Reminders
           scheduled on your phone are cancelled when you delete your account or sign out.
         </p>

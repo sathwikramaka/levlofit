@@ -4,9 +4,10 @@ part of 'dashboard.dart';
 
 /// Renders a tab from a plan without Supabase calls succeeding, so layouts can be tested at phone size.
 @visibleForTesting
-Widget tabForTest(String tab, Map<String, dynamic> plan, {VoidCallback? onBack}) => _BackScope(onBack: onBack, child: _tabForTest(tab, plan));
+Widget tabForTest(String tab, Map<String, dynamic> plan, {VoidCallback? onBack, List<(int, int)> moves = const []}) =>
+    _BackScope(onBack: onBack, child: _tabForTest(tab, plan, moves));
 
-Widget _tabForTest(String tab, Map<String, dynamic> plan) {
+Widget _tabForTest(String tab, Map<String, dynamic> plan, List<(int, int)> moves) {
   final d = (
     name: 'Asha Rao',
     profile: const <String, dynamic>{'sex': 'female', 'birth_year': 1995, 'height_cm': 160, 'weight_kg': 58, 'days_per_week': 3, 'session_minutes': 45, 'equipment': 'home'},
@@ -18,6 +19,9 @@ Widget _tabForTest(String tab, Map<String, dynamic> plan) {
     assessed: const <String>{},
     water: const <DateTime, int>{},
     habits: const <(DateTime, String)>{},
+    swaps: const <String, String>{},
+    lighter: false,
+    moves: moves,
   );
   return switch (tab) {
     'hydration' => _HydrationScreen(data: d),
@@ -1768,7 +1772,8 @@ Future<void> _sendFeedback(BuildContext context) async {
 /// "How we use your data", in plain words.
 const _dataUse = [
   ('What we keep', 'Your sign-up answers (age, height, weight, goals, diet, health check), your plans, the workouts, sets, water, habits, '
-      'measurements, food diary and recipes you log, your progress photos, your chats with Levlofit AI, and feedback you send.'),
+      'measurements, food diary and recipes you log, your progress photos, your chats with Levlofit AI (with a short summary of a long chat\'s '
+      'older messages), the session changes Levlofit AI offered or you confirmed, and feedback you send.'),
   ('Why we keep it', 'Only to run the app for you: to build your plan, show your progress, send the reminders you switch on, and let '
       'Levlofit AI answer about you, not in general.'),
   ('Who can see it', 'No other user: your data is locked to your account by the database itself. The Levlofit team reads the feedback '
@@ -1776,7 +1781,10 @@ const _dataUse = [
   ('Levlofit AI', 'When you send a message, your question and a summary of your plan and recent training go to our AI provider to write '
       'the reply. Your chats are saved in your account. Levlofit AI can suggest facts to remember (your schedule, equipment, likes, goals or an injury); '
       'it keeps one only if you confirm it, and you can edit or delete each one in Memory. Confirmed facts go to our AI provider with your messages; '
-      'an injury fact only when you ask about training, movement or pain. You can delete chats any time.'),
+      'an injury fact only when you ask about training, movement or pain. In a long chat, a summary of its older messages is sent too. '
+      'When you ask to change today\'s session it also gets today\'s moves and checked replacements, or this week\'s free days; when you ask to '
+      'log a meal, the names of foods from your own diary. Swaps, lighter or moved sessions and meals change only after you confirm them. '
+      'You can delete chats any time.'),
   ('Your photos', 'Progress photos are stored privately in your account. Nobody else can open them.'),
   ('You are in control', 'Edit most of your details in Profile and Protocol; email us to correct the rest. Delete your account in Profile (or '
       'from the account menu while you set up) and everything goes with it: answers, plans, logs, chats and photos.'),

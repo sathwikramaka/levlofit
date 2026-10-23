@@ -16,8 +16,8 @@ void main() {
     expect(whtrCheck(height: 170, waist: 84).value, 0.49);
     expect(whtrCheck(height: 170, waist: 84).band, 'No increased risk');
     expect(whtrCheck(height: 170, waist: 84.5).value, 0.5); // 0.497 shows 0.50
-    expect(whtrCheck(height: 170, waist: 84.5).band, 'Increased risk');
-    expect(whtrCheck(height: 170, waist: 101.2).band, 'Very high risk'); // 0.595 shows 0.60
+    expect(whtrCheck(height: 170, waist: 84.5).band, 'Above the healthy range: higher risk');
+    expect(whtrCheck(height: 170, waist: 101.2).band, 'Above the healthy range: higher risk', reason: 'no separate 0.6 band (owner decision 2026-10-24)');
     expect(whtrCheck(height: 67, waist: 33, inches: true).value, whtrCheck(height: 67 * 2.54, waist: 33 * 2.54).value);
     expect(whtrCheck(height: 170, waist: 39).errors.keys, ['waist']);
     expect(whtrCheck(height: 40, waist: 30, inches: true).errors.keys, ['height']); // 40 in = 102 cm

@@ -44,10 +44,12 @@ double kgFromPounds(double lb) => lb * 0.45359237;
   return (value: v, band: bmiBandIndia(v), note: null, errors: errors);
 }
 
-/// Waist-to-height boundaries (Ashwell and Gibson, BMJ Open 2016;6:e010159, UK adults): under 0.5 no increased
-/// risk, 0.5 to under 0.6 increased risk, 0.6 and over very high risk. Same units for both, so cm or inches.
-/// Banded on the value rounded to 2 dp, the number shown, so 0.497 shows "0.50 Increased risk".
-const whtrCuts = [0.5, 0.6];
+/// Waist-to-height boundary: under 0.5 no increased risk; 0.5 and over is above the healthy range. The 2025 Indian
+/// definition (Misra 2025) uses only "over 0.5"; a 0.6 "very high risk" edge has no source Levlofit could read, so
+/// it is not shown (owner decision 2026-10-24, awaiting clinician review). Same units for both, so cm or inches.
+/// Banded on the value rounded to 2 dp, the number shown, so 0.497 shows "0.50" above the healthy range.
+const whtrCuts = [0.5];
+const whtrAbove = 'Above the healthy range: higher risk';
 const waistCm = (min: 40, max: 200); // as onboarding
 
 ({double? value, String? band, Map<String, String> errors}) whtrCheck({double? height, double? waist, bool inches = false}) {
@@ -59,7 +61,7 @@ const waistCm = (min: 40, max: 200); // as onboarding
   };
   if (height == null || waist == null || errors.isNotEmpty) return (value: null, band: null, errors: errors);
   final v = (waist / height * 100).round() / 100;
-  return (value: v, band: v < whtrCuts[0] ? 'No increased risk' : v < whtrCuts[1] ? 'Increased risk' : 'Very high risk', errors: errors);
+  return (value: v, band: v < whtrCuts[0] ? 'No increased risk' : whtrAbove, errors: errors);
 }
 
 // ---------------------------------------------------------------- screens

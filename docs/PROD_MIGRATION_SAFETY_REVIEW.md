@@ -18,7 +18,7 @@ has been verified only locally.
 - **Type:** destructive replace of reference content (no user data). Column adds are no-ops in prod (columns exist).
 - **Prerequisites/conflicts:** `goal_catalog.handbook_chapter` references `handbook_chapters(id)` with no ON DELETE:
   the delete aborts if any goal points at a chapter (2026-10-13: 0). Prod holds an unrecorded pre-correction draft
-  (hash 432c7c6f); the file now produces af1ea000 (fresh local DB, all 34 migrations, 2026-10-18; was 81a79a56 before the 2026-10-18 handbook changes). The file has no explicit transaction: if run statement by
+  (hash 432c7c6f); the file now produces af1ea000 [superseded 2026-10-24 by b3b87df6: current builder output after the item 4 and item 5 Handbook edits, computed read-only from the migration's VALUES list with the same md5 expression and the table's generated search column (tools/handbook_fingerprint_sql.py; validated: it reproduces af1ea000 from the commit 1803009 file, which a throwaway DB also returned after applying it); check b3b87df6 after any production apply] (fresh local DB, all 34 migrations, 2026-10-18; was 81a79a56 before the 2026-10-18 handbook changes). The file has no explicit transaction: if run statement by
   statement, a failed insert leaves the table **empty** (app Handbook screen and coach passages break).
 - **Rollback:** the documented rollback is "restore rows from export P2". There is no restore script yet and it has
   never been rehearsed. Without P2 or a restorable backup the old draft text is unrecoverable (it is not in git: git
