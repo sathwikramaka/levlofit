@@ -1,0 +1,7 @@
+# Security headers for a static host (Cloudflare Pages, Netlify). Same values as next.config.ts securityHeaders;
+# keep the two in step. Next ignores this file when it serves the site itself.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()

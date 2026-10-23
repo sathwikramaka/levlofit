@@ -94,7 +94,7 @@ class _HandbookScreenState extends State<HandbookScreen> {
                 return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   const ErrorLine('Could not load the Handbook. Check your connection.'),
                   const SizedBox(height: 12),
-                  OutlinedButton(onPressed: () => setState(() => _chapters = _load(_query)), child: const Text('Try again')),
+                  OutlinedButton(onPressed: () => setState(() { _chapters = _load(_query); }), child: const Text('Try again')),
                 ]);
               }
               if (!snap.hasData) return const LinearProgressIndicator(minHeight: 4);
@@ -158,17 +158,31 @@ class _ChapterTile extends StatelessWidget {
 }
 
 class ChapterScreen extends StatelessWidget {
-  const ChapterScreen({super.key, required this.id});
-  final int id;
+  // Opened by id from the chapter list, or by slug from an "Up next" link (slugs never change; ids follow book order).
+  const ChapterScreen({super.key, this.id, this.slug, @visibleForTesting this.load}) : assert(id != null || slug != null);
+  final int? id;
+  final String? slug;
+  final Future<Map<String, dynamic>> Function()? load; // tests only: replaces the database read
+
+  static String label(int? id) => id == null ? 'CHAPTER' : 'CHAPTER ${id.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    // One read serves the title bar and the body. Opened by slug, the chapter number comes from the row.
+    final Future<Map<String, dynamic>> future = load?.call() ??
+        (id != null
+            ? supabase.from('handbook_chapters').select('id, title, minutes, blocks').eq('id', id!).single()
+            : supabase.from('handbook_chapters').select('id, title, minutes, blocks').eq('slug', slug!).single());
     return Scaffold(
-      appBar: AppBar(title: Text('CHAPTER ${id.toString().padLeft(2, '0')}', style: monoLabel(context))),
+      appBar: AppBar(
+        title: id != null
+            ? Text(label(id), style: monoLabel(context))
+            : FutureBuilder(future: future, builder: (context, snap) => Text(label(snap.data?['id'] as int?), style: monoLabel(context))),
+      ),
       body: FutureBuilder(
-        future: supabase.from('handbook_chapters').select('title, minutes, blocks').eq('id', id).single(),
+        future: future,
         builder: (context, snap) {
           if (snap.hasError) return const Padding(padding: EdgeInsets.all(24), child: ErrorLine('Could not load this chapter. Check your connection.'));
           if (!snap.hasData) return const Padding(padding: EdgeInsets.all(24), child: LinearProgressIndicator(minHeight: 4));
@@ -193,7 +207,7 @@ class ChapterScreen extends StatelessWidget {
               const SizedBox(height: 6),
               Text('${row['minutes'] ?? 3} min read  ·  ${keys.length} sources', style: t.bodySmall?.copyWith(color: muted)),
               const SizedBox(height: 24),
-              for (final b in blocks) ...[_block(context, b, cite), const SizedBox(height: 22)],
+              for (final b in blocks) ...[handbookBlock(context, b, cite), const SizedBox(height: 22)],
               const Divider(),
               const SizedBox(height: 16),
               Text('SOURCES', style: monoLabel(context)),
@@ -212,8 +226,13 @@ class ChapterScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _block(BuildContext context, _Json b, String? Function(Object?) cite) => switch (b['t']) {
+/// One chapter block. Public so widget tests can draw blocks without the database.
+Widget handbookBlock(BuildContext context, Map<String, dynamic> b, String? Function(Object?) cite) => switch (b['t']) {
+        'part' => _PartOpener(b),
+        'keypoints' => _KeyPoints(b),
+        'next' => _UpNext(b),
         'lead' => _Lead(b['text'] as String),
         'rule' => _Note(label: 'RULE', text: b['text'] as String, filled: false),
         'evidence' => _Note(label: 'EVIDENCE', text: b['text'] as String, filled: true, cite: cite(b['source']), grade: b['grade'] as String?),
@@ -230,6 +249,98 @@ class ChapterScreen extends StatelessWidget {
         'band' => _Band(b, cite(b['source'])),
         _ => Text(b['text'] as String? ?? '', style: Theme.of(context).textTheme.bodyLarge),
       };
+
+// ---------------------------------------------------------------- book structure blocks (Handbook v4)
+
+/// Opens a part of the book: "Part B. Getting better" and what the part covers.
+class _PartOpener extends StatelessWidget {
+  const _PartOpener(this.b);
+  final _Json b;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: _box(context, filled: true),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text((b['title'] as String).toUpperCase(), style: monoLabel(context)),
+        const SizedBox(height: 8),
+        Text(b['text'] as String, style: t.bodyLarge),
+      ]),
+    );
+  }
+}
+
+/// The chapter's summary, a short list.
+class _KeyPoints extends StatelessWidget {
+  const _KeyPoints(this.b);
+  final _Json b;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: _box(context),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('KEY POINTS', style: monoLabel(context)),
+        const SizedBox(height: 10),
+        for (final p in (b['items'] as List).cast<String>())
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Padding(padding: const EdgeInsets.only(top: 9, right: 10), child: Container(width: 6, height: 6, color: Theme.of(context).colorScheme.primary)),
+              Expanded(child: Text(p, style: t.bodyLarge)),
+            ]),
+          ),
+      ]),
+    );
+  }
+}
+
+/// Links to the next chapter(s) of the book, opened by slug.
+class _UpNext extends StatelessWidget {
+  const _UpNext(this.b);
+  final _Json b;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('UP NEXT', style: monoLabel(context)),
+      const SizedBox(height: 10),
+      for (final i in (b['items'] as List).cast<_Json>())
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ChapterScreen(slug: i['ref'] as String))),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: _box(context),
+                child: Row(children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(i['title'] as String, style: t.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(i['why'] as String, style: t.bodyMedium?.copyWith(color: muted)),
+                    ]),
+                  ),
+                  Icon(Icons.chevron_right, color: muted),
+                ]),
+              ),
+            ),
+          ),
+        ),
+    ]);
+  }
 }
 
 // ---------------------------------------------------------------- shared pieces
@@ -295,7 +406,13 @@ class _Note extends StatelessWidget {
   final String? cite, grade;
 
   // How sure the science is: filled bars, like a signal meter, plus the word so it never relies on shape alone.
-  static const _grades = {'strong': (3, 'STRONG EVIDENCE'), 'moderate': (2, 'MODERATE EVIDENCE'), 'consensus': (1, 'EXPERT CONSENSUS')};
+  // 'unverified' (Handbook v4): the cited source has not been read yet, so no bar is filled.
+  static const _grades = {
+    'strong': (3, 'STRONG EVIDENCE'),
+    'moderate': (2, 'MODERATE EVIDENCE'),
+    'consensus': (1, 'EXPERT CONSENSUS'),
+    'unverified': (0, 'NOT YET VERIFIED'),
+  };
 
   @override
   Widget build(BuildContext context) => Container(

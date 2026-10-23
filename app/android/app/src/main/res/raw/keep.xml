@@ -1,3 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The reminder sound is referenced only by name from Dart, so stop resource shrinking from removing it. -->
-<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/levlo_chime" />
+<!-- The reminder sound and the notification icon are referenced only by name from Dart, so stop resource shrinking
+     from removing them (flutter_local_notifications README, "Release build configuration"). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/levlo_chime,@mipmap/ic_launcher" />

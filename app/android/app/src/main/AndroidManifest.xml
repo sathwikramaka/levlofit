@@ -4,10 +4,22 @@
     <!-- Reminders: show notifications (Android 13+) and restore scheduled ones after a reboot. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Optional exact timing for reminders. The user grants it under Alarms & reminders (denied by default on
+         Android 14+); without it reminders fall back to inexact alarms. USE_EXACT_ALARM is not used: Google Play
+         restricts it to alarm-clock and calendar apps. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- No backup: SharedPreferences hold the Supabase session (access and refresh tokens), so a backup or device
+         transfer would copy a live login. Account data lives on the server and reminder settings in reminder_prefs,
+         so signing in on a new phone restores everything; only the light/dark choice is device-local.
+         allowBackup covers cloud and adb backup; dataExtractionRules also covers device-to-device transfer on
+         Android 12+, which allowBackup alone does not stop. -->
     <application
         android:label="Levlofit"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <activity
             android:name=".MainActivity"
             android:exported="true"

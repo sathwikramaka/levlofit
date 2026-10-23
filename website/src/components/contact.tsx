@@ -54,6 +54,7 @@ export function Contact() {
   const [confirm, setConfirm] = useState(false);
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [trap, setTrap] = useState(""); // honeypot: hidden from people, often filled by spam bots
   const [state, setState] = useState<State>({ kind: "idle" });
 
   useEffect(() => {
@@ -89,6 +90,8 @@ export function Contact() {
     const addr = email.trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addr)) return setState({ kind: "error", message: "Enter a full email address so we can reply." });
     if (message.trim().length < 10) return setState({ kind: "error", message: "Write a little more, at least 10 characters." });
+    // A filled honeypot means an automated submission: look sent, store nothing.
+    if (trap) return setState({ kind: "sent" });
     setState({ kind: "sending" });
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/contact_messages`, {
@@ -160,6 +163,16 @@ export function Contact() {
           </div>
         ) : (
           <form onSubmit={submit} noValidate className="mt-5 flex flex-col gap-4">
+            <input
+              type="text"
+              name="website"
+              value={trap}
+              onChange={(e) => setTrap(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="absolute -left-[9999px] h-px w-px opacity-0"
+            />
             <div>
               <label htmlFor="c-email" className="mb-1.5 block text-[14px] font-semibold">
                 Your email

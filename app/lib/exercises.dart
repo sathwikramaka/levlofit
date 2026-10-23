@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'exercise_guide.dart';
 import 'icons.dart';
 import 'main.dart';
 import 'theme.dart';
@@ -55,6 +56,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
   final _items = <_Json>[];
   String _query = '';
   String? _part;
+  String? _group; // muscle group open in the Levlofit moves guide
   bool _loading = false, _done = false, _failed = false;
 
   @override
@@ -119,6 +121,8 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
               Reveal(child: Text('See every move.', style: t.headlineMedium)),
               const SizedBox(height: 6),
               Reveal(index: 1, child: Text('Red shows the muscles doing the work.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant))),
+              const SizedBox(height: 20),
+              Reveal(index: 2, child: _MuscleGuide(group: _group, onGroup: (g) => setState(() => _group = g == _group ? null : g))),
               const SizedBox(height: 20),
               Reveal(
                 index: 2,
@@ -224,9 +228,14 @@ class _ExerciseCard extends StatelessWidget {
   }
 }
 
+/// True when the catalogue read found no row for the id (PostgREST "0 rows" for .single()), as opposed to a network or
+/// server failure.
+bool notInCatalogue(Object? error) => error is PostgrestException && error.code == 'PGRST116';
+
 class ExerciseScreen extends StatelessWidget {
-  const ExerciseScreen({super.key, required this.id});
+  const ExerciseScreen({super.key, required this.id, @visibleForTesting this.load});
   final String id;
+  final Future<Map<String, dynamic>> Function()? load; // tests only; the app reads public.exercises
 
   @override
   Widget build(BuildContext context) {
@@ -235,9 +244,28 @@ class ExerciseScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(),
       body: FutureBuilder(
-        future: supabase.from('exercises').select().eq('id', id).single(),
+        future: (load ?? () => supabase.from('exercises').select().eq('id', id).single())(),
         builder: (context, snap) {
-          if (snap.hasError) return const Padding(padding: EdgeInsets.all(24), child: ErrorLine('Could not load this exercise. Check your connection.'));
+          final guide = moveGuide[id];
+          final missing = notInCatalogue(snap.error);
+          if (snap.hasError && guide == null) {
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: ErrorLine(missing ? 'This exercise is not in the catalogue yet.' : 'Could not load this exercise. Check your connection.'),
+            );
+          }
+          if (snap.hasError) {
+            return ListView(padding: const EdgeInsets.fromLTRB(24, 0, 24, 40), children: [
+              Text(guide!.name, style: t.headlineMedium),
+              const SizedBox(height: 14),
+              _GuideTags(guide),
+              if (guide.versions.isNotEmpty) _Versions(guide.versions),
+              const SizedBox(height: 8),
+              ErrorLine(missing
+                  ? 'The animation and steps for this move are not in the catalogue yet.'
+                  : 'The animation and steps could not load. Check your connection.'),
+            ]);
+          }
           final row = snap.data;
           return ListView(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
@@ -253,11 +281,16 @@ class ExerciseScreen extends StatelessWidget {
                 const LinearProgressIndicator(minHeight: 4)
               else
                 ...staggered([
-                  Text(_title(row['name'] as String), style: t.headlineMedium),
+                  Text(guide?.name ?? _title(row['name'] as String), style: t.headlineMedium),
                   const SizedBox(height: 14),
-                  _Tags('WORKS', (row['target_muscles'] as List).cast<String>(), strong: true),
-                  _Tags('ALSO', (row['secondary_muscles'] as List).cast<String>()),
+                  if (guide != null && guide.main.isNotEmpty)
+                    _GuideTags(guide)
+                  else ...[
+                    _Tags('WORKS', (row['target_muscles'] as List).cast<String>(), strong: true),
+                    _Tags('ALSO', (row['secondary_muscles'] as List).cast<String>()),
+                  ],
                   _Tags('EQUIPMENT', (row['equipment'] as List).cast<String>()),
+                  if (guide != null && guide.versions.isNotEmpty) _Versions(guide.versions),
                   const SizedBox(height: 12),
                   Text('HOW TO DO IT', style: monoLabel(context)),
                   const SizedBox(height: 12),
@@ -288,10 +321,11 @@ class ExerciseScreen extends StatelessWidget {
 }
 
 class _Tags extends StatelessWidget {
-  const _Tags(this.label, this.items, {this.strong = false});
+  const _Tags(this.label, this.items, {this.strong = false, this.titleCase = true});
   final String label;
   final List<String> items;
   final bool strong;
+  final bool titleCase; // catalogue values are lower case; Levlofit's own guide text is written as shown
 
   @override
   Widget build(BuildContext context) {
@@ -311,11 +345,99 @@ class _Tags extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: strong ? c.primary : c.outline),
                 ),
-                child: Text(_title(m), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600, color: strong ? c.onPrimary : c.onSurface)),
+                child: Text(titleCase ? _title(m) : m, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600, color: strong ? c.onPrimary : c.onSurface)),
               ),
           ]),
         ),
       ]),
     );
+  }
+}
+
+/// Levlofit's muscle notes for a prescribed move.
+class _GuideTags extends StatelessWidget {
+  const _GuideTags(this.g);
+  final MoveGuide g;
+
+  @override
+  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _Tags('GROUP', [g.group], strong: true, titleCase: false),
+        _Tags(g.group == 'Mobility' ? 'STRETCHES' : 'WORKS', g.main, titleCase: false),
+        _Tags('HELPS', g.assist, titleCase: false),
+        if (g.equipment != null) _Tags('NEEDS', [g.equipment!], titleCase: false),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text('Muscle lists are general anatomy, pending expert review.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        ),
+      ]);
+}
+
+/// Other versions of the same movement used in Levlofit plans.
+class _Versions extends StatelessWidget {
+  const _Versions(this.ids);
+  final List<String> ids;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(width: 96, child: Padding(padding: const EdgeInsets.only(top: 7), child: Text('VERSIONS', style: monoLabel(context)))),
+          Expanded(
+            child: Wrap(spacing: 6, runSpacing: 6, children: [
+              for (final id in ids)
+                if (moveGuide[id] case final g?)
+                  ActionChip(
+                    label: Text(g.name),
+                    onPressed: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ExerciseScreen(id: id))),
+                  ),
+            ]),
+          ),
+        ]),
+      );
+}
+
+/// Browse the moves Levlofit prescribes by muscle group, with the anatomical regions of each group.
+class _MuscleGuide extends StatelessWidget {
+  const _MuscleGuide({required this.group, required this.onGroup});
+  final String? group;
+  final ValueChanged<String> onGroup;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = Theme.of(context).colorScheme;
+    final g = group;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('LEVLOFIT MOVES BY MUSCLE', style: monoLabel(context)),
+      const SizedBox(height: 10),
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        for (final name in muscleRegions.keys)
+          ChoiceChip(label: Text(name), selected: g == name, showCheckmark: false, onSelected: (_) => onGroup(name)),
+      ]),
+      if (g != null) ...[
+        const SizedBox(height: 14),
+        if (muscleRegions[g]!.isNotEmpty) ...[
+          for (final r in muscleRegions[g]!) Text('·  $r', style: t.bodyMedium),
+          const SizedBox(height: 6),
+          Text(regionNote, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 8),
+        ],
+        for (final n in evidenceNotes[g] ?? const <({String text, String source})>[]) ...[
+          Text(n.text, style: t.bodyMedium),
+          Text('Study: ${n.source}', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 8),
+        ],
+        for (final (id, m) in movesIn(g))
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(m.name),
+            subtitle: m.main.isEmpty
+                ? const Text('Conditioning: many muscles at once')
+                : Text('${m.group == 'Mobility' ? 'Stretches ' : ''}${m.main.join('  ·  ')}'),
+            trailing: const Icon(LvIcons.caretRight, size: 16),
+            onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ExerciseScreen(id: id))),
+          ),
+      ],
+    ]);
   }
 }

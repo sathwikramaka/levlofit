@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'coach_memory.dart';
 import 'icons.dart';
 import 'main.dart';
+import 'steps.dart' show coachStepsPayload, latestSteps, stepsShareWithCoach;
 import 'theme.dart';
 
 /// Opens Levlofit AI as a floating panel over the current screen, rising from the corner where the
@@ -190,9 +192,10 @@ class FitBotPainter extends CustomPainter {
 }
 
 class _Msg {
-  _Msg(this.role, this.text, {this.id, this.fresh = false});
+  _Msg(this.role, this.text, {this.id, this.fresh = false, this.suggestions = const []});
   final String role;
   final String text;
+  final List<Fact> suggestions; // facts the coach suggests remembering; the person decides on the card
   int? id; // set once the server has saved it; only saved messages can be edited
   bool fresh; // a reply that has just arrived writes itself in once
 
@@ -201,9 +204,32 @@ class _Msg {
 
 typedef _Thread = ({String id, String title, DateTime updated});
 
+/// Data access. The screen takes these as a parameter so tests can supply their own.
+typedef CoachApi = ({
+  Future<(String name, List<dynamic> threads)> Function() boot,
+  Future<List<dynamic>> Function(String threadId) messages,
+  Future<Map<dynamic, dynamic>> Function(Map<String, dynamic> body) send,
+  Future<void> Function(String threadId) deleteThread,
+});
+
+final CoachApi supabaseCoach = (
+  boot: () async {
+    final [profile, threads] = await Future.wait<dynamic>([
+      supabase.from('profiles').select('display_name').eq('id', supabase.auth.currentUser!.id).maybeSingle(),
+      supabase.from('coach_threads').select('id, title, updated_at').order('updated_at', ascending: false).limit(50),
+    ]);
+    return ((profile?['display_name'] as String?) ?? '', threads as List);
+  },
+  messages: (id) => supabase.from('coach_messages').select('id, role, content').eq('thread_id', id).order('id', ascending: true).limit(200),
+  send: (body) async => (await supabase.functions.invoke('coach-chat', body: body)).data as Map,
+  deleteThread: (id) => supabase.from('coach_threads').delete().eq('id', id),
+);
+
 class CoachScreen extends StatefulWidget {
-  const CoachScreen({super.key, this.prompt});
+  const CoachScreen({super.key, this.prompt, this.api, this.memory});
   final String? prompt;
+  final CoachApi? api; // tests only; the app uses Supabase
+  final MemoryApi? memory; // tests only
 
   @override
   State<CoachScreen> createState() => _CoachScreenState();
@@ -220,10 +246,13 @@ class _CoachScreenState extends State<CoachScreen> {
   bool _busy = false;
   bool _loadingThread = false;
   int? _editing; // index of the message being edited
-  ({String text, int? editFrom, int cut})? _failed; // what to resend after an error
+  ({String text, int? editFrom, int cut, String clientMsgId})? _failed; // what to resend after an error, with the same id
   String? _error;
+  String? _deleting; // the chat whose deletion is on its way
 
-  String get _uid => supabase.auth.currentUser!.id;
+  late final CoachApi _api = widget.api ?? supabaseCoach;
+  late final MemoryApi _memory = widget.memory ?? supabaseMemory;
+  bool get _deletingCurrent => _deleting != null && _deleting == _threadId;
 
   static const _starters = [
     (LvIcons.barbell, 'Walk me through today\'s session'),
@@ -249,12 +278,9 @@ class _CoachScreenState extends State<CoachScreen> {
 
   Future<void> _boot() async {
     try {
-      final [profile, threads] = await Future.wait<dynamic>([
-        supabase.from('profiles').select('display_name').eq('id', _uid).maybeSingle(),
-        supabase.from('coach_threads').select('id, title, updated_at').order('updated_at', ascending: false).limit(50),
-      ]);
-      _first = ((profile?['display_name'] as String?) ?? '').split(' ').first;
-      _threads = [for (final t in threads as List) (id: t['id'] as String, title: t['title'] as String, updated: DateTime.parse(t['updated_at'] as String))];
+      final (name, threads) = await _api.boot();
+      _first = name.split(' ').first;
+      _threads = [for (final t in threads) (id: t['id'] as String, title: t['title'] as String, updated: DateTime.parse(t['updated_at'] as String))];
     } catch (_) {
       // The chat works without the list; the next send retries the network.
     }
@@ -263,7 +289,34 @@ class _CoachScreenState extends State<CoachScreen> {
     if (widget.prompt != null) _send(widget.prompt!);
   }
 
+  /// Phone step totals for this message: only if the person switched on sharing in Progress and they were read in
+  /// the last day (steps.dart). The server checks them again and uses them only for activity questions.
+  Map<String, dynamic>? _sharedSteps() {
+    try {
+      final s = latestSteps;
+      return coachStepsPayload(s?.days, s?.readAt, DateTime.now(), consent: stepsShareWithCoach());
+    } catch (_) {
+      return null; // no device settings yet (tests, first frame): send nothing
+    }
+  }
+
+  /// While a reply is on its way the chat cannot change: the reply belongs to the chat it was asked in.
+  bool _waitForReply() {
+    if (!_busy) return false;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Wait for Levlofit AI to finish replying first.')));
+    return true;
+  }
+
+  /// One deletion at a time, and a chat that is being deleted cannot be opened.
+  bool _waitForDelete() {
+    if (_deleting == null) return false;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Wait until the chat is deleted.')));
+    return true;
+  }
+
   Future<void> _openThread(String? id) async {
+    if (_waitForReply()) return;
+    if (id != null && id == _deleting && _waitForDelete()) return;
     setState(() {
       _threadId = id;
       _messages.clear();
@@ -275,7 +328,7 @@ class _CoachScreenState extends State<CoachScreen> {
     });
     if (id == null) return _focus.requestFocus();
     try {
-      final rows = await supabase.from('coach_messages').select('id, role, content').eq('thread_id', id).order('id', ascending: true).limit(200);
+      final rows = await _api.messages(id);
       if (!mounted || _threadId != id) return;
       _messages.addAll([for (final r in rows) _Msg(r['role'] as String, r['content'] as String, id: r['id'] as int)]);
     } catch (_) {
@@ -287,9 +340,16 @@ class _CoachScreenState extends State<CoachScreen> {
   }
 
   /// Sends [text]. [cut] drops local messages from that index first (edit and regenerate); [editFrom] tells the server.
-  Future<void> _send(String text, {int? editFrom, int? cut}) async {
+  /// [clientMsgId] identifies this message to the server; a retry reuses it, so a request that was saved but whose
+  /// answer never arrived returns the saved reply instead of a second one.
+  Future<void> _send(String text, {int? editFrom, int? cut, String? clientMsgId}) async {
     text = text.trim();
     if (text.isEmpty || _busy) return;
+    if (_deletingCurrent) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('This chat is being deleted. Start a new chat to send a message.')));
+      return;
+    }
+    final id = clientMsgId ?? newClientMsgId();
     HapticFeedback.selectionClick();
     final at = cut ?? _messages.length;
     setState(() {
@@ -303,33 +363,35 @@ class _CoachScreenState extends State<CoachScreen> {
     });
     _toEnd();
     try {
-      final res = await supabase.functions.invoke('coach-chat', body: {'message': text, 'threadId': ?_threadId, 'editFrom': ?editFrom});
-      final data = res.data as Map;
+      final data = await _api.send({'message': text, 'threadId': ?_threadId, 'editFrom': ?editFrom, 'clientMsgId': id, 'activity': ?_sharedSteps()});
       if (!mounted) return;
       final threadId = data['threadId'] as String;
       setState(() {
         _messages.last.id = data['userMessageId'] as int?;
-        _messages.add(_Msg('assistant', data['reply'] as String, id: data['assistantMessageId'] as int?, fresh: true));
+        final suggested = [for (final s in (data['suggestions'] as List?) ?? const []) if (s is Map) factFromRow({...s, 'status': 'suggested'})];
+        _messages.add(_Msg('assistant', data['reply'] as String, id: data['assistantMessageId'] as int?, fresh: true, suggestions: suggested));
         final known = _threads.where((t) => t.id == threadId).map((t) => t.title).firstOrNull;
         _threadId = threadId;
-        _threads = [(id: threadId, title: known ?? data['title'] as String, updated: DateTime.now()), ..._threads.where((t) => t.id != threadId)];
+        _threads = [(id: threadId, title: known ?? (data['title'] as String?) ?? 'Chat', updated: DateTime.now()), ..._threads.where((t) => t.id != threadId)];
       });
     } on FunctionException catch (e) {
       final d = e.details;
-      _fail(d is Map && d['error'] is String ? d['error'] as String : 'Levlofit AI is unavailable. Try again.', text, editFrom, at);
+      // replyMissing: this id is saved without a reply (deleted since), so it can never be answered; retry under a new id.
+      final retryId = d is Map && d['replyMissing'] == true ? newClientMsgId() : id;
+      _fail(d is Map && d['error'] is String ? d['error'] as String : 'Levlofit AI is unavailable. Try again.', text, editFrom, at, retryId);
     } catch (_) {
-      _fail('Could not reach Levlofit AI. Check your connection.', text, editFrom, at);
+      _fail('Could not reach Levlofit AI. Check your connection.', text, editFrom, at, id);
     } finally {
       if (mounted) setState(() => _busy = false);
       _toEnd();
     }
   }
 
-  void _fail(String message, String text, int? editFrom, int cut) {
+  void _fail(String message, String text, int? editFrom, int cut, String clientMsgId) {
     if (!mounted) return;
     setState(() {
       _error = message;
-      _failed = (text: text, editFrom: editFrom, cut: cut);
+      _failed = (text: text, editFrom: editFrom, cut: cut, clientMsgId: clientMsgId);
     });
   }
 
@@ -357,58 +419,29 @@ class _CoachScreenState extends State<CoachScreen> {
   }
 
   Future<void> _deleteThread(_Thread t) async {
+    if (_waitForDelete()) return;
+    if (_threadId == t.id && _waitForReply()) return;
+    setState(() => _deleting = t.id);
     try {
-      await supabase.from('coach_threads').delete().eq('id', t.id);
-      setState(() => _threads = _threads.where((x) => x.id != t.id).toList());
+      await _api.deleteThread(t.id);
+      if (!mounted) return;
+      setState(() {
+        _threads = _threads.where((x) => x.id != t.id).toList();
+        _deleting = null;
+      });
       if (_threadId == t.id) _openThread(null);
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not delete that chat.')));
+      if (!mounted) return;
+      setState(() => _deleting = null);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not delete that chat.')));
     }
   }
 
-  Future<void> _showMemory() async {
-    String notes = '';
-    try {
-      notes = ((await supabase.from('coach_notes').select('notes').eq('user_id', _uid).maybeSingle())?['notes'] as String?) ?? '';
-    } catch (_) {}
-    if (!mounted) return;
-    final t = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheet) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('MEMORY', style: monoLabel(context)),
-            const SizedBox(height: 6),
-            Text('What Levlofit AI remembers about you', style: t.titleLarge),
-            const SizedBox(height: 4),
-            Text('Learned from your chats and used in every new one.', style: t.bodySmall?.copyWith(color: muted)),
-            const SizedBox(height: 16),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.4),
-              child: SingleChildScrollView(
-                child: Text(notes.isEmpty ? 'Nothing yet. Tell it about your schedule, likes and dislikes, and it will remember.' : notes, style: t.bodyMedium),
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (notes.isNotEmpty)
-              OutlinedButton(
-                onPressed: () async {
-                  Navigator.pop(sheet);
-                  try {
-                    await supabase.from('coach_notes').delete().eq('user_id', _uid);
-                  } catch (_) {}
-                },
-                child: const Text('Forget everything'),
-              ),
-          ]),
-        ),
-      ),
-    );
-  }
+  Future<void> _showMemory() => showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => MemorySheet(api: _memory),
+      );
 
   void _toEnd({bool jump = false}) => WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_scroll.hasClients) return;
@@ -471,6 +504,7 @@ class _CoachScreenState extends State<CoachScreen> {
                                     onRegenerate: i == lastAssistant && !_busy ? _regenerate : null,
                                     onTyped: () => m.fresh = false,
                                     onGrow: () => _toEnd(jump: true),
+                                    below: m.suggestions.isEmpty ? null : FactSuggestions(key: ValueKey('suggest-${m.id ?? i}'), facts: m.suggestions, api: _memory),
                                   );
                           },
                         ),
@@ -480,7 +514,7 @@ class _CoachScreenState extends State<CoachScreen> {
         _Composer(
           controller: _input,
           focus: _focus,
-          busy: _busy,
+          busy: _busy || _deletingCurrent,
           editing: _editing != null,
           onCancelEdit: () => setState(() {
             _editing = null;
@@ -503,7 +537,7 @@ class _CoachScreenState extends State<CoachScreen> {
         ErrorLine(_error!),
         if (f != null)
           TextButton.icon(
-            onPressed: () => _send(f.text, editFrom: f.editFrom, cut: f.cut),
+            onPressed: () => _send(f.text, editFrom: f.editFrom, cut: f.cut, clientMsgId: f.clientMsgId),
             icon: const Icon(LvIcons.arrowsClockwise, size: 16),
             label: const Text('Try again'),
           ),
@@ -665,10 +699,11 @@ class _UserBubble extends StatelessWidget {
 
 /// The assistant's turn: no bubble, full width, formatted, with actions underneath.
 class _Reply extends StatelessWidget {
-  const _Reply({required this.msg, required this.onRegenerate, required this.onTyped, required this.onGrow});
+  const _Reply({required this.msg, required this.onRegenerate, required this.onTyped, required this.onGrow, this.below});
   final _Msg msg;
   final VoidCallback? onRegenerate;
   final VoidCallback onTyped, onGrow;
+  final Widget? below; // memory suggestions for this reply
 
   @override
   Widget build(BuildContext context) {
@@ -692,6 +727,7 @@ class _Reply extends StatelessWidget {
                 _Action(icon: LvIcons.copy, label: 'Copy', onTap: () => _copy(context, msg.text)),
                 if (onRegenerate != null) _Action(icon: LvIcons.arrowsClockwise, label: 'Regenerate', onTap: onRegenerate!),
               ]),
+              ?below,
             ]),
           ),
         ]),
@@ -976,4 +1012,14 @@ class _TypingState extends State<_Typing> with SingleTickerProviderStateMixin {
       ),
     );
   }
+}
+
+/// A random version-4 UUID for one chat message (the server ignores anything that is not a UUID).
+String newClientMsgId([math.Random? random]) {
+  final r = random ?? math.Random.secure();
+  final b = List<int>.generate(16, (_) => r.nextInt(256));
+  b[6] = (b[6] & 0x0f) | 0x40; // version 4
+  b[8] = (b[8] & 0x3f) | 0x80; // RFC 4122 variant
+  final h = b.map((x) => x.toRadixString(16).padLeft(2, '0')).join();
+  return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-${h.substring(16, 20)}-${h.substring(20)}';
 }

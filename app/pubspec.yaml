@@ -45,6 +45,12 @@ dependencies:
   audioplayers: ^6.8.1
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.3
+# Patched copy (BSD-3-Clause): a daily reminder delivered early was re-armed for the same occurrence and shown
+# twice. See third_party/flutter_local_notifications/LEVLOFIT_PATCH.md.
+dependency_overrides:
+  flutter_local_notifications:
+    path: third_party/flutter_local_notifications
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -84,6 +90,7 @@ flutter:
 
   assets:
     - assets/sounds/levlo_chime.wav
+    - assets/fonts/PHOSPHOR-LICENSE
 
   fonts:
     - family: PhosphorLight

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'account.dart';
 import 'icons.dart';
 import 'main.dart';
 import 'mark.dart';
@@ -384,7 +385,21 @@ class _OnboardingState extends State<Onboarding> {
               ),
             ),
           ),
-          actions: const [SizedBox(width: 24)],
+          actions: [
+            // First run only: a way out before the plan exists (Profile, with the same actions, comes after it).
+            if (!widget.goalsOnly)
+              PopupMenuButton<_AccountAction>(
+                tooltip: 'Account',
+                icon: const Icon(LvIcons.userCircle),
+                enabled: !_busy,
+                onSelected: (a) => a == _AccountAction.signOut ? signOutAndClearReminders() : confirmAndDeleteAccount(context),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: _AccountAction.signOut, child: Text('Sign out')),
+                  PopupMenuItem(value: _AccountAction.delete, child: Text('Delete account')),
+                ],
+              ),
+            SizedBox(width: widget.goalsOnly ? 24 : 8),
+          ],
         ),
         body: SafeArea(
           top: false,
@@ -889,6 +904,8 @@ class _OnboardingState extends State<Onboarding> {
     }
   }
 }
+
+enum _AccountAction { signOut, delete }
 
 class _CoachBubble extends StatelessWidget {
   const _CoachBubble(this.text, {this.thinking = false});

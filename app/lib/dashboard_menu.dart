@@ -92,11 +92,12 @@ class _Menu extends StatelessWidget {
       const _MenuSection('FUEL'),
       item(LvIcons.forkKnife, 'Diet', _Tab.diet),
       item(LvIcons.drop, 'Hydration', _Tab.hydration),
+      item(LvIcons.forkKnife, 'Food diary', _Tab.foodDiary),
       item(LvIcons.magnifyingGlass, 'Food library', _Tab.foods),
       const _MenuSection('HABITS AND TOOLS'),
       item(LvIcons.checkCircle, 'Habits', _Tab.habits),
       item(LvIcons.scales, 'BMI calculator', _Tab.bmi),
-      item(LvIcons.calculator, 'Body fat calculator', _Tab.bodyFat),
+      item(LvIcons.ruler, 'Waist check', _Tab.bodyFat),
       const _MenuSection('LEARN'),
       item(LvIcons.bookOpen, 'Handbook', _Tab.handbook),
       item(LvIcons.personSimpleRun, 'Exercise library', _Tab.library),
@@ -240,7 +241,7 @@ class _WorkoutScreen extends StatefulWidget {
   final _Data data;
   final Set<DateTime> logged;
   final VoidCallback onEditGoals;
-  final Future<void> Function(String goal, int? minutes) onToggleToday;
+  final Future<bool> Function(String goal, int? minutes) onToggleToday;
   final VoidCallback onPlanChanged; // a level check rebuilt the plan
 
   @override
@@ -268,7 +269,7 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
     final monday = _monday(now);
     final today = _day(now);
     final minutes = data.input['sessionMinutes'] as int?;
-    final week = weekPlan(plan, sessionMinutes: minutes);
+    final week = weekPlan(plan, sessionMinutes: minutes, estimate: sessionEstimator(data.tier, kitOf(data.profile)));
     final dayGoal = week.days;
     final goals = (plan['goals'] as List).cast<_Json>();
     final phase = plan['phase'] as _Json?;
@@ -316,9 +317,12 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
         for (var i = 0; i < 7; i++) ...[
           Builder(builder: (context) {
             final day = monday.add(Duration(days: i));
-            final g = dayGoal[i + 1];
             final done = _logged.contains(day);
             final isToday = day == today;
+            // A rest day may carry an add-on as its own short session; a training day may carry blocks after it.
+            final own = dayGoal[i + 1] == null ? week.addOns.where((a) => a.day == i + 1).firstOrNull : null;
+            final ownBlock = own == null ? null : blocksFor(week, i + 1, data.tier, kitOf(data.profile), const []).first;
+            final g = own == null ? dayGoal[i + 1] : {...own.session, 'name': '${own.name} add-on', 'startLevel': ownBlock!.level};
             if (g == null) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
@@ -332,8 +336,14 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
             }
             final name = (g['name'] ?? g['goal']) as String;
             final level = g['startLevel'] as int;
-            final nth = seen.update(g['goal'] as String, (n) => n + 1, ifAbsent: () => 0);
-            final ids = sessionIds(g['kind'] as String? ?? 'strength', data.tier, level, nth, goal: g['goal'] as String?);
+            final List<String> ids;
+            if (ownBlock != null) {
+              ids = ownBlock.ids;
+            } else {
+              final nth = seen.update(g['goal'] as String, (n) => n + 1, ifAbsent: () => 0);
+              ids = sessionIds(g['kind'] as String? ?? 'strength', data.tier, level, nth, goal: g['goal'] as String?, kit: kitOf(data.profile));
+            }
+            final blocks = own != null ? const <AddOnBlock>[] : blocksFor(week, i + 1, data.tier, kitOf(data.profile), ids);
             final levelRow = data.levels[g['goal']];
             return _Tile(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
@@ -365,11 +375,16 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
                           title: name,
                           ids: ids,
                           level: level,
+                          blocks: blocks,
                           done: done,
+                          injury: data.profile['injuries'] as String?,
+                          sessionMinutes: minutes,
                           onFinish: isToday && !done
                               ? () async {
-                                  await widget.onToggleToday(g['goal'] as String, minutes);
-                                  if (mounted) setState(() => _logged = {..._logged, today});
+                                  // An add-on day logs its own length (the block and a warm-up), not the session setting.
+                                  final saved = await widget.onToggleToday(g['goal'] as String, ownBlock == null ? minutes : ownBlock.minutes + 5);
+                                  if (saved && mounted) setState(() => _logged = {..._logged, today});
+                                  return saved;
                                 }
                               : null,
                         ),
@@ -379,7 +394,15 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
                   ),
                 ]),
                 const SizedBox(height: 12),
-                MoveStrip(ids: ids, level: level, tile: 104),
+                MoveStrip(ids: ids, level: level, tile: 104, injury: data.profile['injuries'] as String?),
+                for (final b in blocks) ...[
+                  const SizedBox(height: 10),
+                  Text(blockSummary(b).toUpperCase(), style: monoLabel(context)),
+                  if (b.ids.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    MoveStrip(ids: b.ids, level: b.level, tile: 80, injury: data.profile['injuries'] as String?),
+                  ],
+                ],
               ]),
             );
           }),
@@ -529,12 +552,35 @@ class _DietScreen extends StatefulWidget {
   State<_DietScreen> createState() => _DietScreenState();
 }
 
+/// Weeks of meal plans already built, shared by every visit to the Diet tab. Keyed by every input that changes
+/// the result (diet_plan.dart weekKey), so a rebuild or a day switch never repeats the search.
+final _weekCache = WeekCache();
+
 class _DietScreenState extends State<_DietScreen> {
   Map<String, Food>? _foods;
   int _day = DateTime.now().weekday - 1;
   int _tier = 2;
   String _budget = 'Medium';
   String? _error;
+  String? _buildingKey; // the week being built in the background, so it is started only once
+  String? _failedKey; // a week that could not be built; not retried on every rebuild
+
+  /// Builds all seven days for [request] off the UI thread, then rebuilds with the cached result.
+  void _buildWeek(String key, WeekRequest request) {
+    if (_buildingKey == key || _failedKey == key) return;
+    _buildingKey = key;
+    planWeekInBackground(request).then((week) {
+      // Cached under its own key, so a finished older week can never stand in for the week now requested.
+      _weekCache.put(key, week);
+      // Only the computation the screen is still waiting for clears the marker and rebuilds; an older one
+      // finishing later must not clear the marker of a newer week that is still running.
+      if (mounted && _buildingKey == key) setState(() => _buildingKey = null);
+    }, onError: (Object _) {
+      if (!mounted) return;
+      _failedKey = key; // remembered for these inputs only
+      if (_buildingKey == key) setState(() => _buildingKey = null);
+    });
+  }
 
   @override
   void initState() {
@@ -575,17 +621,28 @@ class _DietScreenState extends State<_DietScreen> {
       ]);
     }
     final supps = ((food['supplements'] as List?) ?? const []).cast<_Json>();
-    final plan = planDay(
+    final WeekRequest request = (
       foods: foods,
       kcal: kcal,
       protein: protein,
       excluded: {...(food['excludedFoodTags'] as List).cast<String>()},
       custom: ((food['customExclusions'] as List?) ?? const []).cast<String>(),
       tier: _tier,
-      day: _day,
       soyaCapG: ((food['maxSoyaChunksDryG'] as num?) ?? 50).toDouble(),
       proteinPowder: supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')),
     );
+    final key = weekKey(request);
+    final week = _weekCache.get(key);
+    if (week == null) {
+      _buildWeek(key, request);
+      return _Page(eyebrow: 'DIET', title: 'Your meal plan', children: [
+        if (_failedKey == key)
+          const ErrorLine('Could not build your meal plan. Reopen the Diet tab to try again.')
+        else
+          const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: LevloMark(size: 48, animate: true))),
+      ]);
+    }
+    final plan = week[_day];
     final short = protein - plan.protein;
     Widget macro(String label, double v, double? target, String unit) => Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -639,11 +696,29 @@ class _DietScreenState extends State<_DietScreen> {
                 macro('FAT', plan.fat, null, ' g'),
                 macro('FIBRE', plan.fiber, null, ' g'),
               ]),
+              const SizedBox(height: 10),
+              // Share of energy from fat; never shown when a planned food's fat value is missing.
+              Text(
+                plan.check.fatEnergyShare == null
+                    ? 'FAT SHARE OF ENERGY NOT SHOWN'
+                    : 'FAT  ·  ${fatShareText(plan.check.fatEnergyShare!).toUpperCase()} OF ENERGY',
+                style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.65), fontSize: 10),
+              ),
             ]),
           ),
         ),
-        // The planner reports when a day cannot meet both targets with this person's foods; say so plainly and
-        // offer only changes that respect their settings (never a food they exclude).
+        // Guidance (for example fat above 30% of energy) informs only: it never changes the plan or its pass flag.
+        if (plan.check.guidance.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _Tile(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              for (final line in plan.check.guidance) Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(line, style: t.bodyMedium)),
+            ]),
+          ),
+        ],
+        // The planner reports when it cannot build a day that meets both targets from its food list, templates and
+        // portion limits for this person; say so plainly and offer only changes that respect their settings.
         if (!plan.check.feasible) ...[
           const SizedBox(height: 10),
           _Tile(
@@ -661,7 +736,7 @@ class _DietScreenState extends State<_DietScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Text(
               'Food in this plan gives ${plan.protein.round()} g of your ${protein.round()} g protein. '
-              '${supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')) ? 'The protein powder in your plan can cover the last ${short.round()} g.' : 'A slightly bigger portion of the protein foods above covers the last ${short.round()} g.'}',
+              '${supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')) ? 'The protein powder in your plan can cover the last ${short.round()} g.' : 'A slightly bigger portion of the protein foods above would add about ${short.round()} g, but it may take the day over your calorie target.'}',
               style: t.bodyMedium,
             ),
           ),
@@ -689,7 +764,7 @@ class _DietScreenState extends State<_DietScreen> {
           label: const Text('Recipes for today with Levlofit AI'),
         ),
         const SizedBox(height: 12),
-        Text('Food values: IFCT 2017, ICMR-National Institute of Nutrition. Cooking oil: ICMR-NIN Dietary Guidelines for Indians 2024. '
+        Text('Food values: IFCT 2017, ICMR-National Institute of Nutrition. Cooking oil: ICMR-NIN Dietary Guidelines for Indians 2024 (27 g at 2000 kcal), scaled to your energy by Levlofit. '
             'Swap like for like (one dal for another, one roti flour for another) and the totals stay close.',
             style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ],
@@ -791,7 +866,10 @@ class _CalendarScreenState extends State<_CalendarScreen> {
     _fetch();
   }
 
+  int _fetchSeq = 0; // only the latest month's answer is shown, however the replies arrive
+
   Future<void> _fetch() async {
+    final n = ++_fetchSeq;
     setState(() => _loading = true);
     final (from, to) = _range;
     try {
@@ -811,8 +889,10 @@ class _CalendarScreenState extends State<_CalendarScreen> {
       for (final r in photos) {
         at(r['taken_on'] as String).photos++;
       }
+      if (n != _fetchSeq) return; // a newer month was asked for meanwhile
       _records = records;
     } catch (_) {
+      if (n != _fetchSeq) return;
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not load the calendar. Check your connection.')));
     }
     if (mounted) setState(() => _loading = false);
@@ -845,7 +925,9 @@ class _CalendarScreenState extends State<_CalendarScreen> {
         await supabase.from('workout_logs').delete().eq('user_id', _uid).eq('performed_on', _iso(day));
       } else {
         final goal = _dayGoal[day.weekday] ?? (widget.plan['goals'] as List).first as _Json;
-        await supabase.from('workout_logs').insert({'user_id': _uid, 'performed_on': _iso(day), 'goal': goal['goal']});
+        // A day already logged from the dashboard is not logged twice.
+        final existing = await supabase.from('workout_logs').select('id').eq('user_id', _uid).eq('performed_on', _iso(day)).limit(1);
+        if (existing.isEmpty) await supabase.from('workout_logs').insert({'user_id': _uid, 'performed_on': _iso(day), 'goal': goal['goal']});
       }
       setState(() => _records.putIfAbsent(day, _DayRecord.new).trained = !done);
     } catch (_) {
@@ -1203,7 +1285,8 @@ class _ProgressScreenState extends State<_ProgressScreen> {
   Future<void> _logBody({required bool tape}) async {
     final fields = tape ? _measureFields : const [('weight_kg', 'Weight, kg'), ('body_fat_pct', 'Body fat %, only from a real measurement')];
     final lastWeight = _body.lastWhere((b) => b['weight_kg'] != null, orElse: () => const {})['weight_kg'];
-    final controllers = {for (final (k, _) in fields) k: TextEditingController(text: k == 'weight_kg' && lastWeight != null ? '$lastWeight' : '')};
+    // Every field starts empty: a pre-filled last weight would be saved as a new reading when only body fat is logged.
+    final controllers = {for (final (k, _) in fields) k: TextEditingController()};
     var day = _day(DateTime.now());
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -1246,7 +1329,7 @@ class _ProgressScreenState extends State<_ProgressScreen> {
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}(\.\d?)?$'))],
                           style: monoNumber(sheet, size: 18),
-                          decoration: InputDecoration(labelText: label),
+                          decoration: InputDecoration(labelText: label, hintText: k == 'weight_kg' && lastWeight != null ? 'Last: $lastWeight' : null),
                         ),
                       ),
                   ]),
@@ -1344,11 +1427,14 @@ class _ProgressScreenState extends State<_ProgressScreen> {
     return _Page(
       eyebrow: 'PROGRESS',
       title: 'Is this working?',
-      children: _progressBody(
+      children: [
+        const StepsCard(),
+        ..._progressBody(
         context,
         plan: widget.data.plan,
         logs: logs,
         body: _body,
+        heightCm: widget.data.profile['height_cm'] as num?,
         photos: _photos,
         uploading: _uploading,
         onLogWeight: () => _logBody(tape: false),
@@ -1356,17 +1442,18 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         onAddPhoto: _addPhoto,
         onViewPhoto: _viewPhoto,
       ),
+      ],
     );
   }
 }
 
 /// Renders the progress body from rows, without Supabase, so layout can be tested.
 @visibleForTesting
-Widget progressBodyForTest(Map<String, dynamic> plan, List<Map<String, dynamic>> logs, List<Map<String, dynamic>> body) => Builder(
+Widget progressBodyForTest(Map<String, dynamic> plan, List<Map<String, dynamic>> logs, List<Map<String, dynamic>> body, {num? heightCm}) => Builder(
       builder: (context) => _Page(
         eyebrow: 'PROGRESS',
         title: 'Is this working?',
-        children: _progressBody(context, plan: plan, logs: logs, body: body, photos: const [], uploading: false, onLogWeight: () {}, onLogTape: () {}, onAddPhoto: () {}, onViewPhoto: (_) {}),
+        children: _progressBody(context, plan: plan, logs: logs, body: body, heightCm: heightCm, photos: const [], uploading: false, onLogWeight: () {}, onLogTape: () {}, onAddPhoto: () {}, onViewPhoto: (_) {}),
       ),
     );
 
@@ -1375,6 +1462,7 @@ List<Widget> _progressBody(
   required _Json plan,
   required List<_Json> logs,
   required List<_Json> body,
+  num? heightCm, // profile height, for waist-to-height
   required List<_Photo> photos,
   required bool uploading,
   required VoidCallback onLogWeight,
@@ -1408,6 +1496,10 @@ List<Widget> _progressBody(
       if (body.where((b) => b[k] != null).toList() case final rows when rows.isNotEmpty)
         (label: label, now: (rows.last[k] as num).toDouble(), from: (rows.first[k] as num).toDouble()),
   ];
+  // Waist-to-height from the latest and first waist, against the current profile height (adult height is stable).
+  final waist = tape.where((m) => m.label == 'Waist').firstOrNull;
+  final whtrNow = waist == null ? null : whtrCheck(height: heightCm?.toDouble(), waist: waist.now);
+  final whtrFrom = waist == null || waist.from == waist.now ? null : whtrCheck(height: heightCm?.toDouble(), waist: waist.from).value;
   Widget photo(_Photo p, {double radius = 10}) => GestureDetector(
         onTap: () => onViewPhoto(p),
         child: ClipRRect(
@@ -1434,13 +1526,15 @@ List<Widget> _progressBody(
       ),
     ),
     const SizedBox(height: 12),
-    Row(children: [
-      Expanded(child: _Stat(value: '$adherence', label: 'ADHERENCE %', accent: true)),
-      const SizedBox(width: 10),
-      Expanded(child: _Stat(value: '${days.length}', label: 'SESSIONS')),
-      const SizedBox(width: 10),
-      Expanded(child: _Stat(value: '${_Bento._weekStreak(days, monday, perWeek)}', label: 'WEEK STREAK')),
-    ]),
+    IntrinsicHeight(
+      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Expanded(child: _Stat(value: '$adherence', label: 'ADHERENCE %', accent: true)),
+        const SizedBox(width: 10),
+        Expanded(child: _Stat(value: '${days.length}', label: 'SESSIONS')),
+        const SizedBox(width: 10),
+        Expanded(child: _Stat(value: '${_Bento._weekStreak(days, monday, perWeek)}', label: 'WEEK STREAK')),
+      ]),
+    ),
     const SizedBox(height: 12),
     _Tile(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1495,6 +1589,14 @@ List<Widget> _progressBody(
                 Text('${m.now.toStringAsFixed(1)} cm', style: monoNumber(context, size: 15)),
               ]),
             ),
+        if (whtrNow?.value case final v?)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Waist to height ${v.toStringAsFixed(2)}, ${whtrNow!.band}${whtrFrom == null ? '' : ' (first ${whtrFrom.toStringAsFixed(2)})'}. Under 0.50 is the aim.',
+              style: t.bodySmall?.copyWith(color: c.onSurfaceVariant),
+            ),
+          ),
       ]),
     ),
     const SizedBox(height: 12),
@@ -1578,7 +1680,7 @@ class _Stat extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           CountUp(value, style: monoNumber(context, size: 28).copyWith(color: accent ? Theme.of(context).colorScheme.tertiary : null)),
           const SizedBox(height: 4),
-          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: monoLabel(context).copyWith(fontSize: 10)),
+          Text(label, maxLines: 2, overflow: TextOverflow.ellipsis, style: monoLabel(context).copyWith(fontSize: 10)), // two lines at phone width
         ]),
       );
 }

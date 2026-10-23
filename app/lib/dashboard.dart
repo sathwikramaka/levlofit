@@ -4,27 +4,32 @@ import 'dart:async';
 import 'dart:math' as math;
 
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, kReleaseMode, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'account.dart';
 import 'avatar.dart';
 import 'coach_chat.dart';
 import 'diet_plan.dart';
 import 'exercises.dart';
+import 'food_diary.dart' show FoodDiaryScreen, matchesFoodQuery;
 import 'handbook.dart';
 import 'icons.dart';
 import 'main.dart';
 import 'mark.dart';
 import 'onboarding.dart';
+import 'dashboard_layout.dart';
 import 'reminders.dart';
+import 'rewards.dart';
 import 'session.dart';
+import 'steps.dart' show StepsCard, healthPermissionScreenRequested, onHealthRationale;
 import 'theme.dart';
 import 'tools.dart';
-import 'week_schedule.dart' show addOnLine, weekPlan;
+import 'week_schedule.dart' show addOnLine, reminderSessions, weekPlan;
 
 part 'dashboard_menu.dart';
 part 'dashboard_tabs.dart';
@@ -53,21 +58,33 @@ typedef _Data = ({
   List<_Json> proteins,
   Tier tier,
   Set<String> assessed, // goals with a level check on record
-  Map<DateTime, int> water, // ml drunk per day, last 7 days
-  Set<(DateTime, String)> habits, // hand-ticked habits, last 7 days
+  Map<DateTime, int> water, // ml drunk per day, last 30 days (daily-goal streak)
+  Set<(DateTime, String)> habits, // hand-ticked habits, last 30 days
 });
 
 /// Every place the side menu can take you. The shell swaps the body; the menu stays the same everywhere.
-enum _Tab { home, workout, protocol, diet, hydration, habits, calendar, progress, foods, bmi, bodyFat, handbook, library, glossary, reminders, settings, profile }
+enum _Tab { home, workout, protocol, diet, hydration, habits, calendar, progress, foods, foodDiary, bmi, bodyFat, handbook, library, glossary, reminders, settings, profile }
 
 final _shellKey = GlobalKey<ScaffoldState>();
 
-/// The three-line menu button every tab shows in place of a back arrow.
+/// The three-line menu button every tab shows in place of a back arrow; a back arrow instead when the tab was
+/// opened from another page (Profile > Settings), so the way back is the way in.
 class _ShellMenu extends StatelessWidget {
   const _ShellMenu();
 
   @override
-  Widget build(BuildContext context) => _MenuButton(onTap: () => _shellKey.currentState?.openDrawer());
+  Widget build(BuildContext context) {
+    final back = context.dependOnInheritedWidgetOfExactType<_BackScope>()?.onBack;
+    return back != null ? BackButton(onPressed: back) : _MenuButton(onTap: () => _shellKey.currentState?.openDrawer());
+  }
+}
+
+class _BackScope extends InheritedWidget {
+  const _BackScope({required this.onBack, required super.child});
+  final VoidCallback? onBack;
+
+  @override
+  bool updateShouldNotify(_BackScope old) => old.onBack != onBack;
 }
 
 class Dashboard extends StatefulWidget {
@@ -84,13 +101,60 @@ class _DashboardState extends State<Dashboard> {
   bool _saving = false;
   _Data? _loaded; // for the menu, which can open before or after the first load
   _Tab _tab = _Tab.home;
+  final _back = <_Tab>[]; // pages to return to, for tabs opened from another page rather than the menu
 
   String get _uid => supabase.auth.currentUser!.id;
+
+  @override
+  void initState() {
+    super.initState();
+    // Health Connect opens the app from its permission screens to show why steps are read: show the privacy policy.
+    healthPermissionScreenRequested().then((asked) {
+      if (asked && mounted) showPrivacyPolicy(context);
+    });
+    onHealthRationale(() {
+      if (mounted) showPrivacyPolicy(context);
+    });
+  }
+
+  // Device-local, per user: card layout, the tasks that make up the daily goal, the last celebrated day.
+  late List<CardPref> _layout = mergeLayout(decodeLayout(prefs.getString('dashboard_layout:$_uid')));
+  late Set<String> _dailyTasks = {...?prefs.getStringList('daily_goal:$_uid')}.ifEmpty(defaultDailyTasks);
+  late String? _celebrated = prefs.getString('celebrated_day:$_uid');
+
+  Future<void> _customise() => showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (_) => DashboardCustomiser(
+          initial: _layout,
+          onChanged: (l) {
+            prefs.setString('dashboard_layout:$_uid', encodeLayout(l));
+            setState(() => _layout = l);
+          },
+        ),
+      );
+
+  Future<void> _chooseTasks() async {
+    final d = _loaded;
+    if (d == null) return;
+    final habits = _habitList(d, _logged, d.habits, d.water);
+    final chosen = await showModalBottomSheet<Set<String>>(context: context, showDragHandle: true, builder: (_) => _DailyGoalSheet(habits: habits, chosen: _dailyTasks));
+    if (chosen == null || chosen.isEmpty) return;
+    prefs.setStringList('daily_goal:$_uid', chosen.toList());
+    setState(() => _dailyTasks = chosen);
+  }
+
+  void _onCelebrated(int streak) {
+    final key = dayKey(DateTime.now());
+    prefs.setString('celebrated_day:$_uid', key);
+    _celebrated = key; // no rebuild needed: the card already showed it
+  }
 
   Future<_Data> _load() async {
     final now = DateTime.now();
     final [profile, latest] = await Future.wait([
-      supabase.from('profiles').select('display_name, sex, birth_year, height_cm, weight_kg, waist_cm, equipment, equipment_items, days_per_week, session_minutes, water_target_ml, avatar').eq('id', _uid).single(),
+      supabase.from('profiles').select('display_name, sex, birth_year, height_cm, weight_kg, waist_cm, equipment, equipment_items, injuries, days_per_week, session_minutes, water_target_ml, avatar').eq('id', _uid).single(),
       supabase.from('generated_plans').select('plan, input').eq('user_id', _uid).order('created_at', ascending: false).limit(1).single(),
     ]);
     final plan = latest['plan'] as _Json;
@@ -101,8 +165,8 @@ class _DashboardState extends State<Dashboard> {
       _proteinSources(plan),
       supabase.from('workout_logs').select('performed_on, duration_min').eq('user_id', _uid).gte('performed_on', _iso(_monday(now).subtract(const Duration(days: 49)))),
       supabase.from('goal_levels').select('goal').eq('user_id', _uid),
-      supabase.from('water_intake').select('taken_at, ml').eq('user_id', _uid).gte('taken_at', _day(now).subtract(const Duration(days: 6)).toUtc().toIso8601String()),
-      supabase.from('habit_logs').select('day, habit').eq('user_id', _uid).gte('day', _iso(_day(now).subtract(const Duration(days: 6)))),
+      supabase.from('water_intake').select('taken_at, ml').eq('user_id', _uid).gte('taken_at', _day(now).subtract(const Duration(days: 29)).toUtc().toIso8601String()),
+      supabase.from('habit_logs').select('day, habit').eq('user_id', _uid).gte('day', _iso(_day(now).subtract(const Duration(days: 29)))),
     ]);
     final water = <DateTime, int>{};
     for (final r in (results[4] as List).cast<_Json>()) {
@@ -128,15 +192,20 @@ class _DashboardState extends State<Dashboard> {
       water: water,
       habits: {for (final r in (results[5] as List).cast<_Json>()) (DateTime.parse(r['day'] as String), r['habit'] as String)},
     );
-    _scheduleReminders(plan);
+    _scheduleReminders(_loaded!);
     return _loaded!;
   }
 
   /// Re-arms reminders for the current plan. Never blocks or breaks the dashboard.
-  Future<void> _scheduleReminders(_Json plan) async {
+  Future<void> _scheduleReminders(_Data d) async {
     try {
-      final sessions = {for (final e in _schedule(plan).entries) e.key: ((e.value?['name'] ?? e.value?['goal'] ?? 'Your session') as String)};
-      await Reminders.apply(await loadReminderPrefs(), sessions, inApp: _inApp);
+      // Training days, plus a rest day that carries an add-on session of its own (week_schedule.dart).
+      final sessions = reminderSessions(
+          weekPlan(d.plan, sessionMinutes: d.input['sessionMinutes'] as int?, estimate: sessionEstimator(d.tier, kitOf(d.profile))));
+      // The user's own reminders are optional: a failed read (or the table not there yet) applies the built-in ones
+      // and leaves any scheduled custom ones as they are (null), never cancelling them as if they were deleted.
+      final custom = await loadCustomReminders().then<List<CustomReminder>?>((l) => l, onError: (Object _) => null);
+      await Reminders.apply(await loadReminderPrefs(), sessions, custom: custom, inApp: _inApp);
     } catch (_) {}
   }
 
@@ -170,8 +239,10 @@ class _DashboardState extends State<Dashboard> {
   }
 
   /// Logs today's session, or removes it again. Writes to workout_logs under the user's own row policy.
-  Future<void> _toggleToday(String goal, int? minutes) async {
-    if (_saving) return;
+  /// Returns whether the change was saved. Logging is idempotent: a day already logged elsewhere (the calendar) is
+  /// not logged twice.
+  Future<bool> _toggleToday(String goal, int? minutes) async {
+    if (_saving) return false;
     final today = _day(DateTime.now());
     final done = _logged.contains(today);
     setState(() => _saving = true);
@@ -184,21 +255,41 @@ class _DashboardState extends State<Dashboard> {
           _minutes = {..._minutes}..remove(today);
         });
       } else {
-        await supabase.from('workout_logs').insert({'user_id': _uid, 'performed_on': _iso(today), 'goal': goal, 'duration_min': minutes});
+        final existing = await supabase.from('workout_logs').select('id').eq('user_id', _uid).eq('performed_on', _iso(today)).limit(1);
+        if (existing.isEmpty) {
+          await supabase.from('workout_logs').insert({'user_id': _uid, 'performed_on': _iso(today), 'goal': goal, 'duration_min': minutes});
+        }
         setState(() {
           _logged = {..._logged, today};
           if (minutes != null) _minutes = {..._minutes, today: minutes};
         });
       }
+      return true;
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save. Check your connection and try again.')));
+      return false;
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
+  /// Menu navigation: a fresh start, so the back stack is cleared.
   void _go(_Tab tab) {
+    _back.clear();
+    _show(tab);
+  }
+
+  /// Opens [tab] from the current page; back (arrow or gesture) returns here.
+  void _open(_Tab tab) {
     if (tab == _tab) return;
+    _back.add(_tab);
+    _show(tab);
+  }
+
+  void _pop() => _show(_back.removeLast());
+
+  void _show(_Tab tab) {
+    if (tab == _tab) return setState(() {});
     setState(() {
       // Coming home picks up anything logged on the other tabs.
       if (tab == _Tab.home) _data = _load();
@@ -209,8 +300,8 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) => PopScope(
         // The system back gesture returns to the dashboard instead of leaving the app.
-        canPop: _tab == _Tab.home,
-        onPopInvokedWithResult: (didPop, _) => didPop ? null : _go(_Tab.home),
+        canPop: _tab == _Tab.home && _back.isEmpty,
+        onPopInvokedWithResult: (didPop, _) => didPop ? null : (_back.isNotEmpty ? _pop() : _go(_Tab.home)),
         child: Scaffold(
           key: _shellKey,
           drawer: _Menu(current: _tab, data: () => _loaded, onSelect: _go),
@@ -223,19 +314,28 @@ class _DashboardState extends State<Dashboard> {
               opacity: a,
               child: SlideTransition(position: Tween(begin: const Offset(0, 0.015), end: Offset.zero).animate(a), child: child),
             ),
-            child: KeyedSubtree(key: ValueKey(_tab), child: _body(context)),
+            child: KeyedSubtree(key: ValueKey(_tab), child: _BackScope(onBack: _back.isEmpty ? null : _pop, child: _body(context))),
           ),
         ),
       );
 
   Widget _body(BuildContext context) {
-    final p = _loaded?.profile ?? const <String, dynamic>{};
     return switch (_tab) {
       _Tab.home => _home(context),
       _Tab.glossary => const _GlossaryScreen(),
-      _Tab.settings => _AppSettingsScreen(onOpen: _go),
-      _Tab.bmi => BmiScreen(leading: const _ShellMenu(), heightCm: p['height_cm'] as num?, weightKg: p['weight_kg'] as num?),
-      _Tab.bodyFat => BodyFatScreen(leading: const _ShellMenu(), male: p['sex'] == null ? null : p['sex'] == 'male', heightCm: p['height_cm'] as num?, waistCm: p['waist_cm'] as num?),
+      _Tab.settings => _AppSettingsScreen(onOpen: _open),
+      // The calculators work without the plan, but prefill from the profile once it has loaded (keyed, so the
+      // fields refill when the load finishes after the tab was opened).
+      _Tab.bmi || _Tab.bodyFat => FutureBuilder(
+          future: _data,
+          builder: (context, snap) {
+            final p = snap.data?.profile ?? const <String, dynamic>{};
+            final key = ValueKey(snap.hasData);
+            return _tab == _Tab.bmi
+                ? BmiScreen(key: key, leading: const _ShellMenu(), heightCm: p['height_cm'] as num?, weightKg: p['weight_kg'] as num?, age: p['birth_year'] == null ? null : DateTime.now().year - (p['birth_year'] as int))
+                : WaistScreen(key: key, leading: const _ShellMenu(), heightCm: p['height_cm'] as num?, waistCm: p['waist_cm'] as num?);
+          },
+        ),
       _Tab.handbook => const HandbookScreen(leading: _ShellMenu()),
       _Tab.library => const ExerciseLibraryScreen(leading: _ShellMenu()),
       _ => _withData((d) => switch (_tab) {
@@ -244,24 +344,29 @@ class _DashboardState extends State<Dashboard> {
                 logged: _logged,
                 onEditGoals: () => _editGoals(context, d.plan),
                 onToggleToday: _toggleToday,
-                onPlanChanged: () => setState(() => _data = _load()),
+                onPlanChanged: () => setState(() { _data = _load(); }),
               ),
             _Tab.diet => _DietScreen(data: d),
-            _Tab.protocol => _ProtocolScreen(data: d, onEditGoals: () => _editGoals(context, d.plan), onSaved: () => setState(() => _data = _load())),
+            _Tab.protocol => _ProtocolScreen(data: d, onEditGoals: () => _editGoals(context, d.plan), onSaved: () => setState(() { _data = _load(); })),
             _Tab.profile => _ProfileScreen(
                 data: d,
-                onOpen: _go,
-                onSignOut: () => supabase.auth.signOut(),
+                onOpen: _open,
+                onSignOut: signOutAndClearReminders,
                 onDelete: () => _confirmDelete(context),
                 onEditDetails: () => _editDetails(context, d),
-                onAvatarChanged: () => setState(() => _data = _load()),
+                onAvatarChanged: () => setState(() { _data = _load(); }),
               ),
             _Tab.hydration => _HydrationScreen(data: d),
             _Tab.habits => _HabitsScreen(data: d, logged: _logged),
             _Tab.calendar => _CalendarScreen(plan: d.plan),
             _Tab.progress => _ProgressScreen(data: d),
             _Tab.foods => _FoodsScreen(data: d),
-            _Tab.reminders => _SettingsScreen(onRemindersChanged: () => _scheduleReminders(d.plan)),
+            _Tab.foodDiary => FoodDiaryScreen(
+                leading: const _ShellMenu(),
+                kcalTarget: (d.plan['nutrition'] as _Json?)?['energyKcal'] as num?,
+                proteinTarget: (d.plan['nutrition'] as _Json?)?['proteinG'] as num?,
+              ),
+            _Tab.reminders => _SettingsScreen(onRemindersChanged: () => _scheduleReminders(d)),
             _ => const SizedBox.shrink(),
           }),
     };
@@ -307,7 +412,7 @@ class _DashboardState extends State<Dashboard> {
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   const ErrorLine('Could not load your plan. Check your connection.'),
                   const SizedBox(height: 16),
-                  OutlinedButton(onPressed: () => setState(() => _data = _load()), child: const Text('Try again')),
+                  OutlinedButton(onPressed: () => setState(() { _data = _load(); }), child: const Text('Try again')),
                 ]),
               );
             }
@@ -321,19 +426,31 @@ class _DashboardState extends State<Dashboard> {
               onCheckLevel: () => _go(_Tab.workout),
               onOpen: _go,
               onAddWater: _addWater,
+              layout: _layout,
+              dailyTasks: _dailyTasks,
+              lastCelebrated: _celebrated,
+              onCustomise: _customise,
+              onChooseTasks: _chooseTasks,
+              onCelebrated: _onCelebrated,
             );
           },
         ),
       );
 
+  bool _addingWater = false; // one glass at a time: a double tap must not log two
+
   /// One glass from the dashboard tile.
   Future<void> _addWater() async {
+    if (_addingWater) return;
+    _addingWater = true;
     HapticFeedback.mediumImpact();
     try {
       await supabase.from('water_intake').insert({'ml': 250});
-      setState(() => _data = _load());
+      if (mounted) setState(() { _data = _load(); });
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save. Check your connection.')));
+    } finally {
+      _addingWater = false;
     }
   }
 
@@ -360,11 +477,18 @@ class _DashboardState extends State<Dashboard> {
     name.dispose();
     h.dispose();
     w.dispose();
-    if (ok != true || height == null || weight == null || height < 120 || height > 230 || weight < 30 || weight > 250) return;
+    if (ok != true) return;
+    if (height == null || weight == null || height < bmiHeightCm.min || height > bmiHeightCm.max || weight < bmiWeightKg.min || weight > bmiWeightKg.max) {
+      if (mounted) {
+        ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+            content: Text('Not saved: height must be ${bmiHeightCm.min} to ${bmiHeightCm.max} cm and weight ${bmiWeightKg.min} to ${bmiWeightKg.max} kg.')));
+      }
+      return;
+    }
     try {
       await supabase.from('profiles').update({'display_name': display.isEmpty ? null : display, 'height_cm': height, 'weight_kg': weight}).eq('id', _uid);
       await supabase.functions.invoke('generate-plan');
-      if (mounted) setState(() => _data = _load());
+      if (mounted) setState(() { _data = _load(); });
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Could not save your details.')));
     }
@@ -384,51 +508,31 @@ class _DashboardState extends State<Dashboard> {
         ),
       ),
     );
-    if (updated == true && mounted) setState(() => _data = _load());
+    if (updated == true && mounted) setState(() { _data = _load(); });
   }
 
-  Future<void> _confirmDelete(BuildContext context) async {
-    final danger = Theme.of(context).colorScheme.error;
-    final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (d) => AlertDialog(
-        title: const Text('Delete your account?'),
-        content: const Text('This permanently deletes your profile, plans and logs. It cannot be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Cancel')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: danger, foregroundColor: Theme.of(d).colorScheme.onError),
-            onPressed: () => Navigator.pop(d, true),
-            child: const Text('Delete account'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    try {
-      await supabase.functions.invoke('delete-account');
-      // The user no longer exists server-side, so only clear the local session.
-      await supabase.auth.signOut(scope: SignOutScope.local);
-    } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('Could not delete your account. Try again.')));
-    }
-  }
+  Future<void> _confirmDelete(BuildContext context) => confirmAndDeleteAccount(context);
 }
 
 // ---------------------------------------------------------------- the bento
 
 /// Renders the dashboard body from a plan without Supabase, so layout can be tested at phone size.
 @visibleForTesting
-Widget dashboardBentoForTest(Map<String, dynamic> plan, {Set<DateTime> logged = const {}}) => _Bento(
+Widget dashboardBentoForTest(Map<String, dynamic> plan, {Set<DateTime> logged = const {}, List<CardPref>? layout, Set<String>? dailyTasks, ValueChanged<int>? onCelebrated}) => _Bento(
       data: (name: 'Asha Rao', profile: const {}, plan: plan, input: const {'sessionMinutes': 45}, levels: const {}, proteins: const [], tier: Tier.home, assessed: const {}, water: const {}, habits: const {}),
       logged: logged,
       minutes: {for (final d in logged) d: 45},
       saving: false,
-      onToggleToday: (_, _) async {},
+      onToggleToday: (_, _) async => true,
       onCheckLevel: () {},
       onOpen: (_) {},
       onAddWater: () {},
+      layout: layout ?? defaultLayout,
+      dailyTasks: dailyTasks ?? defaultDailyTasks,
+      lastCelebrated: null,
+      onCustomise: () {},
+      onChooseTasks: () {},
+      onCelebrated: onCelebrated ?? (_) {},
     );
 
 
@@ -442,12 +546,23 @@ class _Bento extends StatelessWidget {
     required this.onCheckLevel,
     required this.onOpen,
     required this.onAddWater,
+    required this.layout,
+    required this.dailyTasks,
+    required this.lastCelebrated,
+    required this.onCustomise,
+    required this.onChooseTasks,
+    required this.onCelebrated,
   });
+  final List<CardPref> layout;
+  final Set<String> dailyTasks;
+  final String? lastCelebrated; // day the daily-goal celebration last played on this device
+  final VoidCallback onCustomise, onChooseTasks;
+  final ValueChanged<int> onCelebrated; // today's streak, once the celebration is shown
   final _Data data;
   final Set<DateTime> logged;
   final Map<DateTime, int> minutes;
   final bool saving;
-  final Future<void> Function(String goal, int? minutes) onToggleToday;
+  final Future<bool> Function(String goal, int? minutes) onToggleToday;
   final VoidCallback onCheckLevel;
   final ValueChanged<_Tab> onOpen;
   final VoidCallback onAddWater;
@@ -474,12 +589,56 @@ class _Bento extends StatelessWidget {
     final level = todayGoal['startLevel'] as int;
     // Which session of this goal today is, so A and B alternate through the week.
     final nth = [for (var d = 1; d < now.weekday; d++) if (dayGoal[d]?['goal'] == todayGoal['goal']) d].length;
-    final ids = sessionIds(todayGoal['kind'] as String? ?? 'strength', data.tier, level, nth, goal: todayGoal['goal'] as String?);
+    final ids = sessionIds(todayGoal['kind'] as String? ?? 'strength', data.tier, level, nth, goal: todayGoal['goal'] as String?, kit: kitOf(data.profile));
+    // Add-on blocks today: joined to today's session, or today's own short session on a rest day (week_schedule.dart).
+    final week = weekPlan(plan, sessionMinutes: sessionMinutes, estimate: sessionEstimator(data.tier, kitOf(data.profile)));
+    final ownAddOn = isTrainingDay ? null : week.addOns.where((a) => a.day == now.weekday).firstOrNull;
+    final todayBlocks = blocksFor(week, now.weekday, data.tier, kitOf(data.profile), isTrainingDay ? ids : const []);
+    final ownBlock = ownAddOn == null ? null : todayBlocks.first;
+    final cardGoal = ownAddOn == null ? todayGoal : {...ownAddOn.session, 'name': '${ownAddOn.name} add-on', 'startLevel': ownBlock!.level};
 
     final first = (data.name ?? '').split(' ').first;
     final hello = now.hour < 12 ? 'Good morning' : (now.hour < 17 ? 'Good afternoon' : 'Good evening');
     final review = ((plan['review'] as List?) ?? const []).cast<_Json>();
     final important = review.where((f) => f['level'] == 'stop' || f['level'] == 'change').toList();
+    final habits = _habitList(data, logged, data.habits, data.water);
+    final tasks = {for (final h in habits) h.$1: h.$5};
+
+    Widget card(String id) => switch (id) {
+          'rings' => _Rings(days: doneThisWeek, daysTarget: perWeek, minutes: minutesThisWeek, minutesTarget: moveTarget, streak: streak),
+          'today' => _TodayCard(
+              isTrainingDay: isTrainingDay || ownAddOn != null,
+              goal: cardGoal,
+              levelRow: data.levels[cardGoal['goal']],
+              minutes: sessionMinutes,
+              ids: ownBlock?.ids ?? ids,
+              blocks: ownAddOn == null ? todayBlocks : const [],
+              injury: data.profile['injuries'] as String?,
+              done: logged.contains(today),
+              saving: saving,
+              // An add-on day logs its own length (the block and a warm-up), not the full session setting.
+              onToggle: () => onToggleToday(cardGoal['goal'] as String, ownBlock == null ? sessionMinutes : ownBlock.minutes + 5),
+            ),
+          'rewards' => _RewardsCard(
+              tasks: [for (final h in habits) if (dailyTasks.contains(h.$1)) (label: h.$3, done: h.$5(today))],
+              streak: dailyStreak(tasks, dailyTasks, today),
+              complete: dayComplete(tasks, dailyTasks, today),
+              celebrate: shouldCelebrate(todayComplete: dayComplete(tasks, dailyTasks, today), lastCelebrated: lastCelebrated, today: today),
+              onCelebrated: onCelebrated,
+              onChoose: onChooseTasks,
+            ),
+          'week' => _WeekStrip(monday: monday, today: today, dayGoal: dayGoal, logged: logged, streak: streak),
+          'hydration' => _HydrationTile(ml: data.water[today] ?? 0, target: waterTarget(data.profile, training: isTrainingDay), onAdd: onAddWater, onOpen: () => onOpen(_Tab.hydration)),
+          'habits' => _HabitsTile(
+              done: habits.where((h) => h.$5(today)).length,
+              total: habits.length,
+              week: [for (var i = 6; i >= 0; i--) habits.where((h) => h.$5(today.subtract(Duration(days: i)))).length],
+              onOpen: () => onOpen(_Tab.habits),
+            ),
+          'fuel' => _FuelTile(plan: plan, proteins: data.proteins),
+          'body' => _BodyTile(plan: plan),
+          _ => const SizedBox.shrink(),
+        };
 
     return Center(
       child: ConstrainedBox(
@@ -491,37 +650,21 @@ class _Bento extends StatelessWidget {
             const SizedBox(height: 6),
             Text(first.isEmpty ? hello : '$hello, $first', style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 20),
-            _Rings(days: doneThisWeek, daysTarget: perWeek, minutes: minutesThisWeek, minutesTarget: moveTarget, streak: streak),
-            const SizedBox(height: 12),
-            _TodayCard(
-              isTrainingDay: isTrainingDay,
-              goal: todayGoal,
-              levelRow: data.levels[todayGoal['goal']],
-              minutes: sessionMinutes,
-              ids: ids,
-              done: logged.contains(today),
-              saving: saving,
-              onToggle: () => onToggleToday(todayGoal['goal'] as String, sessionMinutes),
-            ),
-            // Level first: until the main goal has a level check on record, that is the next thing to do.
-            if (!data.assessed.contains(goals.first['goal']) && data.levels.containsKey(goals.first['goal'])) ...[
+            for (final row in layoutRows(layout)) ...[
+              if (row.length == 2) _Pair(left: card(row[0]), right: card(row[1])) else card(row.single),
+              // Next steps and safety alerts are not customisable: they sit right under today's session.
+              if (row.length == 1 && row.first == 'today') ...[
+                if (!data.assessed.contains(goals.first['goal']) && data.levels.containsKey(goals.first['goal'])) ...[
+                  const SizedBox(height: 12),
+                  _LevelPrompt(goalName: (goals.first['name'] ?? goals.first['goal']) as String, onTap: onCheckLevel),
+                ],
+                if (important.isNotEmpty) ...[const SizedBox(height: 12), _ReviewRow(review: review, important: important)],
+              ],
               const SizedBox(height: 12),
-              _LevelPrompt(goalName: (goals.first['name'] ?? goals.first['goal']) as String, onTap: onCheckLevel),
             ],
-            if (important.isNotEmpty) ...[const SizedBox(height: 12), _ReviewRow(review: review, important: important)],
-            const SizedBox(height: 12),
-            _WeekStrip(monday: monday, today: today, dayGoal: dayGoal, logged: logged, streak: streak),
-            const SizedBox(height: 12),
-            Builder(builder: (context) {
-              final habits = _habitList(data, logged, data.habits, data.water);
-              final week = [for (var i = 6; i >= 0; i--) habits.where((h) => h.$5(today.subtract(Duration(days: i)))).length];
-              return _Pair(
-                left: _HydrationTile(ml: data.water[today] ?? 0, target: waterTarget(data.profile, training: isTrainingDay), onAdd: onAddWater, onOpen: () => onOpen(_Tab.hydration)),
-                right: _HabitsTile(done: week.last, total: habits.length, week: week, onOpen: () => onOpen(_Tab.habits)),
-              );
-            }),
-            const SizedBox(height: 12),
-            _Pair(left: _FuelTile(plan: plan, proteins: data.proteins), right: _BodyTile(plan: plan)),
+            Center(
+              child: TextButton.icon(onPressed: onCustomise, icon: const Icon(Icons.tune, size: 18), label: const Text('Customise dashboard')),
+            ),
           ]),
         ),
       ),
@@ -655,6 +798,8 @@ class _TodayCard extends StatelessWidget {
     required this.levelRow,
     required this.minutes,
     required this.ids,
+    this.blocks = const [],
+    this.injury,
     required this.done,
     required this.saving,
     required this.onToggle,
@@ -664,7 +809,9 @@ class _TodayCard extends StatelessWidget {
   final _Json? levelRow;
   final int? minutes;
   final List<String> ids;
-  final Future<void> Function() onToggle;
+  final List<AddOnBlock> blocks; // today's add-on blocks after the main session
+  final String? injury; // the user's injury note, for the injury check
+  final Future<bool> Function() onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -675,7 +822,8 @@ class _TodayCard extends StatelessWidget {
     final meta = ['Level $level', if (levelRow != null) levelRow!['title'] as String, if (minutes != null) '$minutes min'].join('  ·  ');
     void start() => Navigator.push(
           context,
-          MaterialPageRoute<void>(builder: (_) => SessionScreen(title: name, ids: ids, level: level, done: done, onFinish: done ? null : onToggle)),
+          MaterialPageRoute<void>(
+              builder: (_) => SessionScreen(title: name, ids: ids, level: level, blocks: blocks, done: done, onFinish: done ? null : onToggle, injury: injury, sessionMinutes: minutes)),
         );
     return _Tile(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -690,7 +838,15 @@ class _TodayCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(isTrainingDay ? meta : 'Sleep, walk, eat well. Or train anyway, it still counts.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
         const SizedBox(height: 16),
-        MoveStrip(ids: ids, level: level, tile: 112),
+        MoveStrip(ids: ids, level: level, tile: 112, injury: injury),
+        for (final b in blocks) ...[
+          const SizedBox(height: 12),
+          Text(blockSummary(b).toUpperCase(), style: monoLabel(context)),
+          if (b.ids.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            MoveStrip(ids: b.ids, level: b.level, tile: 88, injury: injury),
+          ],
+        ],
         const SizedBox(height: 14),
         AnimatedSwitcher(
           duration: motion(context, 320),
@@ -763,8 +919,10 @@ class _Pair extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
+        // Stacked on narrow phones (360 dp). Each tile gets its intrinsic height: tiles such as Fuel use a Spacer, which
+        // has no height to fill in an unbounded scroll column and failed layout at 360 dp (found 2026-10-17).
         builder: (context, box) => box.maxWidth < 330
-            ? Column(children: [left, const SizedBox(height: 12), right])
+            ? Column(children: [IntrinsicHeight(child: left), const SizedBox(height: 12), IntrinsicHeight(child: right)])
             : IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Expanded(child: left), const SizedBox(width: 12), Expanded(child: right)])),
       );
 }
@@ -874,14 +1032,22 @@ class _WeekStrip extends StatelessWidget {
                     const SizedBox(height: 6),
                     AnimatedContainer(duration: motion(context, 300), width: isToday ? 14 : 0, height: 2, color: c.primary),
                     const SizedBox(height: 4),
+                    // One word on one line, shrunk to fit: a seventh of a phone is narrower than "Strength" at 10 pt,
+                    // which broke as "Strengt / h" on a 411 dp phone (2026-10-17).
                     SizedBox(
                       height: 28,
-                      child: Text(
-                        goal == null ? '' : ((goal['name'] ?? goal['goal']) as String).split(' ').first,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: t.bodySmall?.copyWith(fontSize: 10, height: 1.2, color: c.onSurfaceVariant),
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            goal == null ? '' : ((goal['name'] ?? goal['goal']) as String).split(' ').first,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: t.bodySmall?.copyWith(fontSize: 10, height: 1.2, color: c.onSurfaceVariant),
+                          ),
+                        ),
                       ),
                     ),
                   ]),
@@ -1167,4 +1333,138 @@ void _showLevel(BuildContext context, String goalName, _Json row) {
       ),
     ),
   );
+}
+
+// ---------------------------------------------------------------- daily goal
+
+/// The day's chosen tasks, the streak, and a one-off celebration when the last task is done.
+class _RewardsCard extends StatefulWidget {
+  const _RewardsCard({required this.tasks, required this.streak, required this.complete, required this.celebrate, required this.onCelebrated, required this.onChoose});
+  final List<({String label, bool done})> tasks;
+  final int streak;
+  final bool complete, celebrate;
+  final ValueChanged<int> onCelebrated;
+  final VoidCallback onChoose;
+
+  @override
+  State<_RewardsCard> createState() => _RewardsCardState();
+}
+
+class _RewardsCardState extends State<_RewardsCard> {
+  bool _shown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _maybeCelebrate();
+  }
+
+  @override
+  void didUpdateWidget(_RewardsCard old) {
+    super.didUpdateWidget(old);
+    _maybeCelebrate();
+  }
+
+  void _maybeCelebrate() {
+    if (!widget.celebrate || _shown) return;
+    _shown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      HapticFeedback.heavyImpact();
+      widget.onCelebrated(widget.streak);
+      final overlay = Overlay.of(context);
+      late OverlayEntry entry;
+      entry = OverlayEntry(builder: (_) => _ReminderBanner(title: 'Daily goal done', body: celebrationLine(widget.streak), onDone: () => entry.remove()));
+      overlay.insert(entry);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final done = widget.tasks.where((x) => x.done).length;
+    return _Tile(
+      onTap: widget.onChoose,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _Label('DAILY GOAL', trailing: Text('Change', style: t.bodySmall?.copyWith(color: c.primary))),
+        const SizedBox(height: 10),
+        Row(children: [
+          AnimatedScale(
+            scale: widget.complete ? 1.15 : 1,
+            duration: motion(context, 420),
+            curve: spring,
+            child: Icon(LvIcons.flame, size: 30, color: widget.streak > 0 ? c.primary : c.onSurfaceVariant),
+          ),
+          const SizedBox(width: 8),
+          CountUp('${widget.streak}', style: monoNumber(context, size: 26)),
+          const SizedBox(width: 6),
+          Expanded(child: Text('day streak', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))),
+          Flexible(
+            child: Text(widget.complete ? 'Done today' : '$done of ${widget.tasks.length} today',
+                overflow: TextOverflow.ellipsis, style: t.titleSmall?.copyWith(color: widget.complete ? c.primary : null)),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        Wrap(spacing: 14, runSpacing: 6, children: [
+          for (final x in widget.tasks)
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(x.done ? LvIcons.checkCircle : LvIcons.minus, size: 16, color: x.done ? c.primary : c.onSurfaceVariant),
+              const SizedBox(width: 4),
+              Flexible(child: Text(x.label, style: t.bodySmall)),
+            ]),
+        ]),
+        if (widget.tasks.isEmpty) Text('Pick the tasks that make a good day for you.', style: t.bodySmall),
+        const SizedBox(height: 6),
+        Text('Planned rest days count as done.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+      ]),
+    );
+  }
+}
+
+extension on Set<String> {
+  Set<String> ifEmpty(Set<String> fallback) => isEmpty ? {...fallback} : this;
+}
+
+/// Pick the tasks that make up the daily goal. At least one.
+class _DailyGoalSheet extends StatefulWidget {
+  const _DailyGoalSheet({required this.habits, required this.chosen});
+  final List<_Habit> habits;
+  final Set<String> chosen;
+
+  @override
+  State<_DailyGoalSheet> createState() => _DailyGoalSheetState();
+}
+
+class _DailyGoalSheetState extends State<_DailyGoalSheet> {
+  late final _on = {...widget.chosen};
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Your daily goal', style: t.titleLarge),
+          const SizedBox(height: 4),
+          Text('A day counts when every task you pick is done. Pick what is realistic most days.', style: t.bodySmall),
+          const SizedBox(height: 12),
+          for (final h in widget.habits)
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _on.contains(h.$1),
+              title: Text(h.$3),
+              subtitle: h.$1 == 'train' ? const Text('Planned rest days count as done') : null,
+              onChanged: (v) => setState(() => v == true ? _on.add(h.$1) : _on.remove(h.$1)),
+            ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(onPressed: _on.isEmpty ? null : () => Navigator.pop(context, _on), child: Text(_on.isEmpty ? 'Pick at least one' : 'Save')),
+          ),
+        ]),
+      ),
+    );
+  }
 }

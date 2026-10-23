@@ -155,16 +155,18 @@ const RECOMMENDED_MAX_GOALS = 3;
 const PROTEIN_PER_KG: Record<WeightGoal, number> = { cut: 2.0, recomp: 2.0, bulk: 1.6, maintain: 1.6, general: 1.4 };
 const PROTEIN_RANGE: [number, number] = [1.4, 2.0];
 
-// ISSN diets and body composition (Aragon 2017): moderate deficit for fat loss, small surplus for
-// lean gain, maintenance intake with high protein for recomposition.
+// Levlofit settings: about 15% below estimated needs for fat loss and 10% above for lean gain. Aragon 2017 (ISSN
+// diets and body composition) supports a sustained deficit for fat loss, larger when body fat is higher, and a
+// surplus for lean gain, but gives no percentages; Helms 2014 suggests losing about 0.5-1% of body weight a week.
 const ENERGY_FACTOR: Record<WeightGoal, number> = { cut: 0.85, bulk: 1.1, recomp: 1.0, maintain: 1.0, general: 1.0 };
 
 // Standard activity multipliers used with Mifflin-St Jeor. The higher of the training-based and
 // the lifestyle-based factor is used, so an active job is not ignored and nothing is counted twice.
 const ACTIVITY_FACTOR: Record<Activity, number> = { sedentary: 1.2, light: 1.375, active: 1.55, very_active: 1.725 };
 
-// Soya chunks: 50 g dry a day is a Levlofit variety cap, not a safety limit. Clinical meta-analyses find no
-// effect of soy on male hormones at any tested dose (Reed et al. 2021, Reprod Toxicol 100:60-67).
+// Soya chunks: 50 g dry a day is a Levlofit variety cap, not a safety limit. Reed et al. 2021 (Reprod Toxicol
+// 100:60-67) found no effect of soy or isoflavones on male reproductive hormones; it covers men only and sets no
+// intake limit, so it is not the source of this cap.
 const MAX_SOYA_CHUNKS_DRY_G = 50;
 
 // Product rule for an India-first app: never offered, for any diet.
@@ -596,6 +598,21 @@ export function generatePlan(input: PlanInput): Plan {
   const extraStrengthSessions = Math.min(missing, maxDays - goalDays);
   const strengthAddOns = missing - extraStrengthSessions;
   const trainingDaysPerWeek = goalDays + extraStrengthSessions;
+  // Say why the week uses fewer days than offered, so "of 3 days" after choosing 4 is not a surprise.
+  if (input.daysPerWeek !== undefined && trainingDaysPerWeek < input.daysPerWeek) {
+    const parts = [
+      `${primary.name} at Level ${primary.startLevel} gets ${primary.sessionsPerWeek} a week`,
+      ...goals.slice(1).filter((g) => g.status === 'active').map((g) => `${g.name} ${g.sessionsPerWeek}`),
+      ...(extraStrengthSessions ? [`plus ${extraStrengthSessions} strength ${extraStrengthSessions === 1 ? 'session' : 'sessions'}`] : []),
+    ];
+    findings.push({
+      id: 'days_fewer',
+      level: 'info',
+      title: `${trainingDaysPerWeek} of your ${input.daysPerWeek} days`,
+      why: `The plan trains on ${trainingDaysPerWeek} of the ${input.daysPerWeek} days you offered. Sessions are set by level: ${parts.join(', ')}. The other days are rest days.`,
+      source: `${SRC.curriculum}, ch. 8 and 29`,
+    });
+  }
 
   const bmiValue = bmiOf(input);
   const whtr = input.waistCm ? Math.round((input.waistCm / input.heightCm) * 100) / 100 : null;

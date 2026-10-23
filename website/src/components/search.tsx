@@ -16,7 +16,7 @@ const INDEX: Entry[] = [
   { title: "Do you suggest beef or pork?", hint: "FAQ", href: "/#faq", words: "diet food" },
   { title: "What does Levlofit AI do?", hint: "FAQ", href: "/#faq", words: "assistant chat bot doctor" },
   { title: "Allergies and intolerances", hint: "FAQ", href: "/#faq", words: "lactose gluten peanut" },
-  { title: "Delete my account", hint: "FAQ", href: "/#faq", words: "remove data" },
+  { title: "Delete my account", hint: "Account", href: "/delete-account", words: "remove data erase delete" },
   { title: "Privacy policy", hint: "Legal", href: "/privacy", words: "data personal information dpdp groq supabase delete" },
   { title: "Terms and conditions", hint: "Legal", href: "/terms", words: "rules use medical liability" },
   { title: "Contact us", hint: "Help", href: "#contact", words: "email message support help" },
