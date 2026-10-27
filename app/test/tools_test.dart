@@ -4,22 +4,33 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:levlo/tools.dart';
 
 void main() {
-  test('BMI and Indian bands', () {
+  test('BMI and WHO bands, as calculator.net shows them', () {
     expect(bmi(175, 70), closeTo(22.86, 0.01));
-    expect(bmiBandIndia(17.9), 'Underweight');
-    expect(bmiBandIndia(22.9), 'Normal');
-    expect(bmiBandIndia(23), 'Overweight');
-    expect(bmiBandIndia(25), 'Obese');
+    for (final (v, band) in [
+      (15.9, 'Severe thinness'), (16.0, 'Moderate thinness'), (17.0, 'Mild thinness'), (18.4, 'Mild thinness'),
+      (18.5, 'Normal'), (24.9, 'Normal'), (25.0, 'Overweight'), (29.9, 'Overweight'),
+      (30.0, 'Obese class I'), (35.0, 'Obese class II'), (40.0, 'Obese class III'),
+    ]) {
+      expect(bmiBandWho(v), band, reason: '$v');
+    }
+  });
+
+  test("calculator.net's example: 180 cm, 65 kg, age 25", () {
+    final r = bmiCheck(heightCm: 180, weightKg: 65, age: 25);
+    expect(r.value, 20.1);
+    expect(r.band, 'Normal');
+    final w = healthyWeightKg(180);
+    expect(w.min.toStringAsFixed(1), '59.9');
+    expect(w.max.toStringAsFixed(1), '81.0');
+    expect(bmiPrime(r.value!).toStringAsFixed(1), '0.8');
+    expect(ponderalIndex(180, 65).toStringAsFixed(1), '11.1');
   });
 
   test('BMI is rounded to 1 dp before banding, as the plan engine does', () {
-    // 22.96 used to show "23.0 Normal" here while the engine called it overweight.
     for (final (h, w, shown, band) in [
-      (170.0, 66.36, 23.0, 'Overweight'), // 22.962
-      (170.0, 66.33, 23.0, 'Overweight'), // 22.952 rounds up
-      (170.0, 66.30, 22.9, 'Normal'), // 22.941
-      (170.0, 51.89, 18.0, 'Normal'), // 17.955 rounds to 18.0
-      (170.0, 72.14, 25.0, 'Obese'), // 24.962
+      (170.0, 72.14, 25.0, 'Overweight'), // 24.962 rounds up
+      (170.0, 72.0, 24.9, 'Normal'), // 24.913
+      (170.0, 53.44, 18.5, 'Normal'), // 18.491 rounds up
     ]) {
       final r = bmiCheck(heightCm: h, weightKg: w);
       expect(r.value, shown, reason: '$h $w');
@@ -42,12 +53,13 @@ void main() {
     expect(bmiCheck(heightCm: 50, weightKg: 60).value, isNull);
   });
 
-  test('BMI under 18 gets no adult band', () {
+  test('BMI under 20 gets no adult band', () {
     final teen = bmiCheck(heightCm: 160, weightKg: 50, age: 15);
     expect(teen.value, 19.5);
     expect(teen.band, isNull);
-    expect(teen.note, contains('under 18'));
-    expect(bmiCheck(heightCm: 160, weightKg: 50, age: 18).band, 'Normal');
+    expect(teen.note, contains('Under 20'));
+    expect(bmiCheck(heightCm: 160, weightKg: 50, age: 19).band, isNull);
+    expect(bmiCheck(heightCm: 160, weightKg: 50, age: 20).band, 'Normal');
     expect(bmiCheck(heightCm: 160, weightKg: 50, age: 150).errors.keys, ['age']);
   });
 
@@ -67,7 +79,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: BmiScreen(heightCm: 170, weightKg: 70, age: 30)));
     await tester.pumpAndSettle();
     expect(find.text('24.2'), findsOneWidget);
-    expect(find.text('OVERWEIGHT'), findsOneWidget);
+    expect(find.text('NORMAL'), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextField, '170'), '90');
     await tester.pumpAndSettle();
     expect(find.text('Enter a height between 120 and 230 cm'), findsOneWidget);

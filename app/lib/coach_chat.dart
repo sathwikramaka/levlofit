@@ -120,35 +120,27 @@ class _CoachLauncherState extends State<CoachLauncher> with SingleTickerProvider
             child: Semantics(
               button: true,
               label: 'Ask Levlofit AI, your fitness bot',
-              // A compact pill: the bot's face and a plain label, 48 dp tall (the minimum touch size), so it no longer
-              // covers content the way the 64 dp disc did.
+              // Just the bot's face in a 52 dp disc (owner request 2026-10-27: no label), with its slow idle animation.
               child: Material(
                 color: c.secondary,
-                shape: const StadiumBorder(),
+                shape: const CircleBorder(),
                 elevation: 3,
                 shadowColor: Colors.black38,
                 child: InkWell(
-                  customBorder: const StadiumBorder(),
+                  customBorder: const CircleBorder(),
                   onHighlightChanged: (v) => setState(() => _pressed = v),
                   onTap: () {
                     HapticFeedback.selectionClick();
                     openCoach(context);
                   },
-                  child: SizedBox(
-                    height: 48,
+                  child: SizedBox.square(
+                    dimension: 52,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 6, right: 16),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        SizedBox.square(
-                          dimension: 36,
-                          child: AnimatedBuilder(
-                            animation: _idle,
-                            builder: (_, _) => CustomPaint(painter: FitBotPainter(t: still ? 0 : _idle.value, face: c.surface, ink: c.secondary)),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text('Ask AI', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: c.onSecondary, fontWeight: FontWeight.w600)),
-                      ]),
+                      padding: const EdgeInsets.all(4),
+                      child: AnimatedBuilder(
+                        animation: _idle,
+                        builder: (_, _) => CustomPaint(painter: FitBotPainter(t: still ? 0 : _idle.value, face: c.surface, ink: c.secondary)),
+                      ),
                     ),
                   ),
                 ),

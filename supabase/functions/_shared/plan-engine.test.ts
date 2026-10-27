@@ -126,13 +126,13 @@ test('every combination of 1 to 6 goals x every days-per-week: fits the days, ev
   }
 });
 
-test('Indian BMI cut-offs (Misra 2009)', () => {
-  assert.equal(bmiCategory(17.9), 'underweight');
-  assert.equal(bmiCategory(18.0), 'normal');
-  assert.equal(bmiCategory(22.9), 'normal');
-  assert.equal(bmiCategory(23.0), 'overweight');
-  assert.equal(bmiCategory(24.9), 'overweight');
-  assert.equal(bmiCategory(25.0), 'obese');
+test('WHO adult BMI bands, as the app calculator shows them', () => {
+  assert.equal(bmiCategory(18.4), 'underweight');
+  assert.equal(bmiCategory(18.5), 'normal');
+  assert.equal(bmiCategory(24.9), 'normal');
+  assert.equal(bmiCategory(25.0), 'overweight');
+  assert.equal(bmiCategory(29.9), 'overweight');
+  assert.equal(bmiCategory(30.0), 'obese');
   assert.equal(generatePlan(base).bmi.value, 23.5);
 });
 
@@ -145,7 +145,7 @@ test('review: underweight user asking to cut is moved to maintenance, with a rea
   assert.equal(plan.weightGoal, 'maintain');
   const f = finding(plan, 'cut_underweight')!;
   assert.equal(f.level, 'change');
-  assert.ok(f.why.length > 20 && f.source.includes('Misra'));
+  assert.ok(f.why.length > 20 && f.source.includes('WHO'));
   assert.ok(plan.nutrition.energyKcal >= plan.nutrition.bmrKcal); // no deficit applied
 });
 

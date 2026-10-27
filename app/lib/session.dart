@@ -493,12 +493,22 @@ Future<Moves> loadMoves(List<String> ids) async {
   }
   final unknown = ids.where((i) => !_cache.containsKey(i)).toList();
   if (unknown.isNotEmpty) {
-    final rows = await supabase.from('exercises').select('id, name, gif_url, target_muscles').inFilter('id', unknown);
-    for (final r in rows) {
-      _cache[r['id'] as String] = r;
+    try {
+      final rows = await supabase.from('exercises').select('id, name, gif_url, target_muscles').inFilter('id', unknown);
+      for (final r in rows) {
+        _cache[r['id'] as String] = r;
+      }
+    } catch (e) {
+      debugPrint('session: catalogue read failed, using the moves guide: $e');
     }
   }
-  final moves = resolveMoves(ids, _cache);
+  // A move the catalogue did not return still has Levlofit's guide entry: keep it in the session under its guide
+  // name (ExerciseGif finds its animation by id), instead of leaving it out. Not cached, so a later read can fill it.
+  final moves = resolveMoves(ids, {
+    ..._cache,
+    for (final i in ids)
+      if (!_cache.containsKey(i) && moveGuide[i] != null) i: {'id': i, 'name': moveGuide[i]!.name},
+  });
   if (moves.missing.isNotEmpty) debugPrint('session: exercise ids not in the catalogue: ${moves.missing.join(', ')}');
   return moves;
 }
@@ -573,11 +583,14 @@ class MoveStrip extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(m == null ? ' ' : moveName(m), maxLines: 1, overflow: TextOverflow.ellipsis, style: t.labelLarge),
-                      Text(
-                        m == null ? ' ' : doseFor(m['id'] as String, level),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: t.bodySmall?.copyWith(fontSize: 11, height: 1.3, color: c.onSurfaceVariant),
+                      // Flexible: with large system text the second dose line gives way instead of overflowing the strip.
+                      Flexible(
+                        child: Text(
+                          m == null ? ' ' : doseFor(m['id'] as String, level),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: t.bodySmall?.copyWith(fontSize: 11, height: 1.3, color: c.onSurfaceVariant),
+                        ),
                       ),
                     ]),
                   ),

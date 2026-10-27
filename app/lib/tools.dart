@@ -9,9 +9,37 @@ import 'theme.dart';
 /// Body mass index, kg/m².
 double bmi(double heightCm, double weightKg) => weightKg / math.pow(heightCm / 100, 2);
 
-/// Asian Indian cut-offs (Misra et al., 2009): under 18, normal to 22.9, overweight to 24.9, obese from 25.
-/// Pass the value already rounded to 1 dp (see [bmiCheck]) so the band matches the number shown.
-String bmiBandIndia(double v) => v < 18 ? 'Underweight' : v < 23 ? 'Normal' : v < 25 ? 'Overweight' : 'Obese';
+/// WHO adult classification (owner choice 2026-10-27, as calculator.net shows it): severe, moderate and mild
+/// thinness under 16, 17 and 18.5; normal 18.5 to under 25; overweight to under 30; obese class I, II and III from
+/// 30, 35 and 40. Pass the value already rounded to 1 dp (see [bmiCheck]) so the band matches the number shown.
+String bmiBandWho(double v) => v < 16
+    ? 'Severe thinness'
+    : v < 17
+        ? 'Moderate thinness'
+        : v < 18.5
+            ? 'Mild thinness'
+            : v < 25
+                ? 'Normal'
+                : v < 30
+                    ? 'Overweight'
+                    : v < 35
+                        ? 'Obese class I'
+                        : v < 40
+                            ? 'Obese class II'
+                            : 'Obese class III';
+
+/// The healthy BMI range (WHO normal) and the weights it gives for a height.
+const healthyBmi = (min: 18.5, max: 25.0);
+({double min, double max}) healthyWeightKg(double heightCm) {
+  final m2 = math.pow(heightCm / 100, 2).toDouble();
+  return (min: healthyBmi.min * m2, max: healthyBmi.max * m2);
+}
+
+/// BMI Prime: BMI divided by the upper limit of normal (25). Under 1 is within or below the normal range.
+double bmiPrime(double bmiValue) => bmiValue / 25;
+
+/// Ponderal index, kg/m³: weight over height cubed, which scales better than BMI for very short or tall people.
+double ponderalIndex(double heightCm, double weightKg) => weightKg / math.pow(heightCm / 100, 3);
 
 /// Same ranges as onboarding and the plan engine (validateInput).
 const bmiHeightCm = (min: 120, max: 230), bmiWeightKg = (min: 30, max: 250);
@@ -21,7 +49,7 @@ double kgFromPounds(double lb) => lb * 0.45359237;
 
 /// The calculator's whole decision, pure so it can be tested. Missing fields are not errors (not entered yet);
 /// out-of-range ones are. The value is rounded to 1 dp before banding, exactly as the plan engine does (bmiOf),
-/// so 22.96 shows "23.0 Overweight" in both places. Adult cut-offs are not applied under 18.
+/// so 24.96 shows "25.0 Overweight" in both places. The adult table applies from age 20, as on calculator.net.
 ({double? value, String? band, String? note, Map<String, String> errors}) bmiCheck({double? heightCm, double? weightKg, int? age, bool imperial = false}) {
   // Messages in the units on screen, rounded inwards so every value they name is accepted.
   String feet(int inches) => '${inches ~/ 12} ft ${inches % 12} in';
@@ -38,10 +66,10 @@ double kgFromPounds(double lb) => lb * 0.45359237;
   };
   if (heightCm == null || weightKg == null || errors.isNotEmpty) return (value: null, band: null, note: null, errors: errors);
   final v = (bmi(heightCm, weightKg) * 10).round() / 10;
-  if (age != null && age < 18) {
-    return (value: v, band: null, note: 'Adult cut-offs do not apply under 18. Children and teens are assessed with BMI-for-age charts; ask a doctor.', errors: errors);
+  if (age != null && age < 20) {
+    return (value: v, band: null, note: 'Under 20, BMI is read against BMI-for-age percentile charts (CDC), not the adult table. Ask a doctor to check it.', errors: errors);
   }
-  return (value: v, band: bmiBandIndia(v), note: null, errors: errors);
+  return (value: v, band: bmiBandWho(v), note: null, errors: errors);
 }
 
 // ---------------------------------------------------------------- screens
@@ -133,20 +161,50 @@ class _BmiScreenState extends State<BmiScreen> {
         _Result(
           value: v?.toStringAsFixed(1),
           unit: 'kg/m²',
-          band: v == null ? null : r.band ?? 'No adult band under 18',
-          scale: v == null || r.band == null ? null : (lo: 14, hi: 35, at: v, cuts: const [18, 23, 25]),
+          band: v == null ? null : r.band ?? 'No adult band under 20',
+          scale: v == null || r.band == null ? null : (lo: 14, hi: 42, at: v, cuts: const [16, 17, 18.5, 25, 30, 35, 40]),
         ),
         if (r.note != null) ...[Text(r.note!, style: t.bodyMedium), const SizedBox(height: 16)],
-        Text('Cut-offs for Asian Indians are lower than the WHO global ones (normal 18 to 22.9, not 18.5 to 24.9) because risk rises at a lower BMI. '
-            'BMI cannot tell muscle from fat, so read it with how your training and the tape are going.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        if (v != null && r.band != null && _heightCm != null && _weightKg != null) ...[
+          _Stat('Healthy BMI range', '${healthyBmi.min} to ${healthyBmi.max.toStringAsFixed(0)} kg/m²'),
+          _Stat(
+            'Healthy weight for your height',
+            _imperial
+                ? '${(healthyWeightKg(_heightCm!).min / 0.45359237).toStringAsFixed(1)} to ${(healthyWeightKg(_heightCm!).max / 0.45359237).toStringAsFixed(1)} lb'
+                : '${healthyWeightKg(_heightCm!).min.toStringAsFixed(1)} to ${healthyWeightKg(_heightCm!).max.toStringAsFixed(1)} kg',
+          ),
+          _Stat('BMI Prime', bmiPrime(v).toStringAsFixed(2)),
+          _Stat('Ponderal index', '${ponderalIndex(_heightCm!, _weightKg!).toStringAsFixed(1)} kg/m³'),
+          const SizedBox(height: 12),
+        ],
+        Text('BMI cannot tell muscle from fat, so read it with how your training is going. For South Asian adults, health risk starts '
+            'to rise at a lower BMI, from about 23 (WHO expert consultation, Lancet 2004), so keeping nearer the middle of the normal range helps.',
+            style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
         const SizedBox(height: 8),
-        Text('Source: Misra et al., Consensus BMI cut-offs for Asian Indians, JAPI 2009;57:163.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        Text('Source: WHO adult BMI classification; BMI Prime and ponderal index as used by calculator.net.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ],
     );
   }
 }
 
 // ---------------------------------------------------------------- parts
+
+class _Stat extends StatelessWidget {
+  const _Stat(this.label, this.value);
+  final String label, value;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(children: [
+        Expanded(child: Text(label, style: t.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant))),
+        Text(value, style: monoNumber(context, size: 14)),
+      ]),
+    );
+  }
+}
 
 String _fmt(num? v) => v == null ? '' : (v == v.roundToDouble() ? '${v.round()}' : '$v');
 double? _num(String s) => double.tryParse(s.trim());

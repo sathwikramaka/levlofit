@@ -207,7 +207,7 @@ const SRC = {
   issnDiet: 'ISSN Position Stand: Diets and Body Composition (Aragon et al., 2017)',
   issnCreatine: 'ISSN Position Stand: Creatine supplementation (Kreider et al., 2017)',
   recomp: 'Body recomposition review (Barakat et al., Strength Cond J 2020)',
-  bmiIndia: 'Consensus BMI cut-offs for Asian Indians (Misra et al., 2009, JAPI 57:163)',
+  bmiWho: 'WHO adult BMI classification (WHO Technical Report Series 894, 2000)',
   sleep: 'Recommended sleep for adults, 7 h or more (Watson et al., AASM/SRS consensus 2015)',
   mifflin: 'Mifflin-St Jeor equation (Mifflin et al., 1990)',
   acsmRt: 'ACSM Position Stand: Resistance Training Prescription (2026), PMID 41843416',
@@ -300,9 +300,10 @@ export function validateInput(raw: unknown): PlanInput {
 }
 
 export function bmiCategory(bmi: number): Plan['bmi']['category'] {
-  if (bmi < 18.0) return 'underweight';
-  if (bmi < 23.0) return 'normal';
-  if (bmi < 25.0) return 'overweight';
+  // WHO adult bands (3.1.0, owner choice 2026-10-27; were the Asian Indian cut-offs), the same as the BMI calculator.
+  if (bmi < 18.5) return 'underweight';
+  if (bmi < 25.0) return 'normal';
+  if (bmi < 30.0) return 'overweight';
   return 'obese';
 }
 
@@ -345,8 +346,8 @@ export function reviewInput(input: PlanInput): { weightGoal: WeightGoal; finding
       id: 'cut_underweight',
       level: 'change',
       title: 'Cutting changed to maintenance',
-      why: `Your BMI is ${bmi}, below the healthy range for Indian adults (18.0). Eating less would take you further below it, so the plan keeps you at maintenance and builds strength instead.`,
-      source: SRC.bmiIndia,
+      why: `Your BMI is ${bmi}, below the healthy range (18.5). Eating less would take you further below it, so the plan keeps you at maintenance and builds strength instead.`,
+      source: SRC.bmiWho,
     });
   }
   if (weightGoal === 'bulk' && category === 'obese') {
@@ -662,7 +663,7 @@ export function generatePlan(input: PlanInput): Plan {
       SRC.issnProtein,
       SRC.issnDiet,
       SRC.mifflin,
-      SRC.bmiIndia,
+      SRC.bmiWho,
       ...findings.map((f) => f.source),
     ].filter((s, i, all) => all.indexOf(s) === i),
   };

@@ -40,7 +40,6 @@ part 'dashboard_tabs.dart';
 
 typedef _Json = Map<String, dynamic>;
 
-const _bmiLabels = {'underweight': 'Underweight', 'normal': 'Normal', 'overweight': 'Overweight', 'obese': 'Obese'};
 const _days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -1202,8 +1201,8 @@ class _BodyTile extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     final bmi = plan['bmi'] as _Json;
     final value = (bmi['value'] as num).toDouble();
-    // Asian Indian cut-offs (Misra 2009), drawn on a 14 to 35 scale.
-    const lo = 14.0, hi = 35.0;
+    // WHO adult bands (tools.dart bmiBandWho, as the BMI calculator), drawn on a 14 to 42 scale.
+    const lo = 14.0, hi = 42.0;
     double at(double v) => ((v - lo) / (hi - lo)).clamp(0.0, 1.0);
     final success = Theme.of(context).brightness == Brightness.dark ? const Color(0xFF5FB482) : const Color(0xFF2F7D4F);
     return _Tile(
@@ -1216,7 +1215,7 @@ class _BodyTile extends StatelessWidget {
           Flexible(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 3),
-              child: Text(_bmiLabels[bmi['category']] ?? '', overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              child: Text(bmiBandWho(value), overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             ),
           ),
         ]),
@@ -1229,14 +1228,14 @@ class _BodyTile extends StatelessWidget {
             builder: (v) => CustomPaint(
               painter: _BandPainter(
                 value: at(value) * v,
-                segments: [(at(lo), at(18), c.primary.withValues(alpha: 0.55)), (at(18), at(23), success), (at(23), at(25), c.primary), (at(25), at(hi), c.error)],
+                segments: [(at(lo), at(18.5), c.primary.withValues(alpha: 0.55)), (at(18.5), at(25), success), (at(25), at(30), c.primary), (at(30), at(hi), c.error)],
                 marker: c.onSurface,
               ),
             ),
           ),
         ),
         const SizedBox(height: 6),
-        Text('INDIAN CUT-OFFS', style: monoLabel(context)),
+        Text('WHO BANDS', style: monoLabel(context)),
       ]),
     );
   }
