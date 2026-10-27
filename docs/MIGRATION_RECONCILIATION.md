@@ -164,6 +164,15 @@ coach_messages 4, progress_photos 0, handbook_chapters 38 (fingerprint 432c7c6f,
 goal_catalog 12, curriculum_levels 36, foods 543, exercises 1500 (all with gif_url), contact_messages 0, app_feedback 0.
 Tables from items 2-17 (rate_events, custom_reminders, food_log, recipes, coach_facts, food_sources, app_errors, ...) are absent.
 
+**Backup and rehearsal, 2026-10-28:** owner ran tools/backup_prod.ps1 (folder levlo-pre-migration-20261027T190443Z):
+roles, schema, data, platform schema and migration history OK; the Storage copy failed (scoped tokens are refused by
+`storage cp`), so the one stored file (progress-photos, 34 KB) is not in the backup; owner accepted. Isolated restore
+(postgres 17.6.1.171, --network none, tmpfs, removed after): every count equal to the A1 values, handbook 432c7c6f,
+RLS on every public table. Rehearsal on the restored copy, as postgres, one --single-transaction file at a time: all 17
+items plus remove_pilates (already live under 20261007092712; re-runs cleanly) applied without error. After: handbook
+f17e603d, user rows unchanged (2 users, 2 profiles, 1 plan, 4 coach messages), foods 571 (28 USDA), food_sources
+ifct2017 hidden / usda_fdc and levlofit_recipe allowed, the 10 new tables present with RLS, 0 tables without RLS.
+
 **Update 2026-10-24 (later):** item 13, `20261025100000_food_sources` (food licence gate). Tested only on a disposable
 local stack (levlo_mig_fs: all migrations and the seed, pgTAP 129/129). **Behaviour change in production:** once
 applied, every IFCT food value is hidden from the app and the coach (`food_sources.ifct2017.release_allowed = false`).
