@@ -368,7 +368,7 @@ export function reviewInput(input: PlanInput): { weightGoal: WeightGoal; finding
       id: 'bulk_slim_soft',
       level: 'change',
       title: 'Bulking changed to recomposition',
-      why: 'You describe yourself as slim but soft and you are new to training. At this stage lifting with high protein at maintenance usually adds muscle and reduces fat together, without the extra fat a surplus brings.',
+      why: 'You describe yourself as skinny-fat (slim but soft) and you are new to training. At this stage lifting with high protein at maintenance usually adds muscle and reduces fat together, without the extra fat a surplus brings.',
       source: SRC.recomp,
     });
   }

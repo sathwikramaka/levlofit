@@ -67,8 +67,9 @@ List<Slot> slotsFor(ReminderPrefs p, Map<int, String> sessions, {List<CustomRemi
 enum ReminderTiming { exact, inexact }
 
 /// What a scheduled alarm stands for. Stored as the notification payload, so the next apply can see whether a
-/// pending alarm still matches the settings without cancelling and rebuilding everything.
-String slotKey(Slot s, ReminderTiming timing, String zone) => 'lv1|${s.weekday ?? 0}|${s.hour}|${s.minute}|${timing.name}|$zone|${s.title}|${s.body}';
+/// pending alarm still matches the settings without cancelling and rebuilding everything. lv2 (2026-10-28): exact alarms
+/// moved to the alarm-clock type, so every lv1 alarm is re-registered once.
+String slotKey(Slot s, ReminderTiming timing, String zone) => 'lv2|${s.weekday ?? 0}|${s.hour}|${s.minute}|${timing.name}|$zone|${s.title}|${s.body}';
 
 /// Ids owned by the reminder schedule (built-in 100-300, custom 1000+). The test notification (1) and anything
 /// else are never cancelled by it.
@@ -289,7 +290,9 @@ abstract final class Reminders {
           id: s.id,
           scheduledDate: _next(s),
           notificationDetails: _details,
-          androidScheduleMode: t == ReminderTiming.exact ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle,
+          // Exact: Android's alarm-clock alarm (setAlarmClock), the one type power saving never delays; owner choice
+          // 2026-10-28 after exact-while-idle reminders arrived about 24 s late on ColorOS. Shows the status-bar alarm icon.
+          androidScheduleMode: t == ReminderTiming.exact ? AndroidScheduleMode.alarmClock : AndroidScheduleMode.inexactAllowWhileIdle,
           title: s.title,
           body: s.body,
           payload: slotKey(s, t, zone),

@@ -64,14 +64,49 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(const MaterialApp(home: ExerciseLibraryScreen()));
     await tester.pump(const Duration(seconds: 1));
-    final figure = find.byType(CustomPaint).at(1); // the body figure (after the toggle's)
-    await tester.ensureVisible(figure);
-    await tester.tapAt(tester.getTopLeft(figure) + const Offset(60, 48) * (tester.getSize(figure).width / 100));
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Chest').first);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Chest').first);
     await tester.pump();
     await tester.tap(find.widgetWithText(ChoiceChip, 'Bodyweight'));
     await tester.pump();
     expect(find.text('Push-up'), findsOneWidget);
     expect(find.text('Bench press'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  test('every map muscle has matches, and trapezius finds real moves', () {
+    for (final m in [...frontMuscles, ...backMuscles].where((m) => m.group != null)) {
+      expect(muscleMatch.keys, contains(m.label), reason: m.label);
+    }
+    final traps = movesForMuscle('Trapezius');
+    expect(traps, isNotEmpty);
+    expect(movesForMuscle('Chest').first.$3, isTrue, reason: 'main movers come first');
+  });
+
+  testWidgets('tapping a muscle on the body opens its exercises; the muscle screen lists guide and catalogue moves', (tester) async {
+    tester.view.physicalSize = const Size(390, 2600) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      home: MuscleExercisesScreen(
+        muscle: 'Trapezius',
+        loadCatalogue: (names) async => [
+          {'id': 'X000001', 'name': 'barbell shrug', 'gif_url': null, 'target_muscles': names},
+        ],
+      ),
+    ));
+    await tester.pump();
+    expect(find.text('Trapezius'), findsOneWidget);
+    expect(find.textContaining('Main mover'), findsWidgets);
+    expect(find.text('MORE EXERCISES  ·  1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    String? opened;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: Align(alignment: Alignment.topLeft, child: SizedBox(width: 200, child: MuscleMap(selected: null, onGroup: (_) {}, onMuscle: (m) => opened = m)))),
+    ));
+    final figure = find.byType(CustomPaint).last;
+    await tester.tapAt(tester.getTopLeft(figure) + const Offset(60, 48) * (tester.getSize(figure).width / 100));
+    expect(opened, 'Chest');
   });
 }

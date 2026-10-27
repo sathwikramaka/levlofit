@@ -29,25 +29,29 @@ Rect _bounds(List<double> xy) {
   return Rect.fromLTRB(l, t, r, b);
 }
 
-/// The guide group at [point] (canvas units), or null. Inside a muscle outline first; failing that, within 2 units
-/// of one (thin muscles such as the forearms are hard to hit exactly with a finger).
-String? groupAt(List<MuscleShape> shapes, Offset point) {
+/// The selectable muscle at [point] (canvas units), or null. Inside a muscle outline first; failing that, within 2
+/// units of one (thin muscles such as the forearms are hard to hit exactly with a finger).
+MuscleShape? muscleAt(List<MuscleShape> shapes, Offset point) {
   for (final s in shapes) {
     if (s.group == null) continue;
-    if (s.polygons.any((p) => _path(p).contains(point))) return s.group;
+    if (s.polygons.any((p) => _path(p).contains(point))) return s;
   }
   for (final s in shapes) {
     if (s.group == null) continue;
-    if (s.polygons.any((p) => _bounds(p).inflate(2).contains(point))) return s.group;
+    if (s.polygons.any((p) => _bounds(p).inflate(2).contains(point))) return s;
   }
   return null;
 }
 
+/// The guide group at [point], or null (see [muscleAt]).
+String? groupAt(List<MuscleShape> shapes, Offset point) => muscleAt(shapes, point)?.group;
+
 /// Front/back toggle plus the figure. [selected] is a guide group name or null.
 class MuscleMap extends StatefulWidget {
-  const MuscleMap({super.key, required this.selected, required this.onGroup});
+  const MuscleMap({super.key, required this.selected, required this.onGroup, this.onMuscle});
   final String? selected;
   final ValueChanged<String> onGroup;
+  final ValueChanged<String>? onMuscle; // the tapped muscle's label (e.g. Trapezius); its group still goes to [onGroup]
 
   @override
   State<MuscleMap> createState() => _MuscleMapState();
@@ -74,8 +78,10 @@ class _MuscleMapState extends State<MuscleMap> {
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTapUp: (d) {
-              final g = groupAt(shapes, d.localPosition / scale);
-              if (g != null) widget.onGroup(g);
+              final m = muscleAt(shapes, d.localPosition / scale);
+              if (m == null) return;
+              widget.onGroup(m.group!);
+              widget.onMuscle?.call(m.label);
             },
             child: CustomPaint(
               size: Size(box.maxWidth, box.maxWidth * _canvas.height / _canvas.width),

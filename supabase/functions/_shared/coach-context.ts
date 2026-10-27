@@ -296,6 +296,31 @@ export function replyProblem(raw: string, notePattern: RegExp): 'empty' | 'conte
   return hits >= 2 ? 'context_echo' : null;
 }
 
+// ---- reply length ------------------------------------------------------------------------------------------
+
+/** Small talk ("hi", "thanks", "ok", "good morning"): the reply must be one or two short sentences, like a person
+ * would answer, not a recap of the plan. Only short messages that are nothing but small talk count. */
+const SMALL_TALK = /^(?:hi+|hey+|hello+|hola|yo|namaste|namaskar|good\s+(?:morning|afternoon|evening|night)|gm|gn|thanks?|thank\s+you|thx|ty|ok(?:ay)?|k|cool|nice|great|awesome|bye|see\s+you|sup|what'?s\s+up)(?:\s+(?:there|coach|levlofit|ai|bro|buddy|man|again|so\s+much|a\s+lot))*[\s!.,?:)😊🙂👍🙏]*$/iu;
+
+export function isSmallTalk(message: string): boolean {
+  const m = message.trim();
+  return m.length > 0 && m.length <= 40 && SMALL_TALK.test(m);
+}
+
+export const SMALL_TALK_BLOCK = `REPLY LENGTH: this message is small talk. Reply like a person would: one or two short sentences, under 30 words, plain text. Greet or acknowledge them, mention at most one concrete thing about today if it helps, and ask what they want help with. No lists, no headings, no numbers from PLAN.`;
+
+export const SMALL_TALK_MAX_WORDS = 45;
+
+export function wordCount(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/** The first two sentences of a reply, for a small-talk answer that came back too long even after a retry. */
+export function firstSentences(text: string, n = 2): string {
+  const parts = text.replace(/\s+/g, ' ').trim().match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g) ?? [text];
+  return parts.slice(0, n).join('').trim();
+}
+
 // ---- rolling chat summary ---------------------------------------------------------------------------------
 
 /** Instructions for the summary call. It sees only the old summary and messages, never the private context block. */

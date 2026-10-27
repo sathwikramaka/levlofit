@@ -52,7 +52,7 @@ const _phases = {
 const _bodyTypes = {
   'lean': ('Lean', 'Slim with little body fat'),
   'average': ('Average', 'Neither slim nor heavy'),
-  'slim_soft': ('Slim but soft', 'Thin arms and legs, softer middle'),
+  'slim_soft': ('Skinny-fat', 'Slim arms and legs, but a softer belly and chest'),
   'extra_fat': ('Carrying extra fat', 'Would like to lose some fat'),
   'muscular': ('Muscular', 'Visible muscle from training'),
 };
