@@ -157,6 +157,13 @@ Then: deploy coach-chat, generate-plan, delete-account; smoke test with a test a
 
 ## Pending production items (17), updated 2026-10-27 (documentation only; nothing applied)
 
+**Read-only state, 2026-10-28 (step A1, owner-approved, no writes):** migration history has 33 rows, last
+20261007092712 remove_pilates; none of the 17 items below is recorded. Functions: delete-account v8, generate-plan v13,
+coach-chat v13 (body-check absent). Exact counts: auth.users 2, profiles 2, generated_plans 1, workout_logs 0,
+coach_messages 4, progress_photos 0, handbook_chapters 38 (fingerprint 432c7c6f, the pre-correction draft, as expected),
+goal_catalog 12, curriculum_levels 36, foods 543, exercises 1500 (all with gif_url), contact_messages 0, app_feedback 0.
+Tables from items 2-17 (rate_events, custom_reminders, food_log, recipes, coach_facts, food_sources, app_errors, ...) are absent.
+
 **Update 2026-10-24 (later):** item 13, `20261025100000_food_sources` (food licence gate). Tested only on a disposable
 local stack (levlo_mig_fs: all migrations and the seed, pgTAP 129/129). **Behaviour change in production:** once
 applied, every IFCT food value is hidden from the app and the coach (`food_sources.ifct2017.release_allowed = false`).
@@ -167,7 +174,7 @@ values. `supabase/seed.sql` turns IFCT on for local stacks only: never run `db p
 **Update 2026-10-24:** items 9-12 below (coach memory facts, chat summaries, exercise swaps, session changes), written
 after the 2026-10-17 list, tested only with pgTAP on throwaway local stacks (121/121) and in the CI database job
 definition (CI not yet run: no Git remote). Never applied to the dev DB or production. Preflight, verify and rollback
-for each are rows 3.7c-3.7f of RELEASE_CHECKLIST.md; the handbook_v3 file (item 1) changed on 2026-10-27 (BMI chapter moved to the WHO bands, waist-to-height removed), so b3b87df6 is superseded: recompute the expected fingerprint with tools/handbook_fingerprint_sql.py before item 1.
+for each are rows 3.7c-3.7f of RELEASE_CHECKLIST.md; the handbook_v3 file (item 1) changed on 2026-10-27 (BMI chapter moved to the WHO bands, waist-to-height removed), so b3b87df6 is superseded; the file now produces f17e603d (computed read-only, 2026-10-28).
 
 **Update 2026-10-17:** an 8th item, `20261017100000_revoke_anon_sequences` (revokes anon on the 4 public sequences,
 all backing identity columns of per-user tables; and the matching default privilege). Written locally with a pgTAP
