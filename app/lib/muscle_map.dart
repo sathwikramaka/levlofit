@@ -1,37 +1,47 @@
-// Tappable front and back body map for the exercise library. Regions are the guide's muscle groups
-// (exercise_guide.dart muscleRegions), drawn as simple shapes on a 100 x 220 figure; tapping one picks that group.
+// Tappable front and back muscle map for the exercise library, drawn from anatomical outlines (muscle_shapes.dart).
+// Each muscle belongs to one of the guide's groups (exercise_guide.dart muscleRegions); tapping it picks the group,
+// and every muscle of the selected group lights up.
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
-/// One tappable shape: the guide group it stands for and its outline on the 100 x 220 figure.
-typedef MapRegion = ({String group, RRect shape});
+import 'muscle_shapes.dart';
 
-RRect _r(double l, double t, double w, double h, [double radius = 6]) => RRect.fromLTRBR(l, t, l + w, t + h, Radius.circular(radius));
+const _canvas = Size(100, 220); // the back view's feet reach y = 220, past the source's 200-high viewBox
 
-// Mirrored pairs share a group, so a tap on either side selects it.
-List<MapRegion> _pair(String group, double l, double t, double w, double h, [double radius = 6]) => [
-      (group: group, shape: _r(l, t, w, h, radius)),
-      (group: group, shape: _r(100 - l - w, t, w, h, radius)),
-    ];
+Path _path(List<double> xy) {
+  final p = Path()..moveTo(xy[0], xy[1]);
+  for (var i = 2; i < xy.length; i += 2) {
+    p.lineTo(xy[i], xy[i + 1]);
+  }
+  return p..close();
+}
 
-final frontRegions = <MapRegion>[
-  ..._pair('Shoulders', 22, 38, 14, 14, 7),
-  (group: 'Chest', shape: _r(36, 40, 28, 20)),
-  ..._pair('Arms', 17, 54, 11, 46, 5),
-  (group: 'Core', shape: _r(38, 62, 24, 34)),
-  (group: 'Hips and glutes', shape: _r(34, 98, 32, 14)),
-  ..._pair('Thighs', 33, 114, 15, 46),
-  ..._pair('Calves', 34, 164, 12, 42),
-];
+Rect _bounds(List<double> xy) {
+  var l = xy[0], t = xy[1], r = xy[0], b = xy[1];
+  for (var i = 2; i < xy.length; i += 2) {
+    l = l < xy[i] ? l : xy[i];
+    r = r > xy[i] ? r : xy[i];
+    t = t < xy[i + 1] ? t : xy[i + 1];
+    b = b > xy[i + 1] ? b : xy[i + 1];
+  }
+  return Rect.fromLTRB(l, t, r, b);
+}
 
-final backRegions = <MapRegion>[
-  ..._pair('Shoulders', 22, 38, 14, 14, 7),
-  (group: 'Back', shape: _r(36, 40, 28, 40)),
-  ..._pair('Arms', 17, 54, 11, 46, 5),
-  (group: 'Core', shape: _r(38, 82, 24, 14)),
-  (group: 'Hips and glutes', shape: _r(34, 98, 32, 18)),
-  ..._pair('Thighs', 33, 118, 15, 42),
-  ..._pair('Calves', 34, 164, 12, 42),
-];
+/// The guide group at [point] (canvas units), or null. Inside a muscle outline first; failing that, within 2 units
+/// of one (thin muscles such as the forearms are hard to hit exactly with a finger).
+String? groupAt(List<MuscleShape> shapes, Offset point) {
+  for (final s in shapes) {
+    if (s.group == null) continue;
+    if (s.polygons.any((p) => _path(p).contains(point))) return s.group;
+  }
+  for (final s in shapes) {
+    if (s.group == null) continue;
+    if (s.polygons.any((p) => _bounds(p).inflate(2).contains(point))) return s.group;
+  }
+  return null;
+}
 
 /// Front/back toggle plus the figure. [selected] is a guide group name or null.
 class MuscleMap extends StatefulWidget {
@@ -48,7 +58,7 @@ class _MuscleMapState extends State<MuscleMap> {
 
   @override
   Widget build(BuildContext context) {
-    final regions = _back ? backRegions : frontRegions;
+    final shapes = _back ? backMuscles : frontMuscles;
     return Column(children: [
       SegmentedButton<bool>(
         segments: const [ButtonSegment(value: false, label: Text('Front')), ButtonSegment(value: true, label: Text('Back'))],
@@ -58,30 +68,20 @@ class _MuscleMapState extends State<MuscleMap> {
       ),
       const SizedBox(height: 12),
       AspectRatio(
-        aspectRatio: 100 / 220,
+        aspectRatio: _canvas.width / _canvas.height,
         child: LayoutBuilder(builder: (context, box) {
-          final scale = box.maxWidth / 100;
-          return Stack(children: [
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _BodyPainter(regions: regions, selected: widget.selected, scheme: Theme.of(context).colorScheme),
-              ),
+          final scale = box.maxWidth / _canvas.width;
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapUp: (d) {
+              final g = groupAt(shapes, d.localPosition / scale);
+              if (g != null) widget.onGroup(g);
+            },
+            child: CustomPaint(
+              size: Size(box.maxWidth, box.maxWidth * _canvas.height / _canvas.width),
+              painter: _BodyPainter(shapes: shapes, selected: widget.selected, scheme: Theme.of(context).colorScheme, onGroup: widget.onGroup),
             ),
-            // One invisible button per region: hit testing and screen-reader labels without a custom hit test.
-            for (final r in regions)
-              Positioned(
-                left: r.shape.left * scale,
-                top: r.shape.top * scale,
-                width: r.shape.width * scale,
-                height: r.shape.height * scale,
-                child: Semantics(
-                  button: true,
-                  selected: widget.selected == r.group,
-                  label: r.group,
-                  child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => widget.onGroup(r.group)),
-                ),
-              ),
-          ]);
+          );
         }),
       ),
     ]);
@@ -89,38 +89,64 @@ class _MuscleMapState extends State<MuscleMap> {
 }
 
 class _BodyPainter extends CustomPainter {
-  _BodyPainter({required this.regions, required this.selected, required this.scheme});
-  final List<MapRegion> regions;
+  _BodyPainter({required this.shapes, required this.selected, required this.scheme, required this.onGroup});
+  final List<MuscleShape> shapes;
   final String? selected;
   final ColorScheme scheme;
+  final ValueChanged<String> onGroup;
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 100);
-    // Visible on both themes: a light tint of the text colour, not a surface colour close to the background.
-    final base = scheme.onSurface.withValues(alpha: 0.16);
-    final skin = Paint()..color = scheme.onSurface.withValues(alpha: 0.08);
-    final line = Paint()
-      ..color = scheme.onSurfaceVariant.withValues(alpha: 0.6)
+    canvas.scale(size.width / _canvas.width);
+    final muscle = Paint()..color = scheme.onSurface.withValues(alpha: 0.22);
+    final other = Paint()..color = scheme.onSurface.withValues(alpha: 0.10);
+    final on = Paint()..color = scheme.primary;
+    final edge = Paint()
+      ..color = scheme.surface
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-    // Head, neck, hands and feet: not selectable, drawn for shape.
-    canvas.drawCircle(const Offset(50, 20), 11, skin);
-    canvas.drawCircle(const Offset(50, 20), 11, line);
-    canvas.drawRRect(_r(45, 30, 10, 9, 3), skin);
-    for (final x in [20.0, 80.0]) {
-      canvas.drawCircle(Offset(x, 105), 4.5, skin);
-    }
-    for (final x in [40.0, 60.0]) {
-      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(x, 210), width: 14, height: 6), const Radius.circular(3)), skin);
-    }
-    for (final r in regions) {
-      final on = r.group == selected;
-      canvas.drawRRect(r.shape, Paint()..color = on ? scheme.primary : base);
-      canvas.drawRRect(r.shape, line..color = on ? scheme.primary : scheme.onSurfaceVariant.withValues(alpha: 0.6));
+      ..strokeWidth = 0.5
+      ..strokeJoin = StrokeJoin.round;
+    for (final s in shapes) {
+      final fill = s.group == null ? other : (s.group == selected ? on : muscle);
+      for (final p in s.polygons) {
+        final path = _path(p);
+        canvas.drawPath(path, fill);
+        canvas.drawPath(path, edge);
+      }
     }
   }
 
+  // One node per guide group, over the union of its muscles, so screen readers can pick a group by name.
   @override
-  bool shouldRepaint(_BodyPainter old) => old.selected != selected || old.regions != regions || old.scheme != scheme;
+  SemanticsBuilderCallback get semanticsBuilder => (size) {
+        final k = size.width / _canvas.width;
+        final byGroup = <String, Rect>{};
+        for (final s in shapes) {
+          final g = s.group;
+          if (g == null) continue;
+          for (final p in s.polygons) {
+            final r = _bounds(p);
+            byGroup[g] = byGroup[g]?.expandToInclude(r) ?? r;
+          }
+        }
+        return [
+          for (final e in byGroup.entries)
+            CustomPainterSemantics(
+              rect: Rect.fromLTRB(e.value.left * k, e.value.top * k, e.value.right * k, e.value.bottom * k),
+              properties: SemanticsProperties(
+                label: e.key,
+                button: true,
+                selected: e.key == selected,
+                textDirection: ui.TextDirection.ltr,
+                onTap: () => onGroup(e.key),
+              ),
+            ),
+        ];
+      };
+
+  @override
+  bool shouldRepaint(_BodyPainter old) => old.selected != selected || old.shapes != shapes || old.scheme != scheme;
+
+  @override
+  bool shouldRebuildSemantics(_BodyPainter old) => old.selected != selected || old.shapes != shapes;
 }

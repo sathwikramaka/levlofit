@@ -782,7 +782,7 @@ class _MuscleGuideState extends State<_MuscleGuide> {
         const SizedBox(height: 4),
         Text('Tap a muscle on the body, or pick a group below.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
         const SizedBox(height: 12),
-        Center(child: SizedBox(width: 180, child: MuscleMap(selected: g, onGroup: widget.onGroup))),
+        Center(child: SizedBox(width: 220, child: MuscleMap(selected: g, onGroup: widget.onGroup))),
         const SizedBox(height: 16),
         Wrap(
           spacing: 8,

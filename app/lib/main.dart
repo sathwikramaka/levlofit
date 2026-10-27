@@ -54,6 +54,8 @@ SupabaseClient get supabase => Supabase.instance.client;
 /// goes for the bundled exercise drawings.
 void registerBundledLicenses() => LicenseRegistry.addLicense(() async* {
       yield LicenseEntryWithLineBreaks(['Phosphor Icons (font)'], await rootBundle.loadString('assets/fonts/PHOSPHOR-LICENSE'));
+      // Body-map outlines (muscle_shapes.dart), converted from react-body-highlighter 2.0.5; its MIT notice, unchanged.
+      yield LicenseEntryWithLineBreaks(['Muscle map outlines: react-body-highlighter'], await rootBundle.loadString('assets/licenses/react-body-highlighter-LICENSE'));
       // Exercise drawings, CC BY-SA 4.0 (assets/drawings/everkinetic/SOURCE.md). Section 3(a): creator, a link to the
       // material, that it is unmodified, and the licence text (which carries the disclaimer).
       yield const LicenseEntryWithLineBreaks(['Exercise animations: CDC Growing Stronger (public domain)'], animationNotice);
