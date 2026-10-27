@@ -1,3 +1,4 @@
+import { DownloadButton, DownloadSection } from "@/components/download";
 import { Vial } from "@/components/vial";
 import { Wordmark } from "@/components/wordmark";
 
@@ -36,8 +37,8 @@ function PhoneMock() {
           <div className="mt-4 rounded-2xl border border-danger/40 bg-surface p-3.5">
             <p className="font-mono text-[9px] tracking-[0.2em] text-muted">CHANGED</p>
             <p className="mt-1 text-[13px] leading-snug font-semibold">Cutting became Maintenance</p>
-            <p className="mt-1 text-[11px] leading-snug text-muted">Your BMI is under 18.0 for Indian adults. Build first, then cut.</p>
-            <p className="mt-1.5 text-[10px] text-muted">Source: Misra et al., 2009</p>
+            <p className="mt-1 text-[11px] leading-snug text-muted">Your BMI is under 18.5. Build strength first, then cut.</p>
+            <p className="mt-1.5 text-[10px] text-muted">Source: WHO BMI classification</p>
           </div>
           <div className="mt-3 rounded-2xl border border-line bg-surface p-3.5">
             <p className="font-mono text-[9px] tracking-[0.2em] text-muted">THIS WEEK</p>
@@ -99,7 +100,16 @@ const sources = [
   ["ACSM", "Exercise testing and prescription"],
   ["ISSN", "Position stands on protein and creatine"],
   ["ICMR-NIN", "Indian Food Composition Tables, 2017"],
-  ["Misra et al.", "BMI cut-offs for Asian Indians, 2009"],
+  ["Lally et al.", "How long habits take to form, 2010"],
+];
+
+const features = [
+  ["Muscle map", "Tap a muscle on the body to see the moves that train it. Filter by equipment and difficulty, with an animated demo for each move."],
+  ["Meals to the gram", "Pick your region's staples and how fast you want to go. Every day is planned to your calories and protein, in grams."],
+  ["Level up", "XP, levels and a 66-day challenge, all worked out from what you actually log. A missed day never resets the run."],
+  ["Levlofit AI", "Remembers what you tell it, explains your plan in plain words, and changes it only after you say yes."],
+  ["Body check, if you want it", "One photo gives posture notes and what to train more. Optional, and the photo is never saved."],
+  ["Reminders that fit", "Training, water and your own reminders, at the times you choose."],
 ];
 
 const faqs = [
@@ -115,6 +125,12 @@ const faqs = [
   ],
   ["I have an allergy. Is that covered?", "Allergies and intolerances are asked before your diet. Foods that contain them are removed from every suggestion, including ones you type in yourself."],
   ["Can I delete my account?", "Yes, from the account menu at any time. Your profile, plans and logs are deleted with it."],
+  ["Why is it not on the Play Store?", "To launch free, without fees, we share the app straight from this website first. A store listing may follow."],
+  [
+    "Is the download safe?",
+    "It comes only from this website, signed with Levlofit's own key. Android installs updates only when they carry the same signature, and the SHA-256 checksum next to the button lets you check the file.",
+  ],
+  ["Does it work on iPhone?", "Not yet. Levlofit is Android only for now, Android 7.0 or newer."],
 ];
 
 export default function Home() {
@@ -142,22 +158,12 @@ export default function Home() {
               Levlofit checks your answers before it builds anything, then shows you why. Every rule comes from a source you can read.
             </p>
             <div data-reveal style={{ "--i": 4 } as React.CSSProperties} className="mt-9 flex flex-wrap gap-3">
+              <DownloadButton compact />
               <a
                 href="#how"
-                className="group inline-flex h-12 items-center gap-3 rounded-xl bg-accent pr-2 pl-5 text-[16px] font-bold text-on-accent transition-transform duration-300 ease-spring active:scale-[0.98]"
-              >
-                See how it works
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-on-accent/10 transition-transform duration-500 ease-spring group-hover:-translate-y-px group-hover:translate-x-0.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                    <path d="M7 17 17 7M9 7h8v8" />
-                  </svg>
-                </span>
-              </a>
-              <a
-                href="#handbook"
                 className="inline-flex h-12 items-center rounded-xl border border-ink px-5 text-[16px] font-semibold transition-colors duration-300 ease-spring hover:bg-ink hover:text-on-ink"
               >
-                Open the Handbook
+                See how it works
               </a>
             </div>
           </div>
@@ -180,6 +186,22 @@ export default function Home() {
                   <h3 className="mt-6 text-[24px] font-bold tracking-tight">{s.title}</h3>
                   <p className="mt-3 text-[15px] leading-relaxed text-muted">{s.body}</p>
                 </Bezel>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Features */}
+        <section id="features" className="mx-auto max-w-6xl px-4 pb-28 sm:px-6 sm:pb-36">
+          <div data-reveal>
+            <Eyebrow>Inside the app</Eyebrow>
+            <h2 className="mt-4 max-w-[20ch] text-[clamp(32px,5vw,56px)] leading-[1.02] font-bold tracking-[-0.035em]">Everything your plan needs, in one place.</h2>
+          </div>
+          <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map(([t, b], i) => (
+              <div key={t} data-reveal style={{ "--i": i % 3 } as React.CSSProperties} className="rounded-2xl border border-line bg-surface p-6">
+                <p className="text-[18px] font-bold tracking-tight">{t}</p>
+                <p className="mt-2 text-[15px] leading-relaxed text-muted">{b}</p>
               </div>
             ))}
           </div>
@@ -264,6 +286,8 @@ export default function Home() {
             </ul>
           </div>
         </section>
+
+        <DownloadSection />
 
         {/* FAQ */}
         <section id="faq" className="mx-auto max-w-3xl px-4 py-28 sm:px-6 sm:py-36">
