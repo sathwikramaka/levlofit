@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:levlo/diet_plan.dart';
 
@@ -31,7 +33,6 @@ Map<String, Food> _withoutFat(String code) {
   };
 }
 
-String _items(DayPlan d) => d.meals.expand((m) => m.items).map((i) => '${i.code}:${i.grams}').join(',');
 
 void main() {
   group('fatGuidance threshold', () {
@@ -133,14 +134,20 @@ void main() {
     expect(week.every((d) => d.check.fatEnergyShare != null), isTrue);
   });
 
-  test('fat data never changes the foods chosen or the pass flag, on any profile', () {
+  test('fat data may swap in leaner foods, but only lowers fat and never fails a day', () {
     final noFat = {for (final e in foodsForTest.entries) e.key: _withoutFat(e.key)[e.key]!};
+    double share(DayPlan d) {
+      // The fat share of a day's foods with their real fat values.
+      final fat = d.meals.expand((m) => m.items).fold(0.0, (s, i) => s + foodsForTest[i.code]!.fat * i.grams / 100);
+      return d.kcal <= 0 ? 0 : 9 * fat / d.kcal;
+    }
+
     for (final p in _profiles) {
       final a = _week(p), b = _week(p, noFat);
       for (var day = 0; day < 7; day++) {
-        expect(_items(b[day]), _items(a[day]), reason: '${p.label} day $day foods');
-        expect(b[day].check.feasible, a[day].check.feasible, reason: '${p.label} day $day pass flag');
-        expect(b[day].check.fatEnergyShare, isNull, reason: '${p.label} day $day');
+        expect(b[day].check.fatEnergyShare, isNull, reason: '${p.label} day $day: unknown fat is never shown');
+        if (b[day].check.feasible) expect(a[day].check.feasible, isTrue, reason: '${p.label} day $day pass flag');
+        expect(share(a[day]), lessThanOrEqualTo(math.max(maxFatEnergyShare, share(b[day])) + 1e-9), reason: '${p.label} day $day fat');
       }
     }
   });
@@ -156,5 +163,19 @@ void main() {
     final cache = WeekCache();
     cache.put(weekKey(req(known0)), planWeek(req(known0)));
     expect(cache.get(weekKey(req(unknown))), isNull, reason: 'a week with known fat is never served for unknown fat');
+  });
+
+  test('egg and vegetarian weeks stay near 30% fat (planner swaps leaner foods; was up to 45%)', () {
+    for (final excluded in [
+      {'beef', 'pork', 'meat', 'poultry', 'fish', 'shellfish'},
+      {'beef', 'pork', 'meat', 'poultry', 'fish', 'shellfish', 'egg'},
+    ]) {
+      final week = planWeek((foods: foodsForTest, kcal: 2290.0, protein: 144.0, excluded: excluded, custom: const <String>[], tier: 2, soyaCapG: 50.0, proteinPowder: false, region: null));
+      for (final d in week) {
+        expect(d.check.fatEnergyShare, lessThanOrEqualTo(0.32), reason: excluded.contains('egg') ? 'vegetarian' : 'eggitarian');
+        expect(d.check.proteinShare, greaterThanOrEqualTo(minProteinShare));
+      }
+      expect(week.every((d) => d.check.feasible), isTrue);
+    }
   });
 }

@@ -82,9 +82,9 @@ class _AuthScreenState extends State<AuthScreen> {
   String? _error;
   String? _notice;
   OtpType? _awaiting; // signup or recovery: showing the "enter the code" view
-  // Production builds show Google at once (the provider is on there); the settings check below hides it only when
-  // the server says it is off, so a slow or failed check never hides it.
-  bool _googleEnabled = backendChoice == 'production';
+  // The Google button is always shown. The settings check records whether the server has the provider on
+  // (null = unknown, e.g. offline); when it is off, a tap explains instead of opening a raw error page.
+  bool? _googleOn;
 
   @override
   void initState() {
@@ -95,13 +95,12 @@ class _AuthScreenState extends State<AuthScreen> {
     if (kIsWeb && failure != null) _error = 'Sign-in did not finish: $failure. Try again or use email.';
   }
 
-  // Public auth settings endpoint: {"external": {"google": true, ...}}. Hides the button when the provider is off
-  // instead of sending people to a raw "provider is not enabled" error page.
+  // Public auth settings endpoint: {"external": {"google": true, ...}}.
   Future<void> _checkGoogle() async {
     try {
       final res = await http.get(Uri.parse('$supabaseUrl/auth/v1/settings'), headers: {'apikey': supabaseKey});
       final on = (jsonDecode(res.body) as Map<String, dynamic>)['external']?['google'] == true;
-      if (mounted && on != _googleEnabled) setState(() => _googleEnabled = on);
+      if (mounted) setState(() => _googleOn = on);
     } catch (_) {
       // Offline or blocked: keep the build's default.
     }
@@ -154,7 +153,13 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // Opens Google's consent page; the session arrives via authRedirect and the Gate reacts.
   // Supabase links it to an existing email account when the verified addresses match.
-  Future<void> _google() => _run(() => supabase.auth.signInWithOAuth(OAuthProvider.google, redirectTo: authRedirect));
+  Future<void> _google() async {
+    if (_googleOn == false) {
+      setState(() => _error = 'Google sign-in is not switched on for this server yet. Use your email for now.');
+      return;
+    }
+    await _run(() => supabase.auth.signInWithOAuth(OAuthProvider.google, redirectTo: authRedirect));
+  }
 
   Future<void> _forgot() async {
     final email = _email.text.trim();
@@ -271,7 +276,7 @@ class _AuthScreenState extends State<AuthScreen> {
               style: t.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 32),
-            if (_googleEnabled) ...[
+            ...[
               OutlinedButton(
                 onPressed: _busy ? null : _google,
                 child: Row(

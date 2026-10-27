@@ -440,6 +440,7 @@ DayPlan planDay({
   final oil = _oilFor(foods, excluded, custom);
   final oilG = oil == null ? 0.0 : oilGrams(kcal);
   final oilKcal = oil == null ? 0.0 : oil.kcal * _oilShown(oilG) / 100;
+  final oilFat = oil == null ? 0.0 : oil.fat * _oilShown(oilG) / 100;
 
   // Portions in kitchen steps (soya rounded down so the day limit holds, eggs in whole eggs), totals from what is shown.
   DayPlan assemble(List<_Pick> picks, List<double> grams, {double? ceiling, bool hitStepLimit = false}) {
@@ -512,7 +513,8 @@ DayPlan planDay({
     // 2. Greedy trade-offs in kitchen steps, aiming inside the acceptance band so rounding cannot push a day out:
     //    raise protein with the densest foods, pay for it by trimming less protein-dense portions, then settle
     //    energy. Every portion stays between its slot's floor and cap, and soya within the day's limit.
-    final kLo = kcal * (1 - 0.03), kHi = kcal * (1 + 0.03), pMin = protein * 0.93;
+    // Aim at the full protein target (the pass flag still allows 90%, so a day that cannot reach it is reported, not hidden).
+    final kLo = kcal * (1 - 0.03), kHi = kcal * (1 + 0.03), pMin = protein;
     int? pickBy(bool Function(int) can, double Function(int) key, {bool lowest = false}) {
       int? best;
       for (var i = 0; i < picks.length; i++) {
@@ -557,15 +559,63 @@ DayPlan planDay({
         if (up == null) break;
         grams[up] += stepOf(up);
       }
+      // Fat: keep the day at or under 30% of energy (WHO 2023, ICMR-NIN 2024) where portions allow. Trim the portion
+      // with the highest share of its energy from fat (paneer, eggs, peanuts, milk) while protein stays at 95% or
+      // more, then refill energy from the staples, which are low in fat.
+      double totalFat() => [for (final (i, p) in picks.indexed) p.$3.fat * grams[i] / 100].fold(oilFat, (s, v) => s + v);
+      double fatRatio(int i) => picks[i].$3.kcal <= 0 ? 0 : 9 * picks[i].$3.fat / picks[i].$3.kcal;
+      while (9 * totalFat() > maxFatEnergyShare * totalKcal() && moves-- > 0) {
+        final down = pickBy(
+            (i) => canTrim(i) && fatRatio(i) > maxFatEnergyShare && totalProtein() - picks[i].$3.protein * stepOf(i) / 100 >= protein * 0.95,
+            fatRatio);
+        if (down == null) break;
+        grams[down] -= stepOf(down);
+        while (totalKcal() < kLo && moves-- > 0) {
+          final up = pickBy((i) => picks[i].$2.scale == _Scale.energy && fatRatio(i) <= maxFatEnergyShare && grams[i] + stepOf(i) <= picks[i].$2.max, (i) => -fatRatio(i));
+          if (up == null) break;
+          grams[up] += stepOf(up);
+        }
+      }
     }
     return assemble(picks, grams, hitStepLimit: moves <= 0);
   }
 
+  // Over 30% of energy from fat: swap the fattiest protein-slot food for the leanest allowed one in the same slot,
+  // one slot at a time, keeping a swap only when the day still passes and its fat share drops.
+  bool fatty(DayPlan d) => (d.check.fatEnergyShare ?? 0) > maxFatEnergyShare;
+  double fatRatioOf(Food f) => f.kcal <= 0 ? 0 : 9 * f.fat / f.kcal;
+  DayPlan leaner(List<_Pick> picks, DayPlan day) {
+    var best = day, bestPicks = picks;
+    for (var round = 0; round < 3 && fatty(best); round++) {
+      DayPlan? next;
+      List<_Pick>? nextPicks;
+      for (final (i, p) in bestPicks.indexed) {
+        if (p.$2.scale != _Scale.protein || fatRatioOf(p.$3) <= maxFatEnergyShare) continue;
+        final soyaElsewhere = bestPicks.indexed.any((e) => e.$1 != i && e.$2.$3.code == 'X001');
+        final options = p.$2.codes.where((c) => ok(c) && c != p.$3.code && !(c == 'X001' && soyaElsewhere)).map((c) => foods[c]!).toList()
+          ..sort((a, b) => fatRatioOf(a).compareTo(fatRatioOf(b)));
+        if (options.isEmpty || fatRatioOf(options.first) >= fatRatioOf(p.$3)) continue;
+        final tried = [...bestPicks]..[i] = (p.$1, p.$2, options.first);
+        final d = build(tried);
+        if (d.check.feasible && (d.check.fatEnergyShare ?? 1) < (next?.check.fatEnergyShare ?? best.check.fatEnergyShare ?? 1)) {
+          next = d;
+          nextPicks = tried;
+        }
+      }
+      if (next == null) break;
+      best = next;
+      bestPicks = nextPicks!;
+    }
+    return best;
+  }
+
   // The rotation first, then the protein-dense variant: both keep the planner's usual portions and variety.
-  final rotation = build(choose(denseProtein: false));
-  if (rotation.check.feasible) return rotation;
-  final dense = build(choose(denseProtein: true));
-  if (dense.check.feasible) return dense;
+  final rotationPicks = choose(denseProtein: false);
+  final rotation = build(rotationPicks);
+  if (rotation.check.feasible) return fatty(rotation) ? leaner(rotationPicks, rotation) : rotation;
+  final densePicks = choose(denseProtein: true);
+  final dense = build(densePicks);
+  if (dense.check.feasible) return fatty(dense) ? leaner(densePicks, dense) : dense;
 
   // Neither passed: search every day the planner can show. Its best day is used when it passes; its protein
   // ceiling makes any impossibility statement exact for the planner's rules.

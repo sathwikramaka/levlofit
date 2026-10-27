@@ -138,6 +138,13 @@ void main() {
     expect(File('../website/src/app/privacy/page.tsx').readAsStringSync(), contains('<strong>ExerciseDB</strong> (AscendAPI)'));
   });
 
+  test('catalogue unreachable or missing a row: guide moves stay in the session', () async {
+    expect(exerciseDbContent, isTrue);
+    final m = await loadMoves(['I4hDWkc', 'zzzzzzz']); // no Supabase client in tests: the catalogue read fails
+    expect(m.found.single['name'], 'Push-up');
+    expect(m.missing, ['zzzzzzz']);
+  });
+
   group('licensed mode (LEVLOFIT_EXERCISEDB=false)', () {
     setUp(() => exerciseDbContent = false);
     tearDown(() => exerciseDbContent = true);

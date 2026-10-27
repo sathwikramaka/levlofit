@@ -1896,7 +1896,7 @@ const _privacyPolicy = [
 
 /// Plain-language meanings for the words the plan uses.
 const _glossary = [
-  ('BMI', 'Body mass index: weight in kg divided by height in metres squared. Indian cut-offs are lower than global ones.'),
+  ('BMI', 'Body mass index: weight in kg divided by height in metres squared. WHO normal range: 18.5 to under 25.'),
   ('BMR', 'Basal metabolic rate: the energy your body uses at complete rest. Your calorie target starts from it.'),
   ('Compound lift', 'A move using several joints at once, like a squat, deadlift, press or row.'),
   ('Deload', 'A lighter week that lets fatigue fall so progress can continue.'),
