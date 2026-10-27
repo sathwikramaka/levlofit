@@ -1836,7 +1836,7 @@ const _privacyPolicy = [
       'sign-up and in Protocol, including your weight goal, food budget and exclusions, equipment, water target and the health check. '
       'What you log: workouts and sets (reps and weight), body weight and measurements, water, habits, your level in each goal and your '
       'reminder settings (including the names you give your own reminders), the foods and weights you log in the food diary and the recipes you save, and how hard each session felt and whether pain stopped you, if you answer after a session. Progress photos, and your profile picture if you upload your own. Your chats with Levlofit AI, the facts you confirm in its Memory, '
-      'and its suggestions waiting for your OK. Feedback you send. For abuse protection: when you send chat messages or rebuild your plan (times only, no content), and a random ID on each chat message so a resent one is not saved twice; feedback is limited by counting the feedback you have sent. On this phone only: your sign-in session, light or dark choice, dashboard layout and daily goals, which permission prompts you have seen, downloaded fonts and the reminders scheduled on the phone. We do not collect your location, contacts or '
+      'and its suggestions waiting for your OK. Feedback you send. Error reports when the app hits an unexpected error while you are signed in (the error message, where in the app code it happened, app version and phone type; email addresses masked; kept up to 90 days). For abuse protection: when you send chat messages or rebuild your plan (times only, no content), and a random ID on each chat message so a resent one is not saved twice; feedback is limited by counting the feedback you have sent. On this phone only: your sign-in session, light or dark choice, dashboard layout and daily goals, which permission prompts you have seen, downloaded fonts and the reminders scheduled on the phone. We do not collect your location, contacts or '
       'data from other apps.'),
   ('How we use it', 'To build your plan, track your progress, send reminders you choose and answer your questions. Nothing else.'),
   ('Where it is stored', 'With Supabase, our database and file storage provider. Photos are kept in private storage only your account '
@@ -1864,7 +1864,7 @@ const _privacyPolicy = [
       'message is sent as written, so leave out details you do not want shared.'),
   ('Who else handles it', 'Supabase stores your data, and Google handles sign-in if you use Google. Google Fonts supplies the app\'s fonts; '
       'Google\'s servers may receive your IP address when the app loads them. ExerciseDB (AscendAPI) supplies the exercise animations; its '
-      'servers may receive your IP address when the app loads them. Each is used only for its job. We never sell your data.'),
+      'servers may receive your IP address when the app loads them. Once per start the app asks the Levlofit website whether a newer version exists, so its host may receive your IP address too. Each is used only for its job. We never sell your data.'),
   ('Body check (optional)', 'Only if you use it and agree each time: the photo you choose is sent once to Groq, which may process it outside India, '
       'to write a few notes on posture and which areas to train. Levlofit does not store the photo or the notes. No body-fat, weight or health '
       'judgement is made. For adults only.'),
@@ -1878,7 +1878,7 @@ const _privacyPolicy = [
   ('How long we keep it', 'Until you delete your account. Every plan built for you is kept, each with a copy of the answers it used (including '
       'any injury you described); the app shows the latest. Deleting your account first removes your progress photos and profile picture; if that '
       'fails, your account is not deleted and you can try again. Then your account is deleted, along with the records linked to it in our '
-      'database: profile and answers, goals, plans, logs, food diary and recipes, measurements, chats, AI notes, reminder settings and feedback. '
+      'database: profile and answers, goals, plans, logs, food diary and recipes, measurements, chats, AI notes, reminder settings, feedback and error reports. '
       'If deleting the account itself fails after the photos are gone, the photos stay deleted, the rest stays and you can try again. '
       'Reminders scheduled on this phone are cancelled when you delete your account or sign out. Copies may remain '
       'in our service providers\' backups and service logs after deletion, under their own retention practices. Messages already sent to '

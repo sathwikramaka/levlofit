@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'account.dart' show signOutEverywhereOrLocally;
 import 'auth_screen.dart';
 import 'dashboard.dart';
+import 'error_report.dart';
 import 'exercises.dart' show animationNotice, drawingNotice;
 import 'mark.dart';
 import 'move_animation.dart' show DemoFigure, demoFigure;
@@ -72,6 +73,7 @@ Future<void> main() async {
     return;
   }
   await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
+  installErrorReporting();
   prefs = await SharedPreferences.getInstance();
   themeMode.value = ThemeMode.values.asNameMap()[prefs.getString('theme')] ?? ThemeMode.system;
   demoFigure.value = DemoFigure.values.asNameMap()[prefs.getString(demoFigureKey)] ?? DemoFigure.man;
