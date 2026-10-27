@@ -877,6 +877,10 @@ const _dishes = {
 
 /// What to put on the plate, e.g. "2 rotis", "1 katori moong dal", "Chicken curry (150 g boneless chicken)".
 String servingLabel(PlanItem i) {
+  if (i.unit == 'scoop') {
+    final n = (i.grams / scoopGrams).round();
+    return '$n ${n == 1 ? 'scoop' : 'scoops'} ${i.code == 'supp:whey' ? 'whey' : 'plant protein'} in water';
+  }
   final s = _servings[i.code];
   if (s == null) {
     final d = _dishes[i.code];
@@ -890,7 +894,9 @@ String servingLabel(PlanItem i) {
 }
 
 /// The exact amount behind [servingLabel], shown small: "60 g wheat atta", "200 ml", "45 g batter mix".
-String exactLabel(PlanItem i) => i.code.startsWith('dish:')
+String exactLabel(PlanItem i) => i.unit == 'scoop'
+    ? '${i.grams.round()} g powder'
+    : i.code.startsWith('dish:')
     ? '${i.grams.round()} g dry ${i.code == 'dish:sprouts' ? 'moong' : 'mix'}'
     : switch (i.unit) {
       'ml' => '${i.grams.round()} ml',
@@ -1000,6 +1006,57 @@ String weekKey(WeekRequest r) {
   }).join(',');
   final custom = r.custom.map((c) => c.trim().toLowerCase()).where((c) => c.isNotEmpty).toSet().toList()..sort();
   return [foods, r.kcal, r.protein, (r.excluded.toList()..sort()).join('+'), custom.join('+'), r.tier, r.soyaCapG, r.proteinPowder, r.region ?? 'any'].join('|');
+}
+
+// ---- protein shake (Build my plate, whey step) ----------------------------------------------------------------
+
+/// One scoop of protein powder as Levlofit counts it: 30 g giving 120 kcal, 24 g protein, 3 g carbohydrate and 1.5 g
+/// fat. A typical label, not a brand's: the person's own tub label is the one to trust.
+const scoopGrams = 30.0;
+const scoopKcal = 120.0, scoopProtein = 24.0, scoopCarb = 3.0, scoopFat = 1.5;
+
+/// [d], planned for the targets minus [scoops] shakes, with the shake added to the evening snack (after training for
+/// most people) and the day's totals and checks recomputed against the full [kcal] and [protein] targets.
+/// [plant]: dairy is excluded, so the shake is a plant protein.
+DayPlan addShake(DayPlan d, int scoops, {required double kcal, required double protein, required bool plant}) {
+  if (scoops <= 0) return d;
+  final shake = (
+    code: plant ? 'supp:plant-protein' : 'supp:whey',
+    name: plant ? 'Plant protein powder' : 'Whey protein',
+    grams: scoopGrams * scoops,
+    unit: 'scoop',
+    kcal: scoopKcal * scoops,
+    protein: scoopProtein * scoops,
+    carb: scoopCarb * scoops,
+    fat: scoopFat * scoops,
+    fiber: 0.0,
+  );
+  final meals = [
+    for (final m in d.meals) m.name == 'Evening snack' ? (name: m.name, time: m.time, items: [shake, ...m.items]) : m,
+  ];
+  final k = d.kcal + shake.kcal, p = d.protein + shake.protein, fat = d.fat + shake.fat;
+  final dev = kcal > 0 ? (k - kcal) / kcal : 0.0;
+  final share = protein > 0 ? p / protein : 1.0;
+  final fatShare = d.check.fatEnergyShare == null || k <= 0 ? null : 9 * fat / k;
+  return (
+    meals: meals,
+    kcal: k,
+    protein: p,
+    carb: d.carb + shake.carb,
+    fat: fat,
+    fiber: d.fiber,
+    check: (
+      feasible: dev.abs() <= kcalTolerance && share >= minProteinShare,
+      kcalDeviation: dev,
+      proteinShare: share,
+      proteinCeiling: d.check.proteinCeiling,
+      hitStepLimit: d.check.hitStepLimit,
+      issues: d.check.issues,
+      options: d.check.options,
+      fatEnergyShare: fatShare,
+      guidance: fatShare == null ? d.check.guidance : fatGuidance(fatShare, const []),
+    ),
+  );
 }
 
 /// The seven days (index 0 = Monday) for one request. Top-level and pure, so it can run in a background isolate.
