@@ -29,7 +29,9 @@ export type Passage = {
 export type Corpus = { sources: Record<string, string>; passages: Passage[] };
 export type Hit = { passage: Passage; score: number };
 
-export const HANDBOOK = data as unknown as Corpus;
+// Only reviewed passages are citable: v4's new key points and chapters wait in the register until reviewed.
+const corpus = data as unknown as Corpus;
+export const HANDBOOK: Corpus = { ...corpus, passages: corpus.passages.filter((p) => p.evidence !== 'unreviewed') };
 
 const STOP = new Set(
   ('the and for are but not you your yours with what when how why who which this that these those there their they them was were '

@@ -60,7 +60,7 @@ function readCsv(text: string): Record<string, string>[] {
 }
 
 test('passages file: every claim id is in the evidence register, and each evidence label agrees with the register', () => {
-  const register = new Map(readCsv(readFileSync(new URL('../../../data/evidence/claims_register.csv', import.meta.url), 'utf8')).map((r) => [r.claim_id, r]));
+  const register = new Map(readCsv(readFileSync(new URL('../../../data/handbook_v4/claims_register.csv', import.meta.url), 'utf8')).map((r) => [r.claim_id, r]));
   for (const p of HANDBOOK.passages) {
     for (const c of p.claimIds) assert.ok(register.has(c), `${c} not in register`);
     const claims = p.claimIds.map((c) => register.get(c)!).filter((r) => r.auto_kind !== 'label');
@@ -107,7 +107,7 @@ test('relevance (real Handbook): questions land on the chapter that covers them'
 test('synonyms: "safe" and "dangerous" reach the creatine safety passage, which never says "safe"', () => {
   for (const q of ['Is creatine safe?', 'Is creatine dangerous?', 'Is creatine harmful?']) {
     const first = retrieve(q)[0].passage;
-    assert.equal(first.id, 'supplements:b04', q);
+    assert.equal(first.id, 'supplements:b05', q); // v4 book: a part opener sits above it
     assert.doesNotMatch(first.text, /\bsafe\b/i, 'the corrected wording stays as it is');
     assert.match(first.text, /adverse health risks/);
   }
@@ -242,10 +242,10 @@ test('topics (coach plan item 4): paraphrased rest and running questions rank th
 
 test('coach plan item 4: every shipped passage the coach can cite has been reviewed (none is "unreviewed")', () => {
   const open = HANDBOOK.passages.filter((p) => p.evidence === 'unreviewed').map((p) => p.id);
-  assert.deepEqual(open, [], 'review these in data/evidence/claims_register.csv before shipping');
+  assert.deepEqual(open, [], 'review these in data/handbook_v4/claims_register.csv before shipping');
   // The 2026-10-24 abstract-level review: partly checked (never "checked"), and the HYROX tip cites no source.
   const by = (id: string) => HANDBOOK.passages.find((p) => p.id === id)!;
-  for (const id of ['one-step-at-a-time:b04', 'one-step-at-a-time:b05', 'rest-between-sets:b01', 'rest-between-sets:b04']) assert.equal(by(id).evidence, 'partly_checked', id);
+  for (const id of ['one-step-at-a-time:b05', 'one-step-at-a-time:b06', 'rest-between-sets:b01', 'rest-between-sets:b04']) assert.equal(by(id).evidence, 'partly_checked', id);
   assert.equal(by('hyrox:b04').evidence, 'editorial');
   assert.deepEqual(by('hyrox:b04').sources, []);
 });
