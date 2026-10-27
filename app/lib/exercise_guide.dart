@@ -198,6 +198,7 @@ const muscleMatch = <String, ({List<String> guide, List<String> catalogue})>{
   'Hamstrings': (guide: ['Hamstrings'], catalogue: ['hamstrings']),
   'Calves': (guide: ['Calves', 'Gastrocnemius', 'Soleus'], catalogue: ['calves']),
   'Soleus': (guide: ['Soleus', 'Calves'], catalogue: ['calves']),
+  'Tibialis': (guide: ['Tibialis anterior', 'Calves'], catalogue: ['calves']),
 };
 
 /// Guide moves that train [muscle] (a body-map label): moves where it is a main mover first, then moves where it
