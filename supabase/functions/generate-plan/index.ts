@@ -24,7 +24,7 @@ export default {
         .select('goal, experience, goal_catalog(name, kind, coach_led_from_level)')
         .eq('user_id', userId)
         .order('priority', { ascending: true }),
-      ctx.supabase.from('dietary_profiles').select('diet_type, restrictions, other_restrictions, supplements').eq('user_id', userId).maybeSingle(),
+      ctx.supabase.from('dietary_profiles').select('diet_type, restrictions, other_restrictions, supplements, diet_pace').eq('user_id', userId).maybeSingle(),
       ctx.supabase.from('goal_levels').select('goal, level').eq('user_id', userId),
     ]);
     if (profile.error || goals.error || diet.error) return Response.json({ error: 'Could not read your answers' }, { status: 500 });
@@ -65,6 +65,7 @@ export default {
         equipment: p.equipment ?? undefined,
         equipmentItems: p.equipment_items,
         supplements: diet.data.supplements,
+        pace: diet.data.diet_pace ?? undefined,
       });
     } catch (e) {
       return Response.json({ error: (e as Error).message }, { status: 400 });

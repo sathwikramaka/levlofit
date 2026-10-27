@@ -564,6 +564,7 @@ class _DietScreenState extends State<_DietScreen> {
   Map<String, Food>? _foods;
   int _day = DateTime.now().weekday - 1;
   int _tier = 2;
+  String? _region; // cuisine_region: staples preferred in the rotation (diet_plan.dart regionStaples)
   String _budget = 'Medium';
   String? _error;
   String? _buildingKey; // the week being built in the background, so it is started only once
@@ -596,7 +597,7 @@ class _DietScreenState extends State<_DietScreen> {
     try {
       final [rows, diet] = await Future.wait<dynamic>([
         supabase.from('foods').select('code, name, tags, kcal, protein_g, carb_g, fat_g, fiber_g').inFilter('code', plannerCodes),
-        supabase.from('dietary_profiles').select('budget_tier, budget_min_inr, budget_max_inr').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
+        supabase.from('dietary_profiles').select('budget_tier, budget_min_inr, budget_max_inr, cuisine_region').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
       ]);
       final tier = diet?['budget_tier'] as String?;
       final lo = diet?['budget_min_inr'] as int?, hi = diet?['budget_max_inr'] as int?;
@@ -604,6 +605,7 @@ class _DietScreenState extends State<_DietScreen> {
       setState(() {
         _foods = plannerFoods((rows as List).cast<Map<String, dynamic>>());
         _tier = budgetTier(tier, hi);
+        _region = diet?['cuisine_region'] as String?;
         _budget = tier == 'custom' ? 'your range, ${lo == null ? '' : 'Rs $lo to '}Rs ${hi ?? '-'} a day' : switch (tier) { 'low' => 'low', 'high' => 'high', _ => 'medium' };
       });
     } catch (_) {
@@ -642,6 +644,7 @@ class _DietScreenState extends State<_DietScreen> {
       tier: _tier,
       soyaCapG: ((food['maxSoyaChunksDryG'] as num?) ?? 50).toDouble(),
       proteinPowder: supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')),
+      region: _region,
     );
     final key = weekKey(request);
     final week = _weekCache.get(key);
@@ -1598,6 +1601,8 @@ List<Widget> _progressBody(
             ),
       ]),
     ),
+    const SizedBox(height: 12),
+    const BodyCheckCard(),
     const SizedBox(height: 12),
     _Tile(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

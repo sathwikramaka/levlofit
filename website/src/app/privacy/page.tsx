@@ -76,6 +76,11 @@ const sections: LegalSection[] = [
           at its Progress page. They stay on your phone and are not stored on our servers. If you switch on sharing, those totals are sent with your coach
           messages about steps or walking, as described below. Disconnect in Progress, or remove access in Health Connect, at any time.
         </p>
+        <p>
+          <strong>Body check (optional, only if you use it):</strong> after you agree each time, the photo you choose is sent once to Groq, which may process it
+          outside India, to write a few notes on posture and which areas to train. Levlofit does not store the photo or the notes, and no body-fat, weight or
+          health judgement is made. For adults only.
+        </p>
       </>
     ),
   },

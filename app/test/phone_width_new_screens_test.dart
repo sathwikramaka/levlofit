@@ -91,8 +91,13 @@ void main() {
     phone(tester);
     await tester.pumpWidget(const MaterialApp(home: ExerciseLibraryScreen()));
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Mobility').first);
+    // The body map sits above the chips, so scroll to them as a person would on a phone.
+    final chip = find.widgetWithText(ChoiceChip, 'Mobility');
+    await tester.dragUntilVisible(chip.first, find.byType(CustomScrollView), const Offset(0, -200));
+    await tester.pump();
+    await tester.tap(chip.first);
     await tester.pump(const Duration(seconds: 1));
+    await tester.dragUntilVisible(find.text('Upward-facing dog'), find.byType(CustomScrollView), const Offset(0, -300));
     expect(find.text('Upward-facing dog'), findsOneWidget);
     expect(find.textContaining('Stretches Rectus abdominis'), findsWidgets);
     expect(tester.takeException(), isNull);

@@ -38,6 +38,7 @@ Owner sign-off: ____________________  Date: __________
 | 13 | Health data minimised for AI | Data-use gate, minimised context, consented steps only | Done |
 | 14 | No location, contacts or other-app data | Manifest permissions | Done |
 | 15 | Grievance contact | Email in "Your rights" | Owner: make sure the address on the website is monitored |
+| 17 | Body check photos (added 2026-10-27) | Consent each time, sent once to Groq, never stored; both policy texts | Done in code; deploy `body-check` only after you approve |
 | 16 | Play Data safety form | docs/PLAY_DATA_SAFETY_DRAFT.md | Fill from this list when a Play listing is made |
 
 ## Not covered by this review

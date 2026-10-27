@@ -1351,7 +1351,7 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
     try {
       final [p, d] = await Future.wait<dynamic>([
         supabase.from('profiles').select('days_per_week, session_minutes, equipment, weight_goal, daily_activity, water_target_ml').eq('id', _uid).single(),
-        supabase.from('dietary_profiles').select('diet_type, budget_tier, budget_min_inr, budget_max_inr').eq('user_id', _uid).single(),
+        supabase.from('dietary_profiles').select('diet_type, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, diet_pace').eq('user_id', _uid).single(),
       ]);
       if (!mounted) return;
       setState(() {
@@ -1466,6 +1466,12 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
         Text('FOOD', style: monoLabel(context)),
         const SizedBox(height: 10),
         _chips<String>('Diet', null, d['diet_type'] as String?, const [('vegan', 'Vegan'), ('vegetarian', 'Vegetarian'), ('eggitarian', 'Eggitarian'), ('non_vegetarian', 'Non-veg')], (v) => d['diet_type'] = v),
+        _chips<String>('Pace', 'How fast a cut or a bulk moves. Easy is gentler and easier to keep up; hard asks more and is harder to sustain. '
+            'Maintenance and recomposition are not changed.', d['diet_pace'] as String? ?? 'balanced',
+            const [('easy', 'Easy'), ('balanced', 'Balanced'), ('hard', 'Hard')], (v) => d['diet_pace'] = v),
+        _chips<String>('Regional staples', 'The grains, dals and fish your meal plan leans on. A preference: other foods still appear to meet your targets.',
+            d['cuisine_region'] as String? ?? 'any',
+            const [('any', 'Mixed'), ('north', 'North Indian'), ('south', 'South Indian'), ('east', 'East Indian'), ('west', 'West Indian')], (v) => d['cuisine_region'] = v),
         _chips<String>('Food budget', 'Low keeps to dals, grains, eggs, milk and seasonal produce. Medium adds paneer, chicken and fish.', d['budget_tier'] as String?,
             const [('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('custom', 'My own range')], (v) => d['budget_tier'] = v),
         AnimatedSize(
@@ -1859,6 +1865,9 @@ const _privacyPolicy = [
   ('Who else handles it', 'Supabase stores your data, and Google handles sign-in if you use Google. Google Fonts supplies the app\'s fonts; '
       'Google\'s servers may receive your IP address when the app loads them. ExerciseDB (AscendAPI) supplies the exercise animations; its '
       'servers may receive your IP address when the app loads them. Each is used only for its job. We never sell your data.'),
+  ('Body check (optional)', 'Only if you use it and agree each time: the photo you choose is sent once to Groq, which may process it outside India, '
+      'to write a few notes on posture and which areas to train. Levlofit does not store the photo or the notes. No body-fat, weight or health '
+      'judgement is made. For adults only.'),
   ('Permissions', 'Notifications, only for the reminders you turn on. On Android, Alarms and reminders, only if you allow it, so reminders arrive at the time you set; without it they can arrive a few minutes late. Photos, only when you add a progress photo or profile picture.'),
   // REVIEW GATE (legal): Health Connect steps text; ships only with builds made with -Plevlofit.healthConnect=true.
   ('Steps from Health Connect', 'Only if you connect it in Progress, and only on Android builds that support it. Levlofit reads your daily step '
