@@ -33,6 +33,7 @@ import 'steps.dart' show StepsCard, healthPermissionScreenRequested, onHealthRat
 import 'swaps.dart';
 import 'theme.dart';
 import 'tools.dart';
+import 'update_check.dart';
 import 'week_schedule.dart' show addOnLine, reminderSessions, weekPlan;
 
 part 'dashboard_menu.dart';
@@ -721,6 +722,7 @@ class _Bento extends StatelessWidget {
             const SizedBox(height: 6),
             Text(first.isEmpty ? hello : '$hello, $first', style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 20),
+            const UpdateBanner(),
             for (final row in layoutRows(layout)) ...[
               if (row.length == 2) _Pair(left: card(row[0]), right: card(row[1])) else card(row.single),
               // Next steps and safety alerts are not customisable: they sit right under today's session.

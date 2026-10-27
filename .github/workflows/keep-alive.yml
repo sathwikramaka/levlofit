@@ -1,0 +1,27 @@
+# Keeps the free-tier Supabase project awake: free projects pause after 7 days without database activity, and the app
+# then stops working for everyone. Every 3 days this reads one row of the public goal catalogue (the same read the app
+# does at sign-up, no user data). Repository secrets: SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY (the app's public key).
+name: Keep Supabase awake
+
+on:
+  schedule:
+    - cron: "17 6 */3 * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read one public row
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$SUPABASE_URL" && test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "Set the SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY secrets"; exit 1; }
+          curl --fail --silent --show-error --max-time 30 \
+            "$SUPABASE_URL/rest/v1/goal_catalog?select=goal&limit=1" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY" > /dev/null
+          echo "Supabase answered"

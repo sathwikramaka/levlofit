@@ -55,8 +55,9 @@ flutter_() {
 }
 website() {
   step "website: lint" '.' bash -c 'cd website && npm run -s lint && echo clean'
-  step "website: tsc" '.' bash -c 'cd website && npx --no-install tsc --noEmit --incremental false && echo clean'
+  # Build first: next build writes the route types (.next/types) that tsc needs on a clean checkout.
   step "website: build" 'Compiled|Route' bash -c 'cd website && NEXT_TELEMETRY_DISABLED=1 npm run -s build'
+  step "website: tsc" '.' bash -c 'cd website && npx --no-install tsc --noEmit --incremental false && echo clean'
 }
 
 suites=("$@"); [ ${#suites[@]} -eq 0 ] && suites=(handbook functions deno flutter website)

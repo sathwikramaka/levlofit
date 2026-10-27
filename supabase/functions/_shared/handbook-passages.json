@@ -31,10 +31,8 @@
   "mcnulty2020": "McNulty KL et al. The effects of menstrual cycle phase on exercise performance in eumenorrheic women: a systematic review and meta-analysis. Sports Med 2020;50(10):1813-1827.",
   "meigh2019": "Meigh NJ et al. Kettlebell training in clinical practice: a scoping review. BMC Sports Sci Med Rehabil 2019;11:19.",
   "mifflin1990": "Mifflin MD, St Jeor ST et al. A new predictive equation for resting energy expenditure in healthy individuals. Am J Clin Nutr 1990;51(2):241-247.",
-  "misra2009": "Misra A et al. Consensus statement for diagnosis of obesity, abdominal obesity and the metabolic syndrome for Asian Indians. J Assoc Physicians India 2009;57:163-170.",
   "morton2018": "Morton RW et al. A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults. Br J Sports Med 2018;52(6):376-384.",
   "mottola2018": "Mottola MF et al. 2019 Canadian guideline for physical activity throughout pregnancy. Br J Sports Med 2018;52(21):1339-1346.",
-  "nice2022": "National Institute for Health and Care Excellence. Obesity: identification, assessment and management (waist-to-height ratio update), 2022.",
   "nielsen2014": "Nielsen RO et al. Excessive progression in weekly running distance and risk of running-related injuries: an association which varies according to type of injury. J Orthop Sports Phys Ther 2014;44(10):739-747.",
   "noetel2024": "Noetel M et al. Effect of exercise for depression: systematic review and network meta-analysis of randomised controlled trials. BMJ 2024;384:e075847.",
   "paluch2022": "Paluch AE et al. Daily steps and all-cause mortality: a meta-analysis of 15 international cohorts. Lancet Public Health 2022;7(3):e219-e228.",
@@ -46,7 +44,9 @@
   "soy2021": "Reed KE et al. Neither soy nor isoflavone intake affects male reproductive hormones: an expanded and updated meta-analysis of clinical studies. Reprod Toxicol 2021;100:60-67.",
   "usda174275": "U.S. Department of Agriculture, Agricultural Research Service. FoodData Central: Soy flour, defatted (FDC ID 174275, SR Legacy 16117).",
   "warneke2024": "Warneke K et al. Revisiting the stretch-induced force deficit: a systematic review with multilevel meta-analysis of acute effects. J Sport Health Sci 2024.",
+  "who2004asia": "WHO Expert Consultation. Appropriate body-mass index for Asian populations and its implications for policy and intervention strategies. Lancet 2004;363:157-163.",
   "who2020": "Bull FC et al. World Health Organization 2020 guidelines on physical activity and sedentary behaviour. Br J Sports Med 2020;54:1451-1462.",
+  "whobmi2000": "World Health Organization. Obesity: preventing and managing the global epidemic. WHO Technical Report Series 894. Geneva: WHO, 2000.",
   "whocarb2023": "World Health Organization. Carbohydrate intake for adults and children: WHO guideline. Geneva: WHO, 2023.",
   "whofat2023": "World Health Organization. Saturated fatty acid and trans-fatty acid intake for adults and children: WHO guideline. Geneva: WHO, 2023.",
   "wilson2012": "Wilson JM et al. Concurrent training: a meta-analysis examining interference of aerobic and resistance exercises. J Strength Cond Res 2012;26(8):2293-2307.",
@@ -895,14 +895,14 @@
    "chapter": "body-measures",
    "chapterTitle": "Reading your body numbers",
    "blockType": "lead",
-   "text": "Asian Indians carry more health risk at a lower weight than Western cut-offs assume, so Levlofit uses Indian cut-offs and your waist.",
+   "text": "BMI is a quick screening number: your weight in kg divided by your height in metres, squared. Levlofit uses the WHO adult bands, the same as most BMI calculators.",
    "sources": [],
    "unknownSources": [],
    "chapterSources": [
-    "misra2009",
-    "nice2022"
+    "whobmi2000",
+    "who2004asia"
    ],
-   "evidence": "unsourced",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "body-measures:b00:text"
@@ -913,16 +913,16 @@
    "chapter": "body-measures",
    "chapterTitle": "Reading your body numbers",
    "blockType": "band",
-   "text": "BMI for Asian Indians. 14 · 18 · Underweight [kg/m²]. 18 · 23 · Normal [kg/m²]. 23 · 25 · Overweight [kg/m²]. 25 · 35 · Obese [kg/m²]",
+   "text": "BMI for adults (WHO). 14 · 18.5 · Underweight [kg/m²]. 18.5 · 25 · Normal [kg/m²]. 25 · 30 · Overweight [kg/m²]. 30 · 40 · Obese [kg/m²]",
    "sources": [
-    "misra2009"
+    "whobmi2000"
    ],
    "unknownSources": [],
    "chapterSources": [
-    "misra2009",
-    "nice2022"
+    "whobmi2000",
+    "who2004asia"
    ],
-   "evidence": "partly_checked",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "body-measures:b01:title",
@@ -936,48 +936,24 @@
    "id": "body-measures:b02",
    "chapter": "body-measures",
    "chapterTitle": "Reading your body numbers",
-   "blockType": "band",
-   "text": "Waist to height ratio. 0.3 · 0.5 · Healthy [ratio]. 0.5 · 0.8 · Above the healthy range: higher risk [ratio]",
+   "blockType": "stats",
+   "text": "23 · kg/m² · BMI from which health risk starts to rise for South Asian adults: aim for the lower half of the normal range",
    "sources": [
-    "nice2022"
+    "who2004asia"
    ],
    "unknownSources": [],
    "chapterSources": [
-    "misra2009",
-    "nice2022"
+    "whobmi2000",
+    "who2004asia"
    ],
-   "evidence": "partly_checked",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
-    "body-measures:b02:title",
-    "body-measures:b02:ranges[0]",
-    "body-measures:b02:ranges[1]"
+    "body-measures:b02:items[0]"
    ]
   },
   {
    "id": "body-measures:b03",
-   "chapter": "body-measures",
-   "chapterTitle": "Reading your body numbers",
-   "blockType": "steps",
-   "text": "Measure your waist. Find the spot · Midway between your lowest rib and the top of your hip bone.. Breathe out · Relax, do not pull the belly in.. Read · Tape level and snug, not tight.. Divide · Waist in cm divided by height in cm.",
-   "sources": [],
-   "unknownSources": [],
-   "chapterSources": [
-    "misra2009",
-    "nice2022"
-   ],
-   "evidence": "editorial",
-   "clinicalReview": true,
-   "claimIds": [
-    "body-measures:b03:title",
-    "body-measures:b03:items[0]",
-    "body-measures:b03:items[1]",
-    "body-measures:b03:items[2]",
-    "body-measures:b03:items[3]"
-   ]
-  },
-  {
-   "id": "body-measures:b04",
    "chapter": "body-measures",
    "chapterTitle": "Reading your body numbers",
    "blockType": "compare",
@@ -985,18 +961,18 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [
-    "misra2009",
-    "nice2022"
+    "whobmi2000",
+    "who2004asia"
    ],
    "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
-    "body-measures:b04:do.title",
-    "body-measures:b04:do.items[0]",
-    "body-measures:b04:do.items[1]",
-    "body-measures:b04:dont.title",
-    "body-measures:b04:dont.items[0]",
-    "body-measures:b04:dont.items[1]"
+    "body-measures:b03:do.title",
+    "body-measures:b03:do.items[0]",
+    "body-measures:b03:do.items[1]",
+    "body-measures:b03:dont.title",
+    "body-measures:b03:dont.items[0]",
+    "body-measures:b03:dont.items[1]"
    ]
   },
   {

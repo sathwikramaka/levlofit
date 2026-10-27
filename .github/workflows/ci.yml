@@ -89,10 +89,10 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Build (writes the route types tsc needs)
+        run: npm run build
       - name: Typecheck
         run: npx --no-install tsc --noEmit --incremental false
-      - name: Build
-        run: npm run build
 
   functions:
     name: Edge Function modules

@@ -58,6 +58,10 @@ const sections: LegalSection[] = [
           <strong>Feedback:</strong> anything you send with Send feedback in the app.
         </p>
         <p>
+          <strong>Error reports:</strong> when the app hits an unexpected error while you are signed in, it sends the error message and where in the app&rsquo;s
+          code it happened, with the app version and phone type, so we can fix it. Email addresses in them are masked. We keep them for up to 90 days.
+        </p>
+        <p>
           <strong>Abuse protection:</strong> a short record of when you send chat messages or rebuild your plan (times only, no content), used to limit how
           often these can be done. Feedback is limited by counting the feedback you have sent. Each chat message also carries a random ID so a resent message is
           not saved twice.
@@ -119,7 +123,10 @@ const sections: LegalSection[] = [
           <li>
             <strong>ExerciseDB</strong> (AscendAPI) supplies the exercise animations. When the app loads them, its servers may receive your IP address.
           </li>
-          <li>A web hosting provider serves this website. The website&rsquo;s fonts are served with the site itself, not loaded from Google.</li>
+          <li>
+            A web hosting provider serves this website. The website&rsquo;s fonts are served with the site itself, not loaded from Google. The app asks this
+            website once per start whether a newer version exists, so the host may receive your IP address.
+          </li>
         </ul>
         {/* REVIEW GATE: the two paragraphs below (what Levlofit AI sends, and the summary and coach-action paragraph) describe the coach-chat code in this repository. Publish them only after the
             deployed coach-chat function is confirmed to match it and LLM_BASE_URL is confirmed unset or pointing at Groq. */}
@@ -167,7 +174,7 @@ const sections: LegalSection[] = [
           Your account data is kept until you delete your account. When you delete it in the app, our server first deletes your progress photos and profile picture.
           If that fails, your account is not deleted, and you can try again. Once they are gone, your account is deleted, and with it the records linked to it in
           our database: your profile and answers, goals, plans, logs, food diary and recipes, measurements, chats and their summaries, Levlofit AI memory facts and notes,
-          the session changes you were offered or confirmed, reminder settings and feedback.
+          the session changes you were offered or confirmed, reminder settings, feedback and error reports.
           If deleting the account itself fails after the photos are gone, the photos stay deleted, everything else stays, and you can try again. Reminders
           scheduled on your phone are cancelled when you delete your account or sign out.
         </p>
