@@ -196,13 +196,32 @@ final _meals = <(String, String, List<_Slot>, double)>[
   ], 0.4),
 ];
 
-/// Daily food budget as rupee ranges, asked with the diet type (onboarding, protocol, Build my plate). The bands match
-/// [budgetTier]'s custom-range cut-offs. (dietary_profiles.budget_tier, title, what it adds)
+/// Monthly food budget, asked with the diet type (onboarding, protocol, Build my plate) (owner request 2026-10-28:
+/// a month, not a day, plus the person's own amount as 'custom'). The bands are [budgetTier]'s daily cut-offs times
+/// 30. (dietary_profiles.budget_tier, title, what it adds)
 const budgetOptions = [
-  ('low', 'Under Rs 150 a day', 'Dals, grains, eggs, milk and seasonal vegetables and fruit'),
-  ('medium', 'Rs 150 to 300 a day', 'Adds paneer, chicken, fish, apples and oranges'),
-  ('high', 'Over Rs 300 a day', 'Every food in the planner'),
+  ('low', 'Under Rs 4,500 a month', 'Dals, grains, eggs, milk and seasonal vegetables and fruit'),
+  ('medium', 'Rs 4,500 to 9,000 a month', 'Adds paneer, chicken, fish, apples and oranges'),
+  ('high', 'Over Rs 9,000 a month', 'Every food in the planner'),
 ];
+
+/// The database keeps the person's own budget per day (budget_max_inr, 0 to 10,000); people enter it per month.
+int dailyFromMonthly(int monthly) => (monthly / 30).round().clamp(0, 10000);
+int monthlyFromDaily(int daily) => daily * 30;
+
+/// "Rs 6,000 a month", with Indian digit grouping for thousands and lakhs.
+String rupeesAMonth(int monthly) {
+  final s = '$monthly';
+  final last3 = s.length <= 3 ? s : s.substring(s.length - 3);
+  var rest = s.length <= 3 ? '' : s.substring(0, s.length - 3);
+  final groups = <String>[];
+  while (rest.length > 2) {
+    groups.insert(0, rest.substring(rest.length - 2));
+    rest = rest.substring(0, rest.length - 2);
+  }
+  if (rest.isNotEmpty) groups.insert(0, rest);
+  return 'Rs ${[...groups, last3].join(',')} a month';
+}
 
 /// Regional cuisine for the meal plan (dietary_profiles.cuisine_region, title, typical dishes).
 const regionOptions = [

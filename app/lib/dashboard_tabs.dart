@@ -1327,7 +1327,7 @@ class _ProtocolScreen extends StatefulWidget {
 class _ProtocolScreenState extends State<_ProtocolScreen> {
   Map<String, dynamic>? _p; // profile fields being edited
   Map<String, dynamic>? _d; // diet fields being edited
-  final _min = TextEditingController(), _max = TextEditingController(), _water = TextEditingController();
+  final _max = TextEditingController(), _water = TextEditingController();
   bool _saving = false;
   String? _error;
 
@@ -1341,7 +1341,6 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
 
   @override
   void dispose() {
-    _min.dispose();
     _max.dispose();
     _water.dispose();
     super.dispose();
@@ -1357,8 +1356,8 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
       setState(() {
         _p = Map.of(p as Map<String, dynamic>);
         _d = Map.of(d as Map<String, dynamic>);
-        _min.text = '${_d!['budget_min_inr'] ?? ''}';
-        _max.text = '${_d!['budget_max_inr'] ?? ''}';
+        final daily = _d!['budget_max_inr'] as int?;
+        _max.text = daily == null ? '' : '${monthlyFromDaily(daily)}';
         _water.text = '${_p!['water_target_ml'] ?? waterTarget(widget.data.profile)}';
       });
     } catch (_) {
@@ -1370,10 +1369,10 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
     final p = _p!, d = _d!;
     int? num(TextEditingController c) => int.tryParse(c.text.trim());
     if (d['budget_tier'] == 'custom') {
-      final lo = num(_min), hi = num(_max);
-      if (hi == null || (lo != null && lo > hi)) return setState(() => _error = 'Enter a daily budget range in rupees, lowest first.');
-      d['budget_min_inr'] = lo;
-      d['budget_max_inr'] = hi;
+      final monthly = num(_max);
+      if (monthly == null || monthly < 900) return setState(() => _error = 'Enter your food budget for a month in rupees (at least 900).');
+      d['budget_min_inr'] = null;
+      d['budget_max_inr'] = dailyFromMonthly(monthly);
     } else {
       d['budget_min_inr'] = null;
       d['budget_max_inr'] = null;
@@ -1466,8 +1465,8 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
         Text('FOOD', style: monoLabel(context)),
         const SizedBox(height: 10),
         _chips<String>('Diet', null, d['diet_type'] as String?, const [('vegan', 'Vegan'), ('vegetarian', 'Vegetarian'), ('eggitarian', 'Eggitarian'), ('non_vegetarian', 'Non-veg')], (v) => d['diet_type'] = v),
-        _chips<String>('Food budget', 'What you can spend on food a day. The lowest band keeps to dals, grains, eggs, milk and seasonal produce; the middle adds paneer, chicken and fish.',
-            d['budget_tier'] as String?, [for (final (k, title, _) in budgetOptions) (k, title), ('custom', 'My own range')], (v) => d['budget_tier'] = v),
+        _chips<String>('Food budget', 'What you can spend on food in a month. The lowest band keeps to dals, grains, eggs, milk and seasonal produce; the middle adds paneer, chicken and fish.',
+            d['budget_tier'] as String?, [for (final (k, title, _) in budgetOptions) (k, title), ('custom', 'My own amount')], (v) => d['budget_tier'] = v),
         AnimatedSize(
           duration: motion(context, 240),
           curve: spring,
@@ -1475,25 +1474,12 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
               ? const SizedBox(width: double.infinity)
               : Padding(
                   padding: const EdgeInsets.only(bottom: 18),
-                  child: Row(children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _min,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: const InputDecoration(labelText: 'From, a day', prefixText: 'Rs '),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: _max,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: const InputDecoration(labelText: 'To, a day', prefixText: 'Rs '),
-                      ),
-                    ),
-                  ]),
+                  child: TextField(
+                    controller: _max,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(labelText: 'Food budget for a month', prefixText: 'Rs ', suffixText: 'a month'),
+                  ),
                 ),
         ),
         _chips<String>('Pace', 'How fast a cut or a bulk moves. Easy is gentler and easier to keep up; hard asks more and is harder to sustain. '

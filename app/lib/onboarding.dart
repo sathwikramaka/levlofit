@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'account.dart';
-import 'diet_plan.dart' show budgetOptions, regionOptions;
+import 'diet_plan.dart' show budgetOptions, dailyFromMonthly, regionOptions;
 import 'icons.dart';
 import 'main.dart';
 import 'mark.dart';
@@ -146,6 +146,7 @@ class _OnboardingState extends State<Onboarding> {
   bool _noRestrictions = false;
   String? _diet, _sex, _weightGoal, _gear, _budget;
   String _region = 'any';
+  final _monthly = TextEditingController(); // own monthly food budget, when _budget is 'custom'
   bool _busy = false;
   String? _error;
 
@@ -191,7 +192,7 @@ class _OnboardingState extends State<Onboarding> {
     _Step.extras => true, // optional
     _Step.experience => _goals.every(_level.containsKey),
     _Step.restrictions => _noRestrictions || _avoid.isNotEmpty || _other.isNotEmpty,
-    _Step.diet => _diet != null && _budget != null && (_noSupp || _supp.isNotEmpty),
+    _Step.diet => _diet != null && _budget != null && (_budget != 'custom' || (int.tryParse(_monthly.text) ?? 0) >= 900) && (_noSupp || _supp.isNotEmpty),
     _Step.body => _sex != null && _bodyType != null,
     _Step.phase => _weightGoal != null,
     _Step.schedule => _days != null && _minutes != null && _activityLevel != null,
@@ -346,6 +347,7 @@ class _OnboardingState extends State<Onboarding> {
       'user_id': uid,
       'diet_type': _diet,
       'budget_tier': _budget,
+      'budget_max_inr': _budget == 'custom' ? dailyFromMonthly(int.parse(_monthly.text)) : null,
       'cuisine_region': _region,
       'restrictions': _avoid.toList(),
       'other_restrictions': _other,
@@ -648,8 +650,18 @@ class _OnboardingState extends State<Onboarding> {
           ],
           const SizedBox(height: 16),
           const FieldLabel('Food budget'),
-          for (final (k, title, sub) in budgetOptions) ...[
+          for (final (k, title, sub) in [...budgetOptions, ('custom', 'My own amount', 'Enter what you spend on food in a month')]) ...[
             ChoiceTile(title: title, subtitle: sub, selected: _budget == k, onTap: () => setState(() => _budget = k)),
+            gap,
+          ],
+          if (_budget == 'custom') ...[
+            TextField(
+              controller: _monthly,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(labelText: 'Food budget for a month', prefixText: 'Rs ', suffixText: 'a month', helperText: 'At least Rs 900'),
+            ),
             gap,
           ],
           const SizedBox(height: 16),

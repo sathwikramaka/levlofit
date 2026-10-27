@@ -152,4 +152,15 @@ void main() {
     expect(identical(addShake(food, 0, kcal: kcal, protein: protein, plant: false), food), isTrue);
     expect(servingLabel(addShake(food, 1, kcal: kcal, protein: protein, plant: true).meals[2].items.first), '1 scoop plant protein in water');
   });
+
+  test('monthly food budget: stored per day, shown per month with Indian grouping, same tiers', () {
+    expect(dailyFromMonthly(6000), 200);
+    expect(monthlyFromDaily(200), 6000);
+    expect(rupeesAMonth(6000), 'Rs 6,000 a month');
+    expect(rupeesAMonth(150000), 'Rs 1,50,000 a month');
+    expect(rupeesAMonth(900), 'Rs 900 a month');
+    expect(budgetTier('custom', dailyFromMonthly(4000)), 1);
+    expect(budgetTier('custom', dailyFromMonthly(6000)), 2);
+    expect(budgetTier('custom', dailyFromMonthly(12000)), 3);
+  });
 }
