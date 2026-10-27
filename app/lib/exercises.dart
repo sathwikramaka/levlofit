@@ -860,7 +860,16 @@ class MuscleExercisesScreen extends StatefulWidget {
 class _MuscleExercisesScreenState extends State<MuscleExercisesScreen> {
   late final Future<List<_Json>> _catalogue = !exerciseDbContent
       ? Future.value(const <_Json>[])
-      : (widget.loadCatalogue ?? _load)(muscleMatch[widget.muscle]?.catalogue ?? const []);
+      : (widget.loadCatalogue ?? _load)(muscleMatch[widget.muscle]?.catalogue ?? const [])
+          .then((rows) => rows.where((r) => _forThisMuscle(widget.muscle, r['name'] as String? ?? '')).toList());
+
+  // The catalogue tags both front and rear shoulder moves "deltoids": split them by name.
+  static final _rear = RegExp(r'rear|reverse fly|face pull', caseSensitive: false);
+  static bool _forThisMuscle(String muscle, String name) => switch (muscle) {
+        'Rear shoulders' => _rear.hasMatch(name),
+        'Front shoulders' => !_rear.hasMatch(name),
+        _ => true,
+      };
 
   static Future<List<_Json>> _load(List<String> names) async => names.isEmpty
       ? const <_Json>[]
@@ -886,12 +895,12 @@ class _MuscleExercisesScreenState extends State<MuscleExercisesScreen> {
             Text('LEVLOFIT MOVES', style: monoLabel(context)),
             const SizedBox(height: 8),
             if (moves.isEmpty) Text('No Levlofit move trains this muscle yet.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
-            for (final (id, m, main) in moves)
+            for (final (id, m) in moves)
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: SizedBox.square(dimension: 56, child: ExerciseGif(null, id: id)),
                 title: Text(m.name),
-                subtitle: Text('${main ? 'Main mover' : 'Also works it'}  ·  ${difficultyOf(id)}  ·  ${equipmentKind(m)}'),
+                subtitle: Text('${difficultyOf(id)}  ·  ${equipmentKind(m)}'),
                 trailing: const Icon(LvIcons.caretRight, size: 16),
                 onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ExerciseScreen(id: id))),
               ),

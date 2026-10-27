@@ -14,7 +14,7 @@ typedef _Profile = ({String label, double kcal, double protein, int tier, Set<St
 const _veg = {'beef', 'egg', 'fish', 'meat', 'pork', 'poultry', 'shellfish'};
 const _profiles = <_Profile>[
   (label: 'M25', kcal: 2300.0, protein: 112.0, tier: 2, excluded: {'beef', 'pork'}, passing: 7),
-  (label: 'F30', kcal: 1450.0, protein: 110.0, tier: 1, excluded: _veg, passing: 0),
+  (label: 'F30', kcal: 1450.0, protein: 110.0, tier: 1, excluded: _veg, passing: 7), // 0 before the breakfast dishes (2026-10-28)
   (label: 'M35', kcal: 2040.0, protein: 170.0, tier: 1, excluded: {'beef', 'dairy', 'egg', 'fish', 'honey', 'meat', 'pork', 'poultry', 'shellfish'}, passing: 0),
   (label: 'M20', kcal: 2540.0, protein: 104.0, tier: 3, excluded: {'beef', 'fish', 'meat', 'pork', 'poultry', 'shellfish'}, passing: 7),
   (label: 'F45', kcal: 1760.0, protein: 140.0, tier: 2, excluded: {'beef', 'dairy', 'fish', 'meat', 'pork', 'poultry', 'shellfish'}, passing: 7),
