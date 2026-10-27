@@ -217,3 +217,12 @@ thinking on, a 200-token test reply came back empty.
 Reading: both are usable for offline development and smoke tests at zero cost, not as the production coach. Food
 safety held only because the deterministic check adds the warning footer; the model alone failed 2 of 5. One run, so
 consistency is not measured. Replies were not read by a person.
+
+## 2026-10-24: what the newer coach features add to provider use (no provider chosen, no key, nothing sent)
+- Chat summaries (batch 2W): one extra call, at most 8 s, only when a chat passes 12 uncovered messages (about one in
+  five turns of a long chat; retried every third turn after a failure). It receives only that chat's previous summary
+  and older messages, never the profile or plan block. No fallback provider and no retries for this call.
+- Coach actions (3a-3d): no extra calls; the swap options, free days and diary food names ride in the normal request
+  only on matching questions, and every proposal is checked by the server.
+- The live evaluation (`_eval/run.ts --live`) now also covers swap, lighter, move, meal and two paraphrase cases (80
+  strict checks offline). Running it still needs the owner's key and data-terms approval (`LLM_DATA_APPROVED`).

@@ -26,6 +26,7 @@ step() {  # step <label> <summary-grep> <command...>
 F=supabase/functions
 handbook() {
   step "handbook: register tests" '^(Ran|OK)' python -I data/evidence/test_extract_claims.py
+  step "food data: FDC builder tests" '^(Ran|OK)' python -I data/fdc/test_build_foods_fdc.py
   step "handbook: freshness --check" 'reviewed' python -I data/evidence/extract_claims.py --check
   # Builder output must equal the working-tree migration (the builder rewrites it; a difference means it was stale).
   step "handbook: migration matches builder" 'identical' bash -c 'M=supabase/migrations/20261007400000_handbook_v3.sql; B=$(mktemp); cp "$M" "$B";
@@ -36,7 +37,7 @@ handbook4() {  # Handbook v4 book draft (data/handbook_v4): builds the draft onl
 }
 functions() {
   step "functions: node tests" '^# pass' node --test $F/_shared/plan-engine.test.ts $F/_shared/llm.test.ts $F/_shared/handbook.test.ts \
-    $F/coach-chat/coach-chat.test.ts $F/delete-account/delete-account.test.ts $F/generate-plan/generate-plan.test.ts $F/_eval/eval.test.ts
+    $F/coach-chat/coach-chat.test.ts $F/delete-account/delete-account.test.ts $F/generate-plan/generate-plan.test.ts $F/_eval/eval.test.ts tools/release_docs.test.mjs
   step "functions: offline eval" '^strict:' node $F/_eval/run.ts
   step "functions: strict tsc" '.' bash -c "website/node_modules/.bin/tsc --noEmit --strict --target es2022 --module esnext --moduleResolution bundler \
     --allowImportingTsExtensions --resolveJsonModule --lib es2022,dom --types node --typeRoots website/node_modules/@types \
@@ -44,7 +45,7 @@ functions() {
 }
 deno_() {
   step "deno: check" 'Check' bash -c "cd $F && '$DENO' check --lock=_test/deno.lock --frozen coach-chat/index.ts generate-plan/index.ts delete-account/index.ts"
-  step "deno: lint" 'Checked' bash -c "cd $F && '$DENO' lint coach-chat/index.ts generate-plan/index.ts delete-account/index.ts _shared/coach-context.ts _shared/llm.ts _shared/handbook.ts _shared/rate.ts _shared/plan-engine.ts _test/deno-smoke.ts"
+  step "deno: lint" 'Checked' bash -c "cd $F && '$DENO' lint coach-chat/index.ts generate-plan/index.ts delete-account/index.ts _shared/coach-context.ts _shared/llm.ts _shared/handbook.ts _shared/rate.ts _shared/plan-engine.ts _shared/swap.ts _shared/meal.ts _test/deno-smoke.ts"
   step "deno: smoke (127.0.0.1 only)" 'passed' bash -c "cd $F && '$DENO' run --lock=_test/deno.lock --frozen --allow-env --allow-read --allow-net=127.0.0.1 _test/deno-smoke.ts"
 }
 db() { step "db: supabase test db (LOCAL)" 'Result|Tests=' supabase test db; }

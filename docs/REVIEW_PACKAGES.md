@@ -50,3 +50,46 @@ Claude does not mark any item approved.
 
 - See docs/LICENSING_REQUIREMENTS.md: NIN (IFCT values), INDB, USDA FoodData Central (licence not verified),
   ExerciseDB media (non-commercial), wger per entry, MuscleWiki (paid). Requests are the owner's to send.
+
+## 6. Additions since 2026-10-16 (prepared 2026-10-24; nothing here is reviewed or approved)
+
+Exact current wording is in `data/build_handbook.py` (Handbook) and `supabase/functions/coach-chat/index.ts` (coach
+RULES); each changed Handbook claim is `needs_clinical_review` in `data/evidence/claims_register.csv`.
+
+**Clinician**
+1. Caffeine (supplements chapter, owner decision D1): table "About 3 mg per kg (about 200 mg at most at once)"; bars
+   "Example dose (3 mg/kg) 210 mg" and "EU single-dose safety level about 200 mg; more at once is above it. Avoid
+   caffeine if pregnant, sensitive or on medication". Evidence: ISSN 2021 (3-6 mg/kg for performance), EFSA topic page
+   (single doses up to 200 mg). Confirm the cap, and whether the avoid line needs its own source.
+2. Waist-to-height (body-measures chapter and app, D2): bands "Healthy" under 0.5, "Above the healthy range: higher
+   risk" from 0.5 (the 0.6 edge was removed: no readable source; Misra 2025 uses over 0.5). Confirm for Indian adults.
+3. Pregnancy "Stop and seek care" (women chapter, D3): "Bleeding, or fluid that keeps leaking"; "Dizziness or faintness
+   that does not settle with rest"; "Chest pain"; "Painful regular contractions"; "Breathlessness that does not settle
+   with rest" (headache removed: not in Mottola 2018). Confirm against Mottola 2018 or ACOG and quote the passage.
+4. Five passages reworded from abstracts only (rest-between-sets b01, b04; one-step-at-a-time b04, b05; hyrox b04).
+   Read the full texts of Grgic 2018 (Sports Med 48:137-151) and Wilson 2012 (JSCR 26:2293-2307) and confirm or correct.
+5. Coach rule for confirmed injury facts: "not a diagnosis; plan around it, never say it is healed or safe to push
+   through; refer pain that persists or worsens; severe pain, swelling, numbness or a joint giving way: stop and get it
+   checked". Lighter-day rule: never offered when the message mentions pain, chest, dizziness, fainting, illness,
+   breathing or injury (they get the stop-and-see-a-doctor rule).
+
+**Coach** (area 3)
+1. Swap rules: a replacement must be on the app's own move list, train the same target muscle, fit the person's
+   equipment, and not be set aside for a reported injury area (session.dart `moveLoads`; with an unmapped injury only
+   moves set aside for nothing). Confirm the set-aside table (unchanged since 2026-10-17, still unreviewed).
+2. Lighter day: one set fewer on every move with more than one set, every set ending with 3 or more reps in reserve.
+3. Moving a session: only to a later free day of the same Monday-to-Sunday week; reminders keep their usual days.
+4. Deload: the engine has no deload rule (owner decision D4: none for now). Advise whether one is needed.
+
+**Dietitian** (area 4)
+1. Meal logging by the coach: items only from foods already in the person's diary that fit their diet exclusions,
+   1 to 2000 g each, one meal, at most 6 items; logged only when the person taps Log it.
+2. Diet-feasibility property test scope (40 seeded profiles: energy 1400-3200 kcal, protein 60-200 g, budget tiers
+   1-3, four diets, peanut/soy/dairy/tree-nut exclusions): confirm these ranges are the ones that matter.
+
+**Lawyer / privacy reviewer** (areas 7, 19)
+1. New privacy text (website /privacy inside the REVIEW GATE, and the in-app policy): the rolling chat summary
+   (stored with the chat; the summary request sees only that chat), today's moves and checked replacements, this
+   week's free days, names of up to 30 foods from the person's own diary, and stored offered or confirmed session
+   changes (deleted with the account; pgTAP-tested).
+2. Coach memory (batch 2U-2V) disclosure on the Memory sheet and injury suggestion card.

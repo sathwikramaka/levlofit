@@ -269,3 +269,30 @@ Area 5/19: provider comparison and recommendation, not chosen. Areas 1/2: eviden
 Area 16 completion criteria now cover Android only: iOS HealthKit deferred by the owner (no Apple device). Area 13:
 plugin fix unit-tested, device timing after the fix unverified. Remaining implementation gaps for local use: none known;
 open items are verification on the device, professional and legal review, licences, and the provider choice.
+
+## Status 2026-10-24 (after commit efc2c02; evidence in PROGRESS.md entries dated 2026-10-22 to 2026-10-24)
+
+| # | Area | Status | Evidence | What is left |
+|---|---|---|---|---|
+| 1 | Handbook audit | Blocked (external) | register check 521/526 reviewed by AI, 0 shipped passages unreviewed (guard test) | Clinician review of clinical items |
+| 2 | Handbook rewrite | Blocked (external) | v3 builder = migration (b3b87df6); v4 draft tests | Clinician sign-off; v4 decisions 1-5 |
+| 3 | Training engine | Implemented, not fully verified | engine tests + 600-plan property test; swap/lighter/move rules tested | Coach review; device pass |
+| 4 | Workout/nutrition rules | Implemented, not fully verified | diet-feasibility property test (40 profiles x 2 days); engine property test | Dietitian and coach review |
+| 5 | AI provider | Blocked (external) | adapter, offline eval 80/0 strict | Key, data terms, live eval |
+| 6 | Grounded retrieval | Complete and verified locally | Handbook tests 22/22, paraphrase eval cases, unreviewed-citation guard | Live answers need area 5; function deploy |
+| 7 | Security, privacy | Implemented, not fully verified | pgTAP 121/121 (RLS, server-only writes, deletion cascade), log-privacy and privacy-text guard tests | Legal review; production backup and reconciliation |
+| 8 | Regression, delivery | Implemented, not fully verified | verify.sh suites pass locally | Git remote and first CI run; device reminder re-test |
+| 9 | BMI | Blocked (external): clinician | tool tests; **phone PASS 2026-10-24**: 175 cm/72 kg = 23.5 Overweight, 60 kg = 19.6 Normal (Asian-Indian cut-offs) | Clinician on cut-offs |
+| 10 | Waist | Blocked (external): clinician | single band from 0.5 (D2); **phone PASS 2026-10-24**: 80/175 = 0.46 no increased risk, 90/175 = 0.51 above the healthy range | Clinician on WHtR for Indian adults |
+| 11 | Custom dashboard | Complete and verified locally and on the phone | Flutter tests; **phone PASS 2026-10-24**: Water tile off hides the card, on restores it, the setting survives an app restart | none of its own |
+| 12 | Exercise library | Implemented and verified on the phone (licensed mode) | Release mode shows Levlofit names, muscles, cues and the Everkinetic drawings (15 moves), no ExerciseDB content. **Phone PASS 2026-10-24** (debug build with LEVLOFIT_EXERCISEDB=false, throwaway): dashboard tiles, library, move pages, session screen. A phone defect (cut-off version names) was fixed and re-verified | Expert review of cues and muscles; drawings for the other 35 moves |
+| 13 | Reminders | Blocked (external) | plugin patch, reminder tests | Alarm-clock mode decision; delivery re-test on device |
+| 14 | Profile and settings | Complete and verified locally | Flutter tests; back gesture passed on device | none of its own |
+| 15 | Daily rewards | Implemented; display verified on the phone | Flutter tests; **phone 2026-10-24**: the card reads "1 of 2 today" on a rest day (the rest counts, water 0 of 2.0 L does not) | Completing a task on the phone (a habit or water write on the throwaway stack) not yet run |
+| 16 | Step counter | Implemented, not fully verified (the "no code" row above is outdated: steps.dart and the Health Connect module exist, device results 2026-10-17) | steps tests; STEP_COUNTER_DEVICE_CHECKLIST.md | Health Connect approval, Play declaration, device re-check |
+| 17 | Exercise content licensing | Implemented, licence-checked locally | ExerciseDB is out of every release path (app, coach-chat, both privacy texts; tests). Everkinetic CC BY-SA 3(a) attribution is on the Licences page (test) | Owner decision on the production `public.exercises` content (plan in LICENSING_REQUIREMENTS.md; set_logs and exercise_swaps cascade from it) |
+| 18 | Food diary | Implemented on licensed data, verification incomplete | USDA FDC (CC0) import of 28 planner foods (migration 20261025200000), licence gate 20261025100000, planner on USDA rows; FDC builder 6/6, diet_fdc_test 7/7, pgTAP 134/134 (disposable stack), Flutter 426/426. One profile (1760 kcal, 140 g protein, lactose-free eggitarian) drops from 7/7 to 0/7 days on target and says so | Library and diary search cover only 29 USDA foods in a release (NIN permission or more mapping); poha, ragi, paneer and rohu have no licensed values; dietitian on targets; production apply of items 13-14 |
+| 19 | AI coach | Implemented, not fully verified | + rule and eval case: ask one clarifying question rather than guessing (eval 83/0 strict); functions 204; coach no longer reads the exercise catalogue | On-screen swap, lighter and move cards (rest day); provider key and live evaluation; privacy review |
+
+Not release-ready: no area depends only on local code any more; every remaining item needs a review, licence, credential,
+device check or production approval.

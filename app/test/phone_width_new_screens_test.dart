@@ -69,7 +69,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('waist-to-height line in Progress', (tester) async {
+  testWidgets('tape list in Progress, no waist-to-height ratio', (tester) async {
     phone(tester);
     String ago(int d) => DateTime.now().subtract(Duration(days: d)).toIso8601String().substring(0, 10);
     await tester.pumpWidget(MaterialApp(
@@ -77,12 +77,13 @@ void main() {
       home: progressBodyForTest(const {'trainingDaysPerWeek': 3, 'weightGoal': 'cut'}, const [], <Map<String, dynamic>>[
         {'measured_on': ago(30), 'waist_cm': 101.5},
         {'measured_on': ago(1), 'waist_cm': 99.0},
-      ], heightCm: 152),
+      ]),
     ));
     await tester.pump(const Duration(seconds: 2));
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
     await tester.pump(const Duration(seconds: 1));
-    expect(find.textContaining('Waist to height 0.65, Above the healthy range: higher risk'), findsOneWidget);
+    expect(find.text('99.0 cm'), findsOneWidget);
+    expect(find.textContaining('Waist to height'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

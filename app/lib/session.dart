@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'exercise_guide.dart';
 import 'exercises.dart';
 import 'icons.dart';
 import 'main.dart';
@@ -484,8 +485,12 @@ typedef Moves = ({List<Map<String, dynamic>> found, List<String> missing});
 Moves resolveMoves(List<String> ids, Map<String, Map<String, dynamic>> rows) =>
     (found: [for (final i in ids) ?rows[i]], missing: [for (final i in ids) if (!rows.containsKey(i)) i]);
 
-/// Loads name and GIF for [ids], keeping their order; cached for the app session.
+/// Loads name and GIF for [ids], keeping their order; cached for the app session. In licensed mode (release builds)
+/// the rows come from Levlofit's own guide, with no catalogue read and no animation.
 Future<Moves> loadMoves(List<String> ids) async {
+  if (!exerciseDbContent) {
+    return resolveMoves(ids, {for (final i in ids) if (moveGuide[i] case final g?) i: {'id': i, 'name': g.name}});
+  }
   final unknown = ids.where((i) => !_cache.containsKey(i)).toList();
   if (unknown.isNotEmpty) {
     final rows = await supabase.from('exercises').select('id, name, gif_url, target_muscles').inFilter('id', unknown);
@@ -503,7 +508,7 @@ String missingMovesText(int n) => n == 1
     ? '1 move could not be loaded, so it is left out of this session.'
     : '$n moves could not be loaded, so they are left out of this session.';
 
-String moveName(Map<String, dynamic> m) => _poseNames[m['id']] ?? (m['name'] as String).split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
+String moveName(Map<String, dynamic> m) => _poseNames[m['id']] ?? moveGuide[m['id']]?.name ?? (m['name'] as String).split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
 
 /// A horizontal strip of animated moves with names and doses. Tapping a move opens its detail.
 class MoveStrip extends StatelessWidget {
@@ -564,7 +569,7 @@ class MoveStrip extends StatelessWidget {
                         height: tile,
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: c.outline)),
-                        child: m == null ? null : ExerciseGif(m['gif_url'] as String),
+                        child: ExerciseGif(m?['gif_url'] as String?, id: m?['id'] as String? ?? (moves == null ? shown[i] : null)),
                       ),
                       const SizedBox(height: 8),
                       Text(m == null ? ' ' : moveName(m), maxLines: 1, overflow: TextOverflow.ellipsis, style: t.labelLarge),
@@ -1178,7 +1183,7 @@ class _MoveCard extends StatelessWidget {
             height: 104,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-            child: ExerciseGif(move['gif_url'] as String),
+            child: ExerciseGif(move['gif_url'] as String?, id: id),
           ),
         ),
         const SizedBox(width: 14),

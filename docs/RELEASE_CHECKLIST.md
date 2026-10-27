@@ -28,7 +28,7 @@ and restore), MIGRATION_RECONCILIATION.md (per-item preflight, verify, rollback)
 
 | # | Step | Who | Approval |
 |---|---|---|---|
-| 2.1 | Rehearse the seven pending items in order on the restored copy, each with its preflight, verify and rollback test | Claude | **Yes** |
+| 2.1 | Rehearse the fourteen pending items (3.1-3.7h) in order on the restored copy, each with its preflight, verify and rollback test | Claude | **Yes** |
 | 2.2 | Choose Option A (re-align history) or B (forward-only, recommended) for the unrecorded handbook_v3 state | Owner | **Yes** (decision) |
 | 2.3 | Remove the drill container and any plaintext | Claude/owner | **Yes** (deletion) |
 
@@ -36,7 +36,7 @@ and restore), MIGRATION_RECONCILIATION.md (per-item preflight, verify, rollback)
 
 Path: **Option B, forward-only**, applying one file at a time with `psql -v ON_ERROR_STOP=1 --single-transaction -f
 <file>` on the session pooler URL (no `supabase link`, no `db push`; Option A in MIGRATION_RECONCILIATION.md needs
-`supabase link` and pushes all seven at once, so it is not used). For every row:
+`supabase link` and pushes every pending file at once, so it is not used). For every row:
 
 - **Before:** the row's preflight (MIGRATION_RECONCILIATION.md) passes; Q7 counts equal the 1.3 values (else take a new
   backup first); `sha256sum` of the file equals the one rehearsed in 2.1 (several files were edited after commit
@@ -46,7 +46,7 @@ Path: **Option B, forward-only**, applying one file at a time with `psql -v ON_E
 
 | # | Item | Preflight (stop if not met) | Verify | Rollback (rehearsed in 2.1; every `drop` uses `if exists`) |
 |---|---|---|---|---|
-| 3.1 | 20261007400000_handbook_v3 | P1, P3, Q5 hash = 432c7c6f; P2 export of the **10 stored columns** (not `select *`: `search` is a generated column) returns 38 rows | handbook hash and 38 rows | `begin; delete from public.handbook_chapters; insert into public.handbook_chapters (<10 columns>) select <10 columns> from jsonb_populate_recordset(null::public.handbook_chapters, '<P2>'); commit;` then Q5 = 432c7c6f |
+| 3.1 | 20261007400000_handbook_v3 | P1, P3, Q5 hash = 432c7c6f; P2 export of the **10 stored columns** (not `select *`: `search` is a generated column) returns 38 rows; the file's expected hash, recomputed read-only with `tools/handbook_fingerprint_sql.py`, is **b3b87df6** (2026-10-24; was af1ea000 at commit 1803009) | handbook hash = b3b87df6 and 38 rows | `begin; delete from public.handbook_chapters; insert into public.handbook_chapters (<10 columns>) select <10 columns> from jsonb_populate_recordset(null::public.handbook_chapters, '<P2>'); commit;` then Q5 = 432c7c6f |
 | 3.2 | 20261013100000_reliability_and_limits (check_rate limits now server-side, Levlofit-4 batch CE) | Q2/Q3/Q4 (record the "own levels" policy text) | objects present; anon cannot execute check_rate; levels <= 3 | drop triggers app_feedback_limit, contact_messages_limit; drop functions limit_app_feedback(), limit_contact_messages(), check_rate(text,int,interval), coach_commit_turn(uuid,text,bigint,uuid,text,text); drop table rate_events; drop index contact_messages_created_at; drop column coach_messages.client_msg_id; drop the 4 new goal_levels policies; re-create "own levels" from the Q4 record. Loses rate events and client ids |
 | 3.3 | 20261014100000_custom_reminders | table absent | table + RLS + limit trigger | drop table custom_reminders; drop function custom_reminders_limit() (loses reminders saved since) |
 | 3.4 | 20261016100000_food_diary (day range check added in CE) | Q3b = 1 (foods.code unique) | table + RLS; anon none | drop table food_log; drop function food_log_limit() (loses diary entries saved since) |
@@ -54,7 +54,13 @@ Path: **Option B, forward-only**, applying one file at a time with `psql -v ON_E
 | 3.6 | 20261016300000_recipes | Q3b = 1; tables and save_recipe absent | tables, function; anon cannot execute save_recipe | drop tables recipe_items, recipes; drop functions save_recipe(text,int,jsonb), recipe_limits() (loses recipes saved since) |
 | 3.7 | 20261016400000_revoke_anon_user_tables | record `pg_class.relacl` and `pg_attribute.attacl` of the six tables (table and column grants) | anon_access query returns '' | restore exactly the recorded ACLs |
 | 3.7b | 20261017100000_revoke_anon_sequences (added 2026-10-17, low finding; run only on a fresh throwaway local DB: all 34 migrations applied, pgTAP 64/64, the assertion fails as expected when anon is re-granted; never run on the dev DB or production) | record `pg_class.relacl` of the 4 public sequences and `pg_default_acl` for schema public | pgTAP anon_access test 4: anon holds nothing on public sequences | restore the recorded ACLs (`grant usage, select, update on sequence ... to anon`) and the default ACL |
-| 3.8 | All eight done | | tools/schema_state.sql (12 kinds) equals the **2.1 rehearsal copy after all eight** (production-only objects from Q8 excepted). Expected movement: fngrant 0 -> 2 after 3.2 -> 3 after 3.6; after 3.7b the anon seqgrant rows (4 sequences x SELECT, USAGE, UPDATE) disappear and defacl changes (fresh local DB: seqgrant 12 12aaba92b25e, defacl 6 35ea73e534f5); authenticated seqgrant rows keep the backup values | |
+| 3.7c | 20261023100000_coach_facts (batch 2U; copies existing coach_notes lines as unconfirmed suggestions) | table absent; record `select count(*) from coach_notes` and its non-empty lines | table + RLS + trigger; migrated rows = recorded note lines, all `suggested`; coach_notes unchanged | drop table coach_facts; drop function coach_facts_stamp() (coach_notes was never changed) |
+| 3.7d | 20261023200000_thread_summaries (batch 2W) | columns absent | 2 columns + checks; authenticated may update only summary, summary_upto, title, updated_at | `alter table coach_threads drop column summary, drop column summary_upto` |
+| 3.7e | 20261024100000_exercise_swaps (batch 3a) | table absent; `public.exercises` present | table + RLS; authenticated has select and delete only | drop table exercise_swaps (loses swaps saved since) |
+| 3.7f | 20261024200000_session_changes (batches 3b, 3c) | table absent | table + RLS; authenticated has select and delete only | drop table session_changes (loses lighter days and moves saved since) |
+| 3.7g | 20261025100000_food_sources (food licence gate, 2026-10-24) | `select to_regclass('public.food_sources') is null` = t; record `select count(*) from foods` (543 expected) and `select policyname from pg_policies where tablename='foods'` (= "foods are public") | food_sources has 3 rows (ifct2017 false; usda_fdc and levlofit_recipe true); every food has a source; as authenticated, `select count(*) from foods where source='ifct2017'` = 0; policy "foods from allowed sources" | `drop policy "foods from allowed sources" on foods; create policy "foods are public" on foods for select to anon, authenticated using (true); alter table foods drop column source, drop column source_ref; drop table food_sources;` (no data lost) |
+| 3.7h | 20261025200000_foods_usda_fdc (USDA planner foods, 2026-10-24) | `select count(*) from foods where code like 'FDC%'` = 0; record X001's row | 28 FDC rows with source usda_fdc; X001 carb_g = 16.42; as authenticated (IFCT hidden) 29 usda_fdc rows visible | `delete from foods where code like 'FDC%' and source = 'usda_fdc'` (only if no food_log or recipe_items row references them: check first) and restore X001's recorded row; `alter table foods drop column source_note` |
+| 3.8 | All fourteen done (2026-10-24: 3.7c-3.7h added; each was tested only with pgTAP on a throwaway local stack, 121/121; rehearse them in 2.1 like the rest) | | tools/schema_state.sql (12 kinds) equals the **2.1 rehearsal copy after all eight** (production-only objects from Q8 excepted). Expected movement: fngrant 0 -> 2 after 3.2 -> 3 after 3.6; after 3.7b the anon seqgrant rows (4 sequences x SELECT, USAGE, UPDATE) disappear and defacl changes (fresh local DB: seqgrant 12 12aaba92b25e, defacl 6 35ea73e534f5); authenticated seqgrant rows keep the backup values | |
 | 3.9 | Record deployed function versions (A4) and secret names (A5); deploy coach-chat, generate-plan, delete-account. Set `LLM_DATA_APPROVED=<provider>` first (batch 2E; `<provider>@<host>` when LLM_BASE_URL or LLM_FALLBACK_BASE_URL points away from the preset host, batch 2H): without it coach-chat answers 503 | | versions changed; LLM_* secret names present, incl. LLM_DATA_APPROVED | redeploy the recorded previous versions |
 
 Q8 and W4 must sort inside `string_agg` by name (`order by event_object_table, trigger_name` / `order by tablename,
@@ -64,7 +70,8 @@ re-run fails at its first statement, so always apply with `--single-transaction`
 ## 4. Production smoke test (test account only; **Yes** approval)
 
 Sign up / sign in; onboarding and plan build; plan rebuild; coach chat send and resend (same message ID saved once);
-feedback (rate limit); food diary add/edit and recipe save/log; custom reminder; profile photo upload; signed-out REST
+feedback (rate limit); coach Memory (suggest, confirm, edit, delete); a long chat gets a summary; coach actions swap, lighter
+day, move and log meal are proposed, confirmed and applied (and Not now leaves nothing); food diary add/edit and recipe save/log; custom reminder; profile photo upload; signed-out REST
 requests to per-user tables return nothing; delete account removes photos then the account. Remove the test account's
 data by id afterwards.
 
@@ -72,7 +79,7 @@ data by id afterwards.
 
 | # | Step | Who | Approval |
 |---|---|---|---|
-| 5.1 | Release keystore + key.properties (outside git); `flutter build appbundle --release --dart-define=LEVLOFIT_BACKEND=production` (without the define the build has no backend, batch 2E; steps in RELEASE_SETUP.md); `apksigner verify --print-certs` is not the debug certificate. Locally verified 2026-10-16: without a keystore the build stops with the intended message; a debug-signed local release builds (not debuggable, allowBackup false, minSdk 24, targetSdk 36) | Owner | Owner's credential |
+| 5.1 | Release keystore + key.properties (outside git); `flutter build appbundle --release --dart-define=LEVLOFIT_BACKEND=production` (without the define the build has no backend, batch 2E; steps in RELEASE_SETUP.md); `apksigner verify --print-certs` is not the debug certificate. Locally verified 2026-10-16: without a keystore the build stops with the intended message; a debug-signed local release builds (not debuggable, allowBackup false, minSdk 24, targetSdk 36). Re-verified 2026-10-24 (efc2c02 + working tree): no-keystore guard stops `flutter build appbundle --release`; `LEVLOFIT_DEBUG_SIGNED_RELEASE=true flutter build apk --release --dart-define=LEVLOFIT_BACKEND=production` builds 63.1 MB, not debuggable, minSdk 24, targetSdk 36, allowBackup false, no Health Connect permission, backend host = the cloud project, signer "CN=Android Debug" (local check only: never install against production or upload) | Owner | Owner's credential |
 | 5.2 | Device pass on the signed build: reminder delivery, permission revoke, reboot, BMI, dashboard customise, daily goal, coach chat, session screen | Owner + Claude | **Yes** (phone) |
 | 5.3 | Choose website host; deploy; `curl -I` headers/CSP on the real URL; /privacy, /terms, /delete-account live | Owner | **Yes** |
 | 5.4 | Git remote, reviewed commits, CI green (5 jobs) | Owner/Claude | **Yes** (commit, push) |
@@ -82,7 +89,7 @@ data by id afterwards.
 
 | Blocker | Needed from | Blocks |
 |---|---|---|
-| Clinical review: handbook (444 items, 150 clinical), BMI and WHtR cut-offs, micronutrient targets, referral wording | Qualified clinician | Areas 1, 2, 9, 10, 18; any health claim |
+| Clinical review: handbook (444 items, 150 clinical), BMI and WHtR cut-offs, micronutrient targets, referral wording; 2026-10-24 owner decisions (caffeine example, single WHtR band from 0.5, pregnancy stop list) and five passages reworded from abstracts (REVIEW_PACKAGES.md section 6) | Qualified clinician | Areas 1, 2, 9, 10, 18; any health claim |
 | Coach review of the session-estimate assumptions; dietitian review of nutrition rules | Coach, dietitian | Areas 3, 4 |
 | Legal/privacy review: privacy text (REVIEW GATE markers), retention periods, /delete-account page, data-safety draft | Lawyer / privacy reviewer | Areas 7, 19; publication; Play |
 | Licences: IFCT values incl. micronutrients (NIN), INDB, wger per-entry, **ExerciseDB media (non-commercial)**, MuscleWiki (paid) | Licensors / owner | Areas 12, 17, 18; commercial release |

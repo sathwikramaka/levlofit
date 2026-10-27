@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'dashboard.dart' show showPrivacyPolicy;
 import 'icons.dart';
 import 'main.dart';
 import 'mark.dart';
@@ -81,7 +82,9 @@ class _AuthScreenState extends State<AuthScreen> {
   String? _error;
   String? _notice;
   OtpType? _awaiting; // signup or recovery: showing the "enter the code" view
-  bool _googleEnabled = false; // shown only once Supabase confirms the provider is on
+  // Production builds show Google at once (the provider is on there); the settings check below hides it only when
+  // the server says it is off, so a slow or failed check never hides it.
+  bool _googleEnabled = backendChoice == 'production';
 
   @override
   void initState() {
@@ -92,15 +95,15 @@ class _AuthScreenState extends State<AuthScreen> {
     if (kIsWeb && failure != null) _error = 'Sign-in did not finish: $failure. Try again or use email.';
   }
 
-  // Public auth settings endpoint: {"external": {"google": true, ...}}. Hides the button
+  // Public auth settings endpoint: {"external": {"google": true, ...}}. Hides the button when the provider is off
   // instead of sending people to a raw "provider is not enabled" error page.
   Future<void> _checkGoogle() async {
     try {
       final res = await http.get(Uri.parse('$supabaseUrl/auth/v1/settings'), headers: {'apikey': supabaseKey});
       final on = (jsonDecode(res.body) as Map<String, dynamic>)['external']?['google'] == true;
-      if (mounted && on) setState(() => _googleEnabled = true);
+      if (mounted && on != _googleEnabled) setState(() => _googleEnabled = on);
     } catch (_) {
-      // Offline or blocked: email sign-in still works, Google stays hidden.
+      // Offline or blocked: keep the build's default.
     }
   }
 
@@ -335,6 +338,11 @@ class _AuthScreenState extends State<AuthScreen> {
                       _error = null;
                     }),
               child: Text(_signUp ? 'I already have an account' : 'New to Levlofit? Create an account'),
+            ),
+            // DPDP Act notice before consent: the policy is readable before an account exists.
+            TextButton(
+              onPressed: () => showPrivacyPolicy(context),
+              child: Text(_signUp ? 'By creating an account you agree to the privacy policy' : 'Privacy policy', textAlign: TextAlign.center),
             ),
           ]),
         ),

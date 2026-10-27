@@ -112,7 +112,7 @@ const sections: LegalSection[] = [
             <strong>Google Fonts</strong> supplies the fonts the app uses. When the app downloads them, Google&rsquo;s servers may receive your IP address.
           </li>
           <li>
-            <strong>ExerciseDB</strong> hosts the exercise animations in the app. When the app loads one, ExerciseDB&rsquo;s servers may receive your IP address.
+            <strong>ExerciseDB</strong> (AscendAPI) supplies the exercise animations. When the app loads them, its servers may receive your IP address.
           </li>
           <li>A web hosting provider serves this website. The website&rsquo;s fonts are served with the site itself, not loaded from Google.</li>
         </ul>
@@ -216,7 +216,7 @@ export default function Privacy() {
       eyebrow="Privacy"
       title="Privacy policy"
       intro="What Levlofit collects, why, who processes it, and how you delete it. Written to be read, not skimmed past."
-      updated="16 October 2026"
+      updated="27 October 2026"
       sections={sections}
     />
   );

@@ -4,6 +4,7 @@
 // identity details and the stored engine input never leave the server. Diet and allergies go only with food talk.
 // Exception by the person's choice: facts they confirmed in the app (coach_facts). Confirmed injury facts are sent only
 // when the question is about training, movement or pain (isInjuryRelevant), at most INJURY_FACTS_IN_CONTEXT of them.
+import { MOVES } from './swap.ts';
 
 export const HISTORY_LIMIT = 12; // recent messages of this chat sent back to the model
 export const SUMMARY_MAX = 800; // characters of the rolling chat summary (coach_threads.summary)
@@ -99,7 +100,7 @@ export function isLiftTalk(question: string, recentUserMessages: string[] = []):
 }
 
 /**
- * Per move, from set_logs rows ({ user_id, exercise_id, performed_on, reps, kg, exercises: { name } }): how many days
+ * Per move, from set_logs rows ({ user_id, exercise_id, performed_on, reps, kg }), named by Levlofit's own labels: how many days
  * it was trained, the last day and the best set (heaviest, then most reps). Rows of any other user are dropped even
  * though row level security already filters them. At most 12 moves, most recent first.
  */
@@ -110,8 +111,7 @@ export function summariseLifts(rows: Json[], uid: string): LiftSummary[] {
     const id = String(r.exercise_id), day = String(r.performed_on), reps = Number(r.reps);
     const kg = r.kg === null || r.kg === undefined ? null : Number(r.kg);
     if (!Number.isInteger(reps) || reps < 1) continue;
-    const name = ((r.exercises as Json | null)?.name as string | undefined)?.trim();
-    const m = by.get(id) ?? { move: name || `move ${id}`, days: new Set<string>(), last: day, best: { kg, reps } };
+    const m = by.get(id) ?? { move: MOVES[id]?.label ?? `move ${id}`, days: new Set<string>(), last: day, best: { kg, reps } };
     m.days.add(day);
     if (day > m.last) m.last = day;
     const better = (kg ?? 0) > (m.best.kg ?? 0) || ((kg ?? 0) === (m.best.kg ?? 0) && reps > m.best.reps);

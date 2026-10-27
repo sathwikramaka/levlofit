@@ -4,7 +4,7 @@ begin;
 select plan(5);
 
 select is((select calcium_mg from public.foods where code = 'A013'), 10.93::numeric, 'brown rice calcium per 100 g as in IFCT 2017');
-select is((select count(*) from public.foods where folate_ug = 0 or vitamin_c_mg = 0 or iron_mg = 0)::int, 0, 'no stored zeros: a source 0 is null');
+select is((select count(*) from public.foods where source = 'ifct2017' and (folate_ug = 0 or vitamin_c_mg = 0 or iron_mg = 0))::int, 0, 'no stored IFCT zeros: an IFCT 0 means no value and is null (a USDA 0 is a measured value and stays)');
 select throws_ok($$update public.foods set iron_mg = -1 where code = 'A013'$$, '23514', null, 'negative values rejected');
 
 set local role authenticated;

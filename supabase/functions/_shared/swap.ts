@@ -2,65 +2,70 @@
 // proposal and every confirmation must pass. Pure functions, no I/O: coach-chat reads the rows and node tests
 // exercise these directly.
 // A swap stays inside the moves the app's sessions already use (MOVES, mirrored from app/lib/session.dart
-// moveLoads; a test keeps the two in step), so every replacement has a working animation and a known joint load.
+// moveLoads; a test keeps the two in step), so every replacement has a known joint load. Each move's main target and
+// kit are Levlofit's own (2026-10-24), so the checks never read the ExerciseDB catalogue, whose terms are
+// non-commercial only. Stretches and yoga poses share the target 'stretch': they only ever replace each other.
 
 type Json = Record<string, unknown>;
 export type Area = 'knee' | 'ankle' | 'wrist' | 'shoulder' | 'lowerBack';
 
 const K: Area = 'knee', A: Area = 'ankle', W: Area = 'wrist', S: Area = 'shoulder', B: Area = 'lowerBack';
 
-/** Every move the app's sessions prescribe: label and the areas whose injury sets it aside (session.dart moveLoads). */
-export const MOVES: Record<string, { label: string; setAside: Area[] }> = {
-  'LIlE5Tn': { label: 'Jump squat', setAside: [K, A] },
-  'dK9394r': { label: 'Burpee', setAside: [K, A, W] },
-  'RJgzwny': { label: 'Mountain climber', setAside: [W] },
-  'I4hDWkc': { label: 'Push-up', setAside: [W] },
-  'B1EVP9F': { label: 'Incline push-up', setAside: [] },
-  'znQUdHY': { label: 'Shoulder press', setAside: [S] },
-  'A6wtbuL': { label: 'Overhead press', setAside: [S] },
-  '9WTm7dq': { label: 'Dip', setAside: [S] },
-  'lBDjFxJ': { label: 'Pull-up', setAside: [S] },
-  'ila4NZS': { label: 'Deadlift', setAside: [B] },
-  'wQ2c4XD': { label: 'Romanian deadlift', setAside: [B] },
-  'rR0LJzx': { label: 'Dumbbell Romanian deadlift', setAside: [B] },
-  'UHJlbu3': { label: 'Kettlebell swing', setAside: [B] },
-  'qXTaZnJ': { label: 'Squat', setAside: [] },
-  'yn8yg1r': { label: 'Goblet squat', setAside: [] },
-  'QChZi3x': { label: 'Squat', setAside: [] },
-  'RRWFUcw': { label: 'Lunge', setAside: [] },
-  'IZVHb27': { label: 'Lunge', setAside: [] },
-  '9E25EOx': { label: 'Split squat', setAside: [] },
-  'aXtJhlg': { label: 'Step-up', setAside: [] },
-  'oLrKqDH': { label: 'Run', setAside: [] },
-  'bJYHBIN': { label: 'Calf raise', setAside: [] },
-  'qPEzJjA': { label: 'Loaded carry', setAside: [] },
-  'EIeI8Vf': { label: 'Bench press', setAside: [] },
-  'SpYC0Kp': { label: 'Dumbbell bench press', setAside: [] },
-  'RVwzP10': { label: 'Pulldown', setAside: [] },
-  '9RT8oQW': { label: 'Bench dip on the floor', setAside: [S, W] },
-  'ealLwvX': { label: 'High knees', setAside: [] },
-  'wd4ds3s': { label: 'Standing row', setAside: [] },
-  'I3tsCnC': { label: 'Hanging leg raise', setAside: [S] },
-  'bZGHsAZ': { label: 'Inverted row', setAside: [] },
-  'BJ0Hz5L': { label: 'Dumbbell row', setAside: [] },
-  'RKjH6Lt': { label: 'Side bridge', setAside: [] },
-  '01qpYSe': { label: 'Upward-facing dog', setAside: [] },
-  'DIVyqrU': { label: 'Sphinx pose', setAside: [] },
-  '2Dk4xQV': { label: 'Rocking frog stretch', setAside: [] },
-  'DFGXwZr': { label: "World's greatest stretch", setAside: [] },
-  'f38OEuO': { label: 'Kneeling lat stretch', setAside: [] },
-  'JbC2iaV': { label: 'Spine stretch', setAside: [] },
-  'HIgYKAB': { label: 'Seated wide-angle fold', setAside: [] },
-  '2jl9K55': { label: 'Seated twist', setAside: [] },
-  '6sYyrRX': { label: 'Reclining twist', setAside: [] },
-  '0mB6wHO': { label: "Runner's stretch", setAside: [] },
-  '99rWm7w': { label: 'Hamstring stretch', setAside: [] },
-  'DeDThfG': { label: 'Seated glute stretch', setAside: [] },
-  'bWlZvXh': { label: 'Butterfly pose', setAside: [] },
-  'K5xgdvI': { label: 'Reclining big toe pose', setAside: [] },
-  'fUBheHs': { label: 'Seated row', setAside: [] },
-  'u0cNiij': { label: 'Glute bridge', setAside: [] },
-  'iny3m5y': { label: 'Dead bug', setAside: [] },
+/**
+ * Every move the app's sessions prescribe: label, the areas whose injury sets it aside (session.dart moveLoads), the
+ * main target a replacement must share, and the kit it needs (every item; words as in [allowedEquipment]).
+ */
+export const MOVES: Record<string, { label: string; setAside: Area[]; target: string; kit: string[] }> = {
+  'LIlE5Tn': { label: 'Jump squat', setAside: [K, A], target: 'quads', kit: ['body weight'] },
+  'dK9394r': { label: 'Burpee', setAside: [K, A, W], target: 'cardio', kit: ['body weight'] },
+  'RJgzwny': { label: 'Mountain climber', setAside: [W], target: 'cardio', kit: ['body weight'] },
+  'I4hDWkc': { label: 'Push-up', setAside: [W], target: 'chest', kit: ['body weight'] },
+  'B1EVP9F': { label: 'Incline push-up', setAside: [], target: 'chest', kit: ['body weight'] },
+  'znQUdHY': { label: 'Shoulder press', setAside: [S], target: 'shoulders', kit: ['barbell'] },
+  'A6wtbuL': { label: 'Overhead press', setAside: [S], target: 'shoulders', kit: ['dumbbell'] },
+  '9WTm7dq': { label: 'Dip', setAside: [S], target: 'chest', kit: ['dip bars'] },
+  'lBDjFxJ': { label: 'Pull-up', setAside: [S], target: 'back', kit: ['pull-up bar'] },
+  'ila4NZS': { label: 'Deadlift', setAside: [B], target: 'hamstrings', kit: ['barbell'] },
+  'wQ2c4XD': { label: 'Romanian deadlift', setAside: [B], target: 'hamstrings', kit: ['barbell'] },
+  'rR0LJzx': { label: 'Dumbbell Romanian deadlift', setAside: [B], target: 'hamstrings', kit: ['dumbbell'] },
+  'UHJlbu3': { label: 'Kettlebell swing', setAside: [B], target: 'hamstrings', kit: ['kettlebell'] },
+  'qXTaZnJ': { label: 'Squat', setAside: [], target: 'quads', kit: ['barbell'] },
+  'yn8yg1r': { label: 'Goblet squat', setAside: [], target: 'quads', kit: ['dumbbell'] },
+  'QChZi3x': { label: 'Squat', setAside: [], target: 'quads', kit: ['body weight'] },
+  'RRWFUcw': { label: 'Lunge', setAside: [], target: 'quads', kit: ['barbell'] },
+  'IZVHb27': { label: 'Lunge', setAside: [], target: 'quads', kit: ['body weight'] },
+  '9E25EOx': { label: 'Split squat', setAside: [], target: 'quads', kit: ['body weight'] },
+  'aXtJhlg': { label: 'Step-up', setAside: [], target: 'quads', kit: ['body weight'] },
+  'oLrKqDH': { label: 'Run', setAside: [], target: 'cardio', kit: ['body weight'] },
+  'bJYHBIN': { label: 'Calf raise', setAside: [], target: 'calves', kit: ['body weight'] },
+  'qPEzJjA': { label: 'Loaded carry', setAside: [], target: 'grip', kit: ['dumbbell'] },
+  'EIeI8Vf': { label: 'Bench press', setAside: [], target: 'chest', kit: ['barbell', 'bench'] },
+  'SpYC0Kp': { label: 'Dumbbell bench press', setAside: [], target: 'chest', kit: ['dumbbell', 'bench'] },
+  'RVwzP10': { label: 'Pulldown', setAside: [], target: 'back', kit: ['cable'] },
+  '9RT8oQW': { label: 'Bench dip on the floor', setAside: [S, W], target: 'triceps', kit: ['body weight'] },
+  'ealLwvX': { label: 'High knees', setAside: [], target: 'cardio', kit: ['body weight'] },
+  'wd4ds3s': { label: 'Standing row', setAside: [], target: 'back', kit: ['body weight'] },
+  'I3tsCnC': { label: 'Hanging leg raise', setAside: [S], target: 'core', kit: ['pull-up bar'] },
+  'bZGHsAZ': { label: 'Inverted row', setAside: [], target: 'back', kit: ['body weight'] },
+  'BJ0Hz5L': { label: 'Dumbbell row', setAside: [], target: 'back', kit: ['dumbbell'] },
+  'RKjH6Lt': { label: 'Side bridge', setAside: [], target: 'core', kit: ['body weight'] },
+  '01qpYSe': { label: 'Upward-facing dog', setAside: [], target: 'stretch', kit: ['body weight'] },
+  'DIVyqrU': { label: 'Sphinx pose', setAside: [], target: 'stretch', kit: ['body weight'] },
+  '2Dk4xQV': { label: 'Rocking frog stretch', setAside: [], target: 'stretch', kit: ['body weight'] },
+  'DFGXwZr': { label: "World's greatest stretch", setAside: [], target: 'stretch', kit: ['body weight'] },
+  'f38OEuO': { label: 'Kneeling lat stretch', setAside: [], target: 'stretch', kit: ['body weight'] },
+  'JbC2iaV': { label: 'Spine stretch', setAside: [], target: 'stretch', kit: ['body weight'] },
+  'HIgYKAB': { label: 'Seated wide-angle fold', setAside: [], target: 'stretch', kit: ['body weight'] },
+  '2jl9K55': { label: 'Seated twist', setAside: [], target: 'stretch', kit: ['body weight'] },
+  '6sYyrRX': { label: 'Reclining twist', setAside: [], target: 'stretch', kit: ['body weight'] },
+  '0mB6wHO': { label: "Runner's stretch", setAside: [], target: 'stretch', kit: ['body weight'] },
+  '99rWm7w': { label: 'Hamstring stretch', setAside: [], target: 'stretch', kit: ['body weight'] },
+  'DeDThfG': { label: 'Seated glute stretch', setAside: [], target: 'stretch', kit: ['body weight'] },
+  'bWlZvXh': { label: 'Butterfly pose', setAside: [], target: 'stretch', kit: ['body weight'] },
+  'K5xgdvI': { label: 'Reclining big toe pose', setAside: [], target: 'stretch', kit: ['body weight'] },
+  'fUBheHs': { label: 'Seated row', setAside: [], target: 'back', kit: ['cable'] },
+  'u0cNiij': { label: 'Glute bridge', setAside: [], target: 'glutes', kit: ['body weight'] },
+  'iny3m5y': { label: 'Dead bug', setAside: [], target: 'core', kit: ['body weight'] },
 };
 
 /** A swap the model asks for, as the last lines of its reply: "SWAP: <move id> -> <replacement id>". */
@@ -122,7 +127,7 @@ export function injuryAreas(texts: (string | null | undefined)[]): { any: boolea
 
 // ---- equipment --------------------------------------------------------------------------------------------------
 
-/** Catalogue equipment words the person has, or null for a gym (anything). Unknown answers count as no kit. */
+/** Kit words the person has, or null for a gym (anything). Unknown answers count as no kit. */
 export function allowedEquipment(equipment: unknown, items: unknown): Set<string> | null {
   if (equipment === 'gym') return null;
   const out = new Set(['body weight']);
@@ -134,7 +139,10 @@ export function allowedEquipment(equipment: unknown, items: unknown): Set<string
       if (s.includes('dumbbell')) add('dumbbell');
       if (s.includes('kettlebell')) add('kettlebell');
       if (s.includes('band')) add('band', 'resistance band');
-      if (s.includes('barbell')) add('barbell', 'olympic barbell', 'ez barbell');
+      if (s.includes('barbell')) add('barbell');
+      if (/pull[- ]?up|chin[- ]?up/.test(s)) add('pull-up bar');
+      if (s.includes('dip')) add('dip bars');
+      if (s.includes('bench')) add('bench');
     }
   }
   return out;
@@ -142,13 +150,11 @@ export function allowedEquipment(equipment: unknown, items: unknown): Set<string
 
 // ---- the checks -------------------------------------------------------------------------------------------------
 
-export type CatalogueRow = { id: string; name?: string; equipment?: string[]; target_muscles?: string[] };
 export type SwapRules = {
-  rows: Map<string, CatalogueRow>; // catalogue rows of today's moves and the candidates
   equipment: Set<string> | null; // allowedEquipment
   injury: { any: boolean; areas: Set<Area> }; // injuryAreas
 };
-export type SwapRefusal = 'not_today' | 'not_a_move' | 'same' | 'already_today' | 'not_in_catalogue' | 'muscle' | 'equipment' | 'injury';
+export type SwapRefusal = 'not_today' | 'not_a_move' | 'same' | 'already_today' | 'muscle' | 'equipment' | 'injury';
 
 /**
  * Why [to] may not replace [from] today, or null when it may. [today] is the session's move ids; null skips the
@@ -159,12 +165,8 @@ export function swapRefusal(from: string, to: string, today: string[] | null, r:
   if (!(from in MOVES) || !(to in MOVES)) return 'not_a_move';
   if (from === to) return 'same';
   if (today && today.includes(to)) return 'already_today';
-  const a = r.rows.get(from), b = r.rows.get(to);
-  if (!a || !b) return 'not_in_catalogue';
-  const muscles = new Set((a.target_muscles ?? []).map((m) => m.toLowerCase()));
-  if (!(b.target_muscles ?? []).some((m) => muscles.has(m.toLowerCase()))) return 'muscle';
-  const kit = b.equipment ?? [];
-  if (r.equipment && (kit.length === 0 || kit.some((e) => !r.equipment!.has(e.toLowerCase())))) return 'equipment';
+  if (MOVES[from].target !== MOVES[to].target) return 'muscle';
+  if (r.equipment && MOVES[to].kit.some((e) => !r.equipment!.has(e))) return 'equipment';
   // With any injury on record, only moves whose load on the reported areas is known and not set aside.
   if (r.injury.any && MOVES[to].setAside.some((x) => r.injury.areas.has(x))) return 'injury';
   if (r.injury.any && r.injury.areas.size === 0 && MOVES[to].setAside.length > 0) return 'injury';

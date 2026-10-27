@@ -12,18 +12,6 @@ void main() {
     expect(bmiBandIndia(25), 'Obese');
   });
 
-  test('waist to height: banded on the 2 dp value shown, units do not change the ratio', () {
-    expect(whtrCheck(height: 170, waist: 84).value, 0.49);
-    expect(whtrCheck(height: 170, waist: 84).band, 'No increased risk');
-    expect(whtrCheck(height: 170, waist: 84.5).value, 0.5); // 0.497 shows 0.50
-    expect(whtrCheck(height: 170, waist: 84.5).band, 'Above the healthy range: higher risk');
-    expect(whtrCheck(height: 170, waist: 101.2).band, 'Above the healthy range: higher risk', reason: 'no separate 0.6 band (owner decision 2026-10-24)');
-    expect(whtrCheck(height: 67, waist: 33, inches: true).value, whtrCheck(height: 67 * 2.54, waist: 33 * 2.54).value);
-    expect(whtrCheck(height: 170, waist: 39).errors.keys, ['waist']);
-    expect(whtrCheck(height: 40, waist: 30, inches: true).errors.keys, ['height']); // 40 in = 102 cm
-    expect(whtrCheck(height: 170, waist: null).value, isNull);
-  });
-
   test('BMI is rounded to 1 dp before banding, as the plan engine does', () {
     // 22.96 used to show "23.0 Normal" here while the engine called it overweight.
     for (final (h, w, shown, band) in [

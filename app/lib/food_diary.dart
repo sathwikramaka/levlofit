@@ -157,6 +157,79 @@ typedef DiaryApi = ({
   Future<void> Function(String id, String meal, double grams) update,
 });
 
+/// Food rows are hidden by the database until their source's licence is confirmed (food_sources.release_allowed,
+/// 20261025100000_food_sources.sql). While no source is allowed the food screens say so, instead of "nothing found".
+const foodDataPendingText = 'Food values are not available in this version yet: Levlofit is moving to openly licensed '
+    'food data. Your calorie and protein targets still apply.';
+
+/// Whether any food row is visible. A failed check counts as available, so a network error never claims a licence gap.
+@visibleForTesting
+Future<bool> Function() foodDataProbe = () => supabase.from('foods').select('code').limit(1).then((r) => r.isNotEmpty);
+Future<bool>? _foodData;
+@visibleForTesting
+void resetFoodDataForTest() => _foodData = null;
+Future<bool> foodDataAvailable() => _foodData ??= Future.sync(foodDataProbe).catchError((Object _) {
+      _foodData = null;
+      return true;
+    });
+
+/// [fallback] when food data is available (or unknown), the licence note when no food row is visible.
+class EmptyFoodsText extends StatelessWidget {
+  const EmptyFoodsText(this.fallback, {super.key, this.style});
+  final String fallback;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<bool>(
+        future: foodDataAvailable(),
+        builder: (context, snap) => Text(snap.data == false ? foodDataPendingText : fallback, style: style),
+      );
+}
+
+/// Attribution for each food source, keyed as in public.food_sources.
+const foodSourceCredits = {
+  'ifct2017': 'Food values: IFCT 2017, ICMR-National Institute of Nutrition',
+  'usda_fdc': 'Food values: USDA FoodData Central, U.S. Department of Agriculture, Agricultural Research Service (fdc.nal.usda.gov)',
+  'levlofit_recipe': 'Recipe values: Levlofit, summed from the ingredients above',
+};
+
+/// The sources of the food rows this person can see (the database hides unlicensed ones). A database from before
+/// 20261025100000_food_sources has no source column and holds only IFCT rows; any other failure credits nothing
+/// rather than a source that may not be shown.
+@visibleForTesting
+Future<Set<String>> Function() foodSourcesProbe = () async {
+  try {
+    return {for (final r in await supabase.from('foods').select('source').limit(2000)) r['source'] as String};
+  } on PostgrestException catch (e) {
+    if (e.code == '42703') return {'ifct2017'};
+    rethrow;
+  }
+};
+Future<Set<String>>? _sources;
+
+/// One line crediting every visible food source, after [lead]. Shows only [lead] when no source is visible.
+class FoodCredit extends StatelessWidget {
+  const FoodCredit({super.key, this.lead = '', this.trail = '', this.style});
+  final String lead, trail;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<Set<String>>(
+        future: _sources ??= Future.sync(foodSourcesProbe).catchError((Object _) {
+          _sources = null;
+          return <String>{};
+        }),
+        builder: (context, snap) {
+          final credits = [for (final MapEntry(:key, :value) in foodSourceCredits.entries) if (snap.data?.contains(key) ?? false) value];
+          final text = [lead.trim(), if (credits.isNotEmpty) '${credits.join('. ')}.', trail.trim()].where((p) => p.isNotEmpty).join(' ');
+          return text.isEmpty ? const SizedBox.shrink() : Text(text, style: style);
+        },
+      );
+}
+
+@visibleForTesting
+void resetFoodSourcesForTest() => _sources = null;
+
 final DiaryApi supabaseDiary = (
   load: (day) async => [
         for (final r in newestFirst(await supabase.from('food_log').select('id, meal, food_code, grams, created_at').eq('day', isoDay(day)))) entryFromRow(r)
@@ -403,8 +476,10 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 const SizedBox(height: 10),
               ],
               const SizedBox(height: 8),
-              Text('Values per 100 g edible portion from the Indian Food Composition Tables (IFCT 2017, ICMR-NIN). Weigh food as eaten. '
-                  'Vitamins and minerals count only foods with a value in the table; a missing value is not zero.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              FoodCredit(
+                  lead: 'Values per 100 g edible portion. ',
+                  trail: 'Weigh food as eaten. Vitamins and minerals count only foods with a value in the table; a missing value is not zero.',
+                  style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             ],
           ]),
         ),
@@ -534,7 +609,7 @@ class _AddFoodSheetState extends State<_AddFoodSheet> {
                   onTap: () => setState(() => _picked = f),
                 ),
               if (_query.text.trim().length >= 2 && _results.isEmpty && _searchError == null)
-                Padding(padding: const EdgeInsets.only(top: 8), child: Text('No matching foods.', style: t.bodySmall)),
+                Padding(padding: const EdgeInsets.only(top: 8), child: EmptyFoodsText('No matching foods.', style: t.bodySmall)),
             ]),
           ),
         ] else ...[

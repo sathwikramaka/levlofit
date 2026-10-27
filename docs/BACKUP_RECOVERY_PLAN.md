@@ -5,9 +5,8 @@ copy, migration or deployment has been run by Claude. The migration plan is **no
 production backup restored in isolation and the seven pending items rehearsed on that copy (section 10, stages 2-5).
 
 Evidence: PROGRESS batches BS (first drill), BU-BY (v1/v2 proposal, review, apply, LF rule) and BZ (hardening and full
-re-verification). Exact script history: docs/proposed_backup_changes.diff (v1, never applied: two bugs),
-docs/proposed_backup_changes_v2.diff (approved and applied), docs/backup_hardening_after_v2.diff (eight defects fixed
-in batch BZ; `git apply` of it onto v2 reproduces the current tools/ files byte for byte).
+re-verification). The proposal and hardening diffs (v1 never applied, v2 applied, BZ hardening) were removed on 2026-10-27 (owner
+cleanup); the applied result is the current tools/ files.
 
 ## 1. Tools
 

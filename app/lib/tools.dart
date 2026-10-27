@@ -44,26 +44,6 @@ double kgFromPounds(double lb) => lb * 0.45359237;
   return (value: v, band: bmiBandIndia(v), note: null, errors: errors);
 }
 
-/// Waist-to-height boundary: under 0.5 no increased risk; 0.5 and over is above the healthy range. The 2025 Indian
-/// definition (Misra 2025) uses only "over 0.5"; a 0.6 "very high risk" edge has no source Levlofit could read, so
-/// it is not shown (owner decision 2026-10-24, awaiting clinician review). Same units for both, so cm or inches.
-/// Banded on the value rounded to 2 dp, the number shown, so 0.497 shows "0.50" above the healthy range.
-const whtrCuts = [0.5];
-const whtrAbove = 'Above the healthy range: higher risk';
-const waistCm = (min: 40, max: 200); // as onboarding
-
-({double? value, String? band, Map<String, String> errors}) whtrCheck({double? height, double? waist, bool inches = false}) {
-  final f = inches ? 2.54 : 1.0;
-  String range(num min, num max) => inches ? '${(min / 2.54).round()} and ${(max / 2.54).round()} in' : '$min and $max cm';
-  final errors = <String, String>{
-    if (height != null && (height * f < bmiHeightCm.min || height * f > bmiHeightCm.max)) 'height': 'Enter a height between ${range(bmiHeightCm.min, bmiHeightCm.max)}',
-    if (waist != null && (waist * f < waistCm.min || waist * f > waistCm.max)) 'waist': 'Enter a waist between ${range(waistCm.min, waistCm.max)}',
-  };
-  if (height == null || waist == null || errors.isNotEmpty) return (value: null, band: null, errors: errors);
-  final v = (waist / height * 100).round() / 100;
-  return (value: v, band: v < whtrCuts[0] ? 'No increased risk' : whtrAbove, errors: errors);
-}
-
 // ---------------------------------------------------------------- screens
 
 class BmiScreen extends StatefulWidget {
@@ -158,92 +138,9 @@ class _BmiScreenState extends State<BmiScreen> {
         ),
         if (r.note != null) ...[Text(r.note!, style: t.bodyMedium), const SizedBox(height: 16)],
         Text('Cut-offs for Asian Indians are lower than the WHO global ones (normal 18 to 22.9, not 18.5 to 24.9) because risk rises at a lower BMI. '
-            'BMI cannot tell muscle from fat, so pair it with your waist.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            'BMI cannot tell muscle from fat, so read it with how your training and the tape are going.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
         const SizedBox(height: 8),
         Text('Source: Misra et al., Consensus BMI cut-offs for Asian Indians, JAPI 2009;57:163.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-      ],
-    );
-  }
-}
-
-/// Waist check: waist-to-height ratio. Replaced the tape-measure body-fat estimate (US Navy method, 2026-10-14):
-/// it needed neck, waist and hip measured to protocol, its source reports could not be retrieved to verify, its
-/// categories were not validated thresholds, and the plan never used the number. Waist-to-height needs one tape
-/// measurement and has a published risk boundary.
-class WaistScreen extends StatefulWidget {
-  const WaistScreen({super.key, this.heightCm, this.waistCm, this.leading});
-  final Widget? leading;
-  final num? heightCm, waistCm;
-
-  @override
-  State<WaistScreen> createState() => _WaistScreenState();
-}
-
-class _WaistScreenState extends State<WaistScreen> {
-  bool _inches = false;
-  late final _h = TextEditingController(text: _fmt(widget.heightCm));
-  late final _waist = TextEditingController(text: _fmt(widget.waistCm));
-
-  @override
-  void dispose() {
-    _h.dispose();
-    _waist.dispose();
-    super.dispose();
-  }
-
-  void _switch(bool inches) {
-    // The ratio does not change with units; convert what is typed so the numbers stay true.
-    double? conv(String s) => _num(s) == null ? null : (inches ? _num(s)! / 2.54 : _num(s)! * 2.54);
-    final h = conv(_h.text), w = conv(_waist.text);
-    setState(() {
-      _inches = inches;
-      _h.text = h == null ? '' : _fmt((h * 10).round() / 10);
-      _waist.text = w == null ? '' : _fmt((w * 10).round() / 10);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Theme.of(context).colorScheme;
-    final t = Theme.of(context).textTheme;
-    final r = whtrCheck(height: _num(_h.text), waist: _num(_waist.text), inches: _inches);
-    final unit = _inches ? 'in' : 'cm';
-    void refresh() => setState(() {});
-    return _ToolPage(
-      leading: widget.leading,
-      title: 'Waist check',
-      eyebrow: 'TOOLS  ·  WAIST TO HEIGHT',
-      children: [
-        SegmentedButton<bool>(
-          segments: const [ButtonSegment(value: false, label: Text('cm')), ButtonSegment(value: true, label: Text('inches'))],
-          selected: {_inches},
-          showSelectedIcon: false,
-          onSelectionChanged: (s) {
-            HapticFeedback.selectionClick();
-            _switch(s.first);
-          },
-        ),
-        const SizedBox(height: 20),
-        _Field(label: 'Height', unit: unit, controller: _h, onChanged: refresh, error: r.errors['height']),
-        _Field(label: 'Waist, midway between lowest rib and hip bone, breathing out', unit: unit, controller: _waist, onChanged: refresh, error: r.errors['waist']),
-        _Result(
-          value: r.value?.toStringAsFixed(2),
-          unit: 'waist ÷ height',
-          band: r.band,
-          scale: r.value == null ? null : (lo: 0.3, hi: 0.8, at: r.value!, cuts: whtrCuts),
-        ),
-        Text('Keep your waist under half your height. Waist size tracks the fat around your organs better than weight alone, '
-            'and it changes as you train even when the scale does not.', style: t.bodyMedium),
-        const SizedBox(height: 12),
-        Text('A screening number for adults, not a diagnosis. If yours is 0.5 or more, talk to a doctor about checking blood pressure, '
-            'blood sugar and cholesterol.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-        const SizedBox(height: 8),
-        Text('Why no body-fat percentage? Tape-measure formulas need three or four measurements taken exactly, are only estimates, '
-            'and their categories are not validated health thresholds. If you have a real measurement (DEXA or similar), log it in Progress.',
-            style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-        const SizedBox(height: 8),
-        Text('Source: Ashwell and Gibson, BMJ Open 2016;6:e010159 (UK adults). Boundaries pending clinical review for Indian adults.',
-            style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ],
     );
   }

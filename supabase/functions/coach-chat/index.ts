@@ -22,7 +22,7 @@ import { checkLimits, LIMITS } from '../_shared/rate.ts';
 import {
   allowedEquipment, injuryAreas, isLaterThisWeek, isLighterTalk, isMoveTalk, isSwapTalk, LIGHTER_BLOCK, LIGHTER_LINE, moveBlock, MOVE_LINE, MOVES, parseToday,
   swapBlock, swapOptions, swapRefusal, SWAP_LINE,
-  type CatalogueRow, type SwapRules,
+  type SwapRules,
 } from '../_shared/swap.ts';
 import { checkMeal, diaryFoods, isMealLogTalk, loggableFoods, mealBlock, MEAL_LINE } from '../_shared/meal.ts';
 
@@ -33,6 +33,7 @@ const RULES = `You are Levlofit AI, the personal fitness assistant inside the Le
 How to talk:
 - Talk like a sharp, warm personal coach who remembers. Use their first name now and then, not every message. Refer back to things they told you before when it helps.
 - Answer exactly what they asked, directly, first sentence first. Then add one useful, specific next step if there is one.
+- When the answer depends on something you do not know and cannot read from the data or the conversation (which supplement or food "it" is, which event, how much time, what equipment), ask one short question first instead of guessing. You may add one general line meanwhile, but no specific dose, amount or plan built on a guess.
 - Never repeat a reply or an opener you already used in this conversation. Never end with a generic menu of things you can do. Never describe yourself unless asked.
 - For a greeting, greet them back in your own words and mention one concrete thing from their situation (today's session, their streak, a goal, a confirmed fact). One or two sentences.
 - Format like a modern chat assistant: short paragraphs, **bold** for the key point, bullet or numbered lists for steps or options, a short "## heading" only for long answers. Match length to the question: one line for simple things, fuller structure for plans and explanations. No emojis.
@@ -131,15 +132,10 @@ async function rollSummary(
   return summary;
 }
 
-/** Catalogue rows, equipment and injuries for the swap checks: today's moves and every candidate, or [ids]. */
-async function swapRules(
-  db: Db, ids: string[], profile: { equipment?: unknown; equipment_items?: unknown; injuries?: unknown } | null, facts: Fact[],
-): Promise<SwapRules | null> {
-  const cat = await db.from('exercises').select('id, name, equipment, target_muscles').in('id', ids);
-  if (cat.error) return null;
+/** Equipment and injuries for the swap checks (move targets and kit are Levlofit's own, in MOVES). */
+function swapRules(profile: { equipment?: unknown; equipment_items?: unknown; injuries?: unknown } | null, facts: Fact[]): SwapRules {
   const injuryFacts = facts.filter((f) => f.status === 'confirmed' && f.category === 'injury').map((f) => f.fact);
   return {
-    rows: new Map(((cat.data ?? []) as CatalogueRow[]).map((r) => [r.id, r])),
     equipment: allowedEquipment(profile?.equipment, profile?.equipment_items),
     injury: injuryAreas([typeof profile?.injuries === 'string' ? profile.injuries : null, ...injuryFacts]),
   };
@@ -167,7 +163,7 @@ async function confirmSwap(ctx: { supabase: Db; supabaseAdmin: Db; userClaims: {
     ctx.supabase.from('profiles').select('equipment, equipment_items, injuries').eq('id', uid).maybeSingle(),
     ctx.supabase.from('coach_facts').select('id, category, fact, status').eq('user_id', uid).limit(500),
   ]);
-  const rules = profile.error || facts.error ? null : await swapRules(ctx.supabase, [row.from_exercise, row.to_exercise], profile.data, (facts.data ?? []) as Fact[]);
+  const rules = profile.error || facts.error ? null : swapRules(profile.data, (facts.data ?? []) as Fact[]);
   if (!rules) return fail(503, 'Could not check this swap. Try again in a moment.');
   const refusal = swapRefusal(row.from_exercise, row.to_exercise, null, rules);
   console.log(JSON.stringify({ event: 'swap_confirm', ok: refusal === null, reason: refusal }));
@@ -267,7 +263,7 @@ export default {
     const stepsShared = parseSteps(body.activity, Date.now());
     if (!stepsShared.ok && stepsShared.reason !== 'absent') console.log(JSON.stringify({ event: 'steps_ignored', reason: stepsShared.reason }));
     const liftRead = liftTalk
-      ? ctx.supabase.from('set_logs').select('user_id, exercise_id, performed_on, reps, kg, exercises(name)').eq('user_id', uid).gte('performed_on', since)
+      ? ctx.supabase.from('set_logs').select('user_id, exercise_id, performed_on, reps, kg').eq('user_id', uid).gte('performed_on', since)
         .order('performed_on', { ascending: false }).limit(1000)
       : Promise.resolve(null);
     const [profile, plan, history, thread, facts, diet, logs, handbook, food, sets] = await Promise.all([
@@ -335,7 +331,7 @@ export default {
     const session = parseToday(body.today, Date.now());
     const today = session && isSwapTalk(message) ? session : null;
     const lighterDay = session && isLighterTalk(message) ? session.day : null;
-    const rules = today ? await swapRules(ctx.supabase, [...new Set([...today.ids, ...Object.keys(MOVES)])], profile.data, known) : null;
+    const rules = today ? swapRules(profile.data, known) : null;
     // Asking to train another day: the rest days later this week, as the app sent them, may be offered.
     const moveFrom = session && isMoveTalk(message) && session.restDays.length ? session : null;
     // Asking to log a meal: foods from their own diary that fit their diet may be offered. Optional read.

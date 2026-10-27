@@ -128,7 +128,6 @@ class _OnboardingState extends State<Onboarding> {
   final _scheduleForm = GlobalKey<FormState>();
   String? _bodyType, _activityLevel;
   int? _days, _minutes;
-  final _waist = TextEditingController();
   final _sleep = TextEditingController();
   final _injuries = TextEditingController();
   final _health = <String>{};
@@ -176,7 +175,7 @@ class _OnboardingState extends State<Onboarding> {
 
   @override
   void dispose() {
-    for (final c in [_name, _birthYear, _height, _weight, _otherInput, _search, _waist, _sleep, _injuries, _itemInput]) {
+    for (final c in [_name, _birthYear, _height, _weight, _otherInput, _search, _sleep, _injuries, _itemInput]) {
       c.dispose();
     }
     super.dispose();
@@ -262,7 +261,6 @@ class _OnboardingState extends State<Onboarding> {
     final plan = _plan ?? const <String, dynamic>{};
     final snap = (plan['snapshot'] as Map?) ?? const {};
     final bmi = snap['bmi'] as Map?;
-    final whtr = snap['waistToHeight'] as Map?;
     final strengths = ((snap['strengths'] as List?) ?? const []).cast<String>();
     final gaps = ((snap['gaps'] as List?) ?? const []).cast<String>();
     final findings = ((plan['review'] as List?) ?? const []).cast<Map<String, dynamic>>();
@@ -271,7 +269,6 @@ class _OnboardingState extends State<Onboarding> {
       Text('WHERE YOU ARE NOW', style: monoLabel(context)),
       const SizedBox(height: 8),
       if (bmi != null) _Fact('BMI', '${bmi['value']}, ${bmi['category']}'),
-      if (whtr != null) _Fact('Waist to height', '${whtr['value']}, ${whtr['category']}'),
       if (strengths.isNotEmpty) _Fact('Strengths', strengths.join(', ')),
       if (gaps.isNotEmpty) _Fact('Starting points', gaps.join(', ')),
       _Fact(
@@ -335,7 +332,6 @@ class _OnboardingState extends State<Onboarding> {
           'equipment': _gear,
           'equipment_items': _gear == 'custom' ? _items.toList() : <String>[],
           'body_type': _bodyType,
-          'waist_cm': double.tryParse(_waist.text),
           'days_per_week': _days,
           'session_minutes': _minutes,
           'daily_activity': _activityLevel,
@@ -732,19 +728,6 @@ class _OnboardingState extends State<Onboarding> {
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 20),
-                const FieldLabel('Waist (optional)'),
-                TextFormField(
-                  controller: _waist,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: digits,
-                  decoration: const InputDecoration(
-                    suffixText: 'cm',
-                    helperText: 'Around your belly button, relaxed. A better health marker than BMI.',
-                    helperMaxLines: 2,
-                  ),
-                  validator: (v) => (v == null || v.isEmpty) ? null : range(v, 40, 200, 'cm'),
                 ),
               ],
             ),

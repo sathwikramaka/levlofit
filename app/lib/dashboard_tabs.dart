@@ -567,10 +567,10 @@ class _FoodsScreenState extends State<_FoodsScreen> {
               ),
             if (f['fiber_g'] != null) Text('Fibre ${(f['fiber_g'] as num).toStringAsFixed(1)} g', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             const SizedBox(height: 10),
-            Text(
-                f['code'] == 'X001'
-                    ? 'Per 100 g dry. Source: USDA FoodData Central, defatted soy flour, which soya chunks are made from.'
-                    : 'Per 100 g. Source: IFCT 2017, ICMR-National Institute of Nutrition.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            f['code'] == 'X001'
+                ? Text('Per 100 g dry. Source: USDA FoodData Central, defatted soy flour, which soya chunks are made from.',
+                    style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))
+                : FoodCredit(lead: 'Per 100 g. ', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
           ]),
         ),
       ),
@@ -629,7 +629,7 @@ class _FoodsScreenState extends State<_FoodsScreen> {
         if (rows == null)
           const Padding(padding: EdgeInsets.only(top: 40), child: Center(child: CircularProgressIndicator()))
         else if (rows.isEmpty)
-          Padding(padding: const EdgeInsets.only(top: 24), child: Text('Nothing matches. Try a simpler word.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)))
+          Padding(padding: const EdgeInsets.only(top: 24), child: EmptyFoodsText('Nothing matches. Try a simpler word.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)))
         else
           for (final f in rows)
             InkWell(
@@ -1687,7 +1687,7 @@ class _AppSettingsScreen extends StatelessWidget {
         _section(context, 'ABOUT', [
           _row(context, LvIcons.sparkle, 'Levlofit 1.0', () => showLicensePage(context: context, applicationName: 'Levlofit', applicationVersion: '1.0.0'), trailing: 'Licences'),
         ]),
-        Text('$exerciseMediaCredit. Food values: IFCT 2017, ICMR-NIN.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        FoodCredit(lead: '$exerciseMediaCredit. ', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ],
     );
   }
@@ -1856,9 +1856,9 @@ const _privacyPolicy = [
       "passages from Levlofit's Handbook that match your question, which are our text, not yours. Your calorie and protein targets are "
       'worked out from your weight, height, age and sex, so your approximate weight can be calculated from them. Anything you type in a '
       'message is sent as written, so leave out details you do not want shared.'),
-  ('Who else handles it', 'Supabase stores your data, and Google handles sign-in if you use Google. Google Fonts supplies the app\'s fonts '
-      'and ExerciseDB hosts the exercise animations; their servers may receive your IP address when the app loads them. Each is used only '
-      'for its job. We never sell your data.'),
+  ('Who else handles it', 'Supabase stores your data, and Google handles sign-in if you use Google. Google Fonts supplies the app\'s fonts; '
+      'Google\'s servers may receive your IP address when the app loads them. ExerciseDB (AscendAPI) supplies the exercise animations; its '
+      'servers may receive your IP address when the app loads them. Each is used only for its job. We never sell your data.'),
   ('Permissions', 'Notifications, only for the reminders you turn on. On Android, Alarms and reminders, only if you allow it, so reminders arrive at the time you set; without it they can arrive a few minutes late. Photos, only when you add a progress photo or profile picture.'),
   // REVIEW GATE (legal): Health Connect steps text; ships only with builds made with -Plevlofit.healthConnect=true.
   ('Steps from Health Connect', 'Only if you connect it in Progress, and only on Android builds that support it. Levlofit reads your daily step '
@@ -1880,7 +1880,7 @@ const _privacyPolicy = [
       'Profile. For the rest, email us and we reply within 30 days.'),
   ('Health', 'Levlofit gives general fitness guidance, not medical advice. See a doctor for pain, illness, or before hard training if you have a health condition.'),
   ('Age', 'Levlofit is for adults aged 18 to 80.'),
-  ('Changes', 'If this policy changes in a way that affects your data, we tell you in the app first. Last updated 16 October 2026.'),
+  ('Changes', 'If this policy changes in a way that affects your data, we tell you in the app first. Last updated 27 October 2026.'),
 ];
 
 // ---------------------------------------------------------------- glossary
@@ -1905,7 +1905,6 @@ const _glossary = [
   ('Rest interval', 'The pause between sets. Longer rests help strength; the session timer sets it for you.'),
   ('RIR', 'Reps in reserve: how many more good reps you could have done when you stopped a set.'),
   ('Set', 'A group of reps done without stopping.'),
-  ('WHtR', 'Waist-to-height ratio: waist divided by height. Under 0.5 is the healthy range.'),
   ('Warm-up', 'Easy movement and lighter sets that prepare you for the work sets.'),
 ];
 

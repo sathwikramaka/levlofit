@@ -1,5 +1,5 @@
-// A day of Indian meals with grams for every food, built by rules over IFCT 2017 (Indian Food Composition
-// Tables) values: breakfast, lunch, snack and dinner templates, foods filtered by diet, allergies and budget,
+// A day of Indian meals with grams for every food, built by rules over USDA FoodData Central values (IFCT 2017 only
+// where the database still allows it; see plannerFoods): breakfast, lunch, snack and dinner templates, foods filtered by diet, allergies and budget,
 // rotated by weekday, then portions solved so the day lands on the plan's energy and protein.
 // Cooking oil: ICMR-NIN Dietary Guidelines for Indians (2024) limit visible fat to 20-50 g a day depending on energy
 // and activity, not more than 27-30 g at 2000 kcal (p.72); its "My Plate" lists 27 g fats and oils at 2000 kcal (p.24).
@@ -68,8 +68,30 @@ const _catalogue = <String, (String, int, String)>{
 /// Most a single portion of a food should reach in one meal, so the solver never asks for a bowl of peanuts.
 const _maxPortion = {'H012': 40.0, 'B002': 80.0, 'B021': 90.0, 'B010': 90.0, 'B013': 90.0, 'B020': 90.0, 'L003': 150.0, 'M004': 200.0, 'N003': 220.0, 'S006': 220.0};
 
-/// Every food the planner may use, for one database read.
-final plannerCodes = _catalogue.keys.toList();
+/// Planner food -> its USDA FoodData Central row (CC0; data/fdc/planner_map.csv, built by data/build_foods_fdc.py into
+/// 20261025200000_foods_usda_fdc.sql; a test keeps the two in step). The planner uses these first. A food without a
+/// USDA record (poha A011, ragi A010, paneer L003, rohu S006) falls back to its IFCT row, which the database shows only
+/// where IFCT is allowed (local development), so in a release those foods simply drop out.
+const plannerFdcCodes = {
+  'A015': 'FDC169756', 'A019': 'FDC168893', 'A005': 'FDC168943', 'A003': 'FDC169702', 'B013': 'FDC174284', 'B021': 'FDC172436',
+  'B010': 'FDC174256', 'B020': 'FDC173744', 'B002': 'FDC173756', 'X001': 'FDC174275', 'H012': 'FDC172430', 'L002': 'FDC171265',
+  'M004': 'FDC173424', 'N003': 'FDC171077', 'E012': 'FDC173944', 'E049': 'FDC169926', 'E028': 'FDC173044', 'E001': 'FDC171688',
+  'E047': 'FDC169097', 'D036': 'FDC169986', 'D056': 'FDC169260', 'C015': 'FDC169975', 'C033': 'FDC168462', 'F002': 'FDC170393',
+  'D043': 'FDC168409', 'D076': 'FDC170457', 'T012': 'FDC171025', 'T006': 'FDC172337',
+};
+
+/// Every food the planner may use (planner codes and their USDA rows), for one database read.
+final plannerCodes = [..._catalogue.keys, ...plannerFdcCodes.values];
+
+/// Database rows keyed by planner code: the USDA row when it is visible, else the planner code's own row. The planner's
+/// rules (portions, soya cap, display names) stay keyed by planner code.
+Map<String, Food> plannerFoods(Iterable<Map<String, dynamic>> rows) {
+  final byCode = {for (final r in rows) r['code'] as String: r};
+  return {
+    for (final k in _catalogue.keys)
+      if (byCode[plannerFdcCodes[k]] ?? byCode[k] case final r?) k: foodFromRow({...r, 'code': k}),
+  };
+}
 
 enum _Scale { protein, energy, fixed }
 

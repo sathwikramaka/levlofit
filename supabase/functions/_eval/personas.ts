@@ -48,7 +48,6 @@ function build(s: Spec): Persona {
       diet: s.diet,
       restrictions: s.restrictions,
       otherRestrictions: s.otherRestrictions,
-      waistCm: s.waistCm,
       daysPerWeek: 3,
       sessionMinutes: 45,
       dailyActivity: 'light',
