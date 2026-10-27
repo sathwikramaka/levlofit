@@ -173,6 +173,11 @@ items plus remove_pilates (already live under 20261007092712; re-runs cleanly) a
 f17e603d, user rows unchanged (2 users, 2 profiles, 1 plan, 4 coach messages), foods 571 (28 USDA), food_sources
 ifct2017 hidden / usda_fdc and levlofit_recipe allowed, the 10 new tables present with RLS, 0 tables without RLS.
 
+**Production apply log** (owner runs tools/apply_prod.ps1; Claude verifies read-only; one approval per item):
+- 2026-10-28 item 1, 20261007400000_handbook_v3 (sha256 63373479ed6a5618...): APPLIED. Verify: handbook 38 rows,
+  fingerprint f17e603d (= rehearsal), body-measures uses WHO, no waist-to-height; users 2, profiles 2, plans 1,
+  coach messages 4 (unchanged). First run did not execute (script parse error, fixed in 5430365); nothing applied then.
+
 **Update 2026-10-24 (later):** item 13, `20261025100000_food_sources` (food licence gate). Tested only on a disposable
 local stack (levlo_mig_fs: all migrations and the seed, pgTAP 129/129). **Behaviour change in production:** once
 applied, every IFCT food value is hidden from the app and the coach (`food_sources.ifct2017.release_allowed = false`).
