@@ -780,9 +780,19 @@ class _MuscleGuideState extends State<_MuscleGuide> {
       children: [
         Text('LEVLOFIT MOVES BY MUSCLE', style: monoLabel(context)),
         const SizedBox(height: 4),
-        Text('Tap a muscle on the body, or pick a group below.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        Text('Tap a muscle to see its exercises, or pick a group below.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
         const SizedBox(height: 12),
-        Center(child: SizedBox(width: 220, child: MuscleMap(selected: g, onGroup: widget.onGroup))),
+        Center(
+          child: SizedBox(
+            width: 220,
+            child: MuscleMap(
+              selected: g,
+              onGroup: widget.onGroup,
+              // A tap on the body opens that muscle's exercises, as MuscleWiki does; the chips below still filter by group.
+              onMuscle: (m) => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => MuscleExercisesScreen(muscle: m))),
+            ),
+          ),
+        ),
         const SizedBox(height: 16),
         Wrap(
           spacing: 8,
@@ -832,6 +842,94 @@ class _MuscleGuideState extends State<_MuscleGuide> {
             ),
         ],
       ],
+    );
+  }
+}
+
+/// One muscle's exercises, opened by tapping it on the body map (MuscleWiki-style): Levlofit's guide moves first
+/// (main movers, then moves where it assists), then every catalogue exercise that targets it, with its animation.
+class MuscleExercisesScreen extends StatefulWidget {
+  const MuscleExercisesScreen({super.key, required this.muscle, @visibleForTesting this.loadCatalogue});
+  final String muscle;
+  final Future<List<Map<String, dynamic>>> Function(List<String> names)? loadCatalogue; // tests
+
+  @override
+  State<MuscleExercisesScreen> createState() => _MuscleExercisesScreenState();
+}
+
+class _MuscleExercisesScreenState extends State<MuscleExercisesScreen> {
+  late final Future<List<_Json>> _catalogue = !exerciseDbContent
+      ? Future.value(const <_Json>[])
+      : (widget.loadCatalogue ?? _load)(muscleMatch[widget.muscle]?.catalogue ?? const []);
+
+  static Future<List<_Json>> _load(List<String> names) async => names.isEmpty
+      ? const <_Json>[]
+      : List<_Json>.from(await supabase
+          .from('exercises')
+          .select('id, name, gif_url, target_muscles')
+          .eq('has_media', true)
+          .overlaps('target_muscles', names)
+          .order('name', ascending: true)
+          .limit(60));
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = Theme.of(context).colorScheme;
+    final moves = movesForMuscle(widget.muscle);
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.muscle)),
+      body: CustomScrollView(slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+          sliver: SliverList.list(children: [
+            Text('LEVLOFIT MOVES', style: monoLabel(context)),
+            const SizedBox(height: 8),
+            if (moves.isEmpty) Text('No Levlofit move trains this muscle yet.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+            for (final (id, m, main) in moves)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: SizedBox.square(dimension: 56, child: ExerciseGif(null, id: id)),
+                title: Text(m.name),
+                subtitle: Text('${main ? 'Main mover' : 'Also works it'}  ·  ${difficultyOf(id)}  ·  ${equipmentKind(m)}'),
+                trailing: const Icon(LvIcons.caretRight, size: 16),
+                onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ExerciseScreen(id: id))),
+              ),
+            const SizedBox(height: 20),
+          ]),
+        ),
+        if (exerciseDbContent)
+          FutureBuilder<List<_Json>>(
+            future: _catalogue,
+            builder: (context, snap) {
+              final rows = snap.data ?? const <_Json>[];
+              return SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                sliver: SliverMainAxisGroup(slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(snap.connectionState != ConnectionState.done ? 'MORE EXERCISES' : 'MORE EXERCISES  ·  ${rows.length}', style: monoLabel(context)),
+                    ),
+                  ),
+                  if (snap.connectionState != ConnectionState.done)
+                    const SliverToBoxAdapter(child: LinearProgressIndicator(minHeight: 3))
+                  else if (snap.hasError)
+                    SliverToBoxAdapter(child: Text('Could not load more exercises. Check your connection.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)))
+                  else
+                    SliverGrid.builder(
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 220, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.74),
+                      itemCount: rows.length,
+                      itemBuilder: (context, i) => _ExerciseCard(rows[i]),
+                    ),
+                  SliverToBoxAdapter(
+                    child: Padding(padding: const EdgeInsets.only(top: 12), child: Text(exerciseMediaCredit, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))),
+                  ),
+                ]),
+              );
+            },
+          ),
+      ]),
     );
   }
 }

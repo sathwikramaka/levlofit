@@ -12,7 +12,7 @@
 // LLM_API_KEY, and LLM_DATA_APPROVED naming the provider once its data terms are reviewed. Optional: LLM_PROVIDER (groq | openrouter | gemini), LLM_MODEL, LLM_BASE_URL, LLM_TIMEOUT_MS, LLM_MAX_RETRIES.
 import { withSupabase } from 'npm:@supabase/server@1.9.1';
 import {
-  acceptSummary, buildCoachContext, HISTORY_LIMIT, isLiftTalk, newSuggestions, parseSteps, replyProblem, restrictedFooter, restrictedMentions, restrictedTerms,
+  acceptSummary, buildCoachContext, firstSentences, HISTORY_LIMIT, isLiftTalk, isSmallTalk, SMALL_TALK_BLOCK, SMALL_TALK_MAX_WORDS, wordCount, newSuggestions, parseSteps, replyProblem, restrictedFooter, restrictedMentions, restrictedTerms,
   summariseFoodLog, summariseLifts, summaryDue, SUMMARY_KEEP, SUMMARY_MIN_LEFT_MS, SUMMARY_READ, SUMMARY_RULES, SUMMARY_TIMEOUT_MS, summaryRequest,
   summaryTurns, type Fact,
 } from '../_shared/coach-context.ts';
@@ -33,6 +33,7 @@ const RULES = `You are Levlofit AI, the personal fitness assistant inside the Le
 How to talk:
 - Talk like a sharp, warm personal coach who remembers. Use their first name now and then, not every message. Refer back to things they told you before when it helps.
 - Answer exactly what they asked, directly, first sentence first. Then add one useful, specific next step if there is one.
+- Be brief by default, like a good chat assistant: 2 to 4 sentences unless they ask for a plan, steps, a comparison or more detail. Never recap their whole plan unprompted.
 - When the answer depends on something you do not know and cannot read from the data or the conversation (which supplement or food "it" is, which event, how much time, what equipment), ask one short question first instead of guessing. You may add one general line meanwhile, but no specific dose, amount or plan built on a guess.
 - Never repeat a reply or an opener you already used in this conversation. Never end with a generic menu of things you can do. Never describe yourself unless asked.
 - For a greeting, greet them back in your own words and mention one concrete thing from their situation (today's session, their streak, a goal, a confirmed fact). One or two sentences.
@@ -345,6 +346,9 @@ export default {
     // Draft, then a deterministic food check against everything this person must not eat. At most one retry.
     const first = buildCoachContext(inputs);
     first.text += swapText;
+    // Small talk gets an explicit length instruction; a draft that is still long is regenerated once, then cut.
+    const smallTalk = isSmallTalk(message);
+    if (smallTalk) first.text += `\n\n${SMALL_TALK_BLOCK}`;
     let llm = await completeWithFallback(cfg, fallback, { system: `${head}\n\n${first.text}`, turns, deadline });
     if (!llm.ok) {
       const status = statusForFailure(llm.kind);
@@ -370,6 +374,13 @@ export default {
         console.error(JSON.stringify({ event: 'reply_rejected', problem, attempt: 2 }));
         return fail(502, 'Levlofit AI could not answer that properly. Try again.', { saved: false });
       }
+    }
+    if (smallTalk && wordCount(raw.replace(NOTE, '')) > SMALL_TALK_MAX_WORDS) {
+      console.log(JSON.stringify({ event: 'small_talk_long', words: wordCount(raw.replace(NOTE, '')) }));
+      const fix = '\n\nYOUR DRAFT was too long for small talk. Reply again in one or two short sentences, under 30 words.';
+      const retry = await completeWithFallback(cfg, fallback, { system: `${head}\n\n${first.text}${fix}`, turns, deadline });
+      if (retry.ok && !replyProblem(retry.text, NOTE)) raw = retry.text;
+      if (wordCount(raw.replace(NOTE, '')) > SMALL_TALK_MAX_WORDS) raw = firstSentences(raw.replace(NOTE, ''));
     }
     let named = restrictedMentions(raw.replace(NOTE, ''), terms);
     if (named.length) {

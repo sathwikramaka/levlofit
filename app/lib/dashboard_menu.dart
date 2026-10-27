@@ -811,26 +811,39 @@ class _MealCard extends StatelessWidget {
             Text('${protein.round()} g protein', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
           ]),
         ]),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
+        // The plate in one line, in household servings; exact grams and nutrients sit below and behind Details.
+        Text(mealSummary(meal), style: t.titleMedium),
+        const SizedBox(height: 8),
         for (final i in meal.items)
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(border: Border(top: BorderSide(color: c.outline))),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(i.name, style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-                  Text('P ${i.protein.toStringAsFixed(1)}  ·  C ${i.carb.toStringAsFixed(1)}  ·  F ${i.fat.toStringAsFixed(1)}  ·  Fibre ${i.fiber.toStringAsFixed(1)} g',
-                      style: t.bodySmall?.copyWith(color: c.onSurfaceVariant, fontSize: 12)),
-                ]),
-              ),
+            child: Row(children: [
+              Expanded(child: Text(servingLabel(i), style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600))),
               const SizedBox(width: 10),
-              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text(amountLabel(i), style: monoNumber(context, size: 14).copyWith(color: c.tertiary)),
-                Text('${i.kcal.round()} kcal', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant, fontSize: 12)),
-              ]),
+              Text(exactLabel(i), style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             ]),
           ),
+        Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: const EdgeInsets.only(bottom: 8),
+            title: Text('Details', style: t.labelLarge),
+            children: [
+              for (final i in meal.items)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(children: [
+                    Expanded(child: Text(i.name, style: t.bodySmall)),
+                    Text('${i.kcal.round()} kcal  ·  P ${i.protein.toStringAsFixed(1)}  ·  C ${i.carb.toStringAsFixed(1)}  ·  F ${i.fat.toStringAsFixed(1)} g',
+                        style: t.bodySmall?.copyWith(color: c.onSurfaceVariant, fontSize: 12)),
+                  ]),
+                ),
+            ],
+          ),
+        ),
       ]),
     );
   }

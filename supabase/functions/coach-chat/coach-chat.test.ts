@@ -7,7 +7,7 @@ import { register } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { generatePlan, validateInput } from '../_shared/plan-engine.ts';
 import { evidenceNote, retrieve } from '../_shared/handbook.ts';
-import { acceptSummary, newSuggestions, PENDING_MAX, summaryDue, SUMMARY_LABEL, SUMMARY_MAX, SUMMARY_READ, SUMMARY_RULES } from '../_shared/coach-context.ts';
+import { acceptSummary, firstSentences, isSmallTalk, newSuggestions, PENDING_MAX, summaryDue, SUMMARY_LABEL, SUMMARY_MAX, SUMMARY_READ, SUMMARY_RULES } from '../_shared/coach-context.ts';
 // @ts-ignore: plain JS test double
 import { fakeClient } from '../_test/supabase-server-mock.mjs';
 
@@ -478,6 +478,34 @@ test('memory: confirmed injury facts go only with training or pain questions, ne
   assert.doesNotMatch(prompt, /old wrist sprain/, 'only the newest three injury facts');
   assert.doesNotMatch(prompt, /hip clicks/, 'an unconfirmed injury is never sent');
   assert.match(prompt, /never say it is healed or safe to push through/);
+});
+
+test('small talk: detected only for short greetings and thanks', () => {
+  for (const m of ['hi', 'Hi!', 'hello coach', 'Good morning', 'thanks so much', 'ok', 'hey there 🙂', 'namaste']) assert.ok(isSmallTalk(m), m);
+  for (const m of ['hi, what should I eat today?', 'How many sets today?', 'ok so my knee hurts when I squat', '']) assert.ok(!isSmallTalk(m), m);
+  assert.equal(firstSentences('Hey Ravi! Ready for legs today? Your plan has five moves. Squats come first.'), 'Hey Ravi! Ready for legs today?');
+});
+
+test('small talk: "hi" gets the length rule, and a long draft is retried once then cut to two sentences', async () => {
+  useDb(tables());
+  const long = 'Hey Ravi! Great to see you. ' + 'Your plan this week has strength sessions and nutrition targets to follow closely. '.repeat(6);
+  fakeLlm([long, long]);
+  const res = await post({ message: 'hi', threadId: THREAD });
+  assert.equal(res.status, 200);
+  assert.match(systemPrompt(), /REPLY LENGTH: this message is small talk/);
+  assert.equal(calls.length, 2, 'one retry');
+  assert.equal(((await res.json()) as any).reply, 'Hey Ravi! Great to see you.');
+});
+
+test('small talk: a short first draft is kept as is, and real questions get no length rule', async () => {
+  useDb(tables());
+  fakeLlm(['Hey! What shall we work on today?']);
+  const res = await post({ message: 'Hello', threadId: THREAD });
+  assert.equal(((await res.json()) as any).reply, 'Hey! What shall we work on today?');
+  assert.equal(calls.length, 1);
+  fakeLlm('ok');
+  await post({ message: 'How many sets should I do today?', threadId: THREAD });
+  assert.doesNotMatch(systemPrompt(), /REPLY LENGTH/);
 });
 
 test('memory: with no confirmed facts the model is told there are none', async () => {

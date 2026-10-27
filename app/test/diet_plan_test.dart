@@ -100,4 +100,21 @@ void main() {
     }
     expect(regionalCount('south', regionStaples['south']!), greaterThan(regionalCount(null, regionStaples['south']!)));
   });
+
+  test('household servings: what goes on the plate, with exact grams kept', () {
+    PlanItem item(String code, String name, double g, String unit) =>
+        (code: code, name: name, grams: g, unit: unit, kcal: 0, protein: 0, carb: 0, fat: 0, fiber: 0);
+    expect(servingLabel(item('A019', 'Wheat atta (roti)', 60, 'dry')), '2 rotis');
+    expect(servingLabel(item('A019', 'Wheat atta (roti)', 45, 'dry')), '1½ rotis');
+    expect(servingLabel(item('B010', 'Moong dal', 30, 'dry')), '1 katori moong dal');
+    expect(servingLabel(item('A015', 'Rice', 100, 'raw')), '2 cups cooked rice');
+    expect(servingLabel(item('L002', 'Cow milk', 200, 'ml')), '1 glass milk');
+    expect(servingLabel(item('M004', 'Eggs, boiled', 100, 'egg')), '2 boiled eggs');
+    expect(servingLabel(item('T012', 'Sunflower oil', 10, 'oil')), '2 tsp cooking oil');
+    expect(servingLabel(item('E012', 'Banana', 60, 'raw')), '½ banana');
+    expect(servingLabel(item('N003', 'Chicken breast', 150, 'raw')), '150 g chicken breast');
+    expect(exactLabel(item('A019', 'Wheat atta (roti)', 60, 'dry')), '60 g dry wheat atta');
+    final meal = (name: 'Lunch', time: '1 pm', items: [item('A019', 'Wheat atta (roti)', 60, 'dry'), item('B010', 'Moong dal', 30, 'dry'), item('T012', 'Sunflower oil', 10, 'oil')]);
+    expect(mealSummary(meal), '2 rotis + 1 katori moong dal');
+  });
 }

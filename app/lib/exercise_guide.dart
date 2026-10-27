@@ -177,6 +177,41 @@ List<(String id, MoveGuide g)> filteredMoves({String? group, String? equipment, 
   ];
 }
 
+/// What each muscle on the body map matches: words in the guide's muscle lists, and the catalogue's target-muscle
+/// names (public.exercises.target_muscles). Labels are the map's (muscle_shapes.dart).
+const muscleMatch = <String, ({List<String> guide, List<String> catalogue})>{
+  'Chest': (guide: ['Pectoralis'], catalogue: ['pectorals']),
+  'Front shoulders': (guide: ['Deltoid, anterior', 'Deltoid'], catalogue: ['deltoids']),
+  'Rear shoulders': (guide: ['Deltoid, posterior'], catalogue: ['deltoids']),
+  'Biceps': (guide: ['Biceps', 'Brachialis'], catalogue: ['biceps']),
+  'Triceps': (guide: ['Triceps'], catalogue: ['triceps']),
+  'Forearms': (guide: ['Forearm'], catalogue: ['forearms']),
+  'Abs': (guide: ['Rectus abdominis', 'Core', 'Transversus'], catalogue: ['abdominals']),
+  'Obliques': (guide: ['Obliques'], catalogue: ['abdominals']),
+  'Trapezius': (guide: ['Trapezius'], catalogue: ['trapezius', 'levator scapulae']),
+  'Upper back': (guide: ['Latissimus', 'Rhomboids', 'Trapezius, middle'], catalogue: ['upper back', 'latissimus dorsi']),
+  'Lower back': (guide: ['Erector spinae'], catalogue: ['erector spinae']),
+  'Glutes': (guide: ['Gluteus maximus'], catalogue: ['glutes']),
+  'Hip abductors': (guide: ['Gluteus medius'], catalogue: ['abductors']),
+  'Adductors': (guide: ['Adductors'], catalogue: ['adductors']),
+  'Quadriceps': (guide: ['Quadriceps'], catalogue: ['quadriceps']),
+  'Hamstrings': (guide: ['Hamstrings'], catalogue: ['hamstrings']),
+  'Calves': (guide: ['Calves', 'Gastrocnemius', 'Soleus'], catalogue: ['calves']),
+  'Soleus': (guide: ['Soleus', 'Calves'], catalogue: ['calves']),
+};
+
+/// Guide moves that train [muscle] (a body-map label): moves where it is a main mover first, then moves where it
+/// assists, one per name. The bool says whether it is a main mover.
+List<(String id, MoveGuide g, bool main)> movesForMuscle(String muscle) {
+  final words = muscleMatch[muscle]?.guide ?? const <String>[];
+  bool hit(List<String> muscles) => muscles.any((m) => words.any((w) => m.startsWith(w)));
+  final seen = <String>{};
+  return [
+    for (final e in moveGuide.entries) if (hit(e.value.main) && seen.add(e.value.name)) (e.key, e.value, true),
+    for (final e in moveGuide.entries) if (hit(e.value.assist) && seen.add(e.value.name)) (e.key, e.value, false),
+  ];
+}
+
 /// Guide moves in a muscle group, in the order the guide lists them, one per name.
 List<(String id, MoveGuide g)> movesIn(String group) {
   final seen = <String>{};

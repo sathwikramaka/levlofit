@@ -738,6 +738,74 @@ String amountLabel(PlanItem i) => switch (i.unit) {
       _ => '${i.grams.round()} g',
     };
 
+/// Household servings (owner request 2026-10-28: plates a person recognises, not raw ingredients). Levlofit's own
+/// approximate conversions, shown next to the exact grams: 1 roti = 30 g atta, 1 jowar or bajra bhakri = 40 g flour,
+/// 1 ragi roti = 30 g, 1 plate poha = 50 g dry, 1 cup cooked rice = 50 g raw, 1 katori cooked dal = 30 g dry
+/// (rajma, chana 35 g, soya chunks 25 g), 1 glass milk = 200 ml, 1 egg = 50 g, 1 tsp oil = 5 g, 1 katori sabzi =
+/// 150 g vegetables, 1 bowl salad = 100 g; fruit by the piece.
+typedef _Serving = (double per, String one, String many);
+const _servings = <String, _Serving>{
+  'A019': (30, 'roti', 'rotis'),
+  'A005': (40, 'jowar bhakri', 'jowar bhakris'),
+  'A003': (40, 'bajra roti', 'bajra rotis'),
+  'A010': (30, 'ragi roti', 'ragi rotis'),
+  'A011': (50, 'plate poha', 'plates poha'),
+  'A015': (50, 'cup cooked rice', 'cups cooked rice'),
+  'B021': (30, 'katori toor dal', 'katoris toor dal'),
+  'B010': (30, 'katori moong dal', 'katoris moong dal'),
+  'B013': (30, 'katori masoor dal', 'katoris masoor dal'),
+  'B020': (35, 'katori rajma', 'katoris rajma'),
+  'B002': (35, 'katori kala chana', 'katoris kala chana'),
+  'X001': (25, 'katori soya chunks curry', 'katoris soya chunks curry'),
+  'L002': (200, 'glass milk', 'glasses milk'),
+  'M004': (50, 'boiled egg', 'boiled eggs'),
+  'E012': (120, 'banana', 'bananas'),
+  'E049': (120, 'bowl papaya', 'bowls papaya'),
+  'E028': (100, 'guava', 'guavas'),
+  'E001': (150, 'apple', 'apples'),
+  'E047': (130, 'orange', 'oranges'),
+  'D036': (150, 'katori cauliflower sabzi', 'katoris cauliflower sabzi'),
+  'D056': (150, 'katori bhindi sabzi', 'katoris bhindi sabzi'),
+  'C015': (150, 'katori cabbage sabzi', 'katoris cabbage sabzi'),
+  'C033': (150, 'katori palak sabzi', 'katoris palak sabzi'),
+  'F002': (150, 'katori carrot sabzi', 'katoris carrot sabzi'),
+  'D043': (100, 'bowl cucumber salad', 'bowls cucumber salad'),
+  'D076': (100, 'bowl tomato salad', 'bowls tomato salad'),
+  'T012': (5, 'tsp cooking oil', 'tsp cooking oil'),
+  'T006': (5, 'tsp mustard oil', 'tsp mustard oil'),
+};
+
+/// A count rounded to the nearest half, as people say it: "1", "1½", "½".
+String _count(double x) {
+  final halves = (x * 2).round().clamp(1, 1000);
+  final whole = halves ~/ 2;
+  return halves.isOdd ? (whole == 0 ? '½' : '$whole½') : '$whole';
+}
+
+/// What to put on the plate, e.g. "2 rotis", "1 katori moong dal", "150 g chicken breast".
+String servingLabel(PlanItem i) {
+  final s = _servings[i.code];
+  if (s == null) {
+    final name = i.name.replaceAll(RegExp(r'\s*\(.*\)'), '').toLowerCase();
+    return '${i.grams.round()} g $name';
+  }
+  final n = i.grams / s.$1;
+  final c = _count(n);
+  return '$c ${c == '1' || c == '½' ? s.$2 : s.$3}';
+}
+
+/// The exact amount behind [servingLabel], shown small: "60 g wheat atta", "200 ml".
+String exactLabel(PlanItem i) => switch (i.unit) {
+      'ml' => '${i.grams.round()} ml',
+      'egg' => '${i.grams.round()} g',
+      'oil' => '${i.grams.round()} g ${i.name.toLowerCase()}',
+      'dry' => '${i.grams.round()} g dry ${i.name.replaceAll(RegExp(r'\s*\(.*\)'), '').toLowerCase()}',
+      _ => '${i.grams.round()} g',
+    };
+
+/// One line for the whole meal, oil left out: "2 rotis + 1 katori moong dal + 1 katori palak sabzi".
+String mealSummary(PlanMeal m) => m.items.where((i) => i.unit != 'oil').map(servingLabel).join(' + ');
+
 /// The food library: only the everyday foods worth knowing for protein, fibre, good carbs and healthy fats.
 /// (IFCT code, display name, group). Soya chunks values: USDA FoodData Central 174275 (defatted soy flour).
 const libraryFoods = <(String, String, String)>[
