@@ -21,9 +21,9 @@ void main() {
   });
 
   test('tap detection follows the outlines', () {
-    expect(groupAt(frontMuscles, const Offset(60, 48)), 'Chest'); // right pectoral
-    expect(groupAt(frontMuscles, const Offset(50, 80)), 'Core'); // abdomen
-    expect(groupAt(frontMuscles, const Offset(50, 12)), isNull); // head
+    expect(groupAt(frontMuscles, const Offset(58, 52)), 'Chest'); // right pectoral
+    expect(groupAt(frontMuscles, const Offset(46, 70)), 'Core'); // abdomen
+    expect(groupAt(frontMuscles, const Offset(50, 26)), isNull); // head
     expect(groupAt(frontMuscles, const Offset(2, 2)), isNull); // empty corner
   });
 
@@ -47,12 +47,12 @@ void main() {
     final figure = find.byType(CustomPaint).last;
     Offset at(double x, double y) => tester.getTopLeft(figure) + Offset(x, y) * (tester.getSize(figure).width / 100);
     expect(find.semantics.byLabel('Chest'), findsOne);
-    await tester.tapAt(at(60, 48));
+    await tester.tapAt(at(58, 52));
     expect(picked, 'Chest');
     await tester.tap(find.text('Back'));
     await tester.pump();
     expect(find.semantics.byLabel('Hips and glutes'), findsOne);
-    await tester.tapAt(at(38, 58)); // left upper back
+    await tester.tapAt(at(40, 68)); // left upper back
     expect(picked, 'Back');
   });
 
@@ -106,7 +106,7 @@ void main() {
       home: Scaffold(body: Align(alignment: Alignment.topLeft, child: SizedBox(width: 200, child: MuscleMap(selected: null, onGroup: (_) {}, onMuscle: (m) => opened = m)))),
     ));
     final figure = find.byType(CustomPaint).last;
-    await tester.tapAt(tester.getTopLeft(figure) + const Offset(60, 48) * (tester.getSize(figure).width / 100));
+    await tester.tapAt(tester.getTopLeft(figure) + const Offset(58, 52) * (tester.getSize(figure).width / 100));
     expect(opened, 'Chest');
   });
 }

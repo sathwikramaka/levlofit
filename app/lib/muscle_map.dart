@@ -8,7 +8,7 @@ import 'package:flutter/semantics.dart';
 
 import 'muscle_shapes.dart';
 
-const _canvas = Size(100, 220); // the back view's feet reach y = 220, past the source's 200-high viewBox
+const _canvas = Size(100, 200);
 
 Path _path(List<double> xy) {
   final p = Path()..moveTo(xy[0], xy[1]);
