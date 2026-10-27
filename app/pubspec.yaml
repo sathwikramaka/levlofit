@@ -91,6 +91,7 @@ flutter:
   assets:
     - assets/sounds/levlo_chime.wav
     - assets/fonts/PHOSPHOR-LICENSE
+    - assets/licenses/react-body-highlighter-LICENSE
     - assets/drawings/everkinetic/
     - assets/animations/cdc/
 
