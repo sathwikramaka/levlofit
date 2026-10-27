@@ -138,4 +138,18 @@ void main() {
       expect(m.items.map((i) => i.code), isNot(contains('X001')), reason: 'no soya curry at ${m.name}');
     }
   });
+
+  test('protein shake: food planned around it, added to the evening snack, checks against the full targets', () {
+    const kcal = 2200.0, protein = 140.0;
+    final food = planDay(foods: foodsForTest, kcal: kcal - 2 * scoopKcal, protein: protein - 2 * scoopProtein, excluded: {'beef', 'pork'});
+    final d = addShake(food, 2, kcal: kcal, protein: protein, plant: false);
+    final snack = d.meals.firstWhere((m) => m.name == 'Evening snack');
+    expect(servingLabel(snack.items.first), '2 scoops whey in water');
+    expect(exactLabel(snack.items.first), '60 g powder');
+    expect(d.protein, closeTo(food.protein + 48, 1e-9));
+    expect(d.kcal, closeTo(food.kcal + 240, 1e-9));
+    expect(d.check.feasible, ((d.kcal - kcal) / kcal).abs() <= kcalTolerance && d.protein / protein >= minProteinShare);
+    expect(identical(addShake(food, 0, kcal: kcal, protein: protein, plant: false), food), isTrue);
+    expect(servingLabel(addShake(food, 1, kcal: kcal, protein: protein, plant: true).meals[2].items.first), '1 scoop plant protein in water');
+  });
 }

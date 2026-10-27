@@ -611,7 +611,7 @@ class _DietScreenState extends State<_DietScreen> {
     try {
       final [rows, diet] = await Future.wait<dynamic>([
         supabase.from('foods').select('code, name, tags, kcal, protein_g, carb_g, fat_g, fiber_g').inFilter('code', plannerCodes),
-        supabase.from('dietary_profiles').select('diet_type, diet_pace, budget_tier, budget_min_inr, budget_max_inr, cuisine_region').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
+        supabase.from('dietary_profiles').select('diet_type, diet_pace, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, restrictions, supplements').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
       ]);
       final tier = diet?['budget_tier'] as String?;
       final lo = diet?['budget_min_inr'] as int?, hi = diet?['budget_max_inr'] as int?;
@@ -650,11 +650,14 @@ class _DietScreenState extends State<_DietScreen> {
       ]);
     }
     final supps = ((food['supplements'] as List?) ?? const []).cast<_Json>();
+    final excluded = {...(food['excludedFoodTags'] as List).cast<String>()};
+    // Whey step of Build my plate (scoops kept on this device): the food is planned around the shakes.
+    final scoops = prefs.getInt(_scoopsKey) ?? 0;
     final WeekRequest request = (
       foods: foods,
-      kcal: kcal,
-      protein: protein,
-      excluded: {...(food['excludedFoodTags'] as List).cast<String>()},
+      kcal: kcal - scoopKcal * scoops,
+      protein: protein - scoopProtein * scoops,
+      excluded: excluded,
       custom: ((food['customExclusions'] as List?) ?? const []).cast<String>(),
       tier: _tier,
       soyaCapG: ((food['maxSoyaChunksDryG'] as num?) ?? 50).toDouble(),
@@ -672,7 +675,8 @@ class _DietScreenState extends State<_DietScreen> {
           const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: LevloMark(size: 48, animate: true))),
       ]);
     }
-    final plan = week[_day];
+    final plan = addShake(week[_day], scoops, kcal: kcal, protein: protein, plant: excluded.contains('dairy'));
+    final conditions = prefs.getStringList(_conditionsKey) ?? const <String>[];
     final short = protein - plan.protein;
     Widget macro(String label, double v, double? target, String unit) => Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -688,6 +692,17 @@ class _DietScreenState extends State<_DietScreen> {
       children: [
         _PlateChoices(choices: _choices, onTap: _openBuilder),
         const SizedBox(height: 12),
+        if (conditions.isNotEmpty) ...[
+          _Tile(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Text(
+              'You told Build my plate about ${conditions.map((k) => _conditionNames[k] ?? k).join(', ').toLowerCase()}. '
+              'This plan is not adjusted for ${conditions.length == 1 ? 'it' : 'them'}: show it to your doctor or a registered dietitian before you follow it.',
+              style: t.bodyMedium,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         // Day picker: each day rotates the foods so the week does not repeat.
         SizedBox(
           height: 44,
@@ -839,6 +854,26 @@ class _PlateChoices extends StatelessWidget {
   }
 }
 
+String get _scoopsKey => 'whey_scoops:${supabase.auth.currentUser?.id}';
+String get _conditionsKey => 'plate_conditions:${supabase.auth.currentUser?.id}';
+
+/// Health step of Build my plate. Lactose and gluten change the food list (dietary_profiles.restrictions); the
+/// others are not diets Levlofit can plan without a clinician, so the plan shows a see-your-doctor note instead.
+const _foodConditions = [
+  ('lactose', 'Lactose intolerance', 'Milk and paneer are left out; the protein shake becomes a plant protein'),
+  ('gluten', 'Gluten intolerance', 'Wheat is left out: rice, millets, idli and dosa instead'),
+];
+const _conditionNames = {
+  'diabetes': 'Diabetes',
+  'pcos': 'PCOD or PCOS',
+  'thyroid': 'A thyroid condition',
+  'hypertension': 'High blood pressure',
+  'cholesterol': 'High cholesterol',
+  'kidney': 'Kidney disease',
+  'ibs': 'IBS or gut problems',
+  'pregnancy': 'Pregnancy',
+};
+
 const _dietNames = {'vegetarian': 'Vegetarian', 'eggitarian': 'Eggitarian', 'non_vegetarian': 'Non-vegetarian', 'vegan': 'Vegan'};
 const _paceNames = {'easy': 'Easy', 'balanced': 'Balanced', 'hard': 'Hard'};
 const _paceOptions = [
@@ -865,11 +900,14 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
     'budget_tier': widget.choices['budget_tier'] == 'custom' ? null : widget.choices['budget_tier'],
     'diet_pace': widget.choices['diet_pace'] ?? 'balanced',
   };
+  late final Set<String> _restrictions = {...((widget.choices['restrictions'] as List?) ?? const []).cast<String>()};
+  late final Set<String> _conditions = {...?prefs.getStringList(_conditionsKey)};
+  late int _scoops = prefs.getInt(_scoopsKey) ?? 0;
   int _step = 0;
   bool _saving = false;
   String? _error;
 
-  static const _titles = ['Your numbers', 'Your regional food', 'How you eat', 'Your food budget', 'Your pace'];
+  static const _titles = ['Your numbers', 'Your regional food', 'How you eat', 'Your food budget', 'Health conditions', 'Protein powder', 'Your pace'];
 
   bool get _ready => switch (_step) { 2 => _d['diet_type'] != null, 3 => _d['budget_tier'] != null, _ => true };
 
@@ -880,7 +918,17 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
     });
     var saved = false;
     try {
-      await supabase.from('dietary_profiles').update({..._d, 'budget_min_inr': null, 'budget_max_inr': null}).eq('user_id', supabase.auth.currentUser!.id);
+      final supps = {...((widget.choices['supplements'] as List?) ?? const []).cast<String>()};
+      _scoops > 0 ? supps.add('protein_powder') : supps.remove('protein_powder');
+      await supabase.from('dietary_profiles').update({
+        ..._d,
+        'budget_min_inr': null,
+        'budget_max_inr': null,
+        'restrictions': _restrictions.toList(),
+        'supplements': supps.toList(),
+      }).eq('user_id', supabase.auth.currentUser!.id);
+      await prefs.setInt(_scoopsKey, _scoops);
+      await prefs.setStringList(_conditionsKey, _conditions.toList());
       saved = true;
       await supabase.functions.invoke('generate-plan');
       HapticFeedback.heavyImpact();
@@ -939,6 +987,42 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
             _ => 'Chicken, fish and eggs',
           })]),
       3 => _tiles('budget_tier', budgetOptions),
+      4 => [
+          Text('Optional. Pick any that apply.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 12),
+          for (final (k, title, sub) in _foodConditions) ...[
+            ChoiceTile(
+              title: title,
+              subtitle: sub,
+              selected: _restrictions.contains(k),
+              onTap: () => setState(() => _restrictions.contains(k) ? _restrictions.remove(k) : _restrictions.add(k)),
+            ),
+            const SizedBox(height: 10),
+          ],
+          for (final MapEntry(key: k, value: title) in _conditionNames.entries) ...[
+            ChoiceTile(
+              title: title,
+              subtitle: 'Your plan will ask you to check it with your doctor',
+              selected: _conditions.contains(k),
+              onTap: () => setState(() => _conditions.contains(k) ? _conditions.remove(k) : _conditions.add(k)),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ],
+      5 => [
+          Text('A shake is added to your evening snack and your meals are planned around it. Counted as a typical '
+              '30 g scoop: 120 kcal and 24 g protein; check your tub\'s label.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 12),
+          for (final (n, title, sub) in const [
+            (0, 'No protein powder', 'Protein from food only'),
+            (1, '1 scoop a day', 'About 24 g protein, 120 kcal'),
+            (2, '2 scoops a day', 'About 48 g protein, 240 kcal'),
+            (3, '3 scoops a day', 'About 72 g protein, 360 kcal'),
+          ]) ...[
+            ChoiceTile(title: title, subtitle: sub, selected: _scoops == n, onTap: () => setState(() => _scoops = n)),
+            const SizedBox(height: 10),
+          ],
+        ],
       _ => _tiles('diet_pace', _paceOptions),
     };
     return Scaffold(
