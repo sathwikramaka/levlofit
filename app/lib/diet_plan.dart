@@ -171,8 +171,8 @@ final _meals = <(String, String, List<_Slot>, double)>[
         'dish:vermicelli'], 60, 30, 150, _Scale.energy, floor: 20),
     // Eggs or paneer bhurji only when the day needs the protein; the breakfast dish and milk come first.
     _s(['M004', 'L003'], 0, 0, 150, _Scale.protein, floor: 0, dense: true),
-    _s(['L002'], 200, 200, 200, _Scale.fixed, step: 50, floor: 100),
-    _s(['E012', 'E049', 'E028', 'E001'], 120, 120, 120, _Scale.fixed, floor: 60),
+    _s(['L002'], 200, 200, 200, _Scale.fixed, step: 200, floor: 200),
+    _s(['E012', 'E049', 'E028', 'E001'], 120, 120, 120, _Scale.fixed, floor: 120),
   ], 0.2),
   ('Lunch', '1 pm', [
     _s(['A015'], 60, 40, 150, _Scale.energy, floor: 20),
@@ -183,8 +183,8 @@ final _meals = <(String, String, List<_Slot>, double)>[
   ], 0.4),
   ('Evening snack', '5 pm', [
     _s(['dish:sprouts', 'B002', 'H012'], 30, 20, 60, _Scale.protein),
-    _s(['E028', 'E047', 'E012', 'E049'], 120, 120, 120, _Scale.fixed, floor: 60),
-    _s(['L002'], 200, 200, 200, _Scale.fixed, step: 50, floor: 100), // a glass of milk or chaas for those who take dairy
+    _s(['E028', 'E047', 'E012', 'E049'], 120, 120, 120, _Scale.fixed, floor: 120),
+    _s(['L002'], 200, 200, 200, _Scale.fixed, step: 200, floor: 0), // a glass of milk or chaas for those who take dairy; left out, never halved, on a tight day
   ], 0.0),
   ('Dinner', '8 pm', [
     _s(['A019', 'A005', 'A003'], 60, 30, 150, _Scale.energy, floor: 20),
@@ -194,6 +194,23 @@ final _meals = <(String, String, List<_Slot>, double)>[
     // second dinner dish (a katori of dal or soya curry), never as a 5 pm curry.
     _s(['M004', 'X001', 'L003', 'B013', 'B010', 'B021'], 0, 0, 100, _Scale.protein, floor: 0, dense: true),
   ], 0.4),
+];
+
+/// Daily food budget as rupee ranges, asked with the diet type (onboarding, protocol, Build my plate). The bands match
+/// [budgetTier]'s custom-range cut-offs. (dietary_profiles.budget_tier, title, what it adds)
+const budgetOptions = [
+  ('low', 'Under Rs 150 a day', 'Dals, grains, eggs, milk and seasonal vegetables and fruit'),
+  ('medium', 'Rs 150 to 300 a day', 'Adds paneer, chicken, fish, apples and oranges'),
+  ('high', 'Over Rs 300 a day', 'Every food in the planner'),
+];
+
+/// Regional cuisine for the meal plan (dietary_profiles.cuisine_region, title, typical dishes).
+const regionOptions = [
+  ('north', 'North Indian', 'Roti, dal, paneer, chilla'),
+  ('south', 'South Indian', 'Idli, dosa, rice, dal'),
+  ('east', 'East Indian', 'Rice, fish, poha'),
+  ('west', 'West Indian', 'Thepla, poha, bhakri'),
+  ('any', 'Mixed', 'A bit of every region'),
 ];
 
 /// Budget tier from the protocol: low, medium, high, or the user's own rupee range. For a custom range the
@@ -272,7 +289,11 @@ PlanItem _item(Food f, double g) {
 typedef _Pick = (int, _Slot, Food); // meal index, slot, food
 
 /// One whole boiled egg is counted as 50 g (a Levlofit kitchen convention), so egg portions move in whole eggs.
-double _stepFor(String code, _Slot s) => code == 'M004' ? 50 : s.step;
+double _stepFor(String code, _Slot s) => code == 'M004' ? 50 : (_wholePieces.contains(code) ? _servings[code]!.$1 : s.step);
+
+/// Foods served as whole pieces (rotis, bhakris, idlis, dosas, chillas, theplas): portions move one piece at a time,
+/// so a plan never says "½ roti".
+const _wholePieces = {'A019', 'A005', 'A003', 'A010', 'dish:idli', 'dish:dosa', 'dish:ragi-dosa', 'dish:besan-chilla', 'dish:moong-chilla', 'dish:thepla'};
 
 /// Largest portion of [code] in slot [s]: fixed slots stop at their usual amount, others at the slot or food cap.
 double _capFor(String code, _Slot s) => s.scale == _Scale.fixed ? s.base : math.min(s.max, _maxPortion[code] ?? double.infinity);
