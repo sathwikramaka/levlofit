@@ -93,6 +93,16 @@ Map<String, Food> plannerFoods(Iterable<Map<String, dynamic>> rows) {
   };
 }
 
+/// Everyday staples by region (owner request 2026-10-27): Levlofit's own grouping of the planner's grains, dals and
+/// fish, used as a preference in the weekday rotation, never as a rule. 'any' (or null) mixes all regions.
+const cuisineRegions = ['any', 'north', 'south', 'east', 'west'];
+const regionStaples = <String, Set<String>>{
+  'north': {'A019', 'A003', 'B020', 'B002', 'L003'},
+  'south': {'A015', 'A010', 'B021', 'B010'},
+  'east': {'A015', 'A011', 'B013', 'S006'},
+  'west': {'A005', 'A003', 'A011', 'B010', 'B021'},
+};
+
 enum _Scale { protein, energy, fixed }
 
 /// [prefer]: rotate among the first n allowed codes when any of them fit the diet (lean proteins first).
@@ -379,7 +389,9 @@ DayPlan planDay({
   int day = 0,
   double soyaCapG = 50,
   bool proteinPowder = false,
+  String? region,
 }) {
+  final regional = regionStaples[region] ?? const <String>{};
   bool allowed(String code, int maxTier) => _allowed(foods, code, tier: maxTier, excluded: excluded, custom: custom, soyaCapG: soyaCapG);
   bool ok(String code) => allowed(code, tier);
   double density(Food f) => f.kcal <= 0 ? 0 : f.protein / f.kcal;
@@ -417,7 +429,8 @@ DayPlan planDay({
           continue;
         }
         final preferred = slot.codes.take(slot.prefer).where(ok).toList();
-        final pool = preferred.isEmpty ? all : preferred;
+        final local = (preferred.isEmpty ? all : preferred).where(regional.contains).toList();
+        final pool = local.isNotEmpty ? local : (preferred.isEmpty ? all : preferred);
         picks.add((mi, slot, foods[pool[(day + si + mi) % pool.length]]!));
       }
     }
@@ -748,6 +761,7 @@ typedef WeekRequest = ({
   int tier,
   double soyaCapG,
   bool proteinPowder,
+  String? region,
 });
 
 /// A key over every input that changes a week: each food's full values and whether its fat is known (name included, since exclusion words
@@ -759,7 +773,7 @@ String weekKey(WeekRequest r) {
     return [c, f.name, (f.tags.toList()..sort()).join('+'), f.kcal, f.protein, f.carb, f.fat, f.fiber, f.fatKnown].join(':');
   }).join(',');
   final custom = r.custom.map((c) => c.trim().toLowerCase()).where((c) => c.isNotEmpty).toSet().toList()..sort();
-  return [foods, r.kcal, r.protein, (r.excluded.toList()..sort()).join('+'), custom.join('+'), r.tier, r.soyaCapG, r.proteinPowder].join('|');
+  return [foods, r.kcal, r.protein, (r.excluded.toList()..sort()).join('+'), custom.join('+'), r.tier, r.soyaCapG, r.proteinPowder, r.region ?? 'any'].join('|');
 }
 
 /// The seven days (index 0 = Monday) for one request. Top-level and pure, so it can run in a background isolate.
@@ -775,6 +789,7 @@ List<DayPlan> planWeek(WeekRequest r) => [
           day: day,
           soyaCapG: r.soyaCapG,
           proteinPowder: r.proteinPowder,
+          region: r.region,
         ),
     ];
 

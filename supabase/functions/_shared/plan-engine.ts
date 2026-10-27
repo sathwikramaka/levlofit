@@ -12,7 +12,7 @@
 // foundation phase: only the main goal, plus the WHO strength minimum. Extra goals unlock one at a time as the
 // main goal climbs (Level 2 unlocks one, Level 3 a second); anything beyond waits, with the reason shown.
 
-export const ENGINE_VERSION = '3.0.0';
+export const ENGINE_VERSION = '3.1.0';
 export const MAX_GOALS = 6; // one primary + up to five optional extras
 
 // Goals live in the goal_catalog table; generate-plan passes each goal's kind and coach rule in.
@@ -24,6 +24,8 @@ export const WEIGHT_GOALS = ['cut', 'bulk', 'recomp', 'maintain', 'general'] as 
 export const SEXES = ['male', 'female'] as const;
 export const BODY_TYPES = ['lean', 'average', 'extra_fat', 'muscular', 'slim_soft'] as const;
 export const ACTIVITY = ['sedentary', 'light', 'active', 'very_active'] as const;
+export const PACES = ['easy', 'balanced', 'hard'] as const;
+export type Pace = (typeof PACES)[number];
 export const EQUIPMENT = ['none', 'home', 'gym', 'custom'] as const;
 export const HEALTH_FLAGS = ['heart_condition', 'chest_pain', 'dizziness', 'pregnancy', 'other_medical'] as const;
 export const SUPPLEMENTS = ['protein_powder', 'creatine'] as const;
@@ -70,6 +72,7 @@ export interface PlanInput {
   equipment?: Equipment;
   equipmentItems?: string[];
   supplements?: Supplement[]; // what the user is willing to use
+  pace?: Pace; // how far a cut or bulk moves from maintenance (balanced when absent)
 }
 
 export type FindingLevel = 'stop' | 'change' | 'advice' | 'info';
@@ -157,6 +160,14 @@ const PROTEIN_RANGE: [number, number] = [1.4, 2.0];
 // diets and body composition) supports a sustained deficit for fat loss, larger when body fat is higher, and a
 // surplus for lean gain, but gives no percentages; Helms 2014 suggests losing about 0.5-1% of body weight a week.
 const ENERGY_FACTOR: Record<WeightGoal, number> = { cut: 0.85, bulk: 1.1, recomp: 1.0, maintain: 1.0, general: 1.0 };
+// Pace (3.1.0, owner request 2026-10-27) moves only a cut or a bulk; balanced is the 3.0 factor. A 10-20% deficit
+// and a 5-15% surplus stay inside the rates the diet sources support (SRC.issnDiet).
+const PACE_FACTOR: Record<'cut' | 'bulk', Record<Pace, number>> = {
+  cut: { easy: 0.9, balanced: 0.85, hard: 0.8 },
+  bulk: { easy: 1.05, balanced: 1.1, hard: 1.15 },
+};
+// Levlofit rule: a cut never goes below 1,200 kcal (women) or 1,500 kcal (men) a day, nor above maintenance.
+export const CUT_FLOOR_KCAL = { female: 1200, male: 1500 } as const;
 
 // Standard activity multipliers used with Mifflin-St Jeor. The higher of the training-based and
 // the lifestyle-based factor is used, so an active job is not ignored and nothing is counted twice.
@@ -282,6 +293,7 @@ export function validateInput(raw: unknown): PlanInput {
     equipment: optOneOf('equipment', EQUIPMENT),
     equipmentItems: x.equipmentItems == null ? undefined : textList('equipmentItems', 20, 40),
     supplements: x.supplements == null ? undefined : listOf('supplements', SUPPLEMENTS),
+    pace: optOneOf('pace', PACES),
   };
   for (const [k, v] of Object.entries(optional)) if (v !== undefined) (input as unknown as Record<string, unknown>)[k] = v;
   return input;
@@ -597,8 +609,11 @@ export function generatePlan(input: PlanInput): Plan {
   // Standard physical-activity multipliers for 1-3, 3-5 and 6-7 training days a week.
   const trainingFactor = trainingDaysPerWeek <= 3 ? 1.375 : trainingDaysPerWeek <= 5 ? 1.55 : 1.725;
   const activity = Math.max(trainingFactor, input.dailyActivity ? ACTIVITY_FACTOR[input.dailyActivity] : 0);
-  // Safety floor: never prescribe intake below estimated BMR.
-  const energy = Math.max(bmr, bmr * activity * ENERGY_FACTOR[weightGoal]);
+  const maintenance = bmr * activity;
+  const factor = weightGoal === 'cut' || weightGoal === 'bulk' ? PACE_FACTOR[weightGoal][input.pace ?? 'balanced'] : ENERGY_FACTOR[weightGoal];
+  // Safety floors: never below estimated BMR; a cut never below the sex floor (capped at maintenance).
+  let energy = Math.max(bmr, maintenance * factor);
+  if (weightGoal === 'cut') energy = Math.max(energy, Math.min(CUT_FLOOR_KCAL[input.sex], maintenance));
 
   const proteinPerKg = Math.min(PROTEIN_RANGE[1], Math.max(PROTEIN_RANGE[0], PROTEIN_PER_KG[weightGoal]));
   const proteinG = Math.round(input.weightKg * proteinPerKg);

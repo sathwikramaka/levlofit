@@ -82,4 +82,22 @@ void main() {
     expect(budgetTier('custom', 250), 2);
     expect(budgetTier('custom', 500), 3);
   });
+
+  test('regional staples are preferred, never forced', () {
+    int regionalCount(String? region, Set<String> staples) {
+      var n = 0;
+      for (var day = 0; day < 7; day++) {
+        final p = planDay(foods: foodsForTest, kcal: 2300, protein: 120, excluded: {'beef', 'pork'}, day: day, region: region);
+        expect(p.meals.expand((m) => m.items), isNotEmpty);
+        n += p.meals.expand((m) => m.items).where((i) => staples.contains(i.code)).length;
+      }
+      return n;
+    }
+
+    for (final region in ['north', 'south', 'east', 'west']) {
+      final staples = regionStaples[region]!;
+      expect(regionalCount(region, staples), greaterThanOrEqualTo(regionalCount(null, staples)), reason: region);
+    }
+    expect(regionalCount('south', regionStaples['south']!), greaterThan(regionalCount(null, regionStaples['south']!)));
+  });
 }

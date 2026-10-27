@@ -370,7 +370,7 @@ class _OnboardingState extends State<Onboarding> {
           automaticallyImplyLeading: false,
           titleSpacing: canGoBack || canClose ? 0 : 24,
           title: Semantics(
-            label: 'Question ${_index + 1} of $questions',
+            label: _step == _Step.review ? 'Plan review' : 'Question ${_index + 1} of $questions',
             child: ClipRRect(
               borderRadius: BorderRadius.circular(2),
               child: TweenAnimationBuilder<double>(

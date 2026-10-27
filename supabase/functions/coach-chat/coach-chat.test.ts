@@ -854,9 +854,9 @@ test('food exclusions typed by the user are capped like the plan engine (10 item
   assert.ok(!terms.includes('food9') && terms.includes('food8'), 'only the first 10 entries are used');
 });
 
-test('rate limits: rate.ts lists exactly the limits the database enforces (migration 20261013100000)', async () => {
+test('rate limits: rate.ts lists exactly the limits the database enforces (latest check_rate, 20261027200000)', async () => {
   const { LIMITS } = await import('../_shared/rate.ts');
-  const sql = readFileSync(new URL('../../migrations/20261013100000_reliability_and_limits.sql', import.meta.url), 'utf8');
+  const sql = readFileSync(new URL('../../migrations/20261027200000_body_check_rate.sql', import.meta.url), 'utf8');
   const rows = [...sql.matchAll(/\('([a-z_]+)', (\d+), interval '([^']+)'\)/g)].map((m) => `${m[1]} ${m[2]} ${m[3]}`).sort();
   assert.deepEqual(rows, Object.values(LIMITS).map((l) => `${l.bucket} ${l.limit} ${l.window}`).sort());
 });

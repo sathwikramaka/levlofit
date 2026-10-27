@@ -12,6 +12,7 @@ const dashboardCards = <String, String>{
   'rings': 'Weekly rings',
   'today': "Today's session",
   'rewards': 'Daily goal and streak',
+  'levelup': 'Level, rating and 66-day challenge',
   'week': 'This week',
   'hydration': 'Water',
   'habits': 'Habits',

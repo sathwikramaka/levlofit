@@ -65,6 +65,9 @@ void main() {
   });
 
   testWidgets('a muscle group shows its evidence note with the study', (tester) async {
+    tester.view.physicalSize = const Size(390, 3200) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
     GoogleFonts.config.allowRuntimeFetching = false;
     await tester.pumpWidget(const MaterialApp(home: ExerciseLibraryScreen()));
     await tester.pump(const Duration(seconds: 1));
@@ -90,6 +93,9 @@ void main() {
   });
 
   testWidgets('library shows regions and moves for a muscle group', (tester) async {
+    tester.view.physicalSize = const Size(390, 3200) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
     GoogleFonts.config.allowRuntimeFetching = false;
     await tester.pumpWidget(const MaterialApp(home: ExerciseLibraryScreen()));
     await tester.pump(const Duration(seconds: 1));

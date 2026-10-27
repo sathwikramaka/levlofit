@@ -2,7 +2,7 @@
 // Guards every cited bound. A failure here means a plan would ship outside the science.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { bmiCategory, buildRoadmap, DIETS, EXPERIENCE, type Experience, generatePlan, type GoalInput, validateInput, WEIGHT_GOALS, type PlanInput } from './plan-engine.ts';
+import { bmiCategory, CUT_FLOOR_KCAL, buildRoadmap, DIETS, EXPERIENCE, type Experience, generatePlan, type GoalInput, validateInput, WEIGHT_GOALS, type PlanInput } from './plan-engine.ts';
 
 // Fixture mirroring goal_catalog rows: every session kind, plus coach-led combat.
 const CATALOG: Omit<GoalInput, 'experience'>[] = [
@@ -304,4 +304,24 @@ test('properties: across 600 random valid inputs, energy never falls below BMR, 
     }
     assert.ok(plan.trainingDaysPerWeek >= 1 && plan.trainingDaysPerWeek <= 7, `${at}: ${plan.trainingDaysPerWeek} days`);
   }
+});
+
+test('pace moves only cut and bulk energy; balanced matches 3.0', () => {
+  const kcal = (weightGoal: 'cut' | 'bulk' | 'maintain', pace?: 'easy' | 'balanced' | 'hard') =>
+    generatePlan({ ...base, weightGoal, ...(pace ? { pace } : {}) }).nutrition.energyKcal;
+  assert.equal(kcal('cut', 'balanced'), kcal('cut'));
+  assert.ok(kcal('cut', 'easy') > kcal('cut', 'balanced') && kcal('cut', 'balanced') > kcal('cut', 'hard'));
+  assert.ok(kcal('bulk', 'easy') < kcal('bulk', 'balanced') && kcal('bulk', 'balanced') < kcal('bulk', 'hard'));
+  assert.equal(kcal('maintain', 'hard'), kcal('maintain', 'easy'));
+  assert.equal(validateInput({ ...base, pace: 'hard' }).pace, 'hard');
+  assert.throws(() => validateInput({ ...base, pace: 'extreme' }));
+});
+
+test('a cut never drops below the sex floor, and the floor never exceeds maintenance', () => {
+  // Small, older, sedentary woman: 0.8 x maintenance would fall under 1,200 kcal.
+  const small = { ...base, sex: 'female' as const, weightKg: 45, heightCm: 150, ageYears: 60, weightGoal: 'cut' as const, pace: 'hard' as const, dailyActivity: 'sedentary' as const };
+  const cut = generatePlan(small).nutrition.energyKcal;
+  const maintain = generatePlan({ ...small, weightGoal: 'maintain' }).nutrition.energyKcal;
+  assert.ok(cut >= Math.min(CUT_FLOOR_KCAL.female, maintain) - 1, `cut ${cut}, maintenance ${maintain}`);
+  assert.ok(cut <= maintain);
 });

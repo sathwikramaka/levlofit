@@ -15,6 +15,7 @@ export const LIMITS = {
   chatHour: { bucket: 'coach_chat_hour', limit: 30, window: '1 hour' },
   chatDay: { bucket: 'coach_chat_day', limit: 150, window: '1 day' },
   planDay: { bucket: 'generate_plan_day', limit: 20, window: '1 day' },
+  bodyCheckDay: { bucket: 'body_check_day', limit: 3, window: '1 day' },
 } satisfies Record<string, Limit>;
 
 /** 'ok' to continue, 'limited' when the caller is over a limit. Checks the limits in order and stops at the first hit. */

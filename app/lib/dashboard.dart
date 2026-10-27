@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'account.dart';
 import 'avatar.dart';
+import 'body_check.dart';
 import 'coach_chat.dart';
 import 'diet_plan.dart';
 import 'exercises.dart';
@@ -25,6 +26,7 @@ import 'move_animation.dart' show DemoFigure, demoFigure;
 import 'onboarding.dart';
 import 'dashboard_layout.dart';
 import 'reminders.dart';
+import 'level_up.dart';
 import 'rewards.dart';
 import 'session.dart';
 import 'steps.dart' show StepsCard, healthPermissionScreenRequested, onHealthRationale;
@@ -202,10 +204,11 @@ class _DashboardState extends State<Dashboard> {
     final results = await Future.wait<Object?>([
       supabase.from('curriculum_levels').select('goal, level, title, practice, advance_when, coach_recommended, source').inFilter('goal', [for (final g in goals) g['goal']]),
       _proteinSources(plan),
-      supabase.from('workout_logs').select('performed_on, duration_min').eq('user_id', _uid).gte('performed_on', _iso(_monday(now).subtract(const Duration(days: 49)))),
+      // 7 weeks for the rings and week strip, and at least a full 66-day challenge for Level up.
+      supabase.from('workout_logs').select('performed_on, duration_min').eq('user_id', _uid).gte('performed_on', _iso(_day(now).subtract(const Duration(days: levelUpWindow + 7)))),
       supabase.from('goal_levels').select('goal').eq('user_id', _uid),
-      supabase.from('water_intake').select('taken_at, ml').eq('user_id', _uid).gte('taken_at', _day(now).subtract(const Duration(days: 29)).toUtc().toIso8601String()),
-      supabase.from('habit_logs').select('day, habit').eq('user_id', _uid).gte('day', _iso(_day(now).subtract(const Duration(days: 29)))),
+      supabase.from('water_intake').select('taken_at, ml').eq('user_id', _uid).gte('taken_at', _day(now).subtract(const Duration(days: levelUpWindow - 1)).toUtc().toIso8601String()),
+      supabase.from('habit_logs').select('day, habit').eq('user_id', _uid).gte('day', _iso(_day(now).subtract(const Duration(days: levelUpWindow - 1)))),
       loadSwaps(_iso(now)), // never fails: an empty map shows the session as planned
       loadLighter(_iso(now)), // never fails: false keeps the planned doses
       loadSessionMoves(_iso(_monday(now)), _iso(_monday(now).add(const Duration(days: 6)))), // never fails: empty keeps the plan's days
@@ -680,6 +683,22 @@ class _Bento extends StatelessWidget {
               onCelebrated: onCelebrated,
               onChoose: onChooseTasks,
             ),
+          'levelup' => () {
+              bool complete(DateTime d) => dayComplete(tasks, dailyTasks, d);
+              bool waterMet(DateTime d) => (data.water[d] ?? 0) >= waterTarget(data.profile);
+              final from = today.subtract(const Duration(days: levelUpWindow - 1));
+              final window = [for (var d = from; !d.isAfter(today); d = d.add(const Duration(days: 1))) d];
+              return LevelUpCard(
+                xp: xpFor(
+                  sessions: logged.where((d) => !d.isBefore(from)).length,
+                  completeDays: window.where(complete).length,
+                  waterDays: window.where(waterMet).length,
+                  activeMinutes: minutes.entries.where((e) => !e.key.isBefore(from)).fold(0, (s, e) => s + e.value),
+                ),
+                ratings: ratingsFor(today: today, trained: logged, minutes: minutes, sessionsPerWeek: perWeek, waterMet: waterMet, dayComplete: complete),
+                dayComplete: complete,
+              );
+            }(),
           'week' => _WeekStrip(monday: monday, today: today, dayGoal: dayGoal, logged: logged, streak: streak),
           'hydration' => _HydrationTile(ml: data.water[today] ?? 0, target: waterTarget(data.profile, training: isTrainingDay), onAdd: onAddWater, onOpen: () => onOpen(_Tab.hydration)),
           'habits' => _HabitsTile(

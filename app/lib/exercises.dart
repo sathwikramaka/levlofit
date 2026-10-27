@@ -15,6 +15,7 @@ import 'icons.dart';
 import 'main.dart';
 import 'move_animation.dart';
 import 'move_animations.dart';
+import 'muscle_map.dart';
 import 'theme.dart';
 
 typedef _Json = Map<String, dynamic>;
@@ -746,28 +747,60 @@ class _Versions extends StatelessWidget {
 }
 
 /// Browse the moves Levlofit prescribes by muscle group, with the anatomical regions of each group.
-class _MuscleGuide extends StatelessWidget {
+class _MuscleGuide extends StatefulWidget {
   const _MuscleGuide({required this.group, required this.onGroup});
   final String? group;
   final ValueChanged<String> onGroup;
 
   @override
+  State<_MuscleGuide> createState() => _MuscleGuideState();
+}
+
+class _MuscleGuideState extends State<_MuscleGuide> {
+  String? _equipment, _difficulty;
+
+  Widget _chips(List<String> options, String? value, ValueChanged<String?> onChanged) => Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final o in options)
+            ChoiceChip(label: Text(o), selected: value == o, showCheckmark: false, onSelected: (_) => onChanged(value == o ? null : o)),
+        ],
+      );
+
+  @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final c = Theme.of(context).colorScheme;
-    final g = group;
+    final g = widget.group;
+    final filtering = g != null || _equipment != null || _difficulty != null;
+    final moves = filtering ? filteredMoves(group: g, equipment: _equipment, difficulty: _difficulty) : const <(String, MoveGuide)>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('LEVLOFIT MOVES BY MUSCLE', style: monoLabel(context)),
-        const SizedBox(height: 10),
+        const SizedBox(height: 4),
+        Text('Tap a muscle on the body, or pick a group below.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        const SizedBox(height: 12),
+        Center(child: SizedBox(width: 180, child: MuscleMap(selected: g, onGroup: widget.onGroup))),
+        const SizedBox(height: 16),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (final name in muscleRegions.keys) ChoiceChip(label: Text(name), selected: g == name, showCheckmark: false, onSelected: (_) => onGroup(name)),
+            for (final name in muscleRegions.keys) ChoiceChip(label: Text(name), selected: g == name, showCheckmark: false, onSelected: (_) => widget.onGroup(name)),
           ],
         ),
+        const SizedBox(height: 14),
+        Text('EQUIPMENT', style: monoLabel(context)),
+        const SizedBox(height: 8),
+        _chips(equipmentKinds, _equipment, (v) => setState(() => _equipment = v)),
+        const SizedBox(height: 14),
+        Text('DIFFICULTY', style: monoLabel(context)),
+        const SizedBox(height: 8),
+        _chips(difficultyLevels, _difficulty, (v) => setState(() => _difficulty = v)),
+        const SizedBox(height: 4),
+        Text("Levlofit's own rating of how much strength or skill a first try needs.", style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
         if (g != null) ...[
           const SizedBox(height: 14),
           if (muscleRegions[g]!.isNotEmpty) ...[
@@ -781,13 +814,19 @@ class _MuscleGuide extends StatelessWidget {
             Text('Study: ${n.source}', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             const SizedBox(height: 8),
           ],
-          for (final (id, m) in movesIn(g))
+        ],
+        if (filtering) ...[
+          const SizedBox(height: 8),
+          if (moves.isEmpty) Text('No moves match these filters. Clear one to see more.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+          for (final (id, m) in moves)
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(m.name),
-              subtitle: m.main.isEmpty
-                  ? const Text('Conditioning: many muscles at once')
-                  : Text('${m.group == 'Mobility' ? 'Stretches ' : ''}${m.main.join('  ·  ')}'),
+              subtitle: Text([
+                if (m.main.isEmpty) 'Conditioning: many muscles at once' else '${m.group == 'Mobility' ? 'Stretches ' : ''}${m.main.join('  ·  ')}',
+                '${difficultyOf(id)}  ·  ${equipmentKind(m)}',
+              ].join('\n')),
+              isThreeLine: true,
               trailing: const Icon(LvIcons.caretRight, size: 16),
               onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ExerciseScreen(id: id))),
             ),

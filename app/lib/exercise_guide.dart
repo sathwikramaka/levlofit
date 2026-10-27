@@ -139,6 +139,44 @@ const evidenceNotes = <String, List<({String text, String source})>>{
   ],
 };
 
+/// Equipment filter for guide moves, from each move's equipment line. A null line means gym kit (barbell, cable or
+/// machine versions), so it files under Gym.
+const equipmentKinds = ['Bodyweight', 'Dumbbells', 'Kettlebell', 'Bars', 'Gym'];
+
+String equipmentKind(MoveGuide g) {
+  final e = g.equipment;
+  if (e == null) return 'Gym';
+  if (e.contains('Dumbbell')) return 'Dumbbells';
+  if (e.contains('Kettlebell')) return 'Kettlebell';
+  if (e == 'Pull-up bar' || e == 'Dip bars') return 'Bars';
+  return 'Bodyweight';
+}
+
+/// Levlofit's own difficulty rating per move (owner request 2026-10-27, pending coach review): how much strength,
+/// skill or load a first attempt needs. Not a study claim. Unlisted moves are intermediate.
+const difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'];
+const _beginnerMoves = {
+  'B1EVP9F', 'RVwzP10', 'fUBheHs', 'BJ0Hz5L', 'znQUdHY', 'QChZi3x', 'yn8yg1r', 'RRWFUcw', 'IZVHb27', 'aXtJhlg', 'u0cNiij',
+  'iny3m5y', 'bJYHBIN', 'oLrKqDH', '9RT8oQW', 'wd4ds3s', 'ealLwvX', 'DIVyqrU', '01qpYSe', 'bWlZvXh', 'HIgYKAB', 'K5xgdvI',
+  '2jl9K55', '6sYyrRX', '99rWm7w', 'DeDThfG', 'f38OEuO', 'JbC2iaV', '2Dk4xQV',
+};
+const _advancedMoves = {'lBDjFxJ', 'ila4NZS', 'I3tsCnC', '9WTm7dq'};
+
+String difficultyOf(String id) => _beginnerMoves.contains(id) ? 'Beginner' : (_advancedMoves.contains(id) ? 'Advanced' : 'Intermediate');
+
+/// Guide moves matching every filter given (null = any), in guide order, one per name.
+List<(String id, MoveGuide g)> filteredMoves({String? group, String? equipment, String? difficulty}) {
+  final seen = <String>{};
+  return [
+    for (final e in moveGuide.entries)
+      if ((group == null || e.value.group == group) &&
+          (equipment == null || equipmentKind(e.value) == equipment) &&
+          (difficulty == null || difficultyOf(e.key) == difficulty) &&
+          seen.add(e.value.name))
+        (e.key, e.value),
+  ];
+}
+
 /// Guide moves in a muscle group, in the order the guide lists them, one per name.
 List<(String id, MoveGuide g)> movesIn(String group) {
   final seen = <String>{};

@@ -20,7 +20,7 @@ const _profiles = <_Profile>[
 ];
 
 List<DayPlan> _week(_Profile p, [Map<String, Food>? foods]) =>
-    planWeek((foods: foods ?? foodsForTest, kcal: p.kcal, protein: p.protein, excluded: p.excluded, custom: const [], tier: p.tier, soyaCapG: 50, proteinPowder: false));
+    planWeek((foods: foods ?? foodsForTest, kcal: p.kcal, protein: p.protein, excluded: p.excluded, custom: const [], tier: p.tier, soyaCapG: 50, proteinPowder: false, region: null));
 
 /// The fixture with one food's fat value missing (as a null fat_g from the food table would give).
 Map<String, Food> _withoutFat(String code) {
@@ -147,7 +147,7 @@ void main() {
 
   test('the week cache key changes when only the fat-known state changes', () {
     WeekRequest req(Map<String, Food> foods) =>
-        (foods: foods, kcal: 2300.0, protein: 112.0, excluded: const {'beef', 'pork'}, custom: const <String>[], tier: 2, soyaCapG: 50.0, proteinPowder: false);
+        (foods: foods, kcal: 2300.0, protein: 112.0, excluded: const {'beef', 'pork'}, custom: const <String>[], tier: 2, soyaCapG: 50.0, proteinPowder: false, region: null);
     final f = foodsForTest['T012']!;
     Food oil(Object? fat) => foodFromRow({'code': f.code, 'name': f.name, 'tags': f.tags, 'kcal': f.kcal, 'protein_g': 0, 'carb_g': 0, 'fat_g': fat, 'fiber_g': 0});
     final known0 = {...foodsForTest, 'T012': oil(0)}, unknown = {...foodsForTest, 'T012': oil(null)};
