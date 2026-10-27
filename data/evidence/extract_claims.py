@@ -315,7 +315,7 @@ def check(module, claims: list[dict], sources: list[dict], strict: bool = False)
     return errors, {"per_chapter": per, "total": total}
 
 
-PASSAGES_JSON = HERE.parent.parent / "supabase" / "functions" / "_shared" / "handbook-passages.json"
+PASSAGES_JSON = HERE / "handbook-passages.json"   # v3 record; coach-chat ships the v4 file (data/handbook_v4/test_book.py)
 
 
 NAV_BLOCKS = {"next", "part"}

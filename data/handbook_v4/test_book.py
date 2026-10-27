@@ -11,7 +11,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 PROD = [ROOT / "data" / "build_handbook.py", ROOT / "supabase" / "migrations" / "20261007400000_handbook_v3.sql",
-        ROOT / "supabase" / "functions" / "_shared" / "handbook-passages.json", ROOT / "data" / "evidence" / "claims_register.csv"]
+        ROOT / "data" / "evidence" / "handbook-passages.json", ROOT / "data" / "evidence" / "claims_register.csv"]
+PASSAGES = ROOT / "supabase" / "functions" / "_shared" / "handbook-passages.json"   # v4 passages ship with coach-chat
 
 
 def load(path, name):
@@ -126,7 +127,7 @@ class Book(unittest.TestCase):
 
     def test_retrieval_passages_hold_no_navigation(self):
         import json
-        ps = json.loads((HERE / "handbook-passages.json").read_text(encoding="utf-8"))["passages"]
+        ps = json.loads(PASSAGES.read_text(encoding="utf-8"))["passages"]
         self.assertFalse([p["id"] for p in ps if p["blockType"] in ("next", "part")])
 
     def test_open_decisions_flag_dependent_text(self):
@@ -220,7 +221,7 @@ class Book(unittest.TestCase):
     def test_register_passes_its_check(self):
         p = subprocess.run([sys.executable, "-I", str(ROOT / "data" / "evidence" / "extract_claims.py"), "--check",
                             "--builder", str(HERE / "build_handbook_v4.py"), "--claims", str(HERE / "claims_register.csv"),
-                            "--sources", str(HERE / "sources_register.csv"), "--passages", str(HERE / "handbook-passages.json")],
+                            "--sources", str(HERE / "sources_register.csv"), "--passages", str(PASSAGES)],
                            capture_output=True, text=True)
         self.assertEqual(p.returncode, 0, p.stdout[-800:] + p.stderr[-800:])
 
