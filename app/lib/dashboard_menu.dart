@@ -614,14 +614,16 @@ class _DietScreenState extends State<_DietScreen> {
         supabase.from('dietary_profiles').select('diet_type, diet_pace, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, restrictions, supplements').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
       ]);
       final tier = diet?['budget_tier'] as String?;
-      final lo = diet?['budget_min_inr'] as int?, hi = diet?['budget_max_inr'] as int?;
+      final hi = diet?['budget_max_inr'] as int?;
       if (!mounted) return;
       setState(() {
         _foods = plannerFoods((rows as List).cast<Map<String, dynamic>>());
         _tier = budgetTier(tier, hi);
         _region = diet?['cuisine_region'] as String?;
         _choices = Map.of((diet as _Json?) ?? const {});
-        _budget = tier == 'custom' ? 'your range, ${lo == null ? '' : 'Rs $lo to '}Rs ${hi ?? '-'} a day' : switch (tier) { 'low' => 'low', 'high' => 'high', _ => 'medium' };
+        _budget = tier == 'custom' && hi != null
+            ? rupeesAMonth(monthlyFromDaily(hi))
+            : budgetOptions.where((o) => o.$1 == tier).firstOrNull?.$2 ?? budgetOptions[1].$2;
       });
     } catch (_) {
       if (mounted) setState(() => _error = 'Could not load your meal plan. Check your connection.');
@@ -835,7 +837,9 @@ class _PlateChoices extends StatelessWidget {
     final line = [
       pick(regionOptions, choices['cuisine_region'] ?? 'any'),
       _dietNames[choices['diet_type']] ?? '',
-      choices['budget_tier'] == 'custom' ? 'My own budget' : pick(budgetOptions, choices['budget_tier']),
+      choices['budget_tier'] == 'custom' && choices['budget_max_inr'] != null
+          ? rupeesAMonth(monthlyFromDaily(choices['budget_max_inr'] as int))
+          : pick(budgetOptions, choices['budget_tier']),
       '${_paceNames[choices['diet_pace'] ?? 'balanced']} pace',
     ].where((s) => s.isNotEmpty).join('  ·  ');
     return _Tile(
@@ -897,19 +901,33 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
   late final _Json _d = {
     'cuisine_region': widget.choices['cuisine_region'] ?? 'any',
     'diet_type': widget.choices['diet_type'],
-    'budget_tier': widget.choices['budget_tier'] == 'custom' ? null : widget.choices['budget_tier'],
+    'budget_tier': widget.choices['budget_tier'],
     'diet_pace': widget.choices['diet_pace'] ?? 'balanced',
   };
   late final Set<String> _restrictions = {...((widget.choices['restrictions'] as List?) ?? const []).cast<String>()};
   late final Set<String> _conditions = {...?prefs.getStringList(_conditionsKey)};
   late int _scoops = prefs.getInt(_scoopsKey) ?? 0;
+  late final _monthly = TextEditingController(
+      text: widget.choices['budget_max_inr'] == null ? '' : '${monthlyFromDaily(widget.choices['budget_max_inr'] as int)}');
   int _step = 0;
   bool _saving = false;
   String? _error;
 
+  int? get _ownMonthly => int.tryParse(_monthly.text.trim());
+
+  @override
+  void dispose() {
+    _monthly.dispose();
+    super.dispose();
+  }
+
   static const _titles = ['Your numbers', 'Your regional food', 'How you eat', 'Your food budget', 'Health conditions', 'Protein powder', 'Your pace'];
 
-  bool get _ready => switch (_step) { 2 => _d['diet_type'] != null, 3 => _d['budget_tier'] != null, _ => true };
+  bool get _ready => switch (_step) {
+        2 => _d['diet_type'] != null,
+        3 => _d['budget_tier'] != null && (_d['budget_tier'] != 'custom' || (_ownMonthly ?? 0) >= 900),
+        _ => true,
+      };
 
   Future<void> _build() async {
     setState(() {
@@ -923,7 +941,7 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
       await supabase.from('dietary_profiles').update({
         ..._d,
         'budget_min_inr': null,
-        'budget_max_inr': null,
+        'budget_max_inr': _d['budget_tier'] == 'custom' ? dailyFromMonthly(_ownMonthly!) : null,
         'restrictions': _restrictions.toList(),
         'supplements': supps.toList(),
       }).eq('user_id', supabase.auth.currentUser!.id);
@@ -986,7 +1004,17 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
             'vegan' => 'No animal products',
             _ => 'Chicken, fish and eggs',
           })]),
-      3 => _tiles('budget_tier', budgetOptions),
+      3 => [
+          ..._tiles('budget_tier', [...budgetOptions, ('custom', 'My own amount', 'Enter what you spend on food in a month')]),
+          if (_d['budget_tier'] == 'custom')
+            TextField(
+              controller: _monthly,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(labelText: 'Food budget for a month', prefixText: 'Rs ', suffixText: 'a month', helperText: 'At least Rs 900'),
+            ),
+        ],
       4 => [
           Text('Optional. Pick any that apply.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
           const SizedBox(height: 12),
