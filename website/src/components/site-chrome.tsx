@@ -10,6 +10,7 @@ const links = [
   { href: "/#handbook", label: "Handbook" },
   { href: "/#food", label: "Indian food" },
   { href: "/#faq", label: "FAQ" },
+  { href: "/#download", label: "Download" },
 ];
 
 /** Floating header island, scroll progress, mobile menu, theme toggle, back to top, scroll reveals. */
