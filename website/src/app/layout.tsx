@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Unbounded } from "next/font/google";
 import Link from "next/link";
 import { Contact } from "@/components/contact";
-import { CookieNotice } from "@/components/cookie-notice";
 import { Search } from "@/components/search";
 import { SiteChrome } from "@/components/site-chrome";
 import { Wordmark } from "@/components/wordmark";
@@ -48,15 +47,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/terms" className="text-muted transition-colors duration-300 hover:text-ink">
                 Terms
               </Link>
-              <Link href="/delete-account" className="text-muted transition-colors duration-300 hover:text-ink">
-                Delete account
-              </Link>
             </nav>
           </div>
         </footer>
         <Search />
         <Contact />
-        <CookieNotice />
       </body>
     </html>
   );
