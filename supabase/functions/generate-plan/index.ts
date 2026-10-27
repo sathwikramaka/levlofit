@@ -18,7 +18,7 @@ export default {
     }
 
     const [profile, goals, diet, levels] = await Promise.all([
-      ctx.supabase.from('profiles').select('display_name, birth_year, sex, height_cm, weight_kg, weight_goal, body_type, waist_cm, days_per_week, session_minutes, daily_activity, sleep_hours, health_flags, injuries, equipment, equipment_items').eq('id', userId).single(),
+      ctx.supabase.from('profiles').select('display_name, birth_year, sex, height_cm, weight_kg, weight_goal, body_type, days_per_week, session_minutes, daily_activity, sleep_hours, health_flags, injuries, equipment, equipment_items').eq('id', userId).single(),
       ctx.supabase
         .from('user_goals')
         .select('goal, experience, goal_catalog(name, kind, coach_led_from_level)')
@@ -56,7 +56,6 @@ export default {
         otherRestrictions: diet.data.other_restrictions,
         // 2.0 intake (null when the user answered before these questions existed)
         bodyType: p.body_type ?? undefined,
-        waistCm: p.waist_cm == null ? undefined : Number(p.waist_cm),
         daysPerWeek: p.days_per_week ?? undefined,
         sessionMinutes: p.session_minutes ?? undefined,
         dailyActivity: p.daily_activity ?? undefined,

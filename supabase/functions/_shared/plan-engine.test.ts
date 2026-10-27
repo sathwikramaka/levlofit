@@ -153,8 +153,6 @@ test('review: high body fat and bulking becomes recomp for novices, cut for trai
   const heavy = { ...base, weightKg: 95, heightCm: 170, weightGoal: 'bulk' as const }; // BMI 32.9
   assert.equal(generatePlan({ ...heavy, goals: [g('strength', 'none')] }).weightGoal, 'recomp');
   assert.equal(generatePlan({ ...heavy, goals: [g('strength', 'advanced')] }).weightGoal, 'cut');
-  // waist alone can trigger it too
-  assert.equal(generatePlan({ ...base, weightGoal: 'bulk', waistCm: 110, goals: [g('strength', 'none')] }).weightGoal, 'recomp');
 });
 
 test('review: slim-but-soft novice bulking becomes recomp; lean user cutting gets advice only', () => {
@@ -208,18 +206,16 @@ test('supplements: creatine only when willing and training strength; protein pow
   assert.ok(generatePlan({ ...base, supplements: ['protein_powder'] }).nutrition.supplements[0].how.includes('whey'));
 });
 
-test('snapshot: strengths, gaps and waist-to-height are reported', () => {
-  const plan = generatePlan({ ...base, waistCm: 90, goals: [g('strength', 'advanced'), g('running', 'none')] });
+test('snapshot: strengths and gaps are reported, no waist-to-height', () => {
+  const plan = generatePlan({ ...base, goals: [g('strength', 'advanced'), g('running', 'none')] });
   assert.deepEqual(plan.snapshot.strengths, ['Strength']);
   assert.deepEqual(plan.snapshot.gaps, ['Running']);
-  assert.equal(plan.snapshot.waistToHeight?.category, 'increased'); // 90/175 = 0.51
-  // One edge at 0.5 (owner decision 2026-10-24, awaiting clinician review): no separate 0.6 "high" band.
-  assert.equal(generatePlan({ ...base, waistCm: 115 }).snapshot.waistToHeight?.category, 'increased'); // 0.66
-  assert.equal(generatePlan({ ...base, waistCm: 80 }).snapshot.waistToHeight?.category, 'healthy'); // 0.46
+  assert.equal('waistToHeight' in plan.snapshot, false); // feature removed 2026-10-27 (owner)
+  assert.equal(plan.review.some((f) => f.id === 'waist_to_height'), false);
 });
 
 test('validateInput: 2.0 fields validated and round-tripped', () => {
-  const full = { ...base, bodyType: 'average', waistCm: 82, daysPerWeek: 4, sessionMinutes: 45, dailyActivity: 'light', sleepHours: 7.5, healthFlags: [], equipment: 'custom', equipmentItems: ['pull-up bar'], supplements: ['creatine'] } as const;
+  const full = { ...base, bodyType: 'average', daysPerWeek: 4, sessionMinutes: 45, dailyActivity: 'light', sleepHours: 7.5, healthFlags: [], equipment: 'custom', equipmentItems: ['pull-up bar'], supplements: ['creatine'] } as const;
   assert.deepEqual(validateInput(full), full);
   assert.throws(() => validateInput({ ...base, weightGoal: 'lose' }));
   assert.throws(() => validateInput({ ...base, daysPerWeek: 9 }));

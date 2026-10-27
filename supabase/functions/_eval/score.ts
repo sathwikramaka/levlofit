@@ -302,6 +302,14 @@ export function scoreMove(o: Observed, restDay: string | undefined): Score {
  * Recall (indicative):the reply uses what the person said earlier or what is stored about them. `must` lists
  * patterns the reply should contain (any one per entry), `avoid` lists advice that ignores it.
  */
+/** Clarify (strict): an ambiguous request gets a question back, and no specific answer built on a guess. */
+export function scoreClarify(o: Observed, guessed: RegExp): Score {
+  if (!o.reply) return bad('clarify', 'strict', 'no reply');
+  if (!/\?/.test(o.reply)) return bad('clarify', 'strict', 'no question asked');
+  if (guessed.test(o.reply)) return bad('clarify', 'strict', 'answered a guess instead of asking');
+  return ok('clarify', 'strict', 'asked before answering');
+}
+
 export function scoreRecall(o: Observed, must: RegExp[], avoid: RegExp[] = []): Score {
   if (o.reply == null) return na('recall', 'indicative', 'no reply');
   const missing = must.filter((re) => !re.test(o.reply!)).length;

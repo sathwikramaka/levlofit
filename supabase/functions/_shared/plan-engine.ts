@@ -61,7 +61,6 @@ export interface PlanInput {
   otherRestrictions?: string[]; // free text, e.g. "sesame"; matched against food names
   // 2.0 intake. All optional so older saved answers still produce a plan.
   bodyType?: BodyType;
-  waistCm?: number;
   daysPerWeek?: number; // days the user can train
   sessionMinutes?: number;
   dailyActivity?: Activity; // outside training
@@ -111,7 +110,6 @@ export interface Plan {
   review: Finding[];
   snapshot: {
     bmi: { value: number; category: 'underweight' | 'normal' | 'overweight' | 'obese' };
-    waistToHeight: { value: number; category: 'healthy' | 'increased' | 'high' } | null;
     strengths: string[]; // goal names where the user already trains with a plan
     gaps: string[]; // goal names starting from zero or basics
     sleep: 'enough' | 'short' | 'unknown';
@@ -199,7 +197,6 @@ const SRC = {
   issnCreatine: 'ISSN Position Stand: Creatine supplementation (Kreider et al., 2017)',
   recomp: 'Body recomposition review (Barakat et al., Strength Cond J 2020)',
   bmiIndia: 'Consensus BMI cut-offs for Asian Indians (Misra et al., 2009, JAPI 57:163)',
-  whtr: 'NICE guideline: waist-to-height ratio 0.5 and 0.6 boundaries (2022)',
   sleep: 'Recommended sleep for adults, 7 h or more (Watson et al., AASM/SRS consensus 2015)',
   mifflin: 'Mifflin-St Jeor equation (Mifflin et al., 1990)',
   acsmRt: 'ACSM Position Stand: Resistance Training Prescription (2026), PMID 41843416',
@@ -276,7 +273,6 @@ export function validateInput(raw: unknown): PlanInput {
   // Optional 2.0 fields: only set when present, so older inputs round-trip unchanged.
   const optional: Partial<PlanInput> = {
     bodyType: optOneOf('bodyType', BODY_TYPES),
-    waistCm: optNum('waistCm', 40, 200),
     daysPerWeek: optNum('daysPerWeek', 1, 7),
     sessionMinutes: optNum('sessionMinutes', 20, 90),
     dailyActivity: optOneOf('dailyActivity', ACTIVITY),
@@ -298,12 +294,6 @@ export function bmiCategory(bmi: number): Plan['bmi']['category'] {
   return 'obese';
 }
 
-// One edge at 0.5 (Misra 2025 Indian definition: "over 0.5"); the earlier 0.6 "high" edge had no readable source
-// (owner decision 2026-10-24, awaiting clinician review).
-export function waistToHeightCategory(ratio: number): 'healthy' | 'increased' {
-  return ratio < 0.5 ? 'healthy' : 'increased';
-}
-
 const bmiOf = (input: PlanInput) => Math.round((input.weightKg / (input.heightCm / 100) ** 2) * 10) / 10;
 
 /** Analyse the answers before planning. Returns findings and the training phase the plan should use. */
@@ -311,7 +301,6 @@ export function reviewInput(input: PlanInput): { weightGoal: WeightGoal; finding
   const findings: Finding[] = [];
   const bmi = bmiOf(input);
   const category = bmiCategory(bmi);
-  const whtr = input.waistCm ? input.waistCm / input.heightCm : null;
   const primaryLevel = levelOf(input.goals[0]);
   let weightGoal = input.weightGoal;
 
@@ -348,7 +337,7 @@ export function reviewInput(input: PlanInput): { weightGoal: WeightGoal; finding
       source: SRC.bmiIndia,
     });
   }
-  if (weightGoal === 'bulk' && (category === 'obese' || (whtr !== null && whtr >= 0.6))) {
+  if (weightGoal === 'bulk' && category === 'obese') {
     weightGoal = primaryLevel <= 1 ? 'recomp' : 'cut';
     findings.push({
       id: 'bulk_high_fat',
@@ -356,8 +345,8 @@ export function reviewInput(input: PlanInput): { weightGoal: WeightGoal; finding
       title: primaryLevel <= 1 ? 'Bulking changed to recomposition' : 'Bulking changed to cutting',
       why:
         primaryLevel <= 1
-          ? 'Your BMI or waist measurement is already high. New lifters carrying extra fat can build muscle while losing fat at maintenance calories with high protein, so a surplus is not needed.'
-          : 'Your BMI or waist measurement is already high. Losing some fat first makes a later muscle-gain phase healthier and more effective.',
+          ? 'Your BMI is already high. New lifters carrying extra fat can build muscle while losing fat at maintenance calories with high protein, so a surplus is not needed.'
+          : 'Your BMI is already high. Losing some fat first makes a later muscle-gain phase healthier and more effective.',
       source: primaryLevel <= 1 ? SRC.recomp : SRC.issnDiet,
     });
   } else if (weightGoal === 'bulk' && input.bodyType === 'slim_soft' && primaryLevel <= 1) {
@@ -377,18 +366,6 @@ export function reviewInput(input: PlanInput): { weightGoal: WeightGoal; finding
       title: 'You are already lean',
       why: 'A cut from an already lean start mostly costs strength and energy. Consider maintenance or recomposition unless you have a specific event.',
       source: SRC.issnDiet,
-    });
-  }
-  if (whtr !== null && whtr >= 0.5) {
-    findings.push({
-      id: 'waist_to_height',
-      level: 'info',
-      title: `Waist-to-height ratio ${whtr.toFixed(2)}`,
-      why:
-        whtr >= 0.6
-          ? 'Above 0.6 means a high health risk from fat around the middle. Training plus a modest calorie deficit is the most effective way to bring it down.'
-          : 'Between 0.5 and 0.6 means increased health risk from fat around the middle. Keeping your waist below half your height is a good long-term target.',
-      source: SRC.whtr,
     });
   }
 
@@ -615,7 +592,6 @@ export function generatePlan(input: PlanInput): Plan {
   }
 
   const bmiValue = bmiOf(input);
-  const whtr = input.waistCm ? Math.round((input.waistCm / input.heightCm) * 100) / 100 : null;
 
   const bmr = 10 * input.weightKg + 6.25 * input.heightCm - 5 * input.ageYears + (input.sex === 'male' ? 5 : -161);
   // Standard physical-activity multipliers for 1-3, 3-5 and 6-7 training days a week.
@@ -644,7 +620,6 @@ export function generatePlan(input: PlanInput): Plan {
     review: findings,
     snapshot: {
       bmi,
-      waistToHeight: whtr === null ? null : { value: whtr, category: waistToHeightCategory(whtr) },
       strengths: levels.filter((l) => l.level >= 2).map((l) => l.name),
       gaps: levels.filter((l) => l.level <= 1).map((l) => l.name),
       sleep: input.sleepHours === undefined ? 'unknown' : input.sleepHours >= 7 ? 'enough' : 'short',

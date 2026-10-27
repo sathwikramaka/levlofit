@@ -1,0 +1,33 @@
+planner_code,levlofit_name,tags,fdc_description,match,disclosure
+A015,Rice,,"Rice, white, long-grain, regular, raw, unenriched",exact,
+A019,Wheat atta (whole wheat flour),gluten;wheat,"Wheat flour, whole-grain (Includes foods for USDA's Food Distribution Program)",exact,
+A005,Jowar flour,,"Sorghum flour, whole-grain",exact,
+A003,Bajra (pearl millet),,"Millet, raw",close,"USDA lists millet without naming the species; Indian bajra is pearl millet."
+B013,Masoor dal (red lentils),,"Lentils, pink or red, raw",exact,
+B021,Toor (pigeon peas),,"Pigeon peas (red gram), mature seeds, raw",close,"Values are for whole pigeon peas; split dehulled toor dal has a little less fibre."
+B010,Moong (mung beans),,"Mung beans, mature seeds, raw",close,"Values are for whole mung beans; split moong dal has a little less fibre."
+B020,Rajma (kidney beans),,"Beans, kidney, red, mature seeds, raw",exact,
+B002,Kala chana (chickpeas),,"Chickpeas (garbanzo beans, bengal gram), mature seeds, raw",close,"USDA chickpeas are mostly the large kabuli type; kala chana is the smaller desi type."
+X001,Soya chunks (defatted soy),soy,"Soy flour, defatted",close,"Soya chunks are textured defatted soy; values are for defatted soy flour, the same material before shaping."
+H012,Peanuts,peanut,"Peanuts, all types, raw",exact,
+L002,Cow milk (whole),dairy,"Milk, whole, 3.25% milkfat, with added vitamin D",close,"USDA whole milk is fortified with vitamin D; Indian milk usually is not."
+M004,Eggs (boiled),egg,"Egg, whole, cooked, hard-boiled",exact,
+N003,Chicken breast,poultry,"Chicken, broiler or fryers, breast, skinless, boneless, meat only, raw",exact,
+E012,Banana,,"Bananas, raw",exact,
+E049,Papaya,,"Papayas, raw",exact,
+E028,Guava,,"Guavas, common, raw",exact,
+E001,Apple,,"Apples, raw, with skin (Includes foods for USDA's Food Distribution Program)",exact,
+E047,Orange,,"Oranges, raw, all commercial varieties",exact,
+D036,Cauliflower,,"Cauliflower, raw",exact,
+D056,Bhindi (okra),,"Okra, raw",exact,
+C015,Cabbage,,"Cabbage, raw",exact,
+C033,Spinach (palak),,"Spinach, raw",exact,
+F002,Carrot,,"Carrots, raw",exact,
+D043,Cucumber,,"Cucumber, with peel, raw",exact,
+D076,Tomato,,"Tomatoes, red, ripe, raw, year round average",exact,
+T012,Sunflower oil,,"Oil, sunflower, linoleic, (approx. 65%)",exact,
+T006,Mustard oil,,"Oil, mustard",exact,
+A011,Poha (rice flakes),,,none,"No USDA record for flattened rice. Left out until a licensed source or a measured Levlofit value exists."
+A010,Ragi flour (finger millet),,,none,"No USDA record for finger millet. Left out until a licensed source exists."
+L003,Paneer,dairy,,none,"No USDA SR Legacy or Foundation record for paneer. Left out until a licensed source exists."
+S006,Rohu fish,fish,,none,"No USDA record for rohu. Left out until a licensed source exists."

@@ -33,7 +33,11 @@ Future<void> openCoach(BuildContext context, {String? prompt}) => showGeneralDia
             child: Align(
               alignment: Alignment.bottomRight,
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: 420, maxHeight: (size.height - insets.bottom - pad.vertical - 24).clamp(320.0, 680.0)),
+                // Phones: a tall sheet (up to 90% of the screen), easier to read and type in than a corner card.
+                constraints: BoxConstraints(
+                  maxWidth: phone ? double.infinity : 420,
+                  maxHeight: (size.height - insets.bottom - pad.vertical - 24).clamp(320.0, phone ? size.height * 0.9 : 680.0),
+                ),
                 child: Material(
                   elevation: 24,
                   shadowColor: Colors.black54,
@@ -56,6 +60,13 @@ Future<void> openCoach(BuildContext context, {String? prompt}) => showGeneralDia
       },
       transitionBuilder: (context, a, _, child) {
         final curve = CurvedAnimation(parent: a, curve: spring, reverseCurve: Curves.easeInCubic);
+        // Phones: rises from the bottom like a sheet. Larger screens: grows out of the launcher corner.
+        if (MediaQuery.sizeOf(context).width < 600) {
+          return FadeTransition(
+            opacity: curve,
+            child: SlideTransition(position: Tween(begin: const Offset(0, 0.12), end: Offset.zero).animate(curve), child: child),
+          );
+        }
         return FadeTransition(
           opacity: curve,
           child: ScaleTransition(scale: Tween(begin: 0.86, end: 1.0).animate(curve), alignment: Alignment.bottomRight, child: child),
@@ -109,23 +120,35 @@ class _CoachLauncherState extends State<CoachLauncher> with SingleTickerProvider
             child: Semantics(
               button: true,
               label: 'Ask Levlofit AI, your fitness bot',
+              // A compact pill: the bot's face and a plain label, 48 dp tall (the minimum touch size), so it no longer
+              // covers content the way the 64 dp disc did.
               child: Material(
                 color: c.secondary,
-                shape: const CircleBorder(),
-                elevation: 6,
-                shadowColor: Colors.black45,
+                shape: const StadiumBorder(),
+                elevation: 3,
+                shadowColor: Colors.black38,
                 child: InkWell(
-                  customBorder: const CircleBorder(),
+                  customBorder: const StadiumBorder(),
                   onHighlightChanged: (v) => setState(() => _pressed = v),
                   onTap: () {
                     HapticFeedback.selectionClick();
                     openCoach(context);
                   },
-                  child: SizedBox.square(
-                    dimension: 64,
-                    child: AnimatedBuilder(
-                      animation: _idle,
-                      builder: (_, _) => CustomPaint(painter: FitBotPainter(t: still ? 0 : _idle.value, face: c.surface, ink: c.secondary)),
+                  child: SizedBox(
+                    height: 48,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 6, right: 16),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        SizedBox.square(
+                          dimension: 36,
+                          child: AnimatedBuilder(
+                            animation: _idle,
+                            builder: (_, _) => CustomPaint(painter: FitBotPainter(t: still ? 0 : _idle.value, face: c.surface, ink: c.secondary)),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text('Ask AI', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: c.onSecondary, fontWeight: FontWeight.w600)),
+                      ]),
                     ),
                   ),
                 ),

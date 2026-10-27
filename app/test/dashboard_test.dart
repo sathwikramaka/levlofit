@@ -25,7 +25,6 @@ final _plan = <String, dynamic>{
   'bmi': {'value': 22.4, 'category': 'normal'},
   'review': [
     {'level': 'change', 'title': 'Cutting became maintenance', 'why': 'BMI under 18.', 'source': 'Misra 2009'},
-    {'level': 'info', 'title': 'Waist to height', 'why': 'Healthy.', 'source': 'NICE 2022'},
   ],
   'sources': ['WHO 2020', 'ISSN 2017'],
 };

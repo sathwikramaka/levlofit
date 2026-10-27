@@ -58,7 +58,7 @@ class _HandbookScreenState extends State<HandbookScreen> {
         children: [
           Reveal(child: Text('Know why, not just what.', style: t.headlineMedium)),
           const SizedBox(height: 6),
-          Reveal(index: 1, child: Text('Short, visual chapters. Every number names its source.', style: t.bodyMedium?.copyWith(color: muted))),
+          Reveal(index: 1, child: Text('Short, visual chapters. Every number names its source. General information from published guidelines, not medical advice and not reviewed by a clinician.', style: t.bodyMedium?.copyWith(color: muted))),
           const SizedBox(height: 20),
           Reveal(
             index: 2,

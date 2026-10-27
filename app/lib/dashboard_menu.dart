@@ -97,7 +97,6 @@ class _Menu extends StatelessWidget {
       const _MenuSection('HABITS AND TOOLS'),
       item(LvIcons.checkCircle, 'Habits', _Tab.habits),
       item(LvIcons.scales, 'BMI calculator', _Tab.bmi),
-      item(LvIcons.ruler, 'Waist check', _Tab.bodyFat),
       const _MenuSection('LEARN'),
       item(LvIcons.bookOpen, 'Handbook', _Tab.handbook),
       item(LvIcons.personSimpleRun, 'Exercise library', _Tab.library),
@@ -603,7 +602,7 @@ class _DietScreenState extends State<_DietScreen> {
       final lo = diet?['budget_min_inr'] as int?, hi = diet?['budget_max_inr'] as int?;
       if (!mounted) return;
       setState(() {
-        _foods = {for (final r in rows as List) r['code'] as String: foodFromRow(r as Map<String, dynamic>)};
+        _foods = plannerFoods((rows as List).cast<Map<String, dynamic>>());
         _tier = budgetTier(tier, hi);
         _budget = tier == 'custom' ? 'your range, ${lo == null ? '' : 'Rs $lo to '}Rs ${hi ?? '-'} a day' : switch (tier) { 'low' => 'low', 'high' => 'high', _ => 'medium' };
       });
@@ -623,6 +622,14 @@ class _DietScreenState extends State<_DietScreen> {
     if (foods == null) {
       return _Page(eyebrow: 'DIET', title: 'Your meal plan', children: [
         if (_error != null) ErrorLine(_error!) else const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: LevloMark(size: 48, animate: true))),
+      ]);
+    }
+    if (foods.isEmpty) {
+      // No food source is licensed for this build yet (food_sources): no meal plan rather than one built from nothing.
+      return _Page(eyebrow: 'DIET', title: 'Your meal plan', children: [
+        Text('${kcal.round()} kcal and ${protein.round()} g protein a day', style: t.titleMedium),
+        const SizedBox(height: 8),
+        Text(foodDataPendingText, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
       ]);
     }
     final supps = ((food['supplements'] as List?) ?? const []).cast<_Json>();
@@ -769,8 +776,9 @@ class _DietScreenState extends State<_DietScreen> {
           label: const Text('Recipes for today with Levlofit AI'),
         ),
         const SizedBox(height: 12),
-        Text('Food values: IFCT 2017, ICMR-National Institute of Nutrition. Cooking oil: ICMR-NIN Dietary Guidelines for Indians 2024 (27 g at 2000 kcal), scaled to your energy by Levlofit. '
-            'Swap like for like (one dal for another, one roti flour for another) and the totals stay close.',
+        FoodCredit(
+            trail: 'Cooking oil: ICMR-NIN Dietary Guidelines for Indians 2024 (27 g at 2000 kcal), scaled to your energy by Levlofit. '
+                'Swap like for like (one dal for another, one roti flour for another) and the totals stay close.',
             style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ],
     );
@@ -1439,7 +1447,6 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         plan: widget.data.plan,
         logs: logs,
         body: _body,
-        heightCm: widget.data.profile['height_cm'] as num?,
         photos: _photos,
         uploading: _uploading,
         onLogWeight: () => _logBody(tape: false),
@@ -1454,11 +1461,11 @@ class _ProgressScreenState extends State<_ProgressScreen> {
 
 /// Renders the progress body from rows, without Supabase, so layout can be tested.
 @visibleForTesting
-Widget progressBodyForTest(Map<String, dynamic> plan, List<Map<String, dynamic>> logs, List<Map<String, dynamic>> body, {num? heightCm}) => Builder(
+Widget progressBodyForTest(Map<String, dynamic> plan, List<Map<String, dynamic>> logs, List<Map<String, dynamic>> body) => Builder(
       builder: (context) => _Page(
         eyebrow: 'PROGRESS',
         title: 'Is this working?',
-        children: _progressBody(context, plan: plan, logs: logs, body: body, heightCm: heightCm, photos: const [], uploading: false, onLogWeight: () {}, onLogTape: () {}, onAddPhoto: () {}, onViewPhoto: (_) {}),
+        children: _progressBody(context, plan: plan, logs: logs, body: body, photos: const [], uploading: false, onLogWeight: () {}, onLogTape: () {}, onAddPhoto: () {}, onViewPhoto: (_) {}),
       ),
     );
 
@@ -1467,7 +1474,6 @@ List<Widget> _progressBody(
   required _Json plan,
   required List<_Json> logs,
   required List<_Json> body,
-  num? heightCm, // profile height, for waist-to-height
   required List<_Photo> photos,
   required bool uploading,
   required VoidCallback onLogWeight,
@@ -1501,10 +1507,6 @@ List<Widget> _progressBody(
       if (body.where((b) => b[k] != null).toList() case final rows when rows.isNotEmpty)
         (label: label, now: (rows.last[k] as num).toDouble(), from: (rows.first[k] as num).toDouble()),
   ];
-  // Waist-to-height from the latest and first waist, against the current profile height (adult height is stable).
-  final waist = tape.where((m) => m.label == 'Waist').firstOrNull;
-  final whtrNow = waist == null ? null : whtrCheck(height: heightCm?.toDouble(), waist: waist.now);
-  final whtrFrom = waist == null || waist.from == waist.now ? null : whtrCheck(height: heightCm?.toDouble(), waist: waist.from).value;
   Widget photo(_Photo p, {double radius = 10}) => GestureDetector(
         onTap: () => onViewPhoto(p),
         child: ClipRRect(
@@ -1594,14 +1596,6 @@ List<Widget> _progressBody(
                 Text('${m.now.toStringAsFixed(1)} cm', style: monoNumber(context, size: 15)),
               ]),
             ),
-        if (whtrNow?.value case final v?)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              'Waist to height ${v.toStringAsFixed(2)}, ${whtrNow!.band}${whtrFrom == null ? '' : ' (first ${whtrFrom.toStringAsFixed(2)})'}. Under 0.50 is the aim.',
-              style: t.bodySmall?.copyWith(color: c.onSurfaceVariant),
-            ),
-          ),
       ]),
     ),
     const SizedBox(height: 12),

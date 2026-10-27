@@ -1,4 +1,4 @@
-# Google Play data safety and store listing: DRAFT (2026-10-16, Levlofit-4; updated 2026-10-17)
+# Google Play data safety and store listing: DRAFT (2026-10-16, Levlofit-4; updated 2026-10-17 and 2026-10-24 for coach memory, summaries and actions)
 
 **Status: draft for legal/privacy review. Not submitted, not reviewed, not legal advice.** Derived only from the
 current code and the privacy text in website/src/app/privacy/page.tsx (dated 13 October 2026, with a REVIEW GATE on
@@ -37,11 +37,11 @@ before it is entered in Play Console (RELEASE_READINESS_AUDIT.md R6, R10).
 | Personal info / Email address | Yes | No | Account management | Required | Supabase auth |
 | Personal info / Name | Yes | No | Account management, personalisation | Required (entered at sign-up; Google pre-fills it; the first name goes to the coach) | profiles.display_name (onboarding.dart) |
 | Personal info / Other info (year of birth, sex) | Yes | No | App functionality (plan) | Required | onboarding answers |
-| Health and fitness / Health info (health check answers, injury, weight, height, waist, body type, diet type, allergies and intolerances, food diary entries (totals and micronutrients are calculated from public food data, not collected), effort/pain answers) | Yes | No | App functionality | Mixed (health check required; waist, sleep optional) | profiles, dietary_profiles, body_metrics, food_log, workout_logs (rpe and session answers), generated_plans (a copy of the answers with each plan) |
-| Health and fitness / Fitness info (workouts, sets, training days, activity, water, habits, goal levels) | Yes | No | App functionality | Required for core use | workout_logs, set_logs, water_intake, habit_logs, goal_levels. Per-move lift summaries (name, days, best set) go to the AI provider only for lifting questions (batch 2F) |
+| Health and fitness / Health info (health check answers, injury, weight, height, waist, body type, diet type, allergies and intolerances, food diary entries (totals and micronutrients are calculated from public food data, not collected), effort/pain answers, injury facts the person confirmed in Levlofit AI Memory) | Yes | No | App functionality | Mixed (health check required; waist, sleep optional) | profiles, dietary_profiles, body_metrics, food_log, workout_logs (rpe and session answers), generated_plans (a copy of the answers with each plan), coach_facts (category injury; sent to the AI provider only for training, movement or pain questions, at most three) |
+| Health and fitness / Fitness info (workouts, sets, training days, activity, water, habits, goal levels) | Yes | No | App functionality | Required for core use | workout_logs, set_logs, water_intake, habit_logs, goal_levels, exercise_swaps and session_changes (coach-offered and confirmed swaps, lighter days, moved sessions; 2026-10-24). Per-move lift summaries (name, days, best set) go to the AI provider only for lifting questions (batch 2F); today's move names and this week's free days only for swap or move questions; names of up to 30 foods from the person's own diary only for meal-logging questions |
 | [HC] Health and fitness / Fitness info: daily step totals from Health Connect | Draft: **not collected** (stays on the phone), except the 7 daily totals sent with a coach message when the person switches on sharing (then: collected, not shared, ephemeral, optional) | No | App functionality | Optional | Not stored server-side; coach-chat request only |
 | Photos and videos / Photos | Yes | No | App functionality | Optional | progress-photos bucket, profile picture |
-| Messages / Other in-app messages (Levlofit AI chats, coach notes, feedback) | Yes | No | App functionality, support | Optional | coach_threads, coach_messages, coach_notes, app_feedback |
+| Messages / Other in-app messages (Levlofit AI chats and their running summaries, confirmed Memory facts and pending suggestions, coach notes, feedback) | Yes | No | App functionality, support | Optional | coach_threads (incl. summary, 2026-10-24), coach_messages, coach_facts, coach_notes, app_feedback |
 | App activity / Other user-generated content (recipes, custom reminder names) | Yes | No | App functionality | Optional | recipes, recipe_items, custom_reminders |
 | App activity / Other actions (time stamps for rate limits) | Yes | No | Fraud prevention, security | Required (automatic) | rate_events |
 | Device or other IDs | Draft: No | | | | Random chat message IDs are per-message, not device IDs: confirm |
@@ -50,9 +50,10 @@ before it is entered in Play Console (RELEASE_READINESS_AUDIT.md R6, R10).
 Data kept only on the device (theme choice, cookie notice, dashboard layout, reminder schedules in the OS) is not
 "collected" under Play's definition: confirm with the reviewer.
 
-Third-party requests that expose the IP address: Google Fonts (font download) and ExerciseDB (exercise animations).
-They are disclosed in the privacy text; whether they need a data-safety entry is a reviewer question. ExerciseDB media
-is also **licensed non-commercial** (separate release blocker).
+Third-party requests that expose the IP address: Google Fonts (font download). Since 2026-10-24 release builds make no
+ExerciseDB request (licensed-content mode; only debug and profile builds load its animations). The privacy text still
+names ExerciseDB and should drop it once the reviewer confirms. Whether Google Fonts needs a data-safety entry is a
+reviewer question.
 
 ## Store listing draft (facts only; marketing copy is the owner's)
 

@@ -119,7 +119,8 @@ jobs:
             supabase/functions/coach-chat/coach-chat.test.ts \
             supabase/functions/delete-account/delete-account.test.ts \
             supabase/functions/generate-plan/generate-plan.test.ts \
-            supabase/functions/_eval/eval.test.ts
+            supabase/functions/_eval/eval.test.ts \
+            tools/release_docs.test.mjs
       - name: AI evaluation (scripted provider, offline; exits 1 on any strict failure)
         run: node supabase/functions/_eval/run.ts
       - name: Strict typecheck of modules that run without Deno
@@ -147,7 +148,7 @@ jobs:
       - name: Typecheck entry points
         run: deno check --lock=_test/deno.lock --frozen coach-chat/index.ts generate-plan/index.ts delete-account/index.ts
       - name: Lint entry points and shared modules
-        run: deno lint coach-chat/index.ts generate-plan/index.ts delete-account/index.ts _shared/coach-context.ts _shared/llm.ts _shared/handbook.ts _shared/rate.ts _shared/plan-engine.ts _test/deno-smoke.ts
+        run: deno lint coach-chat/index.ts generate-plan/index.ts delete-account/index.ts _shared/coach-context.ts _shared/llm.ts _shared/handbook.ts _shared/rate.ts _shared/plan-engine.ts _shared/swap.ts _shared/meal.ts _test/deno-smoke.ts
       - name: Runtime smoke test (dummy values, network limited to 127.0.0.1)
         run: deno run --lock=_test/deno.lock --frozen --allow-env --allow-read --allow-net=127.0.0.1 _test/deno-smoke.ts
 
@@ -164,6 +165,8 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Register tooling tests
         run: python -I data/evidence/test_extract_claims.py -v
+      - name: USDA FoodData Central builder tests (synthetic rows; the real import needs the owner-approved download)
+        run: python -I data/fdc/test_build_foods_fdc.py -v
       - name: Register and retrieval passages are in sync with the Handbook
         run: python -I data/evidence/extract_claims.py --check
       - name: Committed Handbook migration matches the builder

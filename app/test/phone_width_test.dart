@@ -48,11 +48,13 @@ void main() {
     // The catalogue read fails, as with the empty local catalogue.
     await tester.pumpWidget(MaterialApp(home: ExerciseScreen(id: 'I4hDWkc', load: () async => throw Exception('offline'))));
     await tester.pump(const Duration(seconds: 1));
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -400)); // past the demonstration picture
+    await tester.pump(const Duration(seconds: 1));
     expect(find.text('Push-up'), findsOneWidget);
     expect(find.text('No equipment'), findsOneWidget); // guide wording kept as written (catalogue tags are title-cased)
     expect(find.text('None'), findsNothing);
     for (final v in ['Incline push-up', 'Bench press', 'Dumbbell bench press']) {
-      expect(find.widgetWithText(ActionChip, v), findsOneWidget, reason: v);
+      expect(find.widgetWithText(InkWell, v), findsOneWidget, reason: v);
     }
     final pushed = <Route<dynamic>>[];
     // Rebuild with an observer to see the version chip open another exercise page.
@@ -62,7 +64,7 @@ void main() {
     ));
     await tester.pump(const Duration(seconds: 1));
     pushed.clear();
-    await tester.tap(find.widgetWithText(ActionChip, 'Incline push-up'));
+    await tester.tap(find.widgetWithText(InkWell, 'Incline push-up'));
     await tester.pump();
     expect(pushed, hasLength(1));
     tester.takeException(); // the pushed page reads the real catalogue, which tests cannot reach

@@ -1,6 +1,6 @@
 // Levlofit's own notes on the moves its sessions prescribe: muscle group, the main and assisting muscles by their
-// anatomical names, and the other versions of the same movement that the plans use. Instructions, animations and
-// equipment for every move still come from the catalogue (public.exercises).
+// anatomical names, the other versions of the same movement that the plans use, and short technique cues
+// ([moveCues]). Release builds show only this file's content; development builds add catalogue animations and steps.
 //
 // Rules for this file (workstream 13):
 // - Muscle lists are general anatomy (prime movers and main assistants), written for a reviewer to confirm. They
@@ -144,3 +144,70 @@ List<(String id, MoveGuide g)> movesIn(String group) {
   final seen = <String>{};
   return [for (final e in moveGuide.entries) if (e.value.group == group && seen.add(e.value.name)) (e.key, e.value)];
 }
+
+// ---- how to do each move ---------------------------------------------------------------------------------------
+// Levlofit's own short technique cues (written 2026-10-24), shown instead of catalogue steps in release builds.
+// General coaching cues for healthy adults, pending expert review like the muscle lists: no rep targets, no claims.
+
+const _squatCues = ['Feet about shoulder-width apart, toes turned out slightly.', 'Sit down between your heels, knees travelling in line with your toes.', 'Go as low as you can keep your back neutral and heels down, then stand up.'];
+const _lungeCues = ['Stand tall and take a long step.', 'Lower until both knees are bent, front knee in line with the toes and the front heel down.', 'Push through the front foot to come back up. Repeat on the other side.'];
+const _hingeCues = ['Feet hip-width apart, a slight bend in the knees.', 'Push your hips back with your back neutral, keeping the weight close to your legs.', 'Stop when you feel a strong stretch in the back of the thighs, then squeeze your glutes to stand up.'];
+const _pushUpCues = ['Hands a little wider than your shoulders, body in one straight line from head to heels.', 'Lower your chest towards your hands, elbows angled back, not flared straight out.', 'Press back up without letting your hips sag.'];
+const _benchCues = ['Lie on the bench with your feet flat and shoulder blades pulled back and down.', 'Lower the weight with control to the middle of your chest.', 'Press up until your arms are straight. Use a spotter or safety bars for heavy sets.'];
+const _pressCues = ['Stand with feet hip-width apart, ribs down and glutes tight.', 'Press the weight from your shoulders straight overhead.', 'Lower it back to your shoulders with control. Do not lean back to finish the rep.'];
+const _rowCues = ['Brace your trunk and keep your back neutral.', 'Pull your elbows back towards your hips and squeeze your shoulder blades together.', 'Lower with control until your arms are straight.'];
+const _verticalPullCues = ['Grip a little wider than your shoulders.', 'Pull your elbows down towards your ribs until your chin is at bar height or the bar is near your upper chest.', 'Lower with control until your arms are straight.'];
+const _stretchNote = 'Move slowly into a gentle stretch and breathe. A stretch should never feel sharp or painful.';
+
+final moveCues = <String, List<String>>{
+  'I4hDWkc': _pushUpCues,
+  'B1EVP9F': ['Put your hands on a sturdy bench, table or wall, a little wider than your shoulders.', ..._pushUpCues.skip(1)],
+  'EIeI8Vf': _benchCues,
+  'SpYC0Kp': _benchCues,
+  '9WTm7dq': ['Support yourself on the bars with straight arms, shoulders down.', 'Bend your elbows to lower until your upper arms are about level with the bars, or less if your shoulders complain.', 'Press back up to straight arms.'],
+  'lBDjFxJ': ['Hang from the bar, hands a little wider than your shoulders.', ..._verticalPullCues.skip(1)],
+  'RVwzP10': ['Sit with your thighs under the pads.', ..._verticalPullCues.skip(1)],
+  'fUBheHs': ['Sit tall with your feet on the platform and knees slightly bent.', ..._rowCues],
+  'BJ0Hz5L': ['Put one hand and knee on a bench, or hinge forward with a flat back.', ..._rowCues],
+  'bZGHsAZ': ['Lie under a sturdy table or low bar and grip its edge, body straight and heels on the floor.', 'Pull your chest up towards it, squeezing your shoulder blades together.', 'Lower with control. Make sure the table cannot tip.'],
+  'wd4ds3s': ['Hold something fixed and sturdy, such as a railing, and lean back with straight arms.', 'Pull your chest towards your hands, squeezing your shoulder blades together.', 'Lower back with control. Step your feet forward to make it harder.'],
+  'znQUdHY': _pressCues,
+  'A6wtbuL': _pressCues,
+  'QChZi3x': _squatCues,
+  'yn8yg1r': ['Hold one dumbbell or kettlebell against your chest.', ..._squatCues],
+  'qXTaZnJ': ['Rest the bar across your upper back, not your neck, ideally in a rack with safety bars.', ..._squatCues],
+  '9E25EOx': ['Stand in a long split stance, back heel off the floor.', 'Lower straight down until both knees are bent, front heel down.', 'Push through the front foot to stand up. Finish one side, then the other.'],
+  'RRWFUcw': _lungeCues,
+  'IZVHb27': _lungeCues,
+  'aXtJhlg': ['Put one whole foot on a sturdy step or box.', 'Push through that foot to stand up on the step, without pushing off the back foot.', 'Step down with control. Repeat on the other side.'],
+  'wQ2c4XD': _hingeCues,
+  'rR0LJzx': _hingeCues,
+  'ila4NZS': ['Stand with the bar over the middle of your feet.', 'Hinge and bend your knees to grip the bar, back neutral and chest up.', 'Push the floor away and stand tall with the bar close to your legs, then lower it the same way.'],
+  'u0cNiij': ['Lie on your back, knees bent and feet flat.', 'Squeeze your glutes and lift your hips until your body is straight from shoulders to knees.', 'Pause, then lower slowly.'],
+  'UHJlbu3': ['Stand with the kettlebell a little in front of you, feet a bit wider than your hips.', 'Hike it back between your legs with a flat back, then snap your hips forward to swing it to chest height.', 'The power comes from your hips, not your arms. Learn it with a light bell.'],
+  'iny3m5y': ['Lie on your back, arms up and knees bent over your hips.', 'Press your lower back gently into the floor.', 'Slowly reach one arm back and the opposite leg out, return, then switch sides.'],
+  'RKjH6Lt': ['Lie on your side with your elbow under your shoulder.', 'Lift your hips so your body is straight from head to feet.', 'Hold, breathing normally, then switch sides. Bend your knees to make it easier.'],
+  'I3tsCnC': ['Hang from a bar with straight arms and your shoulders engaged.', 'Raise your legs without swinging, bending your knees to make it easier.', 'Lower them slowly.'],
+  'bJYHBIN': ['Stand tall, holding something for balance if you need to.', 'Rise onto the balls of your feet as high as you can.', 'Pause, then lower your heels slowly.'],
+  'qPEzJjA': ['Pick up a heavy weight in each hand, or one in a single hand.', 'Walk with short, steady steps, standing tall with your shoulders down.', 'Set the weights down with a flat back when your grip or posture starts to go.'],
+  'LIlE5Tn': ['Squat down to a comfortable depth.', 'Jump straight up.', 'Land softly on the balls of your feet and sink back into the squat.'],
+  'dK9394r': ['Squat down and put your hands on the floor.', 'Step or jump your feet back to a push-up position, then bring them back in.', 'Stand or jump up. Step instead of jumping to make it easier.'],
+  'RJgzwny': ['Start in a push-up position, hands under your shoulders.', 'Drive one knee towards your chest, then switch legs.', 'Keep your hips level. Go slower to make it easier.'],
+  'oLrKqDH': ['Start at an easy pace you could talk at.', 'Take short, light steps and stay relaxed.', 'Walk breaks are fine. Build time before speed.'],
+  'ealLwvX': ['Stand facing a wall with your hands on it.', 'Lean in slightly and drive your knees up one at a time, quickly.', 'Stay on the balls of your feet.'],
+  '9RT8oQW': ['Sit on the floor with your hands behind you, fingers pointing towards your feet.', 'Lift your hips and bend your elbows to lower a little.', 'Press back up to straight arms.'],
+  'DFGXwZr': ['Step into a long lunge and put both hands on the floor inside your front foot.', 'Rotate your chest and reach the inside arm up towards the ceiling.', 'Return and switch sides. $_stretchNote'],
+  '0mB6wHO': ['From a lunge with both hands down, straighten your front leg.', 'Feel the stretch in the back of that leg.', 'Switch sides. $_stretchNote'],
+  '99rWm7w': ['Put one heel forward on the floor or a low step, leg straight.', 'Hinge forward from the hips with your back long.', _stretchNote],
+  'DeDThfG': ['Sit tall and cross one ankle over the other knee.', 'Lean forward from the hips until you feel the stretch in your outer hip.', 'Switch sides. $_stretchNote'],
+  'f38OEuO': ['Kneel and put your hands or forearms on a bench or the floor in front of you.', 'Sink your chest down towards the floor.', _stretchNote],
+  'JbC2iaV': ['Sit tall with your legs straight out in front of you.', 'Reach forward slowly, rounding your spine one part at a time.', _stretchNote],
+  '2Dk4xQV': ['Kneel on all fours and widen your knees.', 'Rock your hips slowly back and forward.', _stretchNote],
+  'DIVyqrU': ['Lie on your front with your elbows under your shoulders.', 'Lift your chest, keeping your hips on the floor and shoulders down.', _stretchNote],
+  '01qpYSe': ['Lie on your front with your hands under your shoulders.', 'Press up, straightening your arms and lifting your chest and thighs.', 'Keep your shoulders down. $_stretchNote'],
+  'bWlZvXh': ['Sit with the soles of your feet together, knees falling out.', 'Sit tall and hold your feet. Lean forward a little for more stretch.', _stretchNote],
+  'HIgYKAB': ['Sit with your legs wide and straight.', 'Hinge forward from the hips with your back long.', _stretchNote],
+  'K5xgdvI': ['Lie on your back with a strap or towel around one foot.', 'Raise that leg as far as it goes with the knee straight or slightly bent.', 'Switch sides. $_stretchNote'],
+  '2jl9K55': ['Sit tall, cross one foot over the other knee.', 'Turn your chest towards the bent knee, using your arm against it.', 'Switch sides. $_stretchNote'],
+  '6sYyrRX': ['Lie on your back and bring both knees to one side.', 'Keep both shoulders on the floor and look the other way.', 'Switch sides. $_stretchNote'],
+};

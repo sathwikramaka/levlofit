@@ -51,5 +51,15 @@ void main() {
     final phosphor = entries.where((e) => e.packages.contains('Phosphor Icons (font)')).toList();
     expect(phosphor, hasLength(1));
     expect(phosphor.single.paragraphs.map((p) => p.text).join(' '), contains('Permission is hereby granted'));
+    final cdc = entries.where((e) => e.packages.single.startsWith('Exercise animations: CDC')).toList();
+    expect(cdc, hasLength(1));
+    expect(cdc.single.paragraphs.map((p) => p.text).join(' '), contains('does not imply endorsement'));
+    final drawings = entries.where((e) => e.packages.single.startsWith('Exercise drawings: Everkinetic')).toList();
+    expect(drawings, hasLength(1), reason: 'CC BY-SA text for the bundled exercise drawings');
+    expect(drawings.single.paragraphs.map((p) => p.text).join(' '), contains('Attribution-ShareAlike 4.0 International'));
+    final text = drawings.single.paragraphs.map((p) => p.text).join(' ');
+    for (final part in ['Greg Priday', 'https://github.com/everkinetic/data', 'unmodified', 'https://creativecommons.org/licenses/by-sa/4.0/', 'Disclaimer']) {
+      expect(text, contains(part), reason: 'CC BY-SA 4.0 section 3(a): $part');
+    }
   });
 }

@@ -9,7 +9,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'account.dart' show signOutEverywhereOrLocally;
 import 'auth_screen.dart';
 import 'dashboard.dart';
+import 'exercises.dart' show animationNotice, drawingNotice;
 import 'mark.dart';
+import 'move_animation.dart' show DemoFigure, demoFigure;
 import 'onboarding.dart';
 import 'reminders.dart';
 import 'steps.dart' show forgetSteps;
@@ -48,9 +50,15 @@ String? devBackendProblem(String url, String key, {required bool release}) {
 SupabaseClient get supabase => Supabase.instance.client;
 
 /// The Phosphor icon font ships inside the app under the MIT licence, whose notice must travel with it; Flutter lists
-/// package licences on its own, but not bundled font files, so this adds it to the licence page (Settings).
+/// package licences on its own, but not bundled font files, so this adds it to the licence page (Settings). The same
+/// goes for the bundled exercise drawings.
 void registerBundledLicenses() => LicenseRegistry.addLicense(() async* {
       yield LicenseEntryWithLineBreaks(['Phosphor Icons (font)'], await rootBundle.loadString('assets/fonts/PHOSPHOR-LICENSE'));
+      // Exercise drawings, CC BY-SA 4.0 (assets/drawings/everkinetic/SOURCE.md). Section 3(a): creator, a link to the
+      // material, that it is unmodified, and the licence text (which carries the disclaimer).
+      yield const LicenseEntryWithLineBreaks(['Exercise animations: CDC Growing Stronger (public domain)'], animationNotice);
+      yield LicenseEntryWithLineBreaks(['Exercise drawings: Everkinetic by Greg Priday (CC BY-SA 4.0)'],
+          '$drawingNotice\n\n${await rootBundle.loadString('assets/drawings/everkinetic/LICENSE')}');
     });
 
 Future<void> main() async {
@@ -64,11 +72,15 @@ Future<void> main() async {
   await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
   prefs = await SharedPreferences.getInstance();
   themeMode.value = ThemeMode.values.asNameMap()[prefs.getString('theme')] ?? ThemeMode.system;
+  demoFigure.value = DemoFigure.values.asNameMap()[prefs.getString(demoFigureKey)] ?? DemoFigure.man;
   runApp(const LevloApp());
 }
 
 /// Device settings: theme choice and which one-time screens were seen.
 late final SharedPreferences prefs;
+
+/// Which figure demonstrates moves: chosen on a move page, else from the profile's sex (dashboard), on this device.
+const demoFigureKey = 'demo_figure';
 
 /// Light, dark or follow the phone. Changed from Profile, remembered on this device.
 final themeMode = ValueNotifier(ThemeMode.system);

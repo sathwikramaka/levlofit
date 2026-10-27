@@ -1,4 +1,4 @@
-# Cloud migration history reconciliation (prepared 2026-10-13, extended 2026-10-16 to seven pending items and 2026-10-17 to eight; nothing applied)
+# Cloud migration history reconciliation (prepared 2026-10-13, extended 2026-10-16 to seven pending items and 2026-10-17 to eight, 2026-10-24 to fourteen; nothing applied)
 
 > **Corrections 2026-10-16 (Levlofit-4, independent audit, PROGRESS batch CE). Where this file disagrees,
 > docs/RELEASE_CHECKLIST.md section 3 is authoritative.** Option A is not used (it needs `supabase link`, which is
@@ -75,12 +75,12 @@ encrypted, never in git). Backup status was not visible to the read-only tools u
 3. `supabase link --project-ref ndeozgxowggkljluaccz`
 4. `supabase migration repair --status reverted 20260928174658 20260928182245 20260928182954 20260928183912 20260929123123 20260929124453 20260929124512 20260929134407 20260929134655 20260929135530 20260929135833 20260929142821 20260929164332 20260929170329 20260929171600 20260929171749 20260929172515 20260929173613 20260929180006 20260929180518 20260930045317 20261003044920 20261003053618 20261003081358 20261003090315 20261003090402 20261003091951 20261003101127 20261007072328 20261007083557 20261007084949 20261007085015 20261007092712`
 5. `supabase migration repair --status applied 20260928120000 20260928130000 20260928140000 20260929090000 20260929130000 20260929140000 20260929150000 20260929160000 20260929170000 20260929180000 20260929190000 20260929200000 20260929210000 20260929220000 20260929230000 20260930000000 20261003000000 20261003100000 20261003200000 20261003300000 20261003400000 20261003500000 20261007100000 20261007200000 20261007300000 20261007500000`
-6. `supabase migration list` must show those 26 as applied and only the eight items under "Pending production items"
+6. `supabase migration list` must show those 26 as applied and only the fourteen items under "Pending production items"
    pending (20261007400000, 20261013100000, 20261014100000, 20261016100000, 20261016200000, 20261016300000,
    20261016400000, 20261017100000); `supabase db push --dry-run` must list exactly those eight.
 7. `supabase db push`. 8. Verify (below).
 
-**B. Forward-only, leave history as is.** Apply the eight pending files' SQL as new records (Dashboard SQL editor or
+**B. Forward-only, leave history as is.** Apply the fourteen pending files' SQL as new records (Dashboard SQL editor or
 `apply_migration`) in the order of "Pending production items", handbook_v3 first. History stays mismatched; `db push` must then never be
 used for this project, and every future migration must be applied the same way.
 
@@ -155,7 +155,19 @@ policy "own levels"); no data is deleted by the forward migration.
 
 Then: deploy coach-chat, generate-plan, delete-account; smoke test with a test account.
 
-## Pending production items (8), updated 2026-10-17 (documentation only; nothing applied)
+## Pending production items (14), updated 2026-10-24 (documentation only; nothing applied)
+
+**Update 2026-10-24 (later):** item 13, `20261025100000_food_sources` (food licence gate). Tested only on a disposable
+local stack (levlo_mig_fs: all migrations and the seed, pgTAP 129/129). **Behaviour change in production:** once
+applied, every IFCT food value is hidden from the app and the coach (`food_sources.ifct2017.release_allowed = false`).
+The diet plan, food library and diary then show the "food values are not available" note until USDA rows are
+imported or NIN grants permission. Apply it together with item 14 (the USDA import, 2026-10-24), or decide explicitly to ship without food
+values. `supabase/seed.sql` turns IFCT on for local stacks only: never run `db push --include-seed` against production.
+
+**Update 2026-10-24:** items 9-12 below (coach memory facts, chat summaries, exercise swaps, session changes), written
+after the 2026-10-17 list, tested only with pgTAP on throwaway local stacks (121/121) and in the CI database job
+definition (CI not yet run: no Git remote). Never applied to the dev DB or production. Preflight, verify and rollback
+for each are rows 3.7c-3.7f of RELEASE_CHECKLIST.md; the handbook_v3 file (item 1) now hashes b3b87df6.
 
 **Update 2026-10-17:** an 8th item, `20261017100000_revoke_anon_sequences` (revokes anon on the 4 public sequences,
 all backing identity columns of per-user tables; and the matching default privilege). Written locally with a pgTAP
@@ -175,6 +187,13 @@ to the isolated local stack and covered by pgTAP (59/59) and the CI database job
 | 5 | 20261016200000_food_micronutrients | Not applied | Adds 8 nullable columns to foods and fills them by code | Updates reference table foods only; no user data | foods = local (543 rows) |
 | 6 | 20261016300000_recipes | Not applied | New tables recipes, recipe_items, save_recipe(), limit triggers | None (new tables) | 4 not required; foods present |
 | 7 | 20261016400000_revoke_anon_user_tables | Not applied | Revokes anon privileges on 6 per-user tables | None (policies are authenticated-only) | 1-6 |
+| 8 | 20261017100000_revoke_anon_sequences | Not applied | Revokes anon on the 4 public sequences and the default privilege | None | 7 |
+| 9 | 20261023100000_coach_facts | Not applied | New table coach_facts, RLS, stamp trigger; copies coach_notes lines as unconfirmed suggestions | coach_notes unchanged | none |
+| 10 | 20261023200000_thread_summaries | Not applied | Adds coach_threads.summary, summary_upto (+ update grant) | None (new nullable columns) | none |
+| 11 | 20261024100000_exercise_swaps | Not applied | New table exercise_swaps (FK exercises), RLS, server-only writes | None (new table) | exercises present |
+| 12 | 20261024200000_session_changes | Not applied | New table session_changes, RLS, server-only writes | None (new table) | none |
+| 14 | 20261025200000_foods_usda_fdc | Not applied | Inserts 28 USDA FoodData Central rows (CC0; generated by data/build_foods_fdc.py from the SR Legacy 2018-04 release); adds foods.source_note; corrects soya chunks X001 to available carbohydrate (16.42 g, was the by-difference 33.92 g) | Reference data only; X001 values change | 13 |
+| 13 | 20261025100000_food_sources | Not applied | New table food_sources (licence metadata); foods.source, source_ref; the foods read policy shows only allowed sources | No rows changed or deleted. **Hides IFCT values from app roles** (see the update above) | foods present |
 
 Items 3-7 were written after the 2026-10-13 cloud inspection, so their preflight checks below are the first evidence
 for the cloud side and must all hold before applying.

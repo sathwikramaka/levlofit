@@ -1,5 +1,9 @@
 # Production migration safety review (2026-10-16, read-only)
 
+> **Scope note (2026-10-24):** this review covers the seven files listed below as they were on 2026-10-16. Items added later
+> (20261017100000 revoke_anon_sequences and the 2026-10-23/24 coach migrations, RELEASE_CHECKLIST.md rows 3.7b-3.7f) and the
+> handbook_v3 content edits since (expected hash b3b87df6) are not reviewed here; give them the same review before applying.
+
 No production SQL, migration, deployment, commit, push or credential operation was run. Sources: the SQL of the seven
 pending files, docs/MIGRATION_RECONCILIATION.md, tools/backup_prod.sh and backup_prod.ps1, app and function code.
 The read-only queries below were syntax-tested inside `begin read only` on the LOCAL stack only; local values are

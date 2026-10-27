@@ -16,11 +16,12 @@ import 'avatar.dart';
 import 'coach_chat.dart';
 import 'diet_plan.dart';
 import 'exercises.dart';
-import 'food_diary.dart' show FoodDiaryScreen, matchesFoodQuery;
+import 'food_diary.dart' show EmptyFoodsText, FoodCredit, FoodDiaryScreen, foodDataPendingText, matchesFoodQuery;
 import 'handbook.dart';
 import 'icons.dart';
 import 'main.dart';
 import 'mark.dart';
+import 'move_animation.dart' show DemoFigure, demoFigure;
 import 'onboarding.dart';
 import 'dashboard_layout.dart';
 import 'reminders.dart';
@@ -67,7 +68,24 @@ typedef _Data = ({
 });
 
 /// Every place the side menu can take you. The shell swaps the body; the menu stays the same everywhere.
-enum _Tab { home, workout, protocol, diet, hydration, habits, calendar, progress, foods, foodDiary, bmi, bodyFat, handbook, library, glossary, reminders, settings, profile }
+/// Greeting for the dashboard header, by local time of day. One line per day from each set, so it changes day to day
+/// without flickering between rebuilds. The name follows it.
+String greetingFor(DateTime now) {
+  final h = now.hour;
+  final options = h < 5
+      ? const ['Up late', 'Burning the midnight oil', 'Still up']
+      : h < 12
+          ? const ['Good morning', 'Morning', 'Rise and shine']
+          : h < 17
+              ? const ['Good afternoon', 'Afternoon', 'Hope the day is going well']
+              : h < 22
+                  ? const ['Good evening', 'Evening', 'Welcome back']
+                  : const ['Winding down', 'Late evening', 'Almost bedtime'];
+  final dayOfYear = now.difference(DateTime(now.year)).inDays;
+  return options[dayOfYear % options.length];
+}
+
+enum _Tab { home, workout, protocol, diet, hydration, habits, calendar, progress, foods, foodDiary, bmi, handbook, library, glossary, reminders, settings, profile }
 
 final _shellKey = GlobalKey<ScaffoldState>();
 
@@ -173,10 +191,12 @@ class _DashboardState extends State<Dashboard> {
   Future<_Data> _load() async {
     final now = DateTime.now();
     final [profile, latest] = await Future.wait([
-      supabase.from('profiles').select('display_name, sex, birth_year, height_cm, weight_kg, waist_cm, equipment, equipment_items, injuries, days_per_week, session_minutes, water_target_ml, avatar').eq('id', _uid).single(),
+      supabase.from('profiles').select('display_name, sex, birth_year, height_cm, weight_kg, equipment, equipment_items, injuries, days_per_week, session_minutes, water_target_ml, avatar').eq('id', _uid).single(),
       supabase.from('generated_plans').select('plan, input').eq('user_id', _uid).order('created_at', ascending: false).limit(1).single(),
     ]);
     final plan = latest['plan'] as _Json;
+    // Until a figure is picked on a move page, demonstrations follow the profile.
+    if (!prefs.containsKey(demoFigureKey)) demoFigure.value = profile['sex'] == 'female' ? DemoFigure.woman : DemoFigure.man;
     if (profile['avatar'] == 'photo') profile['avatar_url'] = await avatarPhotoUrl(_uid);
     final goals = (plan['goals'] as List).cast<_Json>();
     final results = await Future.wait<Object?>([
@@ -351,14 +371,11 @@ class _DashboardState extends State<Dashboard> {
       _Tab.settings => _AppSettingsScreen(onOpen: _open),
       // The calculators work without the plan, but prefill from the profile once it has loaded (keyed, so the
       // fields refill when the load finishes after the tab was opened).
-      _Tab.bmi || _Tab.bodyFat => FutureBuilder(
+      _Tab.bmi => FutureBuilder(
           future: _data,
           builder: (context, snap) {
             final p = snap.data?.profile ?? const <String, dynamic>{};
-            final key = ValueKey(snap.hasData);
-            return _tab == _Tab.bmi
-                ? BmiScreen(key: key, leading: const _ShellMenu(), heightCm: p['height_cm'] as num?, weightKg: p['weight_kg'] as num?, age: p['birth_year'] == null ? null : DateTime.now().year - (p['birth_year'] as int))
-                : WaistScreen(key: key, leading: const _ShellMenu(), heightCm: p['height_cm'] as num?, waistCm: p['waist_cm'] as num?);
+            return BmiScreen(key: ValueKey(snap.hasData), leading: const _ShellMenu(), heightCm: p['height_cm'] as num?, weightKg: p['weight_kg'] as num?, age: p['birth_year'] == null ? null : DateTime.now().year - (p['birth_year'] as int));
           },
         ),
       _Tab.handbook => const HandbookScreen(leading: _ShellMenu()),
@@ -633,7 +650,7 @@ class _Bento extends StatelessWidget {
     final cardGoal = ownAddOn == null ? todayGoal : {...ownAddOn.session, 'name': '${ownAddOn.name} add-on', 'startLevel': ownBlock!.level};
 
     final first = (data.name ?? '').split(' ').first;
-    final hello = now.hour < 12 ? 'Good morning' : (now.hour < 17 ? 'Good afternoon' : 'Good evening');
+    final hello = greetingFor(now);
     final review = ((plan['review'] as List?) ?? const []).cast<_Json>();
     final important = review.where((f) => f['level'] == 'stop' || f['level'] == 'change').toList();
     final habits = _habitList(data, logged, data.habits, data.water);
@@ -1325,7 +1342,7 @@ List<Widget> _fuelDetails(BuildContext context, _Json plan, List<_Json> proteins
       const SizedBox(height: 4),
       for (final f in proteins) row(f['name_hi'] == null ? f['name'] as String : '${f['name']} (${f['name_hi']})', '${f['kcal']} kcal', '${(f['protein_g'] as num).round()} g'),
       const SizedBox(height: 8),
-      Text('Protein per 100 g, filtered for your diet and allergies. Source: IFCT 2017, National Institute of Nutrition.', style: t.bodySmall?.copyWith(color: muted)),
+      FoodCredit(lead: 'Protein per 100 g, filtered for your diet and allergies. ', style: t.bodySmall?.copyWith(color: muted)),
     ],
   ];
 }
