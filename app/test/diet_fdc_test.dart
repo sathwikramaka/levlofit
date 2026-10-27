@@ -37,7 +37,8 @@ void main() {
 
   test('with IFCT hidden, the planner gets 28 USDA foods under its own codes and none of the four without a record', () {
     final foods = plannerFoods(rows);
-    expect(foods.keys.toSet(), plannerFdcCodes.keys.toSet());
+    expect(foods.keys.where((k) => !k.startsWith('dish:')).toSet(), plannerFdcCodes.keys.toSet());
+    expect(foods.keys.where((k) => k.startsWith('dish:')), ['dish:moong-chilla'], reason: 'the only dish made wholly of USDA foods');
     expect(foods.keys, isNot(containsAll(['A011', 'A010', 'L003', 'S006'])));
     expect(foods['B020']!.code, 'B020', reason: 'planner rules stay keyed by planner code');
     expect(foods['B020']!.kcal, 337, reason: 'kidney beans, FDC 173744');

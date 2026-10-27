@@ -80,7 +80,13 @@ void main() {
     }
     final traps = movesForMuscle('Trapezius');
     expect(traps, isNotEmpty);
-    expect(movesForMuscle('Chest').first.$3, isTrue, reason: 'main movers come first');
+    // Only moves where the muscle is a main mover: no bench press under triceps-only, no squats under calves.
+    for (final m in muscleMatch.keys) {
+      final words = muscleMatch[m]!.guide;
+      for (final (_, g) in movesForMuscle(m)) {
+        expect(g.main.any((x) => words.any((w) => x.startsWith(w))), isTrue, reason: '$m: ${g.name}');
+      }
+    }
   });
 
   testWidgets('tapping a muscle on the body opens its exercises; the muscle screen lists guide and catalogue moves', (tester) async {
@@ -97,7 +103,7 @@ void main() {
     ));
     await tester.pump();
     expect(find.text('Trapezius'), findsOneWidget);
-    expect(find.textContaining('Main mover'), findsWidgets);
+    expect(find.byType(ListTile), findsWidgets);
     expect(find.text('MORE EXERCISES  ·  1'), findsOneWidget);
     expect(tester.takeException(), isNull);
 

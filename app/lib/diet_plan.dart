@@ -63,7 +63,57 @@ const _catalogue = <String, (String, int, String)>{
   'D076': ('Tomato', 1, 'raw'),
   'T012': ('Sunflower oil', 1, 'oil'),
   'T006': ('Mustard oil', 1, 'oil'),
+  // Dishes (dishRecipes): budget tier, weighed as the dry mix.
+  'dish:idli': ('Idli', 1, 'dry'),
+  'dish:dosa': ('Dosa', 1, 'dry'),
+  'dish:ragi-dosa': ('Ragi dosa', 1, 'dry'),
+  'dish:poha': ('Poha with peanuts', 1, 'dry'),
+  'dish:upma': ('Rava upma', 1, 'dry'),
+  'dish:vermicelli': ('Vermicelli upma', 1, 'dry'),
+  'dish:besan-chilla': ('Besan chilla', 1, 'dry'),
+  'dish:moong-chilla': ('Moong dal chilla', 1, 'dry'),
+  'dish:thepla': ('Thepla', 1, 'dry'),
+  'dish:sprouts': ('Sprouts chaat', 1, 'dry'),
 };
+
+/// Breakfast and snack dishes (owner request 2026-10-28: plans people actually eat; nobody wants roti and sabzi at
+/// 8 am). Each dish is Levlofit's own dry-weight recipe of planner ingredients, so its values are the weighted sum of
+/// those ingredients' stored values (oil is counted once for the day, as for every meal). Code -> (name, recipe as
+/// ingredient code and share of the dry weight). Kitchen conventions, not lab analyses.
+const dishRecipes = <String, (String, List<(String, double)>)>{
+  'dish:idli': ('Idli', [('A015', 0.75), ('B003', 0.25)]),
+  'dish:dosa': ('Dosa', [('A015', 0.75), ('B003', 0.25)]),
+  'dish:ragi-dosa': ('Ragi dosa', [('A010', 0.75), ('B003', 0.25)]),
+  'dish:poha': ('Poha with peanuts', [('A011', 0.85), ('H012', 0.15)]),
+  'dish:upma': ('Rava upma', [('A022', 1.0)]),
+  'dish:vermicelli': ('Vermicelli upma', [('A023', 1.0)]),
+  'dish:besan-chilla': ('Besan chilla', [('B001', 1.0)]),
+  'dish:moong-chilla': ('Moong dal chilla', [('B010', 1.0)]),
+  'dish:thepla': ('Thepla', [('A019', 0.85), ('B001', 0.15)]),
+  'dish:sprouts': ('Sprouts chaat', [('B011', 1.0)]),
+};
+
+/// Ingredients only dishes use, read with the planner's foods.
+const _dishOnlyCodes = ['A022', 'A023', 'B001', 'B003', 'B011'];
+
+/// [foods] plus every dish whose ingredients are all present: values per 100 g of the dry mix, tags the union of
+/// the ingredients' tags (so diet and allergy filters see every ingredient).
+Map<String, Food> withDishes(Map<String, Food> foods) => {
+      ...foods,
+      for (final MapEntry(key: code, value: (name, recipe)) in dishRecipes.entries)
+        if (recipe.every((r) => foods.containsKey(r.$1)))
+          code: (
+            code: code,
+            name: name,
+            tags: {for (final r in recipe) ...foods[r.$1]!.tags}.toList(),
+            kcal: recipe.fold(0.0, (t, r) => t + foods[r.$1]!.kcal * r.$2),
+            protein: recipe.fold(0.0, (t, r) => t + foods[r.$1]!.protein * r.$2),
+            carb: recipe.fold(0.0, (t, r) => t + foods[r.$1]!.carb * r.$2),
+            fat: recipe.fold(0.0, (t, r) => t + foods[r.$1]!.fat * r.$2),
+            fiber: recipe.fold(0.0, (t, r) => t + foods[r.$1]!.fiber * r.$2),
+            fatKnown: recipe.every((r) => foods[r.$1]!.fatKnown),
+          ),
+    };
 
 /// Most a single portion of a food should reach in one meal, so the solver never asks for a bowl of peanuts.
 const _maxPortion = {'H012': 40.0, 'B002': 80.0, 'B021': 90.0, 'B010': 90.0, 'B013': 90.0, 'B020': 90.0, 'L003': 150.0, 'M004': 200.0, 'N003': 220.0, 'S006': 220.0};
@@ -81,26 +131,26 @@ const plannerFdcCodes = {
 };
 
 /// Every food the planner may use (planner codes and their USDA rows), for one database read.
-final plannerCodes = [..._catalogue.keys, ...plannerFdcCodes.values];
+final plannerCodes = [..._catalogue.keys.where((c) => !c.startsWith('dish:')), ..._dishOnlyCodes, ...plannerFdcCodes.values];
 
 /// Database rows keyed by planner code: the USDA row when it is visible, else the planner code's own row. The planner's
 /// rules (portions, soya cap, display names) stay keyed by planner code.
 Map<String, Food> plannerFoods(Iterable<Map<String, dynamic>> rows) {
   final byCode = {for (final r in rows) r['code'] as String: r};
-  return {
-    for (final k in _catalogue.keys)
+  return withDishes({
+    for (final k in [..._catalogue.keys, ..._dishOnlyCodes])
       if (byCode[plannerFdcCodes[k]] ?? byCode[k] case final r?) k: foodFromRow({...r, 'code': k}),
-  };
+  });
 }
 
 /// Everyday staples by region (owner request 2026-10-27): Levlofit's own grouping of the planner's grains, dals and
 /// fish, used as a preference in the weekday rotation, never as a rule. 'any' (or null) mixes all regions.
 const cuisineRegions = ['any', 'north', 'south', 'east', 'west'];
 const regionStaples = <String, Set<String>>{
-  'north': {'A019', 'A003', 'B020', 'B002', 'L003'},
-  'south': {'A015', 'A010', 'B021', 'B010'},
-  'east': {'A015', 'A011', 'B013', 'S006'},
-  'west': {'A005', 'A003', 'A011', 'B010', 'B021'},
+  'north': {'A019', 'A003', 'B020', 'B002', 'L003', 'dish:besan-chilla', 'dish:moong-chilla', 'dish:poha', 'dish:thepla'},
+  'south': {'A015', 'A010', 'B021', 'B010', 'dish:idli', 'dish:dosa', 'dish:ragi-dosa', 'dish:upma'},
+  'east': {'A015', 'A011', 'B013', 'S006', 'dish:poha', 'dish:vermicelli', 'dish:upma'},
+  'west': {'A005', 'A003', 'A011', 'B010', 'B021', 'dish:poha', 'dish:thepla', 'dish:besan-chilla', 'dish:upma'},
 };
 
 enum _Scale { protein, energy, fixed }
@@ -116,8 +166,11 @@ _Slot _s(List<String> codes, double base, double min, double max, _Scale scale, 
 // Meal templates: (name, usual time, slots, share of the day's oil).
 final _meals = <(String, String, List<_Slot>, double)>[
   ('Breakfast', '8 am', [
-    _s(['A011', 'A010', 'A019'], 50, 30, 120, _Scale.energy, floor: 20),
-    _s(['M004', 'L003'], 100, 25, 200, _Scale.protein), // eggs or paneer bhurji; soya curry stays at lunch and dinner
+    // A breakfast dish, rotated through the week (never roti and sabzi at 8 am).
+    _s(['dish:poha', 'dish:idli', 'dish:besan-chilla', 'dish:upma', 'dish:dosa', 'dish:moong-chilla', 'dish:thepla', 'dish:ragi-dosa',
+        'dish:vermicelli'], 60, 30, 150, _Scale.energy, floor: 20),
+    // Eggs or paneer bhurji only when the day needs the protein; the breakfast dish and milk come first.
+    _s(['M004', 'L003'], 0, 0, 150, _Scale.protein, floor: 0, dense: true),
     _s(['L002'], 200, 200, 200, _Scale.fixed, step: 50, floor: 100),
     _s(['E012', 'E049', 'E028', 'E001'], 120, 120, 120, _Scale.fixed, floor: 60),
   ], 0.2),
@@ -129,7 +182,7 @@ final _meals = <(String, String, List<_Slot>, double)>[
     _s(['D043'], 100, 100, 100, _Scale.fixed),
   ], 0.4),
   ('Evening snack', '5 pm', [
-    _s(['B002', 'H012'], 30, 20, 60, _Scale.protein),
+    _s(['dish:sprouts', 'B002', 'H012'], 30, 20, 60, _Scale.protein),
     _s(['E028', 'E047', 'E012', 'E049'], 120, 120, 120, _Scale.fixed, floor: 60),
     _s(['L002'], 200, 200, 200, _Scale.fixed, step: 50, floor: 100), // a glass of milk or chaas for those who take dairy
   ], 0.0),
@@ -772,6 +825,16 @@ const _servings = <String, _Serving>{
   'F002': (150, 'katori carrot sabzi', 'katoris carrot sabzi'),
   'D043': (100, 'bowl cucumber salad', 'bowls cucumber salad'),
   'D076': (100, 'bowl tomato salad', 'bowls tomato salad'),
+  'dish:idli': (15, 'idli', 'idlis'),
+  'dish:dosa': (35, 'dosa', 'dosas'),
+  'dish:ragi-dosa': (35, 'ragi dosa', 'ragi dosas'),
+  'dish:poha': (60, 'plate poha with peanuts', 'plates poha with peanuts'),
+  'dish:upma': (50, 'bowl rava upma', 'bowls rava upma'),
+  'dish:vermicelli': (50, 'bowl vermicelli upma', 'bowls vermicelli upma'),
+  'dish:besan-chilla': (30, 'besan chilla', 'besan chillas'),
+  'dish:moong-chilla': (30, 'moong dal chilla', 'moong dal chillas'),
+  'dish:thepla': (30, 'thepla', 'theplas'),
+  'dish:sprouts': (40, 'katori sprouts chaat', 'katoris sprouts chaat'),
   'T012': (5, 'tsp cooking oil', 'tsp cooking oil'),
   'T006': (5, 'tsp mustard oil', 'tsp mustard oil'),
 };
@@ -805,8 +868,10 @@ String servingLabel(PlanItem i) {
   return '$c ${c == '1' || c == '½' ? s.$2 : s.$3}';
 }
 
-/// The exact amount behind [servingLabel], shown small: "60 g wheat atta", "200 ml".
-String exactLabel(PlanItem i) => switch (i.unit) {
+/// The exact amount behind [servingLabel], shown small: "60 g wheat atta", "200 ml", "45 g batter mix".
+String exactLabel(PlanItem i) => i.code.startsWith('dish:')
+    ? '${i.grams.round()} g dry ${i.code == 'dish:sprouts' ? 'moong' : 'mix'}'
+    : switch (i.unit) {
       'ml' => '${i.grams.round()} ml',
       'egg' => '${i.grams.round()} g',
       'oil' => '${i.grams.round()} g ${i.name.toLowerCase()}',

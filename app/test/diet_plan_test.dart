@@ -34,12 +34,18 @@ const _rows = [
   ['D043', 'Cucumber, green, elongate', <String>[], 20, 0.71, 3.48, 0.16, 2.14],
   ['D076', 'Tomato, ripe, local', <String>[], 20, 0.90, 2.71, 0.47, 1.77],
   ['T012', 'Sunflower oil', <String>[], 900, 0.0, 0.0, 100.0, 0.0],
+  // Dish-only ingredients (dishRecipes).
+  ['A022', 'Wheat, semolina', ['gluten', 'wheat'], 334, 11.38, 68.43, 0.74, 9.72],
+  ['A023', 'Wheat, vermicelli', ['gluten', 'wheat'], 333, 9.70, 70.39, 0.45, 9.28],
+  ['B001', 'Bengal gram, dal', <String>[], 329, 21.55, 46.72, 5.31, 15.15],
+  ['B003', 'Black gram, dal', <String>[], 324, 23.06, 51.00, 1.69, 11.93],
+  ['B011', 'Green gram, whole', <String>[], 294, 22.53, 46.13, 1.14, 17.04],
 ];
 
-final foodsForTest = {
+final foodsForTest = withDishes({
   for (final r in _rows)
     r[0] as String: foodFromRow({'code': r[0], 'name': r[1], 'tags': r[2], 'kcal': r[3], 'protein_g': r[4], 'carb_g': r[5], 'fat_g': r[6], 'fiber_g': r[7]}),
-};
+});
 
 void main() {
   test('every diet and budget lands near the plan targets, all week, and respects exclusions', () {
@@ -118,6 +124,16 @@ void main() {
     expect(mealSummary(meal), '2 rotis + 1 katori moong dal');
     final day = planDay(foods: foodsForTest, kcal: 2200, protein: 110, excluded: {'beef', 'pork'});
     expect(dayOilLabel(day), startsWith('Cooking oil for the whole day: '));
+    // Breakfast is a breakfast dish (idli, poha, chilla...), never roti and sabzi, for every diet and region.
+    for (final ex in [{'beef', 'pork'}, {'beef', 'pork', 'egg', 'meat', 'poultry', 'fish'}, {'beef', 'pork', 'egg', 'meat', 'poultry', 'fish', 'dairy'}]) {
+      for (final region in [null, 'north', 'south', 'east', 'west']) {
+        for (var d = 0; d < 7; d++) {
+          final b = planDay(foods: foodsForTest, kcal: 2200, protein: 100, excluded: ex, day: d, region: region).meals.first;
+          expect(b.items.first.code, startsWith('dish:'), reason: '$region day $d: ${mealSummary(b)}');
+          expect(b.items.map((i) => i.code), isNot(anyOf(contains('A019'), contains('C033'), contains('D036'))));
+        }
+      }
+    }
     for (final m in day.meals.take(3)) {
       expect(m.items.map((i) => i.code), isNot(contains('X001')), reason: 'no soya curry at ${m.name}');
     }

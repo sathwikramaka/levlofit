@@ -181,7 +181,7 @@ List<(String id, MoveGuide g)> filteredMoves({String? group, String? equipment, 
 /// names (public.exercises.target_muscles). Labels are the map's (muscle_shapes.dart).
 const muscleMatch = <String, ({List<String> guide, List<String> catalogue})>{
   'Chest': (guide: ['Pectoralis'], catalogue: ['pectorals']),
-  'Front shoulders': (guide: ['Deltoid, anterior', 'Deltoid'], catalogue: ['deltoids']),
+  'Front shoulders': (guide: ['Deltoid, anterior'], catalogue: ['deltoids']),
   'Rear shoulders': (guide: ['Deltoid, posterior'], catalogue: ['deltoids']),
   'Biceps': (guide: ['Biceps', 'Brachialis'], catalogue: ['biceps']),
   'Triceps': (guide: ['Triceps'], catalogue: ['triceps']),
@@ -197,19 +197,18 @@ const muscleMatch = <String, ({List<String> guide, List<String> catalogue})>{
   'Quadriceps': (guide: ['Quadriceps'], catalogue: ['quadriceps']),
   'Hamstrings': (guide: ['Hamstrings'], catalogue: ['hamstrings']),
   'Calves': (guide: ['Calves', 'Gastrocnemius', 'Soleus'], catalogue: ['calves']),
-  'Soleus': (guide: ['Soleus', 'Calves'], catalogue: ['calves']),
-  'Tibialis': (guide: ['Tibialis anterior', 'Calves'], catalogue: ['calves']),
+  'Soleus': (guide: ['Soleus'], catalogue: ['calves']),
+  'Tibialis': (guide: ['Tibialis'], catalogue: []), // the catalogue has no tibialis target
 };
 
-/// Guide moves that train [muscle] (a body-map label): moves where it is a main mover first, then moves where it
-/// assists, one per name. The bool says whether it is a main mover.
-List<(String id, MoveGuide g, bool main)> movesForMuscle(String muscle) {
+/// Guide moves whose main movers include [muscle] (a body-map label), one per name. Moves where it only assists are
+/// left out (owner request 2026-10-28: a muscle's page shows that muscle's exercises only).
+List<(String id, MoveGuide g)> movesForMuscle(String muscle) {
   final words = muscleMatch[muscle]?.guide ?? const <String>[];
-  bool hit(List<String> muscles) => muscles.any((m) => words.any((w) => m.startsWith(w)));
   final seen = <String>{};
   return [
-    for (final e in moveGuide.entries) if (hit(e.value.main) && seen.add(e.value.name)) (e.key, e.value, true),
-    for (final e in moveGuide.entries) if (hit(e.value.assist) && seen.add(e.value.name)) (e.key, e.value, false),
+    for (final e in moveGuide.entries)
+      if (e.value.main.any((m) => words.any((w) => m.startsWith(w))) && seen.add(e.value.name)) (e.key, e.value),
   ];
 }
 

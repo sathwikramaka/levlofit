@@ -19,7 +19,8 @@ const _vegan = {'beef', 'dairy', 'egg', 'fish', 'honey', 'meat', 'pork', 'poultr
 const _eggNoDairy = {'beef', 'dairy', 'fish', 'meat', 'pork', 'poultry', 'shellfish'};
 const _profiles = <_Profile>[
   (label: 'M25 maintain, non-veg, mid budget', kcal: 2300.0, protein: 112.0, tier: 2, excluded: {'beef', 'pork'}, mustPass: true),
-  (label: 'F30 cut, vegetarian, sedentary, low budget', kcal: 1450.0, protein: 110.0, tier: 1, excluded: _veg, mustPass: false),
+  // Passes since breakfast dishes (besan and moong dal chilla) joined the templates on 2026-10-28; it missed before.
+  (label: 'F30 cut, vegetarian, sedentary, low budget', kcal: 1450.0, protein: 110.0, tier: 1, excluded: _veg, mustPass: true),
   (label: 'M35 cut, vegan, low budget', kcal: 2040.0, protein: 170.0, tier: 1, excluded: _vegan, mustPass: false),
   (label: 'M20 bulk, eggitarian, high budget', kcal: 2540.0, protein: 104.0, tier: 3, excluded: {'beef', 'fish', 'meat', 'pork', 'poultry', 'shellfish'}, mustPass: true),
   (label: 'F45 recomp, eggitarian, lactose-free, mid budget', kcal: 1760.0, protein: 140.0, tier: 2, excluded: _eggNoDairy, mustPass: true),
@@ -52,9 +53,10 @@ List<String> _forbiddenWords(Set<String> excluded) => [
 // target +5%; the smallest bound over a grid of multipliers is used. Update this table if the templates change.
 typedef _TSlot = (List<String> codes, double floor, double base, double max, bool fixed);
 const _templates = <_TSlot>[
-  (['A011', 'A010', 'A019'], 20, 50, 120, false), (['M004', 'L003', 'X001'], 25, 100, 200, false), (['L002'], 100, 200, 200, true), (['E012', 'E049', 'E028', 'E001'], 60, 120, 120, true),
+  (['dish:poha', 'dish:idli', 'dish:besan-chilla', 'dish:upma', 'dish:dosa', 'dish:moong-chilla', 'dish:thepla', 'dish:ragi-dosa', 'dish:vermicelli'], 20, 60, 150, false),
+  (['M004', 'L003'], 0, 0, 150, false), (['L002'], 100, 200, 200, true), (['E012', 'E049', 'E028', 'E001'], 60, 120, 120, true),
   (['A015'], 20, 60, 150, false), (['A019', 'A005'], 20, 40, 120, false), (['B021', 'B010', 'B013', 'B020', 'B002'], 30, 40, 90, false), (['D036', 'D056', 'C015', 'F002', 'C033'], 150, 150, 150, true), (['D043'], 100, 100, 100, true),
-  (['B002', 'H012'], 20, 30, 60, false), (['E028', 'E047', 'E012', 'E049'], 60, 120, 120, true), (['L002'], 100, 200, 200, true), (['M004', 'X001', 'L003', 'B013', 'B010', 'B021'], 0, 0, 100, false),
+  (['dish:sprouts', 'B002', 'H012'], 20, 30, 60, false), (['E028', 'E047', 'E012', 'E049'], 60, 120, 120, true), (['L002'], 100, 200, 200, true), (['M004', 'X001', 'L003', 'B013', 'B010', 'B021'], 0, 0, 100, false),
   (['A019', 'A005', 'A003'], 20, 60, 150, false), (['N003', 'S006', 'L003', 'M004', 'X001', 'B020', 'B013'], 25, 100, 220, false), (['C033', 'D076', 'C015', 'D036', 'D056'], 150, 150, 150, true),
 ];
 const _foodCap = {'H012': 40.0, 'B002': 80.0, 'B021': 90.0, 'B010': 90.0, 'B013': 90.0, 'B020': 90.0, 'L003': 150.0, 'M004': 200.0, 'N003': 220.0, 'S006': 220.0};
@@ -204,14 +206,14 @@ void main() {
     // F45 settings with a smaller food list: the only dals are moong, masoor and kala chana. The weekday rotation
     // picks the lunch dal as pool[(day + slot 2 + meal 1) % 3] (the planner's rotation rule, mirrored here).
     // Variety attempts always keep that weekday dal, so a day showing another dal came from the full search.
-    final foods = {...foodsForTest}..remove('B021')..remove('B020');
+    final foods = {...foodsForTest}..remove('B021')..remove('B020')..removeWhere((k, _) => k.startsWith('dish:')); // the pre-dish list
     const dalPool = ['B010', 'B013', 'B002'];
     String dalOf(DayPlan d) => d.meals.firstWhere((m) => m.name == 'Lunch').items.map((i) => i.code).firstWhere(dalPool.contains);
 
     test('when no varied day passes, the passing full-search day is returned', () {
       var fallbacks = 0;
       for (var day = 0; day < 7; day++) {
-        final d = planDay(foods: foods, kcal: 1760, protein: 144, excluded: _eggNoDairy, tier: 2, day: day);
+        final d = planDay(foods: foods, kcal: 1760, protein: 138, excluded: _eggNoDairy, tier: 2, day: day);
         expect(d.check.feasible, isTrue, reason: 'day $day: ${d.check.issues}');
         // Independently recomputed from the food table.
         var k = 0.0, pr = 0.0;
@@ -223,12 +225,12 @@ void main() {
           expect(foods.containsKey(i.code), isTrue, reason: 'day $day uses ${i.name}, which is not in the food list');
         }
         expect((k - 1760).abs() / 1760, lessThanOrEqualTo(kcalTolerance), reason: 'day $day energy $k');
-        expect(pr / 144, greaterThanOrEqualTo(minProteinShare), reason: 'day $day protein $pr');
+        expect(pr / 138, greaterThanOrEqualTo(minProteinShare), reason: 'day $day protein $pr');
         if (dalOf(d) != dalPool[(day + 3) % 3]) {
           fallbacks++;
           expect(d.check.proteinCeiling, isNotNull, reason: 'day $day: only the full search shows another dal');
         }
-        final again = planDay(foods: foods, kcal: 1760, protein: 144, excluded: _eggNoDairy, tier: 2, day: day);
+        final again = planDay(foods: foods, kcal: 1760, protein: 138, excluded: _eggNoDairy, tier: 2, day: day);
         expect(_items(again).map((i) => '${i.code}:${i.grams}').join(','), _items(d).map((i) => '${i.code}:${i.grams}').join(','));
       }
       expect(fallbacks, greaterThan(0), reason: 'this profile should exercise the fallback');
