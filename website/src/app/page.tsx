@@ -33,7 +33,7 @@ function PhoneMock() {
             <Wordmark className="text-[15px]" />
             <span className="font-mono text-[9px] tracking-[0.2em] text-muted">EXAMPLE PLAN</span>
           </div>
-          <p className="mt-5 text-[20px] font-bold tracking-tight">Hi, Aarav</p>
+          <p className="mt-5 text-[20px] font-bold tracking-tight">Hi, Anand</p>
           <div className="mt-4 rounded-2xl border border-danger/40 bg-surface p-3.5">
             <p className="font-mono text-[9px] tracking-[0.2em] text-muted">CHANGED</p>
             <p className="mt-1 text-[13px] leading-snug font-semibold">Cutting became Maintenance</p>
@@ -113,7 +113,6 @@ const features = [
 ];
 
 const faqs = [
-  ["Is Levlofit free?", "Yes, while we grow. A small subscription may come later for extra features. What you use for free now stays free."],
   [
     "Where do the numbers come from?",
     "From published sources, not from an AI. Protein, calories, activity minutes and food limits are calculated by fixed rules, and each rule names its source.",
@@ -125,12 +124,12 @@ const faqs = [
   ],
   ["I have an allergy. Is that covered?", "Allergies and intolerances are asked before your diet. Foods that contain them are removed from every suggestion, including ones you type in yourself."],
   ["Can I delete my account?", "Yes, from the account menu at any time. Your profile, plans and logs are deleted with it."],
-  ["Why is it not on the Play Store?", "To launch free, without fees, we share the app straight from this website first. A store listing may follow."],
+  ["Why is it not on the Play Store?", "We share the app straight from this website first. A store listing may follow."],
   [
     "Is the download safe?",
     "It comes only from this website, signed with Levlofit's own key. Android installs updates only when they carry the same signature, and the SHA-256 checksum next to the button lets you check the file.",
   ],
-  ["Does it work on iPhone?", "Not yet. Levlofit is Android only for now, Android 7.0 or newer."],
+  ["Does it work on iPhone?", "Not yet. Levlofit is Android only for now."],
 ];
 
 export default function Home() {

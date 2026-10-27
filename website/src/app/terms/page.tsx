@@ -74,7 +74,7 @@ const sections: LegalSection[] = [
     title: "Price",
     body: (
       <p>
-        Levlofit is free for now. We may add a paid plan for extra features later. We will tell you before any charge, and nothing will be charged without your
+        Some features may later need a paid plan, and the app may show ads. We will tell you before any charge, and nothing will be charged without your
         clear agreement.
       </p>
     ),
