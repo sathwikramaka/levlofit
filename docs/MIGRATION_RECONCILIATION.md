@@ -195,6 +195,10 @@ ifct2017 hidden / usda_fdc and levlofit_recipe allowed, the 10 new tables presen
   coach_messages, dietary_profiles and cannot run check_rate; check_rate has body_check_day; app_errors: authenticated
   may insert message but not user_id and cannot select, limit trigger present; users 2, profiles 2, plans 1, coach
   messages 4 (unchanged). All 18 pending items are now applied.
+- 2026-10-28 functions (A21, owner-approved; deployed by Claude with the owner's CLI login from this repository):
+  generate-plan v18, coach-chat v18, delete-account v13, body-check v1 (new); all entrypoints from
+  supabase/functions/*, new bundle hashes. Earlier owner attempts had only bumped versions (secret updates) without new
+  code. Secrets (A22): LLM_API_KEY and LLM_DATA_APPROVED present (names checked; values never read).
 
 **Update 2026-10-24 (later):** item 13, `20261025100000_food_sources` (food licence gate). Tested only on a disposable
 local stack (levlo_mig_fs: all migrations and the seed, pgTAP 129/129). **Behaviour change in production:** once
