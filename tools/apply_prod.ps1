@@ -27,7 +27,7 @@ try {
   $name = Split-Path -Leaf $path
   # The file is mounted read-only (never piped, so no text re-encoding); PGPASSWORD passes from this environment.
   & docker run --rm -e PGPASSWORD -v "${dir}:/m:ro" $image psql $url -v ON_ERROR_STOP=1 --single-transaction -q -f "/m/$name"
-  if ($LASTEXITCODE -ne 0) { throw "psql exit $LASTEXITCODE: the transaction rolled back, nothing from this file was applied." }
+  if ($LASTEXITCODE -ne 0) { throw "psql exit ${LASTEXITCODE}: the transaction rolled back, nothing from this file was applied." }
   Write-Host "APPLIED $name ($hash)" -ForegroundColor Green
 } catch {
   Write-Host "FAILED: $($_.Exception.Message)" -ForegroundColor Red
