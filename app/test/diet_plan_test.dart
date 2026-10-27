@@ -112,9 +112,14 @@ void main() {
     expect(servingLabel(item('M004', 'Eggs, boiled', 100, 'egg')), '2 boiled eggs');
     expect(servingLabel(item('T012', 'Sunflower oil', 10, 'oil')), '2 tsp cooking oil');
     expect(servingLabel(item('E012', 'Banana', 60, 'raw')), '½ banana');
-    expect(servingLabel(item('N003', 'Chicken breast', 150, 'raw')), '150 g chicken breast');
+    expect(servingLabel(item('N003', 'Chicken breast', 150, 'raw')), 'Chicken curry (150 g boneless chicken)');
     expect(exactLabel(item('A019', 'Wheat atta (roti)', 60, 'dry')), '60 g dry wheat atta');
     final meal = (name: 'Lunch', time: '1 pm', items: [item('A019', 'Wheat atta (roti)', 60, 'dry'), item('B010', 'Moong dal', 30, 'dry'), item('T012', 'Sunflower oil', 10, 'oil')]);
     expect(mealSummary(meal), '2 rotis + 1 katori moong dal');
+    final day = planDay(foods: foodsForTest, kcal: 2200, protein: 110, excluded: {'beef', 'pork'});
+    expect(dayOilLabel(day), startsWith('Cooking oil for the whole day: '));
+    for (final m in day.meals.take(3)) {
+      expect(m.items.map((i) => i.code), isNot(contains('X001')), reason: 'no soya curry at ${m.name}');
+    }
   });
 }

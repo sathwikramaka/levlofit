@@ -1,11 +1,11 @@
-# Policy decisions (81 claims)
+# Policy decisions (68 claims)
 
 Claims governed by an open policy decision. Choose an option in docs/HANDBOOK_V4_REVIEW.md first, then review these items against it. Includes the muscle-training frequency rewording.
 
 ## Contents
 
-- 1. BMI cut-offs for Indian adults (9)
-- 2. Running versus strength (interference) (10)
+- 1. BMI cut-offs for Indian adults (2)
+- 2. Running versus strength (interference) (4)
 - 3. Vegetarian and vegan muscle-building (6)
 - 4. Caffeine 630 mg example (5)
 - 5. Muscle-training frequency wording (1)
@@ -13,86 +13,12 @@ Claims governed by an open policy decision. Choose an option in docs/HANDBOOK_V4
 
 ## 1. BMI cut-offs for Indian adults
 
-#### `body-measures:b01:ranges[0]`
-- **Chapter:** 22. Reading your body numbers (body-measures), band: BMI for Asian Indians
-- **Proposed wording:** 14 · 18 · Underweight [kg/m²]
-- **Status:** needs_clinical_review; **flags:** source_access; clinical; content_decision
-- **Source:** icmr2024 — ICMR-National Institute of Nutrition. Dietary Guidelines for Indians, 2024.
-- **Recorded passage (for a decision item it may conflict with the wording; see note)** (ICMR-NIN Dietary Guidelines for Indians 2024, PDF pages 81-82 (local copy)): "recommended that the BMI should be between 18.5 to 2 23Kg/M"
-- **Note:** Carried from v3 claim body-measures:b01:ranges[0] (identical text). Cut-off conflict, not decided: the cited Misra 2009 consensus (unread) is the source of 18/23/25, which plan-engine.ts (BMI 18.0 floor) and app/lib/tools.dart (bmiBandIndia) also use. ICMR DGI 2024 gives normal 18.5-23, overweight 23-27.5, obesity above 27.5 (Asian cut-offs). A qualified reviewer must choose the cut-offs; then update handbook, engine and app together. Here: underweight below 18 (handbook) vs below 18.5 (ICMR).
-- **Policy decision:** BMI cut-offs for Indian adults
-- **Reviewer question:** Governed by the decision 'BMI cut-offs for Indian adults' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `body-measures:b01:ranges[1]`
-- **Chapter:** 22. Reading your body numbers (body-measures), band: BMI for Asian Indians
-- **Proposed wording:** 18 · 23 · Normal [kg/m²]
-- **Status:** needs_clinical_review; **flags:** source_access; clinical; content_decision
-- **Source:** icmr2024 — ICMR-National Institute of Nutrition. Dietary Guidelines for Indians, 2024.
-- **Recorded passage (for a decision item it may conflict with the wording; see note)** (ICMR-NIN Dietary Guidelines for Indians 2024, PDF pages 81-82 (local copy)): "recommended that the BMI should be between 18.5 to 2 23Kg/M"
-- **Note:** Carried from v3 claim body-measures:b01:ranges[1] (identical text). Cut-off conflict, not decided: the cited Misra 2009 consensus (unread) is the source of 18/23/25, which plan-engine.ts (BMI 18.0 floor) and app/lib/tools.dart (bmiBandIndia) also use. ICMR DGI 2024 gives normal 18.5-23, overweight 23-27.5, obesity above 27.5 (Asian cut-offs). A qualified reviewer must choose the cut-offs; then update handbook, engine and app together. Here: upper limit 23 agrees; lower limit 18 vs 18.5.
-- **Policy decision:** BMI cut-offs for Indian adults
-- **Reviewer question:** Governed by the decision 'BMI cut-offs for Indian adults' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `body-measures:b01:ranges[2]`
-- **Chapter:** 22. Reading your body numbers (body-measures), band: BMI for Asian Indians
-- **Proposed wording:** 23 · 25 · Overweight [kg/m²]
-- **Status:** needs_clinical_review; **flags:** source_access; clinical; content_decision
-- **Source:** icmr2024 — ICMR-National Institute of Nutrition. Dietary Guidelines for Indians, 2024.
-- **Recorded passage (for a decision item it may conflict with the wording; see note)** (ICMR-NIN Dietary Guidelines for Indians 2024, PDF pages 81-82 (local copy)): "Overweight: BMI ranging over 23 to 27.5 Kg/M is defined as overweight as per Asian cut-offs"
-- **Note:** Carried from v3 claim body-measures:b01:ranges[2] (identical text). Cut-off conflict, not decided: the cited Misra 2009 consensus (unread) is the source of 18/23/25, which plan-engine.ts (BMI 18.0 floor) and app/lib/tools.dart (bmiBandIndia) also use. ICMR DGI 2024 gives normal 18.5-23, overweight 23-27.5, obesity above 27.5 (Asian cut-offs). A qualified reviewer must choose the cut-offs; then update handbook, engine and app together. Here: overweight 23-25 (handbook) vs 23-27.5 (ICMR).
-- **Policy decision:** BMI cut-offs for Indian adults
-- **Reviewer question:** Governed by the decision 'BMI cut-offs for Indian adults' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `body-measures:b01:ranges[3]`
-- **Chapter:** 22. Reading your body numbers (body-measures), band: BMI for Asian Indians
-- **Proposed wording:** 25 · 35 · Obese [kg/m²]
-- **Status:** needs_clinical_review; **flags:** source_access; clinical; content_decision
-- **Source:** icmr2024 — ICMR-National Institute of Nutrition. Dietary Guidelines for Indians, 2024.
-- **Recorded passage (for a decision item it may conflict with the wording; see note)** (ICMR-NIN Dietary Guidelines for Indians 2024, PDF pages 81-82 (local copy)): "Obesity: BMI above 27.5 Kg/M is defined as obesity as per the Asian cut-offs"
-- **Note:** Carried from v3 claim body-measures:b01:ranges[3] (identical text). Cut-off conflict, not decided: the cited Misra 2009 consensus (unread) is the source of 18/23/25, which plan-engine.ts (BMI 18.0 floor) and app/lib/tools.dart (bmiBandIndia) also use. ICMR DGI 2024 gives normal 18.5-23, overweight 23-27.5, obesity above 27.5 (Asian cut-offs). A qualified reviewer must choose the cut-offs; then update handbook, engine and app together. Here: obese from 25 (handbook) vs above 27.5 (ICMR).
-- **Policy decision:** BMI cut-offs for Indian adults
-- **Reviewer question:** Governed by the decision 'BMI cut-offs for Indian adults' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `body-measures:b05:items[0]`
-- **Chapter:** 22. Reading your body numbers (body-measures), Key points
-- **Proposed wording:** Levlofit uses Indian BMI cut-offs and your waist-to-height ratio.
-- **Status:** unreviewed; **flags:** summary_check; clinical; content_decision
-- **Source:** none recorded
-- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
-- **Policy decision:** BMI cut-offs for Indian adults
-- **Reviewer question:** Governed by the decision 'BMI cut-offs for Indian adults' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `body-measures:b05:items[1]`
-- **Chapter:** 22. Reading your body numbers (body-measures), Key points
-- **Proposed wording:** Measure your waist midway between the lowest rib and the hip bone.
-- **Status:** unreviewed; **flags:** summary_check; clinical; content_decision
-- **Source:** none recorded
-- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
-- **Policy decision:** BMI cut-offs for Indian adults
-- **Reviewer question:** Governed by the decision 'BMI cut-offs for Indian adults' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `body-measures:b05:items[2]`
-- **Chapter:** 22. Reading your body numbers (body-measures), Key points
-- **Proposed wording:** BMI screens; it cannot tell muscle from fat.
-- **Status:** unreviewed; **flags:** summary_check; clinical; content_decision
-- **Source:** none recorded
-- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
-- **Policy decision:** BMI cut-offs for Indian adults
-- **Reviewer question:** Governed by the decision 'BMI cut-offs for Indian adults' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
 #### `under-eating:b01:items[1]`
 - **Chapter:** 26. Eating too little (under-eating), stats
 - **Proposed wording:** 0 · kcal · deficit when your BMI is below the healthy range: Levlofit keeps you at maintenance instead
 - **Status:** unreviewed; **flags:** source_needed; clinical; content_decision
 - **Source:** none recorded
-- **Note:** Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. 
+- **Note:** Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. 
 - **Policy decision:** BMI cut-offs for Indian adults
 - **Reviewer question:** Governed by the decision 'BMI cut-offs for Indian adults' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
@@ -102,7 +28,7 @@ Claims governed by an open policy decision. Choose an option in docs/HANDBOOK_V4
 - **Proposed wording:** Is your BMI below the healthy range? · Do not diet. Levlofit keeps you at maintenance and builds strength instead. · Go to the next question.
 - **Status:** unreviewed; **flags:** source_needed; clinical; content_decision
 - **Source:** none recorded
-- **Note:** Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. 
+- **Note:** Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. Depends on the open BMI cut-off decision (Misra 2009 vs ICMR 2024). New v4 safety or medical guidance: needs a qualified reviewer and, where it states a fact, a source. 
 - **Policy decision:** BMI cut-offs for Indian adults
 - **Reviewer question:** Governed by the decision 'BMI cut-offs for Indian adults' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
@@ -115,26 +41,6 @@ Claims governed by an open policy decision. Choose an option in docs/HANDBOOK_V4
 - **Status:** unreviewed; **flags:** source_needed; content_decision
 - **Source:** none recorded
 - **Note:** Text changed in v4 from v3 claim one-step-at-a-time:b03:dont.items[1] (wording only); review reset, gates carried. Part of the open running-versus-strength decision (Wilson 2012 unread; ACSM 2026 reports concurrent training did not change strength). Factual health or fitness claim with no citation; add a source or reword as Levlofit guidance.
-- **Policy decision:** Running versus strength (interference)
-- **Reviewer question:** Governed by the decision 'Running versus strength (interference)' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `one-step-at-a-time:b05:items[0]`
-- **Chapter:** 12. One goal at a time (one-step-at-a-time), stats
-- **Proposed wording:** Possible · interference · with strength and size gains from frequent, long running sessions; the evidence is mixed
-- **Status:** unreviewed; **flags:** source_access; content_decision
-- **Source:** wilson2012 — Wilson JM et al. Concurrent training: a meta-analysis examining interference of aerobic and resistance exercises. J Strength Cond Res 2012;26(8):2293-2307.
-- **Note:** Text changed in v4 from v3 claim one-step-at-a-time:b04:items[0] (wording only); review reset, gates carried. No read source decides this: ACSM 2026 (article body) reports insufficient data to determine whether aerobic and resistance training in the same session affects strength, muscle growth or power (it does not report 'no effect'); the cited Wilson 2012 meta-analysis could not be read. Decision 2 provisional option C (cautious wording), pending evidence review. A reviewer should read Wilson 2012 and decide the wording.
-- **Policy decision:** Running versus strength (interference)
-- **Reviewer question:** Governed by the decision 'Running versus strength (interference)' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `one-step-at-a-time:b06:text`
-- **Chapter:** 12. One goal at a time (one-step-at-a-time), Evidence note
-- **Proposed wording:** Some studies suggest that frequent or long endurance sessions may reduce strength, size and especially power gains from lifting; the evidence is mixed and the cited review is still being checked.
-- **Status:** unreviewed; **flags:** source_access; content_decision
-- **Source:** wilson2012 — Wilson JM et al. Concurrent training: a meta-analysis examining interference of aerobic and resistance exercises. J Strength Cond Res 2012;26(8):2293-2307.
-- **Note:** Text changed in v4 from v3 claim one-step-at-a-time:b05:text (wording only); review reset, gates carried. No read source decides this: ACSM 2026 (article body) reports insufficient data to determine whether aerobic and resistance training in the same session affects strength, muscle growth or power (it does not report 'no effect'); the cited Wilson 2012 meta-analysis could not be read. Decision 2 provisional option C (cautious wording), pending evidence review. A reviewer should read Wilson 2012 and decide the wording.
 - **Policy decision:** Running versus strength (interference)
 - **Reviewer question:** Governed by the decision 'Running versus strength (interference)' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
@@ -161,47 +67,7 @@ Claims governed by an open policy decision. Choose an option in docs/HANDBOOK_V4
 
 #### `one-step-at-a-time:b07:items[2]`
 - **Chapter:** 12. One goal at a time (one-step-at-a-time), Key points
-- **Proposed wording:** Frequent, long endurance sessions may cost some strength and power; the evidence is mixed.
-- **Status:** unreviewed; **flags:** summary_check; content_decision
-- **Source:** none recorded
-- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
-- **Policy decision:** Running versus strength (interference)
-- **Reviewer question:** Governed by the decision 'Running versus strength (interference)' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `hyrox:b04:text`
-- **Chapter:** 36. HYROX and functional fitness (hyrox), Evidence note
-- **Proposed wording:** Running and lifting can share one plan. Keeping hard runs and leg sessions apart may limit any interference with strength; the evidence is mixed.
-- **Status:** unreviewed; **flags:** source_access; content_decision
-- **Source:** wilson2012 — Wilson JM et al. Concurrent training: a meta-analysis examining interference of aerobic and resistance exercises. J Strength Cond Res 2012;26(8):2293-2307.
-- **Note:** Text changed in v4 from v3 claim hyrox:b04:text (wording only); review reset, gates carried. No read source decides this: ACSM 2026 (article body) reports insufficient data to determine whether aerobic and resistance training in the same session affects strength, muscle growth or power (it does not report 'no effect'); the cited Wilson 2012 meta-analysis could not be read. Decision 2 provisional option C (cautious wording), pending evidence review. A reviewer should read Wilson 2012 and decide the wording.
-- **Policy decision:** Running versus strength (interference)
-- **Reviewer question:** Governed by the decision 'Running versus strength (interference)' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `hyrox:b05:items[0]`
-- **Chapter:** 36. HYROX and functional fitness (hyrox), Key points
-- **Proposed wording:** HYROX is 8 x 1 km of running, each followed by a workout station.
-- **Status:** unreviewed; **flags:** summary_check; content_decision
-- **Source:** none recorded
-- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
-- **Policy decision:** Running versus strength (interference)
-- **Reviewer question:** Governed by the decision 'Running versus strength (interference)' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `hyrox:b05:items[1]`
-- **Chapter:** 36. HYROX and functional fitness (hyrox), Key points
-- **Proposed wording:** Train running and strength together; keeping hard runs and leg sessions apart may limit interference.
-- **Status:** unreviewed; **flags:** summary_check; content_decision
-- **Source:** none recorded
-- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
-- **Policy decision:** Running versus strength (interference)
-- **Reviewer question:** Governed by the decision 'Running versus strength (interference)' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `hyrox:b05:items[2]`
-- **Chapter:** 36. HYROX and functional fitness (hyrox), Key points
-- **Proposed wording:** Practise the stations while tired, and pace the first kilometre.
+- **Proposed wording:** Adding endurance work mainly costs power; frequent, long running costs some strength and size too.
 - **Status:** unreviewed; **flags:** summary_check; content_decision
 - **Source:** none recorded
 - **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.

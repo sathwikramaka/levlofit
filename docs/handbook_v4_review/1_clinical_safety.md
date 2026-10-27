@@ -1,4 +1,4 @@
-# Clinical safety (117 claims)
+# Clinical safety (120 claims)
 
 Safety-relevant wording: symptoms and warning signs, pain and return to training, pregnancy and after birth, eating too little, heat illness, mental health, medical referrals, and key points summarising those chapters. Needs a qualified clinician (and a dietitian for nutrition items). Items that also lack a source say so in their flags.
 
@@ -8,16 +8,15 @@ Safety-relevant wording: symptoms and warning signs, pain and return to training
 - 11. Sleep and recovery (4)
 - 13. Tracking that tells the truth (6)
 - 18. Water, sweat and heat (11)
-- 22. Reading your body numbers (2)
 - 23. Calories and energy balance (1)
 - 24. Losing fat, keeping muscle (3)
 - 26. Eating too little (11)
-- 27. Supplements that work (12)
+- 27. Supplements that work (14)
 - 28. General fitness and heart health (5)
 - 34. Kettlebell training (4)
 - 35. Running (1)
 - 37. Soreness, pain and injuries (19)
-- 40. Training as a woman (12)
+- 40. Training as a woman (15)
 - 41. Training after 40 (4)
 - 42. Mood, stress and motivation (8)
 
@@ -348,26 +347,6 @@ Safety-relevant wording: symptoms and warning signs, pain and return to training
 - **Reviewer question:** Does this summary match the chapter and is it clinically safe as worded? Approve or amend.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
-## 22. Reading your body numbers
-
-#### `body-measures:b00:text`
-- **Chapter:** 22. Reading your body numbers (body-measures), Opening line
-- **Proposed wording:** Asian Indians carry more health risk at a lower weight than Western cut-offs assume, so Levlofit uses Indian cut-offs and your waist.
-- **Status:** needs_source; **flags:** source_needed; clinical
-- **Source:** none recorded
-- **Note:** Carried from v3 claim body-measures:b00:text (identical text). Factual health or fitness claim with no citation; add a source or reword as Levlofit guidance.
-- **Reviewer question:** Is this medically correct and suitably cautious? Name a source, or approve it as referral guidance, amend or remove.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
-#### `body-measures:b03:items[3]`
-- **Chapter:** 22. Reading your body numbers (body-measures), steps: Measure your waist
-- **Proposed wording:** Divide · Waist in cm divided by height in cm.
-- **Status:** editorial; **flags:** clinical
-- **Source:** none recorded
-- **Note:** Carried from v3 claim body-measures:b03:items[3] (identical text). A definition (waist divided by height); the cut-offs are reviewed elsewhere.
-- **Reviewer question:** Is this clinically safe and appropriate as worded? Approve, amend or remove.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
 ## 23. Calories and energy balance
 
 #### `calories:b05:items[0]`
@@ -536,11 +515,11 @@ Safety-relevant wording: symptoms and warning signs, pain and return to training
 
 #### `supplements:b01:rows[1]`
 - **Chapter:** 27. Supplements that work (supplements), table
-- **Proposed wording:** Supplement: Caffeine; Dose: 3 to 6 mg per kg; Timing: About 60 min before
-- **Status:** needs_clinical_review; **flags:** clinical
+- **Proposed wording:** Supplement: Caffeine; Dose: About 3 mg per kg (about 200 mg at most at once); Timing: About 60 min before
+- **Status:** needs_clinical_review; **flags:** clinical_review; clinical
 - **Source:** issncaffeine — Guest NS et al. International Society of Sports Nutrition position stand: caffeine and exercise performance. J Int Soc Sports Nutr 2021;18:1.
 - **Quoted passage** (PMC7777221 (article body)): "Caffeine is ergogenic when consumed in doses of 3–6 mg/kg body mass. The most commonly used timing of caffeine supplementation is 60 min pre-exercise."
-- **Note:** Carried from v3 claim supplements:b01:rows[1] (identical text). No direct citation in the Handbook; supported by a source the chapter lists. Dose and timing supported (uncited table row).
+- **Note:** Carried from v3 claim supplements:b01:rows[1] (identical text). Owner decision 2026-10-24 (coach plan item 5, D1); wording awaiting qualified clinician review. Example capped at about 3 mg/kg, about 200 mg at once (EFSA single-dose level); ISSN supports 3-6 mg/kg for performance.
 - **Reviewer question:** Source passage is recorded. Is the claim clinically safe and appropriate for general adult users as worded? Approve, amend or remove.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
@@ -574,11 +553,31 @@ Safety-relevant wording: symptoms and warning signs, pain and return to training
 - **Reviewer question:** Source passage is recorded. Is the claim clinically safe and appropriate for general adult users as worded? Approve, amend or remove.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
+#### `supplements:b03:items[0]`
+- **Chapter:** 27. Supplements that work (supplements), bars: Caffeine for a 70 kg person
+- **Proposed wording:** Example dose (3 mg/kg) · 210 · 210 mg [mg]
+- **Status:** needs_clinical_review; **flags:** clinical_review; clinical
+- **Source:** efsa_caffeine — European Food Safety Authority. Caffeine (topic page, single-dose and daily safety levels). efsa.europa.eu/en/topics/topic/caffeine.
+- **Quoted passage** (EFSA caffeine topic page (read in Step 1; quoted in docs/handbook_v4_review/ROUND8_REVIEW.md)): "Single doses of caffeine up to 200mg – about 3mg per kilogram of body weight (mg/kg bw) from all sources do not raise safety concerns for the general healthy adult population"
+- **Note:** Carried from v3 claim supplements:b03:items[0] (identical text). Owner decision 2026-10-24 (coach plan item 5, D1); wording awaiting qualified clinician review. 210 mg is 3 mg/kg for 70 kg, at the EFSA single-dose level of about 3 mg/kg.
+- **Reviewer question:** Source passage is recorded. Is the claim clinically safe and appropriate for general adult users as worded? Approve, amend or remove.
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `supplements:b03:items[1]`
+- **Chapter:** 27. Supplements that work (supplements), bars: Caffeine for a 70 kg person
+- **Proposed wording:** EU single-dose safety level · 200 · about 200 mg; more at once is above it. Avoid caffeine if pregnant, sensitive or on medication [mg]
+- **Status:** needs_clinical_review; **flags:** clinical_review; clinical
+- **Source:** efsa_caffeine — European Food Safety Authority. Caffeine (topic page, single-dose and daily safety levels). efsa.europa.eu/en/topics/topic/caffeine.
+- **Quoted passage** (EFSA caffeine topic page (read in Step 1; quoted in docs/handbook_v4_review/ROUND8_REVIEW.md)): "Single doses of caffeine up to 200mg – about 3mg per kilogram of body weight (mg/kg bw) from all sources do not raise safety concerns for the general healthy adult population"
+- **Note:** Carried from v3 claim supplements:b03:items[1] (identical text). Owner decision 2026-10-24 (coach plan item 5, D1); wording awaiting qualified clinician review. The avoid line (pregnant, sensitive, medication) is general caution, not from the quoted passage.
+- **Reviewer question:** Source passage is recorded. Is the claim clinically safe and appropriate for general adult users as worded? Approve, amend or remove.
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
 #### `supplements:b03:title`
 - **Chapter:** 27. Supplements that work (supplements), bars: Caffeine for a 70 kg person
 - **Proposed wording:** Caffeine for a 70 kg person
 - **Status:** non_claim; **flags:** clinical
-- **Source:** issncaffeine — Guest NS et al. International Society of Sports Nutrition position stand: caffeine and exercise performance. J Int Soc Sports Nutr 2021;18:1.
+- **Source:** efsa_caffeine — European Food Safety Authority. Caffeine (topic page, single-dose and daily safety levels). efsa.europa.eu/en/topics/topic/caffeine.
 - **Note:** Carried from v3 claim supplements:b03:title (identical text). Heading for the 70 kg worked example; the figures are reviewed below.
 - **Reviewer question:** Is this clinically safe and appropriate as worded? Approve, amend or remove.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
@@ -956,20 +955,47 @@ Safety-relevant wording: symptoms and warning signs, pain and return to training
 
 #### `women:b05:dont.items[0]`
 - **Chapter:** 40. Training as a woman (women), compare: Pregnant: usually fine
-- **Proposed wording:** Bleeding or fluid leaking
-- **Status:** needs_source; **flags:** source_needed; clinical
+- **Proposed wording:** Bleeding, or fluid that keeps leaking
+- **Status:** needs_clinical_review; **flags:** clinical_review; clinical
 - **Source:** none recorded
-- **Note:** Carried from v3 claim women:b05:dont.items[0] (identical text). Symptom or red-flag guidance: needs a qualified reviewer and a source; not reworded as editorial. Factual health or fitness claim with no citation; add a source or reword as Levlofit guidance.
-- **Reviewer question:** Is this medically correct and suitably cautious? Name a source, or approve it as referral guidance, amend or remove.
+- **Note:** Carried from v3 claim women:b05:dont.items[0] (identical text). Owner decision 2026-10-24 (coach plan item 5, D3); wording awaiting qualified clinician review. Follows the Mottola 2018 stop list (persistent fluid loss); full text read in Step 1, passage to be quoted by the reviewer.
+- **Reviewer question:** Source passage is recorded. Is the claim clinically safe and appropriate for general adult users as worded? Approve, amend or remove.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
 #### `women:b05:dont.items[1]`
 - **Chapter:** 40. Training as a woman (women), compare: Pregnant: usually fine
-- **Proposed wording:** Dizziness, chest pain or headache
-- **Status:** needs_source; **flags:** source_needed; clinical
+- **Proposed wording:** Dizziness or faintness that does not settle with rest
+- **Status:** needs_clinical_review; **flags:** clinical_review; clinical
 - **Source:** none recorded
-- **Note:** Carried from v3 claim women:b05:dont.items[1] (identical text). Factual health or fitness claim with no citation; add a source or reword as Levlofit guidance.
-- **Reviewer question:** Is this medically correct and suitably cautious? Name a source, or approve it as referral guidance, amend or remove.
+- **Note:** Carried from v3 claim women:b05:dont.items[1] (identical text). Owner decision 2026-10-24 (coach plan item 5, D3); wording awaiting qualified clinician review. Follows the Mottola 2018 stop list; headache removed (not in Mottola).
+- **Reviewer question:** Source passage is recorded. Is the claim clinically safe and appropriate for general adult users as worded? Approve, amend or remove.
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `women:b05:dont.items[2]`
+- **Chapter:** 40. Training as a woman (women), compare: Pregnant: usually fine
+- **Proposed wording:** Chest pain
+- **Status:** needs_clinical_review; **flags:** clinical_review; clinical
+- **Source:** none recorded
+- **Note:** Carried from v3 claim women:b05:dont.items[2] (identical text). Owner decision 2026-10-24 (coach plan item 5, D3); wording awaiting qualified clinician review. Follows the Mottola 2018 stop list.
+- **Reviewer question:** Source passage is recorded. Is the claim clinically safe and appropriate for general adult users as worded? Approve, amend or remove.
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `women:b05:dont.items[3]`
+- **Chapter:** 40. Training as a woman (women), compare: Pregnant: usually fine
+- **Proposed wording:** Painful regular contractions
+- **Status:** needs_clinical_review; **flags:** clinical_review; clinical
+- **Source:** none recorded
+- **Note:** Carried from v3 claim women:b05:dont.items[3] (identical text). Owner decision 2026-10-24 (coach plan item 5, D3); wording awaiting qualified clinician review. Follows the Mottola 2018 stop list.
+- **Reviewer question:** Source passage is recorded. Is the claim clinically safe and appropriate for general adult users as worded? Approve, amend or remove.
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `women:b05:dont.items[4]`
+- **Chapter:** 40. Training as a woman (women), compare: Pregnant: usually fine
+- **Proposed wording:** Breathlessness that does not settle with rest
+- **Status:** needs_clinical_review; **flags:** clinical_review; clinical
+- **Source:** none recorded
+- **Note:** Carried from v3 claim women:b05:dont.items[4] (identical text). Owner decision 2026-10-24 (coach plan item 5, D3); wording awaiting qualified clinician review. Follows the Mottola 2018 stop list.
+- **Reviewer question:** Source passage is recorded. Is the claim clinically safe and appropriate for general adult users as worded? Approve, amend or remove.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
 #### `women:b06:text`

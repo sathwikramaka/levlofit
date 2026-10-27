@@ -9,7 +9,9 @@ Rules (nothing is marked resolved without a basis):
   - New claims are checked only against source text already downloaded in the evidence audit; each quoted passage must
     occur in that text (after whitespace normalisation) or the script stops.
   - New medical warning signs and after-birth guidance are flagged for clinical review and need a source.
-Usage: python -I data/handbook_v4/carry_over.py <folder with who2020.txt and helms2014.xml>
+Usage: python -I data/handbook_v4/carry_over.py [folder with who2020.txt, helms2014.xml, acsm2026.xml, issncaffeine.xml]
+Without the folder, the source-checked records already in the register are kept as they are (a quoted passage is
+never written without its source text).
 """
 import csv
 import importlib.util
@@ -30,12 +32,18 @@ def norm(s):
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", s))).replace(" ", " ")
 
 
-def main(src_dir: Path):
-    who = re.sub(r"\s+", " ", (src_dir / "who2020.txt").read_text(encoding="utf-8"))   # plain text: no tag stripping ("<6 METs")
-    hx = (src_dir / "helms2014.xml").read_text(encoding="utf-8")
-    helms = norm(hx[hx.find("<body"):hx.rfind("</body>")])
+def main(src_dir: Path | None):
+    def body(name):
+        if src_dir is None:
+            return None
+        x = (src_dir / name).read_text(encoding="utf-8")
+        return norm(x[x.find("<body"):x.rfind("</body>")])
+    who = None if src_dir is None else re.sub(r"\s+", " ", (src_dir / "who2020.txt").read_text(encoding="utf-8"))   # plain text: no tag stripping ("<6 METs")
+    helms = body("helms2014.xml")
 
     def quote(text, *passages):
+        if text is None:
+            return None   # no source text this run: record() keeps the row's existing review
         for p in passages:
             assert p in text, f"passage not found in source text: {p[:60]}"
         return " [...] ".join(passages)
@@ -116,6 +124,8 @@ def main(src_dir: Path):
         return m[0]
 
     def record(r, status, src, passage, locator, note, needs=""):
+        if passage is None:
+            return
         r.update(evidence_status=status, passage_source=src, supporting_passage=passage, passage_locator=locator,
                  reviewed_by=WHO, reviewed_on=TODAY, review_needs=needs, notes=note)
 
@@ -144,8 +154,7 @@ def main(src_dir: Path):
     record(find("under-eating", "In lean athletes, low energy availability"), "needs_clinical_review", "helms2014", quote(helms, TEST, LEA),
            "PMC4033492 (article body)", "New v4 text; source-checked. Part of the eating-too-little chapter, a clinical review item.", needs="clinical")
 
-    ax = (src_dir / "acsm2026.xml").read_text(encoding="utf-8")
-    acsm = norm(ax[ax.find("<body"):ax.rfind("</body>")])
+    acsm = body("acsm2026.xml")
     VOL = "higher volume (≥10 sets/muscle group/wk)"
     FREQ = "RT did not influence hypertrophy performed with low (1 d/wk) versus high (>5 d/wk) frequency when total volume was equated"
     r = find("build-muscle", "Reaching your weekly sets")
@@ -157,8 +166,7 @@ def main(src_dir: Path):
 
     # Decision 4 caution (PROVISIONAL, pending source and clinical review). Passages from ISSN 2017 (caffeine), already read;
     # recorded as source-checked parts only, never approved. No numeric daily limit is given (no source read).
-    cx = (src_dir / "issncaffeine.xml").read_text(encoding="utf-8")
-    caf = norm(cx[cx.find("<body"):cx.rfind("</body>")])
+    caf = body("issncaffeine.xml")
     PREG = "The rate of caffeine metabolism may be inhibited or decreased with pregnancy or use of hormonal contraceptives"
     BP1 = "individuals with the AC or CC genotype (slow metabolizers) have an elevated risk of myocardial infarction"
     BP2 = "hypertension and elevated blood pressure"
@@ -203,6 +211,8 @@ def main(src_dir: Path):
     ]
     for chapter, needle, flag, note in adds:
         hit = [r for r in rows if r["chapter"] == chapter and r["text"].startswith(needle) and r["evidence_status"] != "auto_label" and r["block_type"] != "keypoints"]
+        if not hit and v4m.SUPERSEDED_REST:
+            continue   # Decision 5 superseded: v3 carries its own wording, reviewed from the Grgic 2018 abstract
         assert len(hit) == 1, (chapter, needle, len(hit))
         r = hit[0]
         for f in flag.split("; "):
@@ -272,4 +282,4 @@ def main(src_dir: Path):
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]))
+    main(Path(sys.argv[1]) if len(sys.argv) > 1 else None)

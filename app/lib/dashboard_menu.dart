@@ -761,6 +761,7 @@ class _DietScreenState extends State<_DietScreen> {
           _MealCard(meal: m),
           const SizedBox(height: 10),
         ],
+        if (dayOilGrams(plan) > 0) Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Text(dayOilLabel(plan), style: t.bodyMedium)),
         const SizedBox(height: 8),
         Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -815,7 +816,7 @@ class _MealCard extends StatelessWidget {
         // The plate in one line, in household servings; exact grams and nutrients sit below and behind Details.
         Text(mealSummary(meal), style: t.titleMedium),
         const SizedBox(height: 8),
-        for (final i in meal.items)
+        for (final i in meal.items.where((i) => i.unit != 'oil')) // oil is shown once for the whole day
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(border: Border(top: BorderSide(color: c.outline))),

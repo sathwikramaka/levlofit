@@ -117,7 +117,7 @@ _Slot _s(List<String> codes, double base, double min, double max, _Scale scale, 
 final _meals = <(String, String, List<_Slot>, double)>[
   ('Breakfast', '8 am', [
     _s(['A011', 'A010', 'A019'], 50, 30, 120, _Scale.energy, floor: 20),
-    _s(['M004', 'L003', 'X001'], 100, 25, 200, _Scale.protein),
+    _s(['M004', 'L003'], 100, 25, 200, _Scale.protein), // eggs or paneer bhurji; soya curry stays at lunch and dinner
     _s(['L002'], 200, 200, 200, _Scale.fixed, step: 50, floor: 100),
     _s(['E012', 'E049', 'E028', 'E001'], 120, 120, 120, _Scale.fixed, floor: 60),
   ], 0.2),
@@ -132,13 +132,14 @@ final _meals = <(String, String, List<_Slot>, double)>[
     _s(['B002', 'H012'], 30, 20, 60, _Scale.protein),
     _s(['E028', 'E047', 'E012', 'E049'], 120, 120, 120, _Scale.fixed, floor: 60),
     _s(['L002'], 200, 200, 200, _Scale.fixed, step: 50, floor: 100), // a glass of milk or chaas for those who take dairy
-    // Used only when the day is still short of protein: the densest food the person can eat, within its caps.
-    _s(['M004', 'X001', 'L003', 'B013', 'B010', 'B021'], 0, 0, 100, _Scale.protein, floor: 0, dense: true),
   ], 0.0),
   ('Dinner', '8 pm', [
     _s(['A019', 'A005', 'A003'], 60, 30, 150, _Scale.energy, floor: 20),
     _s(['N003', 'S006', 'L003', 'M004', 'X001', 'B020', 'B013'], 100, 25, 220, _Scale.protein, prefer: 4),
     _s(['C033', 'D076', 'C015', 'D036', 'D056'], 150, 150, 150, _Scale.fixed),
+    // Used only when the day is still short of protein: the densest food the person can eat, within its caps, as a
+    // second dinner dish (a katori of dal or soya curry), never as a 5 pm curry.
+    _s(['M004', 'X001', 'L003', 'B013', 'B010', 'B021'], 0, 0, 100, _Scale.protein, floor: 0, dense: true),
   ], 0.4),
 ];
 
@@ -782,10 +783,20 @@ String _count(double x) {
   return halves.isOdd ? (whole == 0 ? '½' : '$whole½') : '$whole';
 }
 
-/// What to put on the plate, e.g. "2 rotis", "1 katori moong dal", "150 g chicken breast".
+/// Foods weighed rather than counted, named as the dish that is cooked: "Paneer bhurji (100 g paneer)".
+const _dishes = {
+  'L003': ('Paneer bhurji or sabzi', 'paneer'),
+  'N003': ('Chicken curry', 'boneless chicken'),
+  'S006': ('Fish curry', 'rohu'),
+  'H012': ('Roasted peanuts', 'peanuts'),
+};
+
+/// What to put on the plate, e.g. "2 rotis", "1 katori moong dal", "Chicken curry (150 g boneless chicken)".
 String servingLabel(PlanItem i) {
   final s = _servings[i.code];
   if (s == null) {
+    final d = _dishes[i.code];
+    if (d != null) return '${d.$1} (${i.grams.round()} g ${d.$2})';
     final name = i.name.replaceAll(RegExp(r'\s*\(.*\)'), '').toLowerCase();
     return '${i.grams.round()} g $name';
   }
@@ -805,6 +816,17 @@ String exactLabel(PlanItem i) => switch (i.unit) {
 
 /// One line for the whole meal, oil left out: "2 rotis + 1 katori moong dal + 1 katori palak sabzi".
 String mealSummary(PlanMeal m) => m.items.where((i) => i.unit != 'oil').map(servingLabel).join(' + ');
+
+/// Cooking oil for the whole day in teaspoons, shown once rather than per meal, as a dietitian writes it.
+double dayOilGrams(DayPlan d) => d.meals.expand((m) => m.items).where((i) => i.unit == 'oil').fold(0.0, (s, i) => s + i.grams);
+
+/// "Cooking oil for the day: 6 tsp (30 g). Switch between mustard, groundnut, rice bran and sunflower oil" — ICMR-NIN
+/// 2024 advises using a mix of oils rather than one.
+String dayOilLabel(DayPlan d) {
+  final g = dayOilGrams(d);
+  return 'Cooking oil for the whole day: ${_count(g / 5)} tsp (${g.round()} g). '
+      'Switch between oils (mustard, groundnut, rice bran, sunflower) instead of using only one.';
+}
 
 /// The food library: only the everyday foods worth knowing for protein, fibre, good carbs and healthy fats.
 /// (IFCT code, display name, group). Soya chunks values: USDA FoodData Central 174275 (defatted soy flour).
