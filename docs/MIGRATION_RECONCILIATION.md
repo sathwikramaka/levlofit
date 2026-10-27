@@ -187,6 +187,14 @@ ifct2017 hidden / usda_fdc and levlofit_recipe allowed, the 10 new tables presen
 - 2026-10-28 item 5, 20261016200000_food_micronutrients (sha256 8cab69a8b6b477e7...): APPLIED (owner ran it before the
   written approval; approved afterwards in chat). Verify: 8 micronutrient columns, A013 calcium 10.93, 527 of 543 foods
   with calcium; users 2 (unchanged).
+- 2026-10-28 items 6-18 as one owner-approved batch (apply_prod.ps1, stop at first failure): recipes,
+  revoke_anon_user_tables, revoke_anon_sequences, coach_facts, thread_summaries, exercise_swaps, session_changes,
+  food_sources, foods_usda_fdc, diet_pace_region, body_check_rate, app_errors, ifct_release: ALL APPLIED. Verify: the 7
+  new tables present, 0 public tables without RLS, coach_threads summary columns 2, dietary_profiles pace/region 2,
+  foods 571 (28 USDA), sources ifct2017/levlofit_recipe/usda_fdc all allowed, anon has no grants on profiles, food_log,
+  coach_messages, dietary_profiles and cannot run check_rate; check_rate has body_check_day; app_errors: authenticated
+  may insert message but not user_id and cannot select, limit trigger present; users 2, profiles 2, plans 1, coach
+  messages 4 (unchanged). All 18 pending items are now applied.
 
 **Update 2026-10-24 (later):** item 13, `20261025100000_food_sources` (food licence gate). Tested only on a disposable
 local stack (levlo_mig_fs: all migrations and the seed, pgTAP 129/129). **Behaviour change in production:** once
