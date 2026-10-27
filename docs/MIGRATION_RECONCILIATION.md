@@ -182,6 +182,8 @@ ifct2017 hidden / usda_fdc and levlofit_recipe allowed, the 10 new tables presen
   app_feedback_limit trigger present; goal_levels has 4 policies; users 2, profiles 2, coach messages 4 (unchanged).
 - 2026-10-28 item 3, 20261014100000_custom_reminders (sha256 8aacfb31834fcc16...): APPLIED. Verify: table present, RLS on,
   1 policy, 1 limit trigger, anon has no select; users 2, profiles 2 (unchanged).
+- 2026-10-28 item 4, 20261016100000_food_diary (sha256 25057b24bd7f9e13...): APPLIED. Verify: food_log present, RLS on,
+  1 policy, 1 limit trigger, 2 foreign keys, anon has no select; users 2, foods 543 (unchanged).
 
 **Update 2026-10-24 (later):** item 13, `20261025100000_food_sources` (food licence gate). Tested only on a disposable
 local stack (levlo_mig_fs: all migrations and the seed, pgTAP 129/129). **Behaviour change in production:** once
