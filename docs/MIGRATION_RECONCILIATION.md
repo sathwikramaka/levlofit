@@ -155,7 +155,7 @@ policy "own levels"); no data is deleted by the forward migration.
 
 Then: deploy coach-chat, generate-plan, delete-account; smoke test with a test account.
 
-## Pending production items (17), updated 2026-10-27 (documentation only; nothing applied)
+## Pending production items (18), updated 2026-10-28 (documentation only; nothing applied)
 
 **Read-only state, 2026-10-28 (step A1, owner-approved, no writes):** migration history has 33 rows, last
 20261007092712 remove_pilates; none of the 17 items below is recorded. Functions: delete-account v8, generate-plan v13,
@@ -227,6 +227,7 @@ to the isolated local stack and covered by pgTAP (59/59) and the CI database job
 | 15 | 20261027100000_diet_pace_region | Not applied | Adds dietary_profiles.diet_pace (easy/balanced/hard, default balanced) and cuisine_region (any/north/south/east/west, default any); plan engine 3.1.0 reads diet_pace | None (defaults keep plans unchanged) | 14 |
 | 16 | 20261027200000_body_check_rate | Not applied | Redefines check_rate with a body_check_day bucket (3 a day) for functions/body-check | None | 15 |
 | 17 | 20261027300000_app_errors | Not applied | New table app_errors (insert-only for users, 30 a day, 90-day removal, cascade on account delete) | None (new table) | 16 |
+| 18 | 20261028100000_ifct_release | Not applied | Sets food_sources ifct2017 release_allowed = true (owner decision A20) | Reference visibility only | 13 |
 | 13 | 20261025100000_food_sources | Not applied | New table food_sources (licence metadata); foods.source, source_ref; the foods read policy shows only allowed sources | No rows changed or deleted. **Hides IFCT values from app roles** (see the update above) | foods present |
 
 Items 3-7 were written after the 2026-10-13 cloud inspection, so their preflight checks below are the first evidence
