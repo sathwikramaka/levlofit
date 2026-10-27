@@ -1,6 +1,7 @@
 """Levlofit Handbook v4 DRAFT builder: the v3 chapters arranged and extended into one book.
 
-Status: DRAFT FOR REVIEW. It never writes into supabase/migrations/. The production candidate stays data/build_handbook.py
+Status: released 2026-10-28 (owner request; no clinician review, owner decision 2026-10-27). Writes the draft file and
+supabase/migrations/20261028200000_handbook_v4_book.sql. The production candidate stays data/build_handbook.py
 and supabase/migrations/20261007400000_handbook_v3.sql, unchanged. This module imports the v3 content and applies the
 book edits listed in docs/HANDBOOK_BOOK_PLAN.md:
   - an introduction (welcome), a part opener at the start of each of the five parts, and a closing chapter with a
@@ -59,16 +60,26 @@ REWORDS = []   # (slug, old text, new text): v4 rewordings of v3 claims; carry_o
 REMOVED = []   # (slug, rendered v3 claim text, reason): v3 claims removed by a recorded decision
 
 
+SUPERSEDED = []   # (slug, old text): v4 edits that data/build_handbook.py has since made itself (owner decisions applied
+                  # to v3 on 2026-10-23 and later), so the current v3 wording stands
+
+
 def reword(slug, old, new):
-    edit_text(slug, old, new)
-    REWORDS.append((slug, old, new))
+    if edit_text(slug, old, new):
+        REWORDS.append((slug, old, new))
 
 
 def edit_text(slug, old, new):
-    """Replace one exact string inside a chapter's blocks (fails loudly if it is not there exactly once)."""
+    """Replace one exact string inside a chapter's blocks (fails loudly if it is there more than once). Returns False,
+    and records the edit as superseded, when v3 no longer has the old text."""
     s = json.dumps(CH[slug]["blocks"], ensure_ascii=False)
-    assert s.count(json.dumps(old, ensure_ascii=False)[1:-1]) == 1, (slug, old)
+    n = s.count(json.dumps(old, ensure_ascii=False)[1:-1])
+    if n == 0:
+        SUPERSEDED.append((slug, old))
+        return False
+    assert n == 1, (slug, old)
     CH[slug]["blocks"] = json.loads(s.replace(json.dumps(old, ensure_ascii=False)[1:-1], json.dumps(new, ensure_ascii=False)[1:-1]))
+    return True
 
 
 # ------------------------------------------------------------------ new chapters
@@ -323,8 +334,9 @@ reword("one-step-at-a-time", "Lots of running would compete with your strength w
 reword("one-step-at-a-time", "on strength and size from frequent, long running sessions",
        "with strength and size gains from frequent, long running sessions; the evidence is mixed")
 _st = next(b for b in CH["one-step-at-a-time"]["blocks"] if b["t"] == "stats" and b["items"][0]["unit"] == "interference")
-_st["items"][0]["value"] = "Possible"          # was "More"
-REWORDS.append(("one-step-at-a-time", "More · interference", "Possible · interference"))   # rendered form, for gate carry
+if _st["items"][0]["value"] == "More":         # v3 says "Possible" itself since 2026-10-23
+    _st["items"][0]["value"] = "Possible"
+    REWORDS.append(("one-step-at-a-time", "More · interference", "Possible · interference"))   # rendered form, for gate carry
 reword("one-step-at-a-time",
        "Combining endurance and strength training costs some strength, size and especially power gains, and the cost grows with how often and how long the endurance sessions are.",
        "Some studies suggest that frequent or long endurance sessions may reduce strength, size and especially power gains from lifting; the evidence is mixed and the cited review is still being checked.")
@@ -355,38 +367,42 @@ CH["supplements"]["blocks"].insert(_i + 1, steps("Caffeine caution", [
 # ACSM: "Strength was not affected by ... short (<1 min) versus long (>1 min) between-set rest intervals"; hypertrophy:
 # insufficient data. Timer durations are Levlofit rules (the app timer is unchanged: 120 s compound lifts, 90 s others).
 # Grgic 2018 and Grgic 2017 remain unread; the muscle-growth bar stays flagged until Grgic 2017 is read.
-_rest = CH["rest-between-sets"]
-_rb = next(b for b in _rest["blocks"] if b["t"] == "bars" and b["title"] == "Rest to aim for")
-_rb["source"] = None
-_rb["items"] = [
-    {"label": "Big lifts (Levlofit rule)", "value": 2, "note": "about 2 min"},
-    {"label": "Muscle building (evidence under review)", "value": 1.5, "note": "over 1 min"},
-    {"label": "Other exercises (Levlofit rule)", "value": 1.5, "note": "about 90 s"},
-]
-REWORDS += [("rest-between-sets", "Big lifts for strength · 2 · 2 min or more", "Big lifts (Levlofit rule) · 2 · about 2 min"),
-            ("rest-between-sets", "Muscle building · 1.5 · over 1 min", "Muscle building (evidence under review) · 1.5 · over 1 min"),
-            ("rest-between-sets", "Light accessory work · 1 · about 1 min", "Other exercises (Levlofit rule) · 1.5 · about 90 s")]
-_rs = next(b for b in _rest["blocks"] if b["t"] == "stats" and b["items"][0]["unit"] == "minutes or more")
-_rs["items"][0] = {"value": "Similar", "unit": "",
-                   "label": "strength outcomes were reported when rests under 1 minute and over 1 minute were compared in the reviews summarised by ACSM 2026",
-                   "source": "acsm2026"}
-REWORDS.append(("rest-between-sets", "2 · minutes or more · of rest maximises strength gains",
-                "Similar · strength outcomes were reported when rests under 1 minute and over 1 minute were compared in the reviews summarised by ACSM 2026"))
-_re = next(b for b in _rest["blocks"] if b["t"] == "evidence" and b["text"].startswith("Strength improves with short rests too"))
-_old_ev = _re["text"]
-_re["text"] = ("Similar strength outcomes were reported when rests under 1 minute and over 1 minute were compared in the reviews "
-               "summarised by ACSM 2026. For muscle growth, ACSM found the data insufficient. Rest long enough to repeat good reps.")
-_re["source"] = "acsm2026"   # grade left as "moderate" for now: flagged grade_confirm in the register (63% is ACSM's rating, not ours)
-REWORDS.append(("rest-between-sets", _old_ev, _re["text"]))
-_rest["sources"] = _rest["sources"] + ["acsm2026"]
-_gs = next(b for b in CH["get-stronger"]["blocks"] if b["t"] == "stats" and any(i["unit"] == "min rest" for i in b["items"]))
-_gi = next(i for i in _gs["items"] if i["unit"] == "min rest")
-_gi.update(value="About 2", label="between heavy sets: a Levlofit rule (reviews comparing rests under and over 1 minute reported similar strength outcomes)", source=None)
-REWORDS.append(("get-stronger", "2+ · min rest · between heavy sets helps strength",
-                "About 2 · min rest · between heavy sets: a Levlofit rule (reviews comparing rests under and over 1 minute reported similar strength outcomes)"))
+# Superseded when v3 itself was reworded from the Grgic 2018 abstract (2026-10-23): then v3's wording stands.
+SUPERSEDED_REST = not any(b["t"] == "evidence" and b["text"].startswith("Strength improves with short rests too") for b in CH["rest-between-sets"]["blocks"])
+if not SUPERSEDED_REST:
+    _rest = CH["rest-between-sets"]
+    _rb = next(b for b in _rest["blocks"] if b["t"] == "bars" and b["title"] == "Rest to aim for")
+    _rb["source"] = None
+    _rb["items"] = [
+        {"label": "Big lifts (Levlofit rule)", "value": 2, "note": "about 2 min"},
+        {"label": "Muscle building (evidence under review)", "value": 1.5, "note": "over 1 min"},
+        {"label": "Other exercises (Levlofit rule)", "value": 1.5, "note": "about 90 s"},
+    ]
+    REWORDS += [("rest-between-sets", "Big lifts for strength · 2 · 2 min or more", "Big lifts (Levlofit rule) · 2 · about 2 min"),
+                ("rest-between-sets", "Muscle building · 1.5 · over 1 min", "Muscle building (evidence under review) · 1.5 · over 1 min"),
+                ("rest-between-sets", "Light accessory work · 1 · about 1 min", "Other exercises (Levlofit rule) · 1.5 · about 90 s")]
+    _rs = next(b for b in _rest["blocks"] if b["t"] == "stats" and b["items"][0]["unit"] == "minutes or more")
+    _rs["items"][0] = {"value": "Similar", "unit": "",
+                       "label": "strength outcomes were reported when rests under 1 minute and over 1 minute were compared in the reviews summarised by ACSM 2026",
+                       "source": "acsm2026"}
+    REWORDS.append(("rest-between-sets", "2 · minutes or more · of rest maximises strength gains",
+                    "Similar · strength outcomes were reported when rests under 1 minute and over 1 minute were compared in the reviews summarised by ACSM 2026"))
+    _re = next(b for b in _rest["blocks"] if b["t"] == "evidence" and b["text"].startswith("Strength improves with short rests too"))
+    _old_ev = _re["text"]
+    _re["text"] = ("Similar strength outcomes were reported when rests under 1 minute and over 1 minute were compared in the reviews "
+                   "summarised by ACSM 2026. For muscle growth, ACSM found the data insufficient. Rest long enough to repeat good reps.")
+    _re["source"] = "acsm2026"   # grade left as "moderate" for now: flagged grade_confirm in the register (63% is ACSM's rating, not ours)
+    REWORDS.append(("rest-between-sets", _old_ev, _re["text"]))
+    _rest["sources"] = _rest["sources"] + ["acsm2026"]
+    _gs = next(b for b in CH["get-stronger"]["blocks"] if b["t"] == "stats" and any(i["unit"] == "min rest" for i in b["items"]))
+    _gi = next(i for i in _gs["items"] if i["unit"] == "min rest")
+    _gi.update(value="About 2", label="between heavy sets: a Levlofit rule (reviews comparing rests under and over 1 minute reported similar strength outcomes)", source=None)
+    REWORDS.append(("get-stronger", "2+ · min rest · between heavy sets helps strength",
+                    "About 2 · min rest · between heavy sets: a Levlofit rule (reviews comparing rests under and over 1 minute reported similar strength outcomes)"))
 for _slug, _needle in (("one-step-at-a-time", "Some studies suggest"), ("hyrox", "Running and lifting can share")):
-    _b = next(b for b in CH[_slug]["blocks"] if b["t"] == "evidence" and b["text"].startswith(_needle))
-    _b["grade"] = "unverified"   # was strong (one-step) / moderate (hyrox); cited source not read
+    _b = next((b for b in CH[_slug]["blocks"] if b["t"] == "evidence" and b["text"].startswith(_needle)), None)
+    if _b:   # absent once v3 carries its own reviewed wording
+        _b["grade"] = "unverified"   # was strong (one-step) / moderate (hyrox); cited source not read
 
 # ------------------------------------------------------------------ evidence round 5 (2026-10-16): match the sources
 # Nielsen 2014 (abstract): exploratory cohort, distance-related injuries only, not statistically significant (P = .07).
@@ -473,14 +489,14 @@ KEY = {
                            "Double progression: add reps until the top of the range, then add a little weight.",
                            "A deload is a planned lighter week; 4 to 8 weeks between them is common practice."],
     "rest-between-sets": ["Levlofit's timer gives about 2 minutes on big lifts and 90 seconds on other exercises; adjust so you can repeat good reps.",
-                          "Similar strength outcomes were reported when rests under and over 1 minute were compared; for muscle growth the evidence is not settled.",
+                          "Trained lifters gain the most strength with rests over 2 minutes; for beginners, 1 to 2 minutes is enough.",
                           "Rest long enough to repeat good reps; the timer helps."],
     "sleep-recovery": ["Adults 18 to 60 need 7 or more hours of sleep regularly.",
                        "Alternate hard and easy days so you recover between hard sessions.",
                        "Falling performance and motivation for over a week are signs of too much fatigue."],
     "one-step-at-a-time": ["Build your main goal and the basics before stacking goals.",
                            "Add a second goal once the main goal reaches Level 2 and you recover well.",
-                           "Frequent, long endurance sessions may cost some strength and power; the evidence is mixed."],
+                           "Adding endurance work mainly costs power; frequent, long running costs some strength and size too."],
     "tracking-progress": ["Use the scale for trends, the tape every 2 to 4 weeks and photos every 4 weeks.",
                           "Weigh at the same time and in the same conditions.",
                           "A heavy day after salty food is water, not fat."],
@@ -508,8 +524,8 @@ KEY = {
     "meal-timing": ["Total calories and protein matter far more than timing.",
                     "Spread 20 to 40 g of protein every 3 to 4 hours.",
                     "Eat a normal meal 2 to 3 hours before training."],
-    "body-measures": ["Levlofit uses Indian BMI cut-offs and your waist-to-height ratio.",
-                      "Measure your waist midway between the lowest rib and the hip bone.",
+    "body-measures": ["Levlofit uses the WHO adult BMI bands.",
+                      "For South Asian adults, health risk starts to rise from a BMI of 23.",
                       "BMI screens; it cannot tell muscle from fat."],
     "calories": ["BMR from Mifflin-St Jeor, times an activity multiplier, gives maintenance.",
                  "Fat loss eats about 15% below maintenance, muscle gain about 10% above.",
@@ -533,7 +549,7 @@ KEY = {
                      "Light and heavy loads both build muscle when sets end close to failure.",
                      "Add reps or weight over time, with most sets ending close to failure."],
     "get-stronger": ["Heavy loads build more maximal strength than light loads.",
-                     "Rest about 2 minutes between heavy sets (a Levlofit rule).",
+                     "Rest 2 minutes or more between heavy sets.",
                      "Build for 3 weeks, take a lighter week, then retest."],
     "physique": ["Build muscle first, then lean out.",
                  "Add sets for lagging areas, and keep training legs.",
@@ -691,7 +707,23 @@ insert into public.handbook_chapters (id, slug, part, part_title, title, summary
 """
     out = HERE / "handbook_v4_draft.sql"
     out.write_text(sql, encoding="utf-8", newline="\n")
-    print(f"wrote {out.relative_to(ROOT)}: {len(rows)} chapters (draft; supabase/migrations untouched)")
+    print(f"wrote {out.relative_to(ROOT)}: {len(rows)} chapters (draft)")
+    # Release (owner request 2026-10-28: rebuild the Handbook as one book; owner decision 2026-10-27: no clinician review,
+    # the app shows "not medical advice and not reviewed by a clinician"). Same rows as the draft, as a migration.
+    release = ROOT / "supabase" / "migrations" / "20261028200000_handbook_v4_book.sql"
+    guard = f"""-- Handbook v4, one book: {len(rows)} chapters in five parts, ids in reading order, slugs unchanged. Generated by
+-- data/handbook_v4/build_handbook_v4.py; edit that file, not this one. Not clinician-reviewed (owner decision
+-- 2026-10-27); the evidence register is data/handbook_v4/claims_register.csv.
+do $$
+begin
+  -- ids are renumbered: stop rather than point a goal at the wrong chapter
+  if exists (select 1 from public.goal_catalog where handbook_chapter is not null) then
+    raise exception 'goal_catalog.handbook_chapter is set; map goals to v4 chapter ids first';
+  end if;
+end $$;
+"""
+    release.write_text(guard + sql.split("\n", 2)[2], encoding="utf-8", newline="\n")
+    print(f"wrote {release.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

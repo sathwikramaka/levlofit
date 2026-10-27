@@ -1,4 +1,4 @@
-# Evidence and source gaps (101 claims)
+# Evidence and source gaps (104 claims)
 
 Claims whose source could not be read (source_access), have no source (source_needed), are only partly supported, or need an official-table spot check. Inaccessible and missing sources are unresolved; none is marked verified.
 
@@ -9,14 +9,15 @@ Claims whose source could not be read (source_access), have no source (source_ne
 - 5. Easy, moderate and hard cardio (4)
 - 6. How hard to push (6)
 - 8. Warming up (3)
-- 10. Rest between sets (6)
+- 10. Rest between sets (5)
+- 12. One goal at a time (2)
 - 16. Building habits that last (4)
 - 17. Food for training (10)
 - 18. Water, sweat and heat (3)
 - 19. Carbs, fibre and fats (10)
 - 20. Vegetarian and vegan protein (6)
 - 21. When to eat around training (1)
-- 22. Reading your body numbers (3)
+- 22. Reading your body numbers (5)
 - 23. Calories and energy balance (3)
 - 24. Losing fat, keeping muscle (2)
 - 25. Gaining muscle and weight (2)
@@ -225,11 +226,12 @@ Claims whose source could not be read (source_access), have no source (source_ne
 
 #### `rest-between-sets:b01:items[0]`
 - **Chapter:** 10. Rest between sets (rest-between-sets), bars: Rest to aim for
-- **Proposed wording:** Big lifts (Levlofit rule) · 2 · about 2 min [minutes]
-- **Status:** unreviewed; **flags:** source_access; reviewer_confirm
-- **Source:** none recorded
-- **Note:** Decision 5 (option B, owner 2026-10-14; wording pending review). Levlofit rule matching the app timer (120 s for compound lifts); not a proven optimum. Text changed in v4 from v3 claim rest-between-sets:b01:items[0] (wording only); review reset, gates carried. Cited source grgic2018 is not open access (Europe PMC) or was not retrieved; full text not read.
-- **Reviewer question:** Source not yet readable (grgic2018 singer2024 acsm2026). Obtain it; does it support the claim? Record the exact passage.
+- **Proposed wording:** Big lifts for strength · 2 · 2 min or more [minutes]
+- **Status:** partly_supported; **flags:** source_access; reviewer_confirm
+- **Source:** grgic2018 — Grgic J, Schoenfeld BJ, Skrepnik M, Davies TB, Mikulic P. Effects of rest interval duration in resistance training on measures of muscular strength: a systematic review. Sports Med 2018;48(1):137-151.
+- **Quoted passage** (abstract, PMID 28933024 (Europe PMC)): "longer RIs (> 2 min) are required to maximize strength gains in resistance-trained individuals. With regard to untrained individuals, it seems that short to moderate RIs (60-120 s) are sufficient for maximizing muscular strength gains."
+- **Note:** Carried from v3 claim rest-between-sets:b01:items[0] (identical text). Wording approved by the owner 2026-10-24 (abstract-level review of the five unreviewed passages). Over 2 min maximises strength in trained lifters; beginners need 60-120 s.
+- **Reviewer question:** Source not yet readable (grgic2018). Obtain it; does it support the claim? Record the exact passage.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
 #### `rest-between-sets:b01:items[1]`
@@ -242,31 +244,45 @@ Claims whose source could not be read (source_access), have no source (source_ne
 - **Reviewer question:** Source not yet readable (singer2024). Obtain it; does it support the claim? Record the exact passage.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
-#### `rest-between-sets:b01:items[2]`
-- **Chapter:** 10. Rest between sets (rest-between-sets), bars: Rest to aim for
-- **Proposed wording:** Other exercises (Levlofit rule) · 1.5 · about 90 s [minutes]
-- **Status:** unreviewed; **flags:** source_access; reviewer_confirm
-- **Source:** none recorded
-- **Note:** Decision 5 (option B, owner 2026-10-14; wording pending review). Levlofit rule matching the app timer (90 s); not a proven optimum. Text changed in v4 from v3 claim rest-between-sets:b01:items[2] (wording only); review reset, gates carried. Cited source grgic2018 is not open access (Europe PMC) or was not retrieved; full text not read.
-- **Reviewer question:** Source not yet readable (grgic2018 singer2024 acsm2026). Obtain it; does it support the claim? Record the exact passage.
-- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
-
 #### `rest-between-sets:b02:items[0]`
 - **Chapter:** 10. Rest between sets (rest-between-sets), stats
-- **Proposed wording:** Similar · strength outcomes were reported when rests under 1 minute and over 1 minute were compared in the reviews summarised by ACSM 2026
-- **Status:** unreviewed; **flags:** source_access; reviewer_confirm
-- **Source:** acsm2026 — Currier BS, D'Souza AC, Fiatarone Singh MA et al. American College of Sports Medicine position stand: Resistance training prescription for muscle function, hypertrophy, and physical performance in healthy adults: an overview of reviews. Med Sci Sports Exerc 2026.
-- **Note:** Decision 5 (option B, owner 2026-10-14; wording pending review). ACSM 2026 passage for the reviewer to match: 'Strength was not affected by ... short (<1 min) versus long (>1 min) between-set rest intervals'; hypertrophy: 'insufficient data'. Grgic 2018 and Grgic 2017 remain unread. Text changed in v4 from v3 claim rest-between-sets:b02:items[0] (wording only); review reset, gates carried. Cited source grgic2018 is not open access (Europe PMC) or was not retrieved; full text not read. Round 8: ACSM 2026 full text (PMC12965823) matches: strength 'was not affected by' short (<1 min) versus long (>1 min) between-set rests; no finding for hypertrophy. Left unresolved under Decision 5.
-- **Reviewer question:** Source not yet readable (acsm2026). Obtain it; does it support the claim? Record the exact passage.
+- **Proposed wording:** 2 · minutes or more · of rest maximises strength gains
+- **Status:** unreviewed; **flags:** source_access
+- **Source:** grgic2018 — Grgic J, Schoenfeld BJ, Skrepnik M, Davies TB, Mikulic P. Effects of rest interval duration in resistance training on measures of muscular strength: a systematic review. Sports Med 2018;48(1):137-151.
+- **Note:** Carried from v3 claim rest-between-sets:b02:items[0] (identical text). Cited source grgic2018 is not open access (Europe PMC) or was not retrieved; full text not read.
+- **Reviewer question:** Source not yet readable (grgic2018). Obtain it; does it support the claim? Record the exact passage.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
 #### `rest-between-sets:b04:text`
 - **Chapter:** 10. Rest between sets (rest-between-sets), Evidence note
-- **Proposed wording:** Similar strength outcomes were reported when rests under 1 minute and over 1 minute were compared in the reviews summarised by ACSM 2026. For muscle growth, ACSM found the data insufficient. Rest long enough to repeat good reps.
-- **Status:** unreviewed; **flags:** source_access; reviewer_confirm; grade_confirm
-- **Source:** acsm2026 — Currier BS, D'Souza AC, Fiatarone Singh MA et al. American College of Sports Medicine position stand: Resistance training prescription for muscle function, hypertrophy, and physical performance in healthy adults: an overview of reviews. Med Sci Sports Exerc 2026.
-- **Note:** Decision 5 (option B, owner 2026-10-14; wording pending review). ACSM 2026 passage for the reviewer to match: 'Strength was not affected by ... short (<1 min) versus long (>1 min) between-set rest intervals'; hypertrophy: 'insufficient data'. Grgic 2018 and Grgic 2017 remain unread. Grade 'moderate' kept only pending reviewer confirmation: ACSM's 63% evidence-quality rating is not Levlofit's grade. Text changed in v4 from v3 claim rest-between-sets:b04:text (wording only); review reset, gates carried. Cited source grgic2018 is not open access (Europe PMC) or was not retrieved; full text not read. Round 8: As rest-between-sets:b02:items[0].
-- **Reviewer question:** Source not yet readable (acsm2026). Obtain it; does it support the claim? Record the exact passage.
+- **Proposed wording:** Strength improves even with short rests. Trained lifters gain the most strength with rests over 2 minutes; for beginners, 1 to 2 minutes is enough.
+- **Status:** partly_supported; **flags:** source_access; reviewer_confirm
+- **Source:** grgic2018 — Grgic J, Schoenfeld BJ, Skrepnik M, Davies TB, Mikulic P. Effects of rest interval duration in resistance training on measures of muscular strength: a systematic review. Sports Med 2018;48(1):137-151.
+- **Quoted passage** (abstract, PMID 28933024 (Europe PMC)): "longer RIs (> 2 min) are required to maximize strength gains in resistance-trained individuals. With regard to untrained individuals, it seems that short to moderate RIs (60-120 s) are sufficient for maximizing muscular strength gains."
+- **Note:** Carried from v3 claim rest-between-sets:b04:text (identical text). Wording approved by the owner 2026-10-24 (abstract-level review of the five unreviewed passages). Replaces the earlier 'both trained and untrained' wording, which overstated the review.
+- **Reviewer question:** Source not yet readable (grgic2018). Obtain it; does it support the claim? Record the exact passage.
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+## 12. One goal at a time
+
+#### `one-step-at-a-time:b05:items[0]`
+- **Chapter:** 12. One goal at a time (one-step-at-a-time), stats
+- **Proposed wording:** Possible · interference · with strength and size from frequent, long running sessions
+- **Status:** partly_supported; **flags:** source_access; reviewer_confirm
+- **Source:** wilson2012 — Wilson JM et al. Concurrent training: a meta-analysis examining interference of aerobic and resistance exercises. J Strength Cond Res 2012;26(8):2293-2307.
+- **Quoted passage** (abstract, PMID 22002517 (Europe PMC)): "resistance training concurrently with running, but not cycling, resulted in significant decrements in both hypertrophy and strength. Correlational analysis identified significant negative relationships between frequency (-0.26 to -0.35) and duration (-0.29 to -0.75) of endurance training for hypertrophy, strength, and power."
+- **Note:** Carried from v3 claim one-step-at-a-time:b04:items[0] (identical text). Wording approved by the owner 2026-10-24 (abstract-level review of the five unreviewed passages). Correlational; 'Possible' wording kept deliberately.
+- **Reviewer question:** Source not yet readable (wilson2012). Obtain it; does it support the claim? Record the exact passage.
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `one-step-at-a-time:b06:text`
+- **Chapter:** 12. One goal at a time (one-step-at-a-time), Evidence note
+- **Proposed wording:** Adding endurance training mainly reduces power gains. Strength and size gains drop mostly when the endurance is running, and more so the more often and longer you run.
+- **Status:** partly_supported; **flags:** source_access; reviewer_confirm
+- **Source:** wilson2012 — Wilson JM et al. Concurrent training: a meta-analysis examining interference of aerobic and resistance exercises. J Strength Cond Res 2012;26(8):2293-2307.
+- **Quoted passage** (abstract, PMID 22002517 (Europe PMC)): "The mean ES for power development for strength training only was 0.91; for endurance training, it was 0.11; and for concurrent training, it was 0.55. Significant differences were found between all the 3 groups. resistance training concurrently with running, but not cycling, resulted in significant decrements in both hypertrophy and strength. Correlational analysis identified significant negative relationships between frequency (-0.26 to -0.35) and duration (-0.29 to -0.75) of endurance training for hypertrophy, strength, and power."
+- **Note:** Carried from v3 claim one-step-at-a-time:b05:text (identical text). Wording approved by the owner 2026-10-24 (abstract-level review of the five unreviewed passages). Power clearly reduced; strength and size reduced significantly only with running.
+- **Reviewer question:** Source not yet readable (wilson2012). Obtain it; does it support the claim? Record the exact passage.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
 ## 16. Building habits that last
@@ -623,34 +639,49 @@ Claims whose source could not be read (source_access), have no source (source_ne
 
 ## 22. Reading your body numbers
 
-#### `body-measures:b02:ranges[0]`
-- **Chapter:** 22. Reading your body numbers (body-measures), band: Waist to height ratio
-- **Proposed wording:** 0.3 · 0.5 · Healthy [ratio]
-- **Status:** partly_supported; **flags:** source_access
-- **Source:** misra2025 — Misra A, Vikram NK, Ghosh A, et al. Revised definition of obesity in Asian Indians living in India. Diabetes Metab Syndr 2025;19:102989. doi:10.1016/j.dsx.2024.102989.
-- **Quoted passage** (full article PDF (Diabetes Metab Syndr 2025;19:102989), read 2026-10-18): "W-HtR cutoff level: >0.5"
-- **Note:** Carried from v3 claim body-measures:b02:ranges[0] (identical text). nice.org.uk returned 403 to an automated download; check the guideline page manually. Round 8: Revised Indian definition (2025) uses a waist-to-height cut-off of >0.5 for abdominal obesity, so under 0.5 matches its non-elevated range; the 0.3 lower edge is a display range, not from the source. NICE 2022 still not readable (403).
-- **Reviewer question:** Source not yet readable (misra2025). Obtain it; does it support the claim? Record the exact passage.
+#### `body-measures:b01:ranges[0]`
+- **Chapter:** 22. Reading your body numbers (body-measures), band: BMI for adults (WHO)
+- **Proposed wording:** 14 · 18.5 · Underweight [kg/m²]
+- **Status:** needs_better_source; **flags:** source_access
+- **Source:** whobmi2000 — World Health Organization. Obesity: preventing and managing the global epidemic. WHO Technical Report Series 894. Geneva: WHO, 2000.
+- **Note:** Carried from v3 claim body-measures:b01:ranges[0] (identical text). WHO adult BMI classification (TRS 894, 2000), owner decision 2026-10-27; full text not read here. Values match the WHO table as reproduced by calculator.net (checked 2026-10-27).
+- **Reviewer question:** Source not yet readable (whobmi2000). Obtain it; does it support the claim? Record the exact passage.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
-#### `body-measures:b02:ranges[1]`
-- **Chapter:** 22. Reading your body numbers (body-measures), band: Waist to height ratio
-- **Proposed wording:** 0.5 · 0.6 · Increased risk [ratio]
-- **Status:** partly_supported; **flags:** source_access
-- **Source:** misra2025 — Misra A, Vikram NK, Ghosh A, et al. Revised definition of obesity in Asian Indians living in India. Diabetes Metab Syndr 2025;19:102989. doi:10.1016/j.dsx.2024.102989.
-- **Quoted passage** (full article PDF (Diabetes Metab Syndr 2025;19:102989), read 2026-10-18): "W-HtR cutoff level: >0.5"
-- **Note:** Carried from v3 claim body-measures:b02:ranges[1] (identical text). nice.org.uk returned 403 to an automated download; check the guideline page manually. Round 8: 0.5 is the cut-off in the 2025 Indian definition; the source gives no 0.6 boundary, so the 0.5 to 0.6 band edge is not supported by it.
-- **Reviewer question:** Source not yet readable (misra2025). Obtain it; does it support the claim? Record the exact passage.
+#### `body-measures:b01:ranges[1]`
+- **Chapter:** 22. Reading your body numbers (body-measures), band: BMI for adults (WHO)
+- **Proposed wording:** 18.5 · 25 · Normal [kg/m²]
+- **Status:** needs_better_source; **flags:** source_access
+- **Source:** whobmi2000 — World Health Organization. Obesity: preventing and managing the global epidemic. WHO Technical Report Series 894. Geneva: WHO, 2000.
+- **Note:** Carried from v3 claim body-measures:b01:ranges[1] (identical text). WHO adult BMI classification (TRS 894, 2000), owner decision 2026-10-27; full text not read here. Values match the WHO table as reproduced by calculator.net (checked 2026-10-27).
+- **Reviewer question:** Source not yet readable (whobmi2000). Obtain it; does it support the claim? Record the exact passage.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
-#### `body-measures:b02:ranges[2]`
-- **Chapter:** 22. Reading your body numbers (body-measures), band: Waist to height ratio
-- **Proposed wording:** 0.6 · 0.8 · High risk [ratio]
-- **Status:** partly_supported; **flags:** source_access
-- **Source:** misra2025 — Misra A, Vikram NK, Ghosh A, et al. Revised definition of obesity in Asian Indians living in India. Diabetes Metab Syndr 2025;19:102989. doi:10.1016/j.dsx.2024.102989.
-- **Quoted passage** (full article PDF (Diabetes Metab Syndr 2025;19:102989), read 2026-10-18): "with the lowest all-cause mortality risk at 0.5 and a sharp linear increase after that"
-- **Note:** Carried from v3 claim body-measures:b02:ranges[2] (identical text). nice.org.uk returned 403 to an automated download; check the guideline page manually. Round 8: The source reports risk rising linearly above 0.5 but states no 0.6 'high risk' threshold; the 0.6 band needs NICE 2022 (unreadable) or another source, or rewording.
-- **Reviewer question:** Source not yet readable (misra2025). Obtain it; does it support the claim? Record the exact passage.
+#### `body-measures:b01:ranges[2]`
+- **Chapter:** 22. Reading your body numbers (body-measures), band: BMI for adults (WHO)
+- **Proposed wording:** 25 · 30 · Overweight [kg/m²]
+- **Status:** needs_better_source; **flags:** source_access
+- **Source:** whobmi2000 — World Health Organization. Obesity: preventing and managing the global epidemic. WHO Technical Report Series 894. Geneva: WHO, 2000.
+- **Note:** Carried from v3 claim body-measures:b01:ranges[2] (identical text). WHO adult BMI classification (TRS 894, 2000), owner decision 2026-10-27; full text not read here. Values match the WHO table as reproduced by calculator.net (checked 2026-10-27).
+- **Reviewer question:** Source not yet readable (whobmi2000). Obtain it; does it support the claim? Record the exact passage.
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `body-measures:b01:ranges[3]`
+- **Chapter:** 22. Reading your body numbers (body-measures), band: BMI for adults (WHO)
+- **Proposed wording:** 30 · 40 · Obese [kg/m²]
+- **Status:** needs_better_source; **flags:** source_access
+- **Source:** whobmi2000 — World Health Organization. Obesity: preventing and managing the global epidemic. WHO Technical Report Series 894. Geneva: WHO, 2000.
+- **Note:** Carried from v3 claim body-measures:b01:ranges[3] (identical text). WHO adult BMI classification (TRS 894, 2000), owner decision 2026-10-27; full text not read here. Values match the WHO table as reproduced by calculator.net (checked 2026-10-27).
+- **Reviewer question:** Source not yet readable (whobmi2000). Obtain it; does it support the claim? Record the exact passage.
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `body-measures:b02:items[0]`
+- **Chapter:** 22. Reading your body numbers (body-measures), stats
+- **Proposed wording:** 23 · kg/m² · BMI from which health risk starts to rise for South Asian adults: aim for the lower half of the normal range
+- **Status:** needs_better_source; **flags:** source_access
+- **Source:** who2004asia — WHO Expert Consultation. Appropriate body-mass index for Asian populations and its implications for policy and intervention strategies. Lancet 2004;363:157-163.
+- **Note:** Carried from v3 claim body-measures:b02:items[0] (identical text). WHO Expert Consultation, Lancet 2004;363:157-163 (South Asian public-health action point 23); full text not read here.
+- **Reviewer question:** Source not yet readable (who2004asia). Obtain it; does it support the claim? Record the exact passage.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
 ## 23. Calories and energy balance
@@ -796,11 +827,11 @@ Claims whose source could not be read (source_access), have no source (source_ne
 
 #### `get-stronger:b01:items[1]`
 - **Chapter:** 30. Getting stronger and powerlifting (get-stronger), stats
-- **Proposed wording:** About 2 · min rest · between heavy sets: a Levlofit rule (reviews comparing rests under and over 1 minute reported similar strength outcomes)
-- **Status:** unreviewed; **flags:** source_access; reviewer_confirm
-- **Source:** none recorded
-- **Note:** Decision 5 (option B, owner 2026-10-14; wording pending review). Levlofit rule; ACSM 2026 passage for the reviewer to match: 'Strength was not affected by ... short (<1 min) versus long (>1 min) between-set rest intervals'; hypertrophy: 'insufficient data'. Grgic 2018 and Grgic 2017 remain unread. Text changed in v4 from v3 claim get-stronger:b01:items[1] (wording only); review reset, gates carried. Cited source grgic2018 is not open access (Europe PMC) or was not retrieved; full text not read.
-- **Reviewer question:** Source not yet readable (schoenfeld2017l grgic2018 zourdos2016 acsm2026). Obtain it; does it support the claim? Record the exact passage.
+- **Proposed wording:** 2+ · min rest · between heavy sets helps strength
+- **Status:** unreviewed; **flags:** source_access
+- **Source:** grgic2018 — Grgic J, Schoenfeld BJ, Skrepnik M, Davies TB, Mikulic P. Effects of rest interval duration in resistance training on measures of muscular strength: a systematic review. Sports Med 2018;48(1):137-151.
+- **Note:** Carried from v3 claim get-stronger:b01:items[1] (identical text). Cited source grgic2018 is not open access (Europe PMC) or was not retrieved; full text not read.
+- **Reviewer question:** Source not yet readable (grgic2018). Obtain it; does it support the claim? Record the exact passage.
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
 #### `get-stronger:b03:items[0]`

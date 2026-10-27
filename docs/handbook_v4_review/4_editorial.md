@@ -1,4 +1,4 @@
-# Editorial review (136 claims)
+# Editorial review (143 claims)
 
 Key points (summaries of their chapter), new v4 text without safety or evidence flags, and reworded text. Needs an editor or subject expert, not a clinician.
 
@@ -9,17 +9,19 @@ Key points (summaries of their chapter), new v4 text without safety or evidence 
 - 5. Easy, moderate and hard cardio (8)
 - 7. Learning a lift (23)
 - 9. Sets, reps and progress (3)
-- 10. Rest between sets (3)
+- 10. Rest between sets (4)
 - 15. Daily steps (3)
 - 16. Building habits that last (3)
 - 17. Food for training (3)
 - 18. Water, sweat and heat (3)
 - 21. When to eat around training (3)
+- 22. Reading your body numbers (3)
 - 30. Getting stronger and powerlifting (3)
 - 31. Building an aesthetic physique (3)
 - 32. Calisthenics (3)
 - 33. Mobility and yoga (3)
 - 35. Running (3)
+- 36. HYROX and functional fitness (3)
 - 38. Missed sessions, travel and busy weeks (4)
 - 39. Training at home (3)
 - 43. Putting it together: your first 12 weeks (29)
@@ -588,6 +590,15 @@ Key points (summaries of their chapter), new v4 text without safety or evidence 
 
 ## 10. Rest between sets
 
+#### `rest-between-sets:b01:items[2]`
+- **Chapter:** 10. Rest between sets (rest-between-sets), bars: Rest to aim for
+- **Proposed wording:** Other exercises (Levlofit rule) · 1.5 · about 90 s [minutes]
+- **Status:** editorial; **flags:** reviewer_confirm
+- **Source:** grgic2018 — Grgic J, Schoenfeld BJ, Skrepnik M, Davies TB, Mikulic P. Effects of rest interval duration in resistance training on measures of muscular strength: a systematic review. Sports Med 2018;48(1):137-151.
+- **Note:** Decision 5 (option B, owner 2026-10-14; wording pending review). Levlofit rule matching the app timer (90 s); not a proven optimum. Carried from v3 claim rest-between-sets:b01:items[2] (identical text). Wording approved by the owner 2026-10-24 (abstract-level review of the five unreviewed passages). Levlofit rule matching the app rest timer (90 s for moves that are not main lifts); no evidence claimed.
+- **Reviewer question:** Is this accurate and clear? If it states a fact, does it need a source?
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
 #### `rest-between-sets:b05:items[0]`
 - **Chapter:** 10. Rest between sets (rest-between-sets), Key points
 - **Proposed wording:** Levlofit's timer gives about 2 minutes on big lifts and 90 seconds on other exercises; adjust so you can repeat good reps.
@@ -599,7 +610,7 @@ Key points (summaries of their chapter), new v4 text without safety or evidence 
 
 #### `rest-between-sets:b05:items[1]`
 - **Chapter:** 10. Rest between sets (rest-between-sets), Key points
-- **Proposed wording:** Similar strength outcomes were reported when rests under and over 1 minute were compared; for muscle growth the evidence is not settled.
+- **Proposed wording:** Trained lifters gain the most strength with rests over 2 minutes; for beginners, 1 to 2 minutes is enough.
 - **Status:** unreviewed; **flags:** summary_check
 - **Source:** none recorded
 - **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
@@ -757,6 +768,35 @@ Key points (summaries of their chapter), new v4 text without safety or evidence 
 - **Reviewer question:** Does this key point accurately summarise its chapter without adding claims?
 - **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
 
+## 22. Reading your body numbers
+
+#### `body-measures:b04:items[0]`
+- **Chapter:** 22. Reading your body numbers (body-measures), Key points
+- **Proposed wording:** Levlofit uses the WHO adult BMI bands.
+- **Status:** unreviewed; **flags:** summary_check
+- **Source:** none recorded
+- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
+- **Reviewer question:** Does this key point accurately summarise its chapter without adding claims?
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `body-measures:b04:items[1]`
+- **Chapter:** 22. Reading your body numbers (body-measures), Key points
+- **Proposed wording:** For South Asian adults, health risk starts to rise from a BMI of 23.
+- **Status:** unreviewed; **flags:** summary_check
+- **Source:** none recorded
+- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
+- **Reviewer question:** Does this key point accurately summarise its chapter without adding claims?
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `body-measures:b04:items[2]`
+- **Chapter:** 22. Reading your body numbers (body-measures), Key points
+- **Proposed wording:** BMI screens; it cannot tell muscle from fat.
+- **Status:** unreviewed; **flags:** summary_check
+- **Source:** none recorded
+- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
+- **Reviewer question:** Does this key point accurately summarise its chapter without adding claims?
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
 ## 30. Getting stronger and powerlifting
 
 #### `get-stronger:b06:items[0]`
@@ -770,7 +810,7 @@ Key points (summaries of their chapter), new v4 text without safety or evidence 
 
 #### `get-stronger:b06:items[1]`
 - **Chapter:** 30. Getting stronger and powerlifting (get-stronger), Key points
-- **Proposed wording:** Rest about 2 minutes between heavy sets (a Levlofit rule).
+- **Proposed wording:** Rest 2 minutes or more between heavy sets.
 - **Status:** unreviewed; **flags:** summary_check
 - **Source:** none recorded
 - **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
@@ -896,6 +936,35 @@ Key points (summaries of their chapter), new v4 text without safety or evidence 
 #### `running:b06:items[2]`
 - **Chapter:** 35. Running (running), Key points
 - **Proposed wording:** Use run-walk intervals to build up to 5 km.
+- **Status:** unreviewed; **flags:** summary_check
+- **Source:** none recorded
+- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
+- **Reviewer question:** Does this key point accurately summarise its chapter without adding claims?
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+## 36. HYROX and functional fitness
+
+#### `hyrox:b05:items[0]`
+- **Chapter:** 36. HYROX and functional fitness (hyrox), Key points
+- **Proposed wording:** HYROX is 8 x 1 km of running, each followed by a workout station.
+- **Status:** unreviewed; **flags:** summary_check
+- **Source:** none recorded
+- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
+- **Reviewer question:** Does this key point accurately summarise its chapter without adding claims?
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `hyrox:b05:items[1]`
+- **Chapter:** 36. HYROX and functional fitness (hyrox), Key points
+- **Proposed wording:** Train running and strength together; keeping hard runs and leg sessions apart may limit interference.
+- **Status:** unreviewed; **flags:** summary_check
+- **Source:** none recorded
+- **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
+- **Reviewer question:** Does this key point accurately summarise its chapter without adding claims?
+- **Decision:** [ ] approve  [ ] amend  [ ] remove   Reviewer / date: ________
+
+#### `hyrox:b05:items[2]`
+- **Chapter:** 36. HYROX and functional fitness (hyrox), Key points
+- **Proposed wording:** Practise the stations while tired, and pace the first kilometre.
 - **Status:** unreviewed; **flags:** summary_check
 - **Source:** none recorded
 - **Note:** Key point restating this chapter; reviewer to confirm it matches the chapter's reviewed claims and their status.
