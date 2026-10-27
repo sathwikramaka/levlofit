@@ -549,8 +549,9 @@ class _Roadmap extends StatelessWidget {
 }
 
 class _DietScreen extends StatefulWidget {
-  const _DietScreen({required this.data});
+  const _DietScreen({required this.data, required this.onChanged});
   final _Data data;
+  final VoidCallback onChanged; // Build my plate saved new choices and rebuilt the plan
 
   @override
   State<_DietScreen> createState() => _DietScreenState();
@@ -566,6 +567,7 @@ class _DietScreenState extends State<_DietScreen> {
   int _tier = 2;
   String? _region; // cuisine_region: staples preferred in the rotation (diet_plan.dart regionStaples)
   String _budget = 'Medium';
+  _Json _choices = const {}; // dietary_profiles: diet_type, budget_tier, cuisine_region, diet_pace
   String? _error;
   String? _buildingKey; // the week being built in the background, so it is started only once
   String? _failedKey; // a week that could not be built; not retried on every rebuild
@@ -593,11 +595,23 @@ class _DietScreenState extends State<_DietScreen> {
     _fetch();
   }
 
+  @override
+  void didUpdateWidget(_DietScreen old) {
+    super.didUpdateWidget(old);
+    if (old.data != widget.data) _fetch(); // a rebuilt plan may come with new budget or region
+  }
+
+  Future<void> _openBuilder() async {
+    HapticFeedback.selectionClick();
+    final changed = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => _BuildMyPlate(data: widget.data, choices: _choices)));
+    if (changed == true) widget.onChanged();
+  }
+
   Future<void> _fetch() async {
     try {
       final [rows, diet] = await Future.wait<dynamic>([
         supabase.from('foods').select('code, name, tags, kcal, protein_g, carb_g, fat_g, fiber_g').inFilter('code', plannerCodes),
-        supabase.from('dietary_profiles').select('budget_tier, budget_min_inr, budget_max_inr, cuisine_region').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
+        supabase.from('dietary_profiles').select('diet_type, diet_pace, budget_tier, budget_min_inr, budget_max_inr, cuisine_region').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
       ]);
       final tier = diet?['budget_tier'] as String?;
       final lo = diet?['budget_min_inr'] as int?, hi = diet?['budget_max_inr'] as int?;
@@ -606,6 +620,7 @@ class _DietScreenState extends State<_DietScreen> {
         _foods = plannerFoods((rows as List).cast<Map<String, dynamic>>());
         _tier = budgetTier(tier, hi);
         _region = diet?['cuisine_region'] as String?;
+        _choices = Map.of((diet as _Json?) ?? const {});
         _budget = tier == 'custom' ? 'your range, ${lo == null ? '' : 'Rs $lo to '}Rs ${hi ?? '-'} a day' : switch (tier) { 'low' => 'low', 'high' => 'high', _ => 'medium' };
       });
     } catch (_) {
@@ -667,10 +682,12 @@ class _DietScreenState extends State<_DietScreen> {
           ]),
         );
     return _Page(
-      eyebrow: 'DIET  ·  YOUR MEAL PLAN',
-      title: 'What to eat, to the gram',
-      subtitle: 'Built for your targets, diet, allergies and budget ($_budget). Weights are raw or dry, before cooking.',
+      eyebrow: 'DIET  ·  YOUR PLATE',
+      title: 'Your 7-day plate',
+      subtitle: 'Indian meals in household servings, built for your targets, diet, allergies and budget ($_budget).',
       children: [
+        _PlateChoices(choices: _choices, onTap: _openBuilder),
+        const SizedBox(height: 12),
         // Day picker: each day rotates the foods so the week does not repeat.
         SizedBox(
           height: 44,
@@ -785,6 +802,172 @@ class _DietScreenState extends State<_DietScreen> {
                 'Swap like for like (one dal for another, one roti flour for another) and the totals stay close.',
             style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ],
+    );
+  }
+}
+
+/// The plate choices in one line, with the way into Build my plate.
+class _PlateChoices extends StatelessWidget {
+  const _PlateChoices({required this.choices, required this.onTap});
+  final _Json choices;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = Theme.of(context).colorScheme;
+    String pick(List<(String, String, String)> options, Object? v) => options.where((o) => o.$1 == v).firstOrNull?.$2 ?? '';
+    final line = [
+      pick(regionOptions, choices['cuisine_region'] ?? 'any'),
+      _dietNames[choices['diet_type']] ?? '',
+      choices['budget_tier'] == 'custom' ? 'My own budget' : pick(budgetOptions, choices['budget_tier']),
+      '${_paceNames[choices['diet_pace'] ?? 'balanced']} pace',
+    ].where((s) => s.isNotEmpty).join('  ·  ');
+    return _Tile(
+      onTap: onTap,
+      child: Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('BUILD MY PLATE', style: monoLabel(context)),
+            const SizedBox(height: 4),
+            Text(line, style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+          ]),
+        ),
+        Icon(LvIcons.pencilSimple, size: 18, color: c.onSurfaceVariant),
+      ]),
+    );
+  }
+}
+
+const _dietNames = {'vegetarian': 'Vegetarian', 'eggitarian': 'Eggitarian', 'non_vegetarian': 'Non-vegetarian', 'vegan': 'Vegan'};
+const _paceNames = {'easy': 'Easy', 'balanced': 'Balanced', 'hard': 'Hard'};
+const _paceOptions = [
+  ('easy', 'Easy', 'A small daily gap or surplus. Slowest, and the easiest to keep up.'),
+  ('balanced', 'Balanced', 'The usual pace for most people.'),
+  ('hard', 'Hard', 'A bigger gap or surplus. Faster, harder to sustain; for short phases.'),
+];
+
+/// Build my plate: five short steps (your numbers, region, diet, budget, pace), then the plan is rebuilt. Pops true
+/// when the choices were saved.
+class _BuildMyPlate extends StatefulWidget {
+  const _BuildMyPlate({required this.data, required this.choices});
+  final _Data data;
+  final _Json choices;
+
+  @override
+  State<_BuildMyPlate> createState() => _BuildMyPlateState();
+}
+
+class _BuildMyPlateState extends State<_BuildMyPlate> {
+  late final _Json _d = {
+    'cuisine_region': widget.choices['cuisine_region'] ?? 'any',
+    'diet_type': widget.choices['diet_type'],
+    'budget_tier': widget.choices['budget_tier'] == 'custom' ? null : widget.choices['budget_tier'],
+    'diet_pace': widget.choices['diet_pace'] ?? 'balanced',
+  };
+  int _step = 0;
+  bool _saving = false;
+  String? _error;
+
+  static const _titles = ['Your numbers', 'Your regional food', 'How you eat', 'Your food budget', 'Your pace'];
+
+  bool get _ready => switch (_step) { 2 => _d['diet_type'] != null, 3 => _d['budget_tier'] != null, _ => true };
+
+  Future<void> _build() async {
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    var saved = false;
+    try {
+      await supabase.from('dietary_profiles').update({..._d, 'budget_min_inr': null, 'budget_max_inr': null}).eq('user_id', supabase.auth.currentUser!.id);
+      saved = true;
+      await supabase.functions.invoke('generate-plan');
+      HapticFeedback.heavyImpact();
+      if (mounted) Navigator.pop(context, true);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = saved
+            ? 'Your choices are saved, but your plan could not be rebuilt. Try again.'
+            : 'Could not save. Check your connection and try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  List<Widget> _tiles(String key, List<(String, String, String)> options) => [
+        for (final (k, title, sub) in options) ...[
+          ChoiceTile(title: title, subtitle: sub, selected: _d[key] == k, onTap: () => setState(() => _d[key] = k)),
+          const SizedBox(height: 10),
+        ],
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = Theme.of(context).colorScheme;
+    final p = widget.data.profile;
+    final food = widget.data.plan['nutrition'] as _Json;
+    final age = p['birth_year'] == null ? null : DateTime.now().year - (p['birth_year'] as int);
+    final last = _step == _titles.length - 1;
+    final body = switch (_step) {
+      0 => [
+          Text('Your daily targets come from your profile: Mifflin-St Jeor energy for your age, sex, height and weight, '
+              'your activity, and your goal.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 14),
+          for (final (k, v) in [
+            ('Sex', p['sex'] == 'female' ? 'Female' : 'Male'),
+            if (age != null) ('Age', '$age years'),
+            ('Height', '${p['height_cm'] ?? '-'} cm'),
+            ('Weight', '${p['weight_kg'] ?? '-'} kg'),
+            ('Energy a day', '${(food['energyKcal'] as num).round()} kcal'),
+            ('Protein a day', '${(food['proteinG'] as num).round()} g'),
+          ])
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(children: [Expanded(child: Text(k, style: t.bodyLarge)), Text(v, style: monoNumber(context, size: 16))]),
+            ),
+          const SizedBox(height: 10),
+          Text('Change these in Protocol or your profile.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        ],
+      1 => _tiles('cuisine_region', regionOptions),
+      2 => _tiles('diet_type', [for (final MapEntry(:key, :value) in _dietNames.entries) (key, value, switch (key) {
+            'vegetarian' => 'Dairy, no egg, meat or fish',
+            'eggitarian' => 'Vegetarian plus eggs',
+            'vegan' => 'No animal products',
+            _ => 'Chicken, fish and eggs',
+          })]),
+      3 => _tiles('budget_tier', budgetOptions),
+      _ => _tiles('diet_pace', _paceOptions),
+    };
+    return Scaffold(
+      appBar: AppBar(title: const Text('Build my plate')),
+      body: SafeArea(
+        child: ListView(padding: const EdgeInsets.fromLTRB(24, 8, 24, 32), children: [
+          Text('STEP ${_step + 1} OF ${_titles.length}', style: monoLabel(context).copyWith(color: c.tertiary)),
+          const SizedBox(height: 6),
+          LinearProgressIndicator(value: (_step + 1) / _titles.length, minHeight: 3),
+          const SizedBox(height: 18),
+          Text(_titles[_step], style: t.headlineSmall),
+          const SizedBox(height: 14),
+          ...body,
+          if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: ErrorLine(_error!)),
+          const SizedBox(height: 18),
+          Row(children: [
+            if (_step > 0) ...[
+              OutlinedButton(onPressed: _saving ? null : () => setState(() => _step--), child: const Text('Back')),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: FilledButton(
+                onPressed: !_ready || _saving ? null : (last ? _build : () => setState(() => _step++)),
+                child: Text(_saving ? 'Building your plate...' : (last ? 'Build my 7-day plate' : 'Next')),
+              ),
+            ),
+          ]),
+        ]),
+      ),
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'account.dart';
+import 'diet_plan.dart' show budgetOptions, regionOptions;
 import 'icons.dart';
 import 'main.dart';
 import 'mark.dart';
@@ -143,7 +144,8 @@ class _OnboardingState extends State<Onboarding> {
   final _other = <String>[]; // free-text allergies, saved to dietary_profiles.other_restrictions
   final _otherInput = TextEditingController();
   bool _noRestrictions = false;
-  String? _diet, _sex, _weightGoal, _gear;
+  String? _diet, _sex, _weightGoal, _gear, _budget;
+  String _region = 'any';
   bool _busy = false;
   String? _error;
 
@@ -189,7 +191,7 @@ class _OnboardingState extends State<Onboarding> {
     _Step.extras => true, // optional
     _Step.experience => _goals.every(_level.containsKey),
     _Step.restrictions => _noRestrictions || _avoid.isNotEmpty || _other.isNotEmpty,
-    _Step.diet => _diet != null && (_noSupp || _supp.isNotEmpty),
+    _Step.diet => _diet != null && _budget != null && (_noSupp || _supp.isNotEmpty),
     _Step.body => _sex != null && _bodyType != null,
     _Step.phase => _weightGoal != null,
     _Step.schedule => _days != null && _minutes != null && _activityLevel != null,
@@ -207,7 +209,7 @@ class _OnboardingState extends State<Onboarding> {
     _Step.extras => 'Anything else you want to train? You can add up to five, but the curriculum recommends one or two for real progress. Extras get fewer sessions so your main goal keeps moving.',
     _Step.experience => 'How much have you trained for each? You start where you are, and move up by passing tests.',
     _Step.restrictions => 'Before we talk food: any allergies or intolerances? I keep these out of every meal.',
-    _Step.diet => 'Last one. How do you eat, and are you open to supplements? Levlofit never suggests beef or pork.',
+    _Step.diet => 'Last one. How do you eat, what can you spend on food, and are you open to supplements? Levlofit never suggests beef or pork.',
     _Step.body => 'A few numbers and how you see your body today. Only you can see them.',
     _Step.phase => 'What do you want your body to do right now? I check this against your numbers before building anything.',
     _Step.schedule => 'How much time can you give training? The plan fits your week, not the other way round.',
@@ -343,6 +345,8 @@ class _OnboardingState extends State<Onboarding> {
     await supabase.from('dietary_profiles').upsert({
       'user_id': uid,
       'diet_type': _diet,
+      'budget_tier': _budget,
+      'cuisine_region': _region,
       'restrictions': _avoid.toList(),
       'other_restrictions': _other,
       'supplements': _supp.toList(),
@@ -640,6 +644,18 @@ class _OnboardingState extends State<Onboarding> {
               disabledNote: 'Not available with an egg allergy',
               onTap: () => setState(() => _diet = d),
             ),
+            gap,
+          ],
+          const SizedBox(height: 16),
+          const FieldLabel('Food budget'),
+          for (final (k, title, sub) in budgetOptions) ...[
+            ChoiceTile(title: title, subtitle: sub, selected: _budget == k, onTap: () => setState(() => _budget = k)),
+            gap,
+          ],
+          const SizedBox(height: 16),
+          const FieldLabel('Your regional food'),
+          for (final (k, title, sub) in regionOptions) ...[
+            ChoiceTile(title: title, subtitle: sub, selected: _region == k, onTap: () => setState(() => _region = k)),
             gap,
           ],
           const SizedBox(height: 16),

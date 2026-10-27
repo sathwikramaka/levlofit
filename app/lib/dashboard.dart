@@ -391,7 +391,7 @@ class _DashboardState extends State<Dashboard> {
                 onToggleToday: _toggleToday,
                 onPlanChanged: () => setState(() { _data = _load(); }),
               ),
-            _Tab.diet => _DietScreen(data: d),
+            _Tab.diet => _DietScreen(data: d, onChanged: () => setState(() { _data = _load(); })),
             _Tab.protocol => _ProtocolScreen(data: d, onEditGoals: () => _editGoals(context, d.plan), onSaved: () => setState(() { _data = _load(); })),
             _Tab.profile => _ProfileScreen(
                 data: d,
