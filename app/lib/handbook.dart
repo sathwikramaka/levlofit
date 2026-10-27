@@ -190,8 +190,8 @@ class ChapterScreen extends StatelessWidget {
     // One read serves the title bar and the body. Opened by slug, the chapter number comes from the row.
     final Future<Map<String, dynamic>> future = load?.call() ??
         (id != null
-            ? supabase.from('handbook_chapters').select('id, title, minutes, blocks').eq('id', id!).single()
-            : supabase.from('handbook_chapters').select('id, title, minutes, blocks').eq('slug', slug!).single());
+            ? supabase.from('handbook_chapters').select('id, part, part_title, title, minutes, blocks').eq('id', id!).single()
+            : supabase.from('handbook_chapters').select('id, part, part_title, title, minutes, blocks').eq('slug', slug!).single());
     return Scaffold(
       appBar: AppBar(
         title: id != null
@@ -217,17 +217,39 @@ class ChapterScreen extends StatelessWidget {
           }.where(sources.containsKey).toList();
           // Source keys become numbered markers that match the list at the end of the chapter.
           String? cite(Object? key) => key is String && keys.contains(key) ? '[${keys.indexOf(key) + 1}]' : null;
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 48),
-            children: staggered([
-              Text(row['title'] as String, style: t.headlineMedium),
-              const SizedBox(height: 6),
-              Text('${row['minutes'] ?? 3} min read  ·  ${keys.length} sources', style: t.bodySmall?.copyWith(color: muted)),
-              const SizedBox(height: 24),
-              for (final b in blocks) ...[handbookBlock(context, b, cite), const SizedBox(height: 22)],
-              const Divider(),
-              const SizedBox(height: 16),
-              Text('SOURCES', style: monoLabel(context)),
+          // Textbook frame (owner request 2026-10-28): chapter opener, numbered figures, takeaways, references.
+          final chapter = row['id'] as int? ?? 0;
+          var n = 0;
+          final figureNo = <_Json, String>{for (final b in blocks) if (figureBlocks.contains(b['t'])) b: '$chapter.${++n}'};
+          final lead = blocks.where((b) => b['t'] == 'lead').firstOrNull;
+          final takeaways = blocks.where((b) => b['t'] == 'keypoints').toList();
+          final next = blocks.where((b) => b['t'] == 'next').toList();
+          final body = blocks.where((b) => b != lead && b['t'] != 'keypoints' && b['t'] != 'next').toList();
+          final figureCount = figureNo.length;
+          return _ReadingProgress(
+            child: (controller) => ListView(
+              controller: controller,
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 48),
+              children: staggered([
+                _ChapterOpener(
+                  part: row['part'] as String?,
+                  partTitle: row['part_title'] as String?,
+                  number: chapter,
+                  title: row['title'] as String,
+                  meta: '${row['minutes'] ?? 3} min  ·  $figureCount ${figureCount == 1 ? 'figure' : 'figures'}  ·  ${keys.length} sources',
+                ),
+                const SizedBox(height: 22),
+                _InThisChapter(lead: lead?['text'] as String?, figures: [for (final e in figureNo.entries) (e.value, e.key['title'] as String? ?? '')]),
+                const SizedBox(height: 26),
+                for (final b in body) ...[
+                  figureNo[b] != null ? _Figure(number: figureNo[b]!, child: handbookBlock(context, b, cite)) : handbookBlock(context, b, cite),
+                  const SizedBox(height: 24),
+                ],
+                for (final b in takeaways) ...[handbookBlock(context, b, cite), const SizedBox(height: 24)],
+                for (final b in next) ...[handbookBlock(context, b, cite), const SizedBox(height: 24)],
+                const Divider(),
+                const SizedBox(height: 16),
+                Text('REFERENCES', style: monoLabel(context)),
               const SizedBox(height: 10),
               for (final (i, k) in keys.indexed)
                 Padding(
@@ -237,7 +259,8 @@ class ChapterScreen extends StatelessWidget {
                     Expanded(child: Text(sources[k]!, style: t.bodySmall?.copyWith(color: muted))),
                   ]),
                 ),
-            ]),
+              ]),
+            ),
           );
         },
       ),
@@ -266,6 +289,126 @@ Widget handbookBlock(BuildContext context, Map<String, dynamic> b, String? Funct
         'band' => _Band(b, cite(b['source'])),
         _ => Text(b['text'] as String? ?? '', style: Theme.of(context).textTheme.bodyLarge),
       };
+
+// ---------------------------------------------------------------- textbook frame
+
+/// Block types drawn as numbered figures.
+const figureBlocks = {'stats', 'steps', 'compare', 'bars', 'scale', 'week', 'plate', 'cycle', 'table', 'flow', 'band'};
+
+/// A thin reading-progress bar over the chapter, driven by its scroll position.
+class _ReadingProgress extends StatefulWidget {
+  const _ReadingProgress({required this.child});
+  final Widget Function(ScrollController controller) child;
+
+  @override
+  State<_ReadingProgress> createState() => _ReadingProgressState();
+}
+
+class _ReadingProgressState extends State<_ReadingProgress> {
+  final _controller = ScrollController();
+  final _progress = ValueNotifier(0.0);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(() {
+      final p = _controller.position;
+      _progress.value = p.maxScrollExtent <= 0 ? 1 : (p.pixels / p.maxScrollExtent).clamp(0.0, 1.0);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _progress.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(children: [
+        ValueListenableBuilder(
+          valueListenable: _progress,
+          builder: (_, v, _) => LinearProgressIndicator(value: v, minHeight: 3, backgroundColor: Colors.transparent),
+        ),
+        Expanded(child: widget.child(_controller)),
+      ]);
+}
+
+/// The chapter's opening: part, a large chapter number, the title and what it holds.
+class _ChapterOpener extends StatelessWidget {
+  const _ChapterOpener({required this.part, required this.partTitle, required this.number, required this.title, required this.meta});
+  final String? part, partTitle;
+  final int number;
+  final String title, meta;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = Theme.of(context).colorScheme;
+    final partLine = part == null ? null : (partTitle == null ? 'PART $part' : 'PART $part  ·  ${partTitle!.toUpperCase()}');
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (partLine != null) Text(partLine, style: monoLabel(context).copyWith(color: c.tertiary)),
+      const SizedBox(height: 10),
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(number.toString().padLeft(2, '0'), style: monoNumber(context, size: 44).copyWith(color: c.primary, height: 1)),
+        const SizedBox(width: 14),
+        Expanded(child: Text(title, style: t.headlineMedium)),
+      ]),
+      const SizedBox(height: 8),
+      Text(meta, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+    ]);
+  }
+}
+
+/// "In this chapter": the opening idea and the list of figures, like a textbook's chapter preview.
+class _InThisChapter extends StatelessWidget {
+  const _InThisChapter({required this.lead, required this.figures});
+  final String? lead;
+  final List<(String, String)> figures;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(color: c.surfaceContainerHigh, borderRadius: BorderRadius.circular(20), border: Border.all(color: c.outline)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('IN THIS CHAPTER', style: monoLabel(context)),
+        if (lead != null) ...[const SizedBox(height: 8), Text(lead!, style: t.titleMedium?.copyWith(height: 1.45))],
+        if (figures.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          for (final (no, title) in figures)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(title.isEmpty ? 'Figure $no' : 'Figure $no  ·  $title', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            ),
+        ],
+      ]),
+    );
+  }
+}
+
+/// A numbered figure panel around a visual block.
+class _Figure extends StatelessWidget {
+  const _Figure({required this.number, required this.child});
+  final String number;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), border: Border.all(color: c.outline)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('FIGURE $number', style: monoLabel(context).copyWith(color: c.tertiary)),
+        const SizedBox(height: 10),
+        child,
+      ]),
+    );
+  }
+}
 
 // ---------------------------------------------------------------- book structure blocks (Handbook v4)
 
