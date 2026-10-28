@@ -1479,3 +1479,49 @@ test('privacy texts: the website policy and the in-app policy name every coach d
     assert.match(app, re, `in-app policy: ${what}`);
   }
 });
+
+// ---- first assessment and live research (2026-10-28) ------------------------------------------------------------
+
+test('assess: one model turn, levels only from a complete LEVELS line, capped at 3, nothing saved', async () => {
+  useDb(tables({ curriculum_levels: { data: [{ goal: 'strength', level: 1, title: 'Basics', advance_when: '3 x 10 push-ups' }] } }));
+  fakeLlm(['Your BMI is in the normal band. How many push-ups can you do in a row?']);
+  const goals = [{ id: 'strength', name: 'Strength', experience: 'advanced' }];
+  let res = await post({ assess: { goals, body: { heightCm: 175, weightKg: 70 }, turns: [] } });
+  assert.equal(res.status, 200);
+  let out = await res.json();
+  assert.equal(out.done, false);
+  assert.equal(out.levels, null);
+  assert.match(systemPrompt(), /LEVEL LADDER/);
+  assert.match(systemPrompt(), /bmiBand: normal/);
+  assert.equal(calls[0].body.messages.at(-1).content, 'Please start my assessment.');
+
+  fakeLlm(['Strength: Level 1, eight push-ups is the basics level.\nLEVELS: strength=5']);
+  res = await post({ assess: { goals, body: {}, turns: [{ role: 'assistant', content: 'q1' }, { role: 'user', content: '8' }] } });
+  out = await res.json();
+  assert.deepEqual(out.levels, { strength: 3 });
+  assert.equal(out.done, true);
+  assert.doesNotMatch(out.reply, /LEVELS:/);
+  assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'upsert').length, 0);
+});
+
+test('research: an evidence question gets review abstracts in the prompt and a source list, with topic words only sent', async () => {
+  useDb(tables());
+  const searched: string[] = [];
+  calls.length = 0;
+  globalThis.fetch = (async (url: string, init?: RequestInit) => {
+    const u = String(url);
+    if (u.includes('europepmc')) {
+      searched.push(decodeURIComponent(u));
+      return Response.json({ resultList: { result: [{ title: 'Creatine and kidney function', abstractText: 'No harm to kidney function in healthy adults.', authorString: 'Smith A', journalTitle: 'Nutrients', pubYear: '2021', pmid: '123' }] } });
+    }
+    if (u.includes('wikipedia')) return new Response('{}', { status: 404 });
+    calls.push({ url: u, body: JSON.parse(String(init!.body)) });
+    return Response.json({ choices: [{ message: { content: 'Creatine does not harm healthy kidneys [R1].' } }] });
+  }) as typeof fetch;
+  const res = await post({ message: 'Is creatine safe for my kidneys? I weigh 72 kg', threadId: THREAD });
+  const out = await res.json();
+  assert.match(systemPrompt(), /RESEARCH \(live search results/);
+  assert.match(out.reply, /Sources:\n\[R1\] Creatine and kidney function \(Smith A, Nutrients, 2021\) https:\/\/europepmc\.org\/article\/MED\/123/);
+  assert.equal(searched.length, 1);
+  assert.doesNotMatch(searched[0], /72|kg\b|ACL|torn/);
+});

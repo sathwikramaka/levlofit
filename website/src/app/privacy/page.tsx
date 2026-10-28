@@ -150,13 +150,27 @@ const sections: LegalSection[] = [
           the free days later this week; when you ask for an easier day, only that a lighter session is possible. Only when you ask to log something you
           ate, it sends the names of up to 30 foods from your own food diary that fit your diet, so it can propose diary entries for you to confirm.
         </p>
+        <p>
+          {/* REVIEW GATE (legal): level check and research search (2026-10-28); publish with the coach-chat deploy that adds them. */}
+          <strong>Level check when you set up.</strong> Only during setup, if you do the level check, Groq receives your age, sex, height, weight, body
+          type, body goal, daily activity, training days and session length, equipment, your goals and how you rated yourself in each, two yes-or-no
+          flags (whether you reported a medical condition and whether you noted an injury, not what they are) and the answers you type in that chat.
+          We do not keep that chat; only the levels it suggests are saved to your account. You can skip it and use your own ratings.
+        </p>
+        <p>
+          <strong>Research search.</strong> When you ask Levlofit AI a question about facts or evidence, our server sends a few topic words taken from
+          your question to Europe PMC (run by EMBL-EBI) and Wikipedia (run by the Wikimedia Foundation) to find review articles and a short summary.
+          Numbers, names inside a sentence and common personal words are removed first, and nothing from your profile, plan, logs or Memory is sent.
+          The search comes from our server, so those services do not see your IP address. A word that opens a sentence is searched as written, so
+          leave out details you do not want searched.
+        </p>
         {/* REVIEW GATE: publish only once the owner has decided whether a second provider is configured (LLM_FALLBACK_*). */}
         <p>
           <strong>If Groq is unavailable.</strong> We may set up a second AI provider that answers when Groq is down or busy. It would receive exactly what Groq
           receives for that message. We will name it here before it is switched on.
         </p>
         <p>
-          Groq does not receive your email, account ID, year of birth, sex, height, weight, waist or other measurements, body type, health check answers, the
+          Outside the level check, Groq does not receive your email, account ID, year of birth, sex, height, weight, waist or other measurements, body type, health check answers, the
           injury you described in your health check (an injury fact you confirm in Memory is sent as described above), photos, set logs outside lifting questions, water or habit logs, your effort or pain answers, or feedback. It also receives passages from Levlofit&rsquo;s
           Handbook that match your question; these are Levlofit&rsquo;s own text, not your data. Your calorie and protein targets are worked out from your weight,
           height, age and sex, so your approximate weight can be calculated from them. Anything you type in a message is sent as written, so leave out details you
