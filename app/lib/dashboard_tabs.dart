@@ -1934,7 +1934,7 @@ const _privacyPolicy = [
   ('If Groq is unavailable', 'We may set up a second AI provider that answers when Groq is down or busy. It would receive exactly what Groq '
       'receives for that message. We name it here before it is switched on.'),
   // REVIEW GATE (legal): level check and research search (2026-10-28); ship with the coach-chat deploy that adds them.
-  ('Level check when you set up', 'Only during setup, if you do the level check: Groq gets your age, sex, height, weight, body type, body goal, '
+  ('Level check', 'Only during setup or when you edit your goals, if you do the level check: Groq gets your age, sex, height, weight, body type, body goal, '
       'daily activity, training days and session length, equipment, your goals and how you rated yourself in each, two yes-or-no flags (whether '
       'you reported a medical condition and whether you noted an injury, not what they are), and the answers you type in that chat. Levlofit '
       'does not keep that chat; only the levels it suggests are saved to your account. You can skip it and use your own ratings.'),

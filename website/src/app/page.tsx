@@ -70,7 +70,7 @@ const steps = [
   {
     n: "01",
     title: "You answer",
-    body: "Goals first, then your level in each. Body, schedule, a short health check, equipment, allergies, then how you eat.",
+    body: "Goals first, then a short check of where you really are in each. Body, schedule, a health check, equipment, allergies, how you eat and what you can cook with, including a hostel or PG mess.",
   },
   {
     n: "02",
@@ -105,9 +105,9 @@ const sources = [
 
 const features = [
   ["Muscle map", "Tap a muscle on the body to see the moves that train it. Filter by equipment and difficulty, with an animated demo for each move."],
-  ["Meals to the gram", "Pick your region's staples and how fast you want to go. Every day is planned to your calories and protein, in grams."],
-  ["Level up", "XP, levels and a 66-day challenge, all worked out from what you actually log. A missed day never resets the run."],
-  ["Levlofit AI", "Remembers what you tell it, explains your plan in plain words, and changes it only after you say yes."],
+  ["Meals to the gram", "Planned around your region, budget, kitchen and mess meals, with pre- and post-workout meals on training days. Clear portions in pieces, millilitres and grams."],
+  ["Rank up", "XP, ranks and a 66-day challenge, all worked out from what you actually log. A missed day never resets the run. Your training levels move only with level checks."],
+  ["Levlofit AI", "Remembers what you tell it, reads the progress you log, explains your plan in plain words, and changes it only after you say yes."],
   ["Body check, if you want it", "One photo gives posture notes and what to train more. Optional, and the photo is never saved."],
   ["Reminders that fit", "Training, water and your own reminders, at the times you choose."],
 ];
@@ -120,7 +120,7 @@ const faqs = [
   ["Do you suggest beef or pork?", "Never. Levlofit is built for Indian users. Food choices are vegetarian, eggitarian, vegan or non-vegetarian without beef and pork."],
   [
     "What does Levlofit AI do?",
-    "It explains your plan in plain words and answers questions about it. It cannot change your numbers and it is not a doctor. If your health check needs a doctor, it says so.",
+    "It explains your plan in plain words, answers questions about it and reads the progress you log. It never sets your numbers itself: when a different body goal, pace or number of training days makes sense, it proposes it, and the plan is rebuilt by its fixed rules only after you say yes. It is not a doctor. If your health check needs a doctor, it says so.",
   ],
   ["I have an allergy. Is that covered?", "Allergies and intolerances are asked before your diet. Foods that contain them are removed from every suggestion, including ones you type in yourself."],
   ["Can I delete my account?", "Yes, from the account menu at any time. Your profile, plans and logs are deleted with it."],

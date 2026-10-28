@@ -12,7 +12,7 @@ const INDEX: Entry[] = [
   { title: "Indian food", hint: "Home", href: "/#food", words: "ifct dal paneer rajma soya allergy beef pork nutrition" },
   { title: "Where the rules come from", hint: "Home", href: "/#sources", words: "who acsm issn icmr nin lally science source" },
   { title: "Download the Android app", hint: "Home", href: "/#download", words: "download apk android install app get" },
-  { title: "Inside the app", hint: "Home", href: "/#features", words: "features muscle map meals level up challenge body check reminders ai" },
+  { title: "Inside the app", hint: "Home", href: "/#features", words: "features muscle map meals rank up level challenge body check reminders ai kitchen mess warm-up" },
   { title: "Where do the numbers come from?", hint: "FAQ", href: "/#faq", words: "protein calories rules" },
   { title: "Do you suggest beef or pork?", hint: "FAQ", href: "/#faq", words: "diet food" },
   { title: "What does Levlofit AI do?", hint: "FAQ", href: "/#faq", words: "assistant chat bot doctor" },

@@ -158,7 +158,7 @@ const sections: LegalSection[] = [
         </p>
         <p>
           {/* REVIEW GATE (legal): level check and research search (2026-10-28); publish with the coach-chat deploy that adds them. */}
-          <strong>Level check when you set up.</strong> Only during setup, if you do the level check, Groq receives your age, sex, height, weight, body
+          <strong>Level check.</strong> Only during setup or when you edit your goals, if you do the level check, Groq receives your age, sex, height, weight, body
           type, body goal, daily activity, training days and session length, equipment, your goals and how you rated yourself in each, two yes-or-no
           flags (whether you reported a medical condition and whether you noted an injury, not what they are) and the answers you type in that chat.
           We do not keep that chat; only the levels it suggests are saved to your account. You can skip it and use your own ratings.
