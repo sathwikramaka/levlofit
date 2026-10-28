@@ -11,7 +11,7 @@ One row per check of what users actually get. Add a new dated section for every 
 | Android APK | com.levlofit.app 1.0.1, versionCode 2003, 13.0 MB (native libraries now compressed: Cloudflare Pages refuses files over 25 MiB), same release certificate 7c510c35...4c431384, not debuggable, allowBackup false; permissions add CAMERA (barcode scan only), no microphone or storage | aapt2, apksigner |
 | APK SHA-256 | 52c849f4dfd429e0c841601b4e5b076f075086b46c47b9d920668a977bc1ce06, equal on the live download and the site | sha256sum of the live file |
 | Website | Cloudflare Pages deployment 083cc000 (branch main): /, /handbook (43 chapters), /privacy, /terms, /delete-account, /app/, /version.json = 1.0.1 build 3; report-only CSP served, no violations on the home page; search opens Handbook chapters | curl and browser |
-| Edge Functions | Not yet deployed: the Supabase CLI here is not logged in, and the connector would need ~400 KB of source pasted by hand | |
+| Edge Functions | body-check v2 and coach-chat v23 deployed from 0911278 with `supabase functions deploy --use-api` after the owner logged in; both booted without errors (35-41 ms) and refuse signed-out calls (401); delete-account v13 and generate-plan v21 unchanged | Function list, function logs, signed-out probe |
 | CI | Run 40777242775 on 6b274a9: all 6 jobs green | gh run view |
 
 ## 2026-10-29: state of the live release (read-only checks, owner-approved)
