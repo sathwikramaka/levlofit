@@ -69,6 +69,8 @@ Cloud history was written by `apply_migration` with apply-time versions; local f
 | 20261029300000_cooking_and_schedule | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
 | 20261029400000_replace_user_goals | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
 | 20261029500000_kitchen_equipment_mess | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261029600000_mixed_regions | 2026-10-29 apply_migration mixed_regions | Applied 2026-10-29 after the daily backup run 40777558939 passed; fingerprint after = local stack with all migrations (11/11 kinds) |
+| 20261029700000_packaged_foods | 2026-10-29 apply_migration packaged_foods | Applied 2026-10-29, same backup and fingerprint check |
 
 Schema fingerprint: grants, columns, constraints, indexes, policies, functions, triggers, storage buckets/policies,
 auth trigger and extensions are identical between cloud and a local `supabase db reset`, except the
@@ -190,7 +192,7 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (2), updated 2026-10-29 (documentation only; nothing applied)
+## Pending production items (0), updated 2026-10-29 (both items below applied the same day)
 
 - 20261029600000_mixed_regions: widens dietary_profiles.cuisine_region's check to allow several regions
   ("north,south"). Preflight: `select cuisine_region, count(*) from public.dietary_profiles group by 1` (all values

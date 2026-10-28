@@ -41,6 +41,13 @@ val healthConnect = rootProject.findProject(":healthconnect") != null
 val localTest = System.getenv("LEVLOFIT_LOCAL_TEST") == "true" || (findProperty("levlofit.localTest") as String?) == "true"
 
 android {
+    // Compress native libraries inside the APK (Flutter engine, app code, ZXing): the direct download must stay under
+    // Cloudflare Pages' 25 MiB file limit. Android unpacks them once at install, so the app takes a little more space.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
     namespace = "com.levlofit.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
