@@ -724,6 +724,12 @@ end $$;
 """
     release.write_text(guard + sql.split("\n", 2)[2], encoding="utf-8", newline="\n")
     print(f"wrote {release.relative_to(ROOT)}")
+    # The website's static Handbook pages (/handbook/<slug>) read the same chapters, so site and app never differ.
+    site = ROOT / "website" / "src" / "lib" / "handbook.json"
+    book = [{"slug": c["slug"], "part": c["part"], "partTitle": PARTS[c["part"]], "title": c["title"], "summary": c["summary"],
+             "minutes": c["minutes"], "sources": {k: SRC[k] for k in c["sources"]}, "blocks": c["blocks"]} for c in CHAPTERS]
+    site.write_text(json.dumps(book, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+    print(f"wrote {site.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

@@ -71,8 +71,9 @@ const sections: LegalSection[] = [
         </p>
         <p>
           <strong>On this device only:</strong> on the website, your light or dark choice and whether you closed the cookie notice. In the app, your sign-in
-          session, light or dark choice, dashboard layout and daily goals, which permission prompts you have seen, downloaded fonts and the reminders scheduled on
-          your phone. These stay on the device and are never sent to us.
+          session, light or dark choice, dashboard layout and daily goals, which permission prompts you have seen, downloaded fonts, the reminders scheduled on
+          your phone, and a copy of your latest plan, profile answers and recent logs so the app opens without a connection. These stay on the device and are
+          never sent to us.
         </p>
         {/* REVIEW GATE: applies only to Android builds made with the Health Connect option; legal review before publishing. */}
         <p>
@@ -84,6 +85,12 @@ const sections: LegalSection[] = [
           <strong>Body check (optional, only if you use it):</strong> after you agree each time, the photo you choose is sent once to Groq, which may process it
           outside India, to write a few notes on posture and which areas to train. Levlofit does not store the photo or the notes, and no body-fat, weight or
           health judgement is made. For adults only.
+        </p>
+        <p>
+          <strong>Packaged foods (optional, only if you use it):</strong> when you scan or type a barcode in the food diary, the camera image is read on your
+          phone and never leaves it; only the barcode number is sent to Open Food Facts to look the product up, with no account or personal details. The
+          products you save (name, brand, values per 100 g, barcode and where the values came from) are stored with your account like your other diary
+          entries and deleted with it.
         </p>
       </>
     ),
@@ -113,6 +120,9 @@ const sections: LegalSection[] = [
           </li>
           <li>
             <strong>Groq</strong> runs Levlofit AI and may process your messages outside India. See below for exactly what it receives.
+          </li>
+          <li>
+            <strong>Open Food Facts</strong> receives a barcode number, and your IP address, only when you look up a packaged food.
           </li>
           <li>
             <strong>Google</strong>, only if you choose to sign in with Google.
@@ -193,10 +203,10 @@ const sections: LegalSection[] = [
         <p>
           Your account data is kept until you delete your account. When you delete it in the app, our server first deletes your progress photos and profile picture.
           If that fails, your account is not deleted, and you can try again. Once they are gone, your account is deleted, and with it the records linked to it in
-          our database: your profile and answers, goals, plans, logs, food diary and recipes, measurements, chats and their summaries, Levlofit AI memory facts and notes,
+          our database: your profile and answers, goals, plans, logs, food diary, saved packaged foods and recipes, measurements, chats and their summaries, Levlofit AI memory facts and notes,
           the session changes you were offered or confirmed, reminder settings, feedback and error reports.
           If deleting the account itself fails after the photos are gone, the photos stay deleted, everything else stays, and you can try again. Reminders
-          scheduled on your phone are cancelled when you delete your account or sign out.
+          scheduled on your phone and the app&rsquo;s offline copy of your plan are removed when you delete your account or sign out.
         </p>
         <p>
           We back up the database every day and before major updates. Backups are encrypted before they leave our server, kept privately (on our own

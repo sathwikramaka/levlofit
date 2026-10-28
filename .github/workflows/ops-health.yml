@@ -1,0 +1,36 @@
+# Daily read-only health check of the production database (tools/ops_health.sql: counts only, no personal data).
+# A failed run is the alert: GitHub emails the repository owner when a scheduled workflow fails.
+# Fails when: check_rate lacks the body_check_day bucket (every body check is then refused), orphan progress photos
+# exist (account deletion missed files), more than 20 app error reports in 24 h, or 3 or more users sit at the
+# body-check cap (possible abuse or a cap that is too low).
+# Secret: SUPABASE_DB_URL (same as the daily backup).
+name: Production health check
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # 08:30 IST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Run read-only checks
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          [ -n "$DB_URL" ] || { echo "Set the SUPABASE_DB_URL secret."; exit 1; }
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -At -F '|' -f tools/ops_health.sql | grep '|' | tee health.txt
+          val() { grep "^$1|" health.txt | cut -d'|' -f2; }
+          fail=0
+          [ "$(val 'check_rate knows body_check_day')" = yes ] || { echo "ALERT: check_rate has no body_check_day bucket"; fail=1; }
+          [ "$(val 'orphan progress photos')" = 0 ] || { echo "ALERT: orphan progress photos"; fail=1; }
+          [ "$(val 'app errors, last 24 h')" -le 20 ] || { echo "ALERT: more than 20 app errors in 24 h"; fail=1; }
+          [ "$(val 'users at the body-check cap now')" -lt 3 ] || { echo "ALERT: 3 or more users at the body-check cap"; fail=1; }
+          exit $fail

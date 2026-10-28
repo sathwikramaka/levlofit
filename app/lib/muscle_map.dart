@@ -29,19 +29,31 @@ Rect _bounds(List<double> xy) {
   return Rect.fromLTRB(l, t, r, b);
 }
 
-/// The selectable muscle at [point] (canvas units), or null. Inside a muscle outline first; failing that, within 2
-/// units of one (thin muscles such as the forearms are hard to hit exactly with a finger).
-MuscleShape? muscleAt(List<MuscleShape> shapes, Offset point) {
+/// The selectable muscle at [point] (canvas units), or null. Inside a muscle outline first; failing that, the muscle
+/// whose outline box is nearest, within [slop] units (thin muscles such as the forearms, calves and rear deltoids are
+/// hard to hit exactly with a finger). The map passes a finger-sized slop for its drawn size.
+MuscleShape? muscleAt(List<MuscleShape> shapes, Offset point, {double slop = 2}) {
   for (final s in shapes) {
     if (s.group == null) continue;
     if (s.polygons.any((p) => _path(p).contains(point))) return s;
   }
+  MuscleShape? best;
+  var bestD = slop;
   for (final s in shapes) {
     if (s.group == null) continue;
-    if (s.polygons.any((p) => _bounds(p).inflate(2).contains(point))) return s;
+    for (final p in s.polygons) {
+      final b = _bounds(p);
+      final dx = point.dx < b.left ? b.left - point.dx : (point.dx > b.right ? point.dx - b.right : 0.0);
+      final dy = point.dy < b.top ? b.top - point.dy : (point.dy > b.bottom ? point.dy - b.bottom : 0.0);
+      final d = Offset(dx, dy).distance;
+      if (d <= bestD) (best, bestD) = (s, d);
+    }
   }
-  return null;
+  return best;
 }
+
+/// Half of a 44 dp touch target (Apple HIG minimum; Material asks 48 dp), as the tap tolerance around thin muscles.
+const fingerSlopDp = 22.0;
 
 /// The guide group at [point], or null (see [muscleAt]).
 String? groupAt(List<MuscleShape> shapes, Offset point) => muscleAt(shapes, point)?.group;
@@ -78,7 +90,7 @@ class _MuscleMapState extends State<MuscleMap> {
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTapUp: (d) {
-              final m = muscleAt(shapes, d.localPosition / scale);
+              final m = muscleAt(shapes, d.localPosition / scale, slop: (fingerSlopDp / scale).clamp(2, 6));
               if (m == null) return;
               widget.onGroup(m.group!);
               widget.onMuscle?.call(m.label);

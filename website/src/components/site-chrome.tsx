@@ -161,6 +161,7 @@ export function SiteChrome() {
         </ul>
       </div>
 
+      <nav aria-label="Back to top">
       <a
         href="#"
         onClick={(e) => {
@@ -168,12 +169,14 @@ export function SiteChrome() {
           scrollTo({ top: 0 });
         }}
         aria-label="Back to top"
+        tabIndex={scrolled ? 0 : -1}
         className={`no-print fixed right-6 bottom-22 z-30 grid h-12 w-12 place-items-center rounded-xl border border-line bg-surface text-ink transition-all duration-500 ease-spring hover:-translate-y-0.5 ${scrolled ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"}`}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
           <path d="M12 19V5M6 11l6-6 6 6" />
         </svg>
       </a>
+      </nav>
     </>
   );
 }

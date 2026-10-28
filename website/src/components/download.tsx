@@ -51,6 +51,14 @@ export function DownloadSection() {
         {(apk.version || apk.size) && (
           <p className="mt-5 text-[14px] text-muted">{[apk.version && `Version ${apk.version}`, apk.size].filter(Boolean).join("  ·  ")}</p>
         )}
+        {apk.url && (
+          <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-muted">
+            Needs Android 7.0 or newer. Open the file after it downloads and allow your browser to install apps when Android asks. Updates install over it
+            and keep your data.{" "}
+            <a href="/privacy" className="underline underline-offset-4">Privacy</a> ·{" "}
+            <a href="/delete-account" className="underline underline-offset-4">Delete your account</a>
+          </p>
+        )}
         {apk.sha256 && (
           <p className="mx-auto mt-3 max-w-md text-[12px] leading-relaxed break-all text-muted">
             SHA-256: <span className="font-mono">{apk.sha256}</span>

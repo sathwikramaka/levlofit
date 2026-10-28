@@ -1135,6 +1135,17 @@ class _LevelCheckScreenState extends State<_LevelCheckScreen> {
       _Tile(child: Text(row['advance_when'] as String, style: t.bodyLarge?.copyWith(height: 1.5))),
       const SizedBox(height: 10),
       Text('Answer honestly. Starting a level too high is the fastest way to stall or get hurt.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+      const SizedBox(height: 16),
+      _Tile(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('IF YOU TEST IT NOW', style: monoLabel(context)),
+          const SizedBox(height: 8),
+          for (final line in levelCheckGuide) ...[
+            Text(line, style: t.bodyMedium?.copyWith(height: 1.45)),
+            const SizedBox(height: 6),
+          ],
+        ]),
+      ),
       const SizedBox(height: 24),
       Row(children: [
         Expanded(child: OutlinedButton(onPressed: () => setState(() => _finished = true), child: const Text('Not yet'))),
@@ -1486,7 +1497,7 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
     );
   }
 
-  Widget _chips<T>(String title, String? help, T? value, List<(T, String)> options, ValueChanged<T> onPick) {
+  Widget _chips<T>(String title, String? help, T? value, List<(T, String)> options, ValueChanged<T> onPick, {bool Function(T)? isSelected}) {
     final t = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
@@ -1495,7 +1506,7 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
         if (help != null) Text(help, style: t.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
         const SizedBox(height: 8),
         Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final (v, label) in options) ChoiceChip(label: Text(label), selected: value == v, onSelected: (_) => setState(() => onPick(v))),
+          for (final (v, label) in options) ChoiceChip(label: Text(label), selected: isSelected?.call(v) ?? value == v, onSelected: (_) => setState(() => onPick(v))),
         ]),
       ]),
     );
@@ -1572,7 +1583,8 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
             [for (final (k, title, _) in cookTimeOptions) (k, title)], (v) => d['cook_time'] = v),
         _chips<String>('Regional staples', 'The grains, dals and fish your meal plan leans on. A preference: other foods still appear to meet your targets.',
             d['cuisine_region'] as String? ?? 'any',
-            [for (final (k, title, _) in regionOptions) (k, title)], (v) => d['cuisine_region'] = v),
+            [for (final (k, title, _) in regionOptions) (k, title)], (v) => d['cuisine_region'] = toggleRegion(d['cuisine_region'] as String?, v),
+            isSelected: (k) => regionSelected(d['cuisine_region'] as String?, k)),
         Text('WATER', style: monoLabel(context)),
         const SizedBox(height: 10),
         _chips<bool>('Daily water target', 'Auto follows EFSA guidance and adds water on training days.', p['water_target_ml'] != null, const [(false, 'Auto'), (true, 'My own')],
@@ -1910,7 +1922,7 @@ const _privacyPolicy = [
       'sign-up and in Protocol, including your weight goal, food budget and exclusions, equipment, water target and the health check. '
       'What you log: workouts and sets (reps and weight), body weight and measurements, water, habits, your level in each goal and your '
       'reminder settings (including the names you give your own reminders), the foods and weights you log in the food diary and the recipes you save, and how hard each session felt and whether pain stopped you, if you answer after a session. Progress photos, and your profile picture if you upload your own. Your chats with Levlofit AI, the facts you confirm in its Memory, '
-      'and its suggestions waiting for your OK. Feedback you send. Error reports when the app hits an unexpected error while you are signed in (the error message, where in the app code it happened, app version and phone type; email addresses masked; kept up to 90 days). For abuse protection: when you send chat messages or rebuild your plan (times only, no content), and a random ID on each chat message so a resent one is not saved twice; feedback is limited by counting the feedback you have sent. On this phone only: your sign-in session, light or dark choice, dashboard layout and daily goals, which permission prompts you have seen, downloaded fonts and the reminders scheduled on the phone. We do not collect your location, contacts or '
+      'and its suggestions waiting for your OK. Feedback you send. Error reports when the app hits an unexpected error while you are signed in (the error message, where in the app code it happened, app version and phone type; email addresses masked; kept up to 90 days). For abuse protection: when you send chat messages or rebuild your plan (times only, no content), and a random ID on each chat message so a resent one is not saved twice; feedback is limited by counting the feedback you have sent. On this phone only: your sign-in session, light or dark choice, dashboard layout and daily goals, which permission prompts you have seen, downloaded fonts, the reminders scheduled on the phone, and a copy of your latest plan, profile answers and recent logs so the app opens without a connection. We do not collect your location, contacts or '
       'data from other apps.'),
   ('How we use it', 'To build your plan, track your progress, send reminders you choose and answer your questions. Nothing else.'),
   ('Where it is stored', 'With Supabase, our database and file storage provider. Photos are kept in private storage only your account '
@@ -1951,11 +1963,14 @@ const _privacyPolicy = [
       'message is sent as written, so leave out details you do not want shared.'),
   ('Who else handles it', 'Supabase stores your data, and Google handles sign-in if you use Google. Google Fonts supplies the app\'s fonts; '
       'Google\'s servers may receive your IP address when the app loads them. ExerciseDB (AscendAPI) supplies the exercise animations; its '
-      'servers may receive your IP address when the app loads them. Once per start the app asks the Levlofit website whether a newer version exists, so its host may receive your IP address too. Each is used only for its job. We never sell your data.'),
+      'servers may receive your IP address when the app loads them. Once per start the app asks the Levlofit website whether a newer version exists, so its host may receive your IP address too. Open Food Facts receives a barcode number, and your IP address, only when you look up a packaged food. Each is used only for its job. We never sell your data.'),
   ('Body check (optional)', 'Only if you use it and agree each time: the photo you choose is sent once to Groq, which may process it outside India, '
       'to write a few notes on posture and which areas to train. Levlofit does not store the photo or the notes. No body-fat, weight or health '
       'judgement is made. For adults only.'),
-  ('Permissions', 'Notifications, only for the reminders you turn on. On Android, Alarms and reminders, only if you allow it, so reminders arrive at the time you set; without it they can arrive a few minutes late. Photos, only when you add a progress photo or profile picture.'),
+  ('Packaged foods (optional)', 'When you scan or type a barcode in the food diary, the camera image is read on this phone and never leaves it; only '
+      'the barcode number is sent to Open Food Facts to look the product up. Products you save (name, brand, values per 100 g, barcode, source) are '
+      'stored with your account and deleted with it.'),
+  ('Permissions', 'Notifications, only for the reminders you turn on. On Android, Alarms and reminders, only if you allow it, so reminders arrive at the time you set; without it they can arrive a few minutes late. Photos, only when you add a progress photo or profile picture. Camera, only while you scan a barcode.'),
   // REVIEW GATE (legal): Health Connect steps text; ships only with builds made with -Plevlofit.healthConnect=true.
   ('Steps from Health Connect', 'Only if you connect it in Progress, and only on Android builds that support it. Levlofit reads your daily step '
       'totals for the last 7 days while you look at Progress. They stay on this phone: they are not stored on our servers. If you switch on '
@@ -1964,9 +1979,9 @@ const _privacyPolicy = [
   ('How long we keep it', 'Until you delete your account. Every plan built for you is kept, each with a copy of the answers it used (including '
       'any injury you described); the app shows the latest. Deleting your account first removes your progress photos and profile picture; if that '
       'fails, your account is not deleted and you can try again. Then your account is deleted, along with the records linked to it in our '
-      'database: profile and answers, goals, plans, logs, food diary and recipes, measurements, chats, AI notes, reminder settings, feedback and error reports. '
+      'database: profile and answers, goals, plans, logs, food diary, saved packaged foods and recipes, measurements, chats, AI notes, reminder settings, feedback and error reports. '
       'If deleting the account itself fails after the photos are gone, the photos stay deleted, the rest stays and you can try again. '
-      'Reminders scheduled on this phone are cancelled when you delete your account or sign out. We back up the database daily '
+      'Reminders scheduled on this phone and the offline copy of your plan are removed when you delete your account or sign out. We back up the database daily '
       'and before major updates, encrypted and kept privately, and delete backups within 90 days; your data stays in them until then. Copies may also '
       'remain for a short time in our service providers\' backups and logs, under their own retention practices. Messages already sent to '
       'Groq cannot be deleted by us; Groq handles them under its own terms. Website contact messages are not linked to your account; we '
@@ -2155,3 +2170,13 @@ class _AlarmClockTestTileState extends State<_AlarmClockTestTile> {
     );
   }
 }
+
+/// Shown with every level check question. Levlofit rules, not reviewed by a coach or physiotherapist: warm-up, full
+/// range, effort and when to stop, so a self-test never becomes a max attempt.
+const levelCheckGuide = [
+  'Warm up for 5 to 10 minutes first, with easy sets of the same move.',
+  'Count only reps with full range and steady form. A rep that twists, bounces or cuts short does not count.',
+  'Hard but controlled: stop when the next rep would break form, not when you can no longer move. Never test to a fall or a dropped weight.',
+  'Stop at once for chest pain, dizziness, unusual breathlessness or sharp pain, and answer Not yet.',
+  'Not sure how a move should look? Open it in Exercise library first.',
+];

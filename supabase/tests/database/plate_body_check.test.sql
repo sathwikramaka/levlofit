@@ -2,7 +2,7 @@
 -- Run locally: supabase test db (throwaway stack).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(10);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000cccc', 'c@test.local');
 insert into public.dietary_profiles (user_id, diet_type) values ('00000000-0000-0000-0000-00000000cccc', 'vegetarian');
@@ -16,6 +16,8 @@ select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000
 select lives_ok($$ update public.dietary_profiles set diet_pace = 'hard', cuisine_region = 'south' $$, 'the owner can set pace and region');
 select throws_ok($$ update public.dietary_profiles set diet_pace = 'extreme' $$, '23514', null, 'an unknown pace is refused');
 select throws_ok($$ update public.dietary_profiles set cuisine_region = 'mars' $$, '23514', null, 'an unknown region is refused');
+select lives_ok($$ update public.dietary_profiles set cuisine_region = 'north,south' $$, 'several regions can be saved together');
+select throws_ok($$ update public.dietary_profiles set cuisine_region = 'north,mars' $$, '23514', null, 'a list with an unknown region is refused');
 
 -- Body check: 3 a day, owned by the database.
 select is((select count(*)::int from generate_series(1, 3) where public.check_rate('body_check_day', 3, interval '1 day')), 3, 'three body checks pass');

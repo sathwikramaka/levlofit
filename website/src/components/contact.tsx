@@ -131,6 +131,7 @@ export function Contact() {
         aria-modal="true"
         aria-labelledby="contact-title"
         aria-hidden={!open}
+        inert={!open}
         className={`fixed right-0 bottom-0 z-[57] flex w-full flex-col rounded-t-3xl border border-line bg-surface p-6 transition-transform duration-700 ease-spring sm:right-6 sm:bottom-6 sm:w-[420px] sm:rounded-3xl ${open ? "translate-y-0" : "pointer-events-none translate-y-[110%]"}`}
       >
         <div className="flex items-start justify-between">

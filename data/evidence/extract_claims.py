@@ -82,9 +82,11 @@ CLINICAL = re.compile(
 
 def load_builder(path: Path = BUILDER):
     """Imports the builder module for its CHAPTERS and SRC; its main() is not run, so nothing is written."""
+    # Compiled from the source each time: a cached .pyc is keyed on mtime (whole seconds) and size, so a same-length
+    # edit within a second (the stale-text test on fast CI runners) would load the old text.
     spec = importlib.util.spec_from_file_location("handbook_builder", path)
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    exec(compile(path.read_text(encoding="utf-8"), str(path), "exec"), module.__dict__)
     return module
 
 

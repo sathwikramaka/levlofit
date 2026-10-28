@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { Estimate } from "@/components/estimate";
+import { chapters } from "@/lib/handbook";
 import { DownloadButton, DownloadSection, webAppUrl } from "@/components/download";
 import { Vial } from "@/components/vial";
 import { Wordmark } from "@/components/wordmark";
@@ -84,16 +87,6 @@ const steps = [
   },
 ];
 
-const chapters = [
-  "Foundations of training",
-  "Strength and muscle",
-  "Calisthenics",
-  "Running",
-  "HYROX and hybrid",
-  "Mobility and recovery",
-  "Nutrition for Indian diets",
-  "Sleep and habits",
-];
 
 const sources = [
   ["WHO", "Physical activity guidelines, 2020"],
@@ -224,21 +217,21 @@ export default function Home() {
             </div>
             <div data-reveal style={{ "--i": 1 } as React.CSSProperties}>
               <Bezel>
-                <div className="flex h-12 items-center gap-3 rounded-xl border border-line bg-bg px-4 text-muted">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3.5-3.5" />
-                  </svg>
-                  <span className="text-[15px]">Search: deadlift form, soya limit, creatine</span>
-                </div>
-                <ol className="mt-5">
-                  {chapters.map((c, i) => (
-                    <li key={c} className="group flex items-center gap-4 border-t border-line py-3.5 first:border-t-0">
-                      <span className="w-6 font-mono text-[12px] text-muted">{String(i + 1).padStart(2, "0")}</span>
-                      <span className="flex-1 text-[15px] font-semibold transition-transform duration-500 ease-spring group-hover:translate-x-1">{c}</span>
+                <p className="mb-3 font-mono text-[11px] tracking-[0.15em] text-muted uppercase">{chapters.length} chapters, here and in the app</p>
+                <ol>
+                  {chapters.filter((c, i) => i === 0 || chapters[i - 1].part !== c.part).map((c) => (
+                    <li key={c.slug} className="border-t border-line first:border-t-0">
+                      <Link href={`/handbook/${c.slug}`} className="group flex items-center gap-4 py-3.5">
+                        <span className="w-6 font-mono text-[12px] text-muted">{c.part}</span>
+                        <span className="flex-1 text-[15px] font-semibold group-hover:underline group-hover:underline-offset-4">{c.title}</span>
+                        <span className="font-mono text-[12px] text-muted">{c.minutes} min</span>
+                      </Link>
                     </li>
                   ))}
                 </ol>
+                <Link href="/handbook" className="mt-4 inline-block text-[15px] font-semibold underline underline-offset-4">
+                  All chapters
+                </Link>
               </Bezel>
             </div>
           </div>
@@ -288,6 +281,17 @@ export default function Home() {
                 </li>
               ))}
             </ul>
+          </div>
+        </section>
+
+        {/* Estimate */}
+        <section id="estimate" className="mx-auto max-w-6xl px-4 py-28 sm:px-6 sm:py-36">
+          <div data-reveal>
+            <Eyebrow>Try the numbers</Eyebrow>
+            <h2 className="mt-4 max-w-[20ch] text-[clamp(32px,5vw,56px)] leading-[1.02] font-bold tracking-[-0.035em]">See your daily target before you install.</h2>
+          </div>
+          <div data-reveal className="mt-14" style={{ "--i": 1 } as React.CSSProperties}>
+            <Estimate />
           </div>
         </section>
 

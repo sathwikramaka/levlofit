@@ -1,0 +1,47 @@
+# Weekly restore rehearsal: takes the same five dumps as the daily backup, restores them into a throwaway Postgres
+# container on the runner (no network, RAM only, removed after) and compares the copy with production
+# (tools/restore_drill.sh: 12 schema fingerprint kinds and every public table's row count). A failed run is the alert.
+# Plaintext dumps live only in the runner's temporary folder and are never uploaded. Database only: progress photos
+# are covered by tools/backup_prod.sh before each release (docs/BACKUP_RECOVERY_PLAN.md).
+# ponytail: row counts are read live, so a user logging during the run can fail it once; rerun before acting.
+# Secret: SUPABASE_DB_URL (same as the daily backup). The image tag matches production's Postgres (17.6.1.166 on
+# 2026-10-29, from the Supabase project details); update it when Supabase upgrades the project.
+name: Weekly restore drill
+
+on:
+  schedule:
+    - cron: "0 21 * * 0" # Monday 02:30 IST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.118.0
+      - name: Dump, restore and compare
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          [ -n "$DB_URL" ] || { echo "Set the SUPABASE_DB_URL secret."; exit 1; }
+          umask 077
+          dir=$(mktemp -d)
+          trap 'rm -rf "$dir"' EXIT
+          dump() { f=$1; shift; supabase db dump --db-url "$DB_URL" -f "$dir/$f" "$@" >/dev/null 2>&1 || { echo "FAIL $f"; exit 1; }; echo "OK $f"; }
+          dump roles.sql --role-only
+          dump schema.sql
+          dump data.sql --data-only --use-copy
+          dump platform_schema.sql --schema auth,storage,supabase_functions,supabase_migrations
+          dump migration_history.sql --data-only --use-copy --schema supabase_migrations
+          bash tools/restore_drill.sh "$dir" "$DB_URL" public.ecr.aws/supabase/postgres:17.6.1.166

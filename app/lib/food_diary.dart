@@ -2,11 +2,13 @@
 // public.foods at read time; nothing here estimates a nutrient that the table does not hold. Vitamins and minerals
 // are summed only over foods with a value; a missing value is reported, never treated as zero. No daily targets are
 // shown for them (reference intakes need review before they are shown as goals).
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 import 'main.dart';
+import 'packaged_food.dart' show addPackagedFood;
 import 'theme.dart';
 
 typedef FoodRow = ({String code, String name, String? nameHi, double kcal, double protein, double fat, double carb, double fiber, Map<String, double> micros});
@@ -48,8 +50,28 @@ FoodRow foodFromRow(Map<String, dynamic> r) => (
       micros: {for (final (k, _, _) in diaryMicros) if (r[k] case final num v) k: v.toDouble()},
     );
 
-DiaryEntry entryFromRow(Map<String, dynamic> r) =>
-    (id: r['id'] as String, meal: r['meal'] as String, foodCode: r['food_code'] as String, grams: (r['grams'] as num).toDouble());
+/// A packaged food (barcode.dart) is keyed `pkg:<packaged_foods.id>` so totals and editing treat it like any food.
+DiaryEntry entryFromRow(Map<String, dynamic> r) => (
+      id: r['id'] as String,
+      meal: r['meal'] as String,
+      foodCode: (r['food_code'] as String?) ?? 'pkg:${r['packaged_food_id']}',
+      grams: (r['grams'] as num).toDouble(),
+    );
+
+const packagedPrefix = 'pkg:';
+
+/// A packaged_foods row as a diary food. Vitamins and minerals are not on Indian labels, so they count as missing.
+FoodRow foodFromPackaged(Map<String, dynamic> r) => (
+      code: '$packagedPrefix${r['id']}',
+      name: r['brand'] == null ? r['name'] as String : '${r['name']} (${r['brand']})',
+      nameHi: null,
+      kcal: (r['kcal'] as num).toDouble(),
+      protein: (r['protein_g'] as num).toDouble(),
+      fat: (r['fat_g'] as num).toDouble(),
+      carb: (r['carb_g'] as num).toDouble(),
+      fiber: (r['fiber_g'] as num? ?? 0).toDouble(),
+      micros: const <String, double>{},
+    );
 
 /// Sums entries by scaling each food's per-100 g values. An entry whose food is missing from [foods] is counted in
 /// [DiaryTotals.unknownFoods] and adds nothing, rather than being guessed.
@@ -232,13 +254,17 @@ void resetFoodSourcesForTest() => _sources = null;
 
 final DiaryApi supabaseDiary = (
   load: (day) async => [
-        for (final r in newestFirst(await supabase.from('food_log').select('id, meal, food_code, grams, created_at').eq('day', isoDay(day)))) entryFromRow(r)
+        for (final r in newestFirst(await supabase.from('food_log').select('id, meal, food_code, packaged_food_id, grams, created_at').eq('day', isoDay(day)))) entryFromRow(r)
       ],
   foods: (codes) async {
-    final list = codes.toSet().toList();
-    if (list.isEmpty) return <String, FoodRow>{};
-    final rows = await supabase.from('foods').select(_foodColumns).inFilter('code', list);
-    return {for (final r in rows) r['code'] as String: foodFromRow(r)};
+    final list = codes.where((c) => !c.startsWith(packagedPrefix)).toSet().toList();
+    final own = {for (final c in codes) if (c.startsWith(packagedPrefix)) c.substring(packagedPrefix.length)}.toList();
+    return {
+      if (list.isNotEmpty)
+        for (final r in await supabase.from('foods').select(_foodColumns).inFilter('code', list)) r['code'] as String: foodFromRow(r),
+      if (own.isNotEmpty)
+        for (final r in await supabase.from('packaged_foods').select().inFilter('id', own)) '$packagedPrefix${r['id']}': foodFromPackaged(r),
+    };
   },
   search: (query) async {
     final q = foodSearchPattern(query);
@@ -249,9 +275,16 @@ final DiaryApi supabaseDiary = (
         .or('name.ilike.$q,name_hi.ilike.$q')
         .order('name')
         .limit(30);
-    return [for (final r in rows) foodFromRow(r)];
+    // The person's own packaged foods first: re-logging a product they eat often should be quick.
+    final own = await supabase.from('packaged_foods').select().or('name.ilike.$q,brand.ilike.$q').order('name').limit(10);
+    return [for (final r in own) foodFromPackaged(r), for (final r in rows) foodFromRow(r)];
   },
-  add: (day, meal, code, grams) => supabase.from('food_log').insert({'day': isoDay(day), 'meal': meal, 'food_code': code, 'grams': grams}),
+  add: (day, meal, code, grams) => supabase.from('food_log').insert({
+        'day': isoDay(day),
+        'meal': meal,
+        if (code.startsWith(packagedPrefix)) 'packaged_food_id': code.substring(packagedPrefix.length) else 'food_code': code,
+        'grams': grams,
+      }),
   remove: (id) => supabase.from('food_log').delete().eq('id', id),
   update: (id, meal, grams) => supabase.from('food_log').update({'meal': meal, 'grams': grams}).eq('id', id),
 );
@@ -322,7 +355,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => _AddFoodSheet(search: api.search, mealName: diaryMealNames[meal]!),
+      builder: (_) => _AddFoodSheet(search: api.search, mealName: diaryMealNames[meal]!, packaged: true),
     );
     if (picked == null || !mounted) return;
     try {
@@ -542,9 +575,10 @@ class _MicrosTile extends StatelessWidget {
 
 /// Search the food table, pick a food, enter grams. Pops with (food, grams).
 class _AddFoodSheet extends StatefulWidget {
-  const _AddFoodSheet({required this.search, required this.mealName, this.weightLabel = 'Weight eaten'});
+  const _AddFoodSheet({required this.search, required this.mealName, this.weightLabel = 'Weight eaten', this.packaged = false});
   final Future<List<FoodRow>> Function(String) search;
   final String mealName, weightLabel;
+  final bool packaged; // the diary offers barcode scanning and packaged foods; recipes use table foods only
 
   @override
   State<_AddFoodSheet> createState() => _AddFoodSheetState();
@@ -563,6 +597,11 @@ class _AddFoodSheetState extends State<_AddFoodSheet> {
     _query.dispose();
     _grams.dispose();
     super.dispose();
+  }
+
+  Future<void> _packaged({required bool scan}) async {
+    final r = await addPackagedFood(context, scan: scan);
+    if (r != null && mounted) Navigator.pop(context, r);
   }
 
   Future<void> _search(String q) async {
@@ -598,6 +637,11 @@ class _AddFoodSheetState extends State<_AddFoodSheet> {
             onChanged: _search,
           ),
           if (_searchError != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_searchError!, style: TextStyle(color: c.error))),
+          if (widget.packaged)
+            Wrap(spacing: 8, children: [
+              if (!kIsWeb) TextButton.icon(onPressed: () => _packaged(scan: true), icon: const Icon(Icons.qr_code_scanner, size: 18), label: const Text('Scan a barcode')),
+              TextButton.icon(onPressed: () => _packaged(scan: false), icon: const Icon(Icons.edit_note, size: 18), label: const Text('Packaged food by hand')),
+            ]),
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 320),
             child: ListView(shrinkWrap: true, children: [
@@ -893,7 +937,12 @@ class _RecipeEditorState extends State<_RecipeEditor> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => _AddFoodSheet(search: widget.diary.search, mealName: 'recipe', weightLabel: 'Raw weight in the whole recipe'),
+      // Recipes hold table foods only (recipe_items.food_code), so packaged products are left out of this search.
+      builder: (_) => _AddFoodSheet(
+        search: (q) async => [for (final f in await widget.diary.search(q)) if (!f.code.startsWith(packagedPrefix)) f],
+        mealName: 'recipe',
+        weightLabel: 'Raw weight in the whole recipe',
+      ),
     );
     if (picked != null) {
       setState(() {

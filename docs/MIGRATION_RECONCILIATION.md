@@ -44,9 +44,31 @@ Cloud history was written by `apply_migration` with apply-time versions; local f
 | 20261007100000_soya_chunks | 20261007072328 | Applied, same SQL |
 | 20261007200000_profile_avatar | 20261007083557 | Applied, same SQL |
 | 20261007300000_app_feedback | 20261007084949 + 20261007085015 app_feedback_user_index | Applied as two records; concatenated SQL identical |
-| 20261007400000_handbook_v3 | none | **Partly applied, unrecorded**: v3 columns exist; 38 chapters hold a pre-correction draft (data hash 432c7c6f; committed daaea96 version fe8b8740; current builder output af1ea000 [superseded 2026-10-24 by b3b87df6: current builder output after the item 4 and item 5 Handbook edits, computed read-only from the migration's VALUES list with the same md5 expression and the table's generated search column (tools/handbook_fingerprint_sql.py; validated: it reproduces af1ea000 from the commit 1803009 file, which a throwaway DB also returned after applying it); check b3b87df6 after any production apply] (fresh local DB, all 34 migrations, 2026-10-18; was 81a79a56 before the 2026-10-18 handbook changes)) |
+| 20261007400000_handbook_v3 | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical (handbook_chapters 43 rows, hash 354d94b9 = local). Earlier state: **Partly applied, unrecorded**: v3 columns exist; 38 chapters hold a pre-correction draft (data hash 432c7c6f; committed daaea96 version fe8b8740; current builder output af1ea000 [superseded 2026-10-24 by b3b87df6: current builder output after the item 4 and item 5 Handbook edits, computed read-only from the migration's VALUES list with the same md5 expression and the table's generated search column (tools/handbook_fingerprint_sql.py; validated: it reproduces af1ea000 from the commit 1803009 file, which a throwaway DB also returned after applying it); check b3b87df6 after any production apply] (fresh local DB, all 34 migrations, 2026-10-18; was 81a79a56 before the 2026-10-18 handbook changes)) |
 | 20261007500000_remove_pilates | 20261007092712 | Applied, same SQL (0 pilates rows remain) |
-| 20261013100000_reliability_and_limits | none | **Not applied** (all 23 schema differences between cloud and local are this migration's objects plus the old "own levels" policy it replaces) |
+| 20261013100000_reliability_and_limits | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical. Earlier state: **Not applied** (all 23 schema differences between cloud and local are this migration's objects plus the old "own levels" policy it replaces) |
+| 20261014100000_custom_reminders | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261016100000_food_diary | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261016200000_food_micronutrients | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261016300000_recipes | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261016400000_revoke_anon_user_tables | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261017100000_revoke_anon_sequences | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261023100000_coach_facts | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261023200000_thread_summaries | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261024100000_exercise_swaps | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261024200000_session_changes | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261025100000_food_sources | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261025200000_foods_usda_fdc | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261027100000_diet_pace_region | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261027200000_body_check_rate | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261027300000_app_errors | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261028100000_ifct_release | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261028200000_handbook_v4_book | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261029100000_plate_conditions_account | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261029200000_plan_changes | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261029300000_cooking_and_schedule | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261029400000_replace_user_goals | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
+| 20261029500000_kitchen_equipment_mess | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
 
 Schema fingerprint: grants, columns, constraints, indexes, policies, functions, triggers, storage buckets/policies,
 auth trigger and extensions are identical between cloud and a local `supabase db reset`, except the
@@ -155,7 +177,32 @@ policy "own levels"); no data is deleted by the forward migration.
 
 Then: deploy coach-chat, generate-plan, delete-account; smoke test with a test account.
 
-## Pending production items (24), updated 2026-10-29 (documentation only; nothing applied)
+## Production state, verified 2026-10-29 (read-only, owner-approved)
+
+Every migration up to 20261029500000_kitchen_equipment_mess is in production, applied outside
+`supabase_migrations.schema_migrations` (history still ends at 20261007092712 remove_pilates, 33 rows). Evidence:
+tools/schema_state.sql on production equals a local stack with all migrations for all 12 kinds (colgrant 489
+b1763f400336, column 260 dea69c4b4686, constraint 187 a0f5cf9b97b1, defacl 6, fngrant 6, function 13 cdd978170ba2,
+grant 64, index 62, policy 37 85c03301eb8a, seqgrant 27, trigger 9); per-table data hashes equal for foods (571),
+goal_catalog (12), curriculum_levels (36), handbook_chapters (43, 354d94b9), food_sources (3); exercises differ only by
+the 1500 catalogue rows imported outside migrations. check_rate knows body_check_day. Functions deployed: delete-account
+v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; source edits after that are not deployed).
+Because history is not recorded, `supabase db push` must never be run against production; apply new files with
+tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
+
+## Pending production items (2), updated 2026-10-29 (documentation only; nothing applied)
+
+- 20261029600000_mixed_regions: widens dietary_profiles.cuisine_region's check to allow several regions
+  ("north,south"). Preflight: `select cuisine_region, count(*) from public.dietary_profiles group by 1` (all values
+  must already pass the new check, they do by construction). Verify: the new check constraint text. Rollback: restore the
+  old check only after any multi-region values are reset to 'any'.
+- 20261029700000_packaged_foods: new owner-only table packaged_foods (barcode products), food_log.food_code nullable
+  plus packaged_food_id with exactly-one check and an ownership trigger. Preflight: `select count(*) from
+  public.food_log where food_code is null` = 0. Verify: pgTAP packaged_foods 9/9 locally; in production the table,
+  policy "own packaged foods", constraint food_log_one_food and both triggers exist. Rollback: `delete from food_log
+  where packaged_food_id is not null`, drop the column, constraint, trigger and table, `alter column food_code set not null`.
+
+### Earlier pending list (superseded by the verification above, kept for history)
 
 **Read-only state, 2026-10-28 (step A1, owner-approved, no writes):** migration history has 33 rows, last
 20261007092712 remove_pilates; none of the 17 items below is recorded. Functions: delete-account v8, generate-plan v13,

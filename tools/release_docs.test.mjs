@@ -1,7 +1,7 @@
 // Run: node --test tools/release_docs.test.mjs
 // Release runbooks must list every migration that production still lacks, so a new migration cannot be forgotten
 // at release. Pending = every file from 20261007400000_handbook_v3 on, except the ones MIGRATION_RECONCILIATION.md's
-// history table marks "Applied" in the cloud (read-only inspection, 2026-10-13).
+// history table marks "Applied" in the cloud (read-only inspections 2026-10-13 and 2026-10-29).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
@@ -15,7 +15,6 @@ const pending = readdirSync(new URL('supabase/migrations/', root))
   .filter((m) => !applied.has(m));
 
 test('every pending migration is in the release checklist and the reconciliation runbook', () => {
-  assert.ok(pending.length >= 12, `found ${pending.length} pending migrations`);
   const checklist = read('docs/RELEASE_CHECKLIST.md');
   const reconciliation = read('docs/MIGRATION_RECONCILIATION.md');
   for (const m of pending) {

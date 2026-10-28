@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'account.dart';
-import 'diet_plan.dart' show budgetOptions, cookTimeOptions, customEquipmentNote, dailyFromMonthly, equipmentList, kitchenEquipmentOptions, legacyKitchen, messMealOptions, regionOptions;
+import 'diet_plan.dart' show budgetOptions, cookTimeOptions, customEquipmentNote, dailyFromMonthly, equipmentList, kitchenEquipmentOptions, legacyKitchen, messMealOptions, regionOptions, regionSelected, toggleRegion;
 import 'icons.dart';
 import 'main.dart';
 import 'mark.dart';
@@ -882,9 +882,9 @@ class _OnboardingState extends State<Onboarding> {
             gap,
           ],
           const SizedBox(height: 16),
-          const FieldLabel('Your regional food'),
+          const FieldLabel('Your regional food (pick all you eat)'),
           for (final (k, title, sub) in regionOptions) ...[
-            ChoiceTile(title: title, subtitle: sub, selected: _region == k, onTap: () => setState(() => _region = k)),
+            ChoiceTile(title: title, subtitle: sub, selected: regionSelected(_region, k), onTap: () => setState(() => _region = toggleRegion(_region, k))),
             gap,
           ],
           const SizedBox(height: 16),

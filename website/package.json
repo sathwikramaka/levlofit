@@ -3,9 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "engine": "node -e \"require('fs').cpSync('../supabase/functions/_shared/plan-engine.ts', 'src/lib/plan-engine.ts')\"",
+    "predev": "npm run -s engine",
     "dev": "next dev",
+    "prebuild": "npm run -s engine",
     "build": "next build",
     "start": "next start",
+    "prelint": "npm run -s engine",
     "lint": "eslint"
   },
   "dependencies": {
