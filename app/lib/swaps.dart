@@ -56,10 +56,13 @@ typedef SwapApi = ({
   Future<void> Function(MealProposal meal) logMeal, // writes the person's own diary entries, after Log it
 });
 
+/// This phone's calendar day as YYYY-MM-DD, sent to coach-chat so its "today" is the person's (audit F7).
+String localDayNow([DateTime? now]) => isoDay(now ?? DateTime.now());
+
 /// Asks coach-chat to confirm a proposal ({'confirmSwap': id} or {'confirmChange': id}); null when done.
 Future<String?> _confirmOnServer(Map<String, Object> body) async {
   try {
-    await supabase.functions.invoke('coach-chat', body: body);
+    await supabase.functions.invoke('coach-chat', body: {...body, 'localDay': localDayNow()});
     swapsChanged.value++;
     return null;
   } on FunctionException catch (e) {
@@ -171,6 +174,74 @@ ChangeProposal? changeFromJson(Object? j) {
     'move' when j['toDay'] is String => (id: j['id'] as int, kind: 'move', day: j['day'] as String, toDay: j['toDay'] as String),
     _ => null,
   };
+}
+
+/// A plan change the coach proposes (table plan_changes, B5): body goal, diet pace or training days. [preview] holds
+/// the plan engine's numbers for the changed plan, computed on the server; the model never sets them.
+typedef PlanChangeProposal = ({int id, String field, String value, String? from, int? energyKcal, int? proteinG, int? trainingDays});
+
+PlanChangeProposal? planChangeFromJson(Object? j) {
+  if (j is! Map || j['id'] is! int || j['value'] is! String || !planFieldNames.containsKey(j['field'])) return null;
+  final p = j['preview'] is Map ? j['preview'] as Map : const {};
+  int? n(Object? v) => v is num ? v.round() : null;
+  return (
+    id: j['id'] as int, field: j['field'] as String, value: j['value'] as String, from: j['from'] as String?,
+    energyKcal: n(p['energyKcal']), proteinG: n(p['proteinG']), trainingDays: n(p['trainingDaysPerWeek']),
+  );
+}
+
+const planFieldNames = {'weight_goal': 'Body goal', 'diet_pace': 'Pace', 'days_per_week': 'Training days a week'};
+const _planValueNames = {
+  'cut': 'Cut (lose fat)', 'bulk': 'Bulk (gain muscle)', 'recomp': 'Recomposition', 'maintain': 'Maintain', 'general': 'General fitness',
+  'easy': 'Easy', 'balanced': 'Balanced', 'hard': 'Hard',
+};
+String planValueName(String field, String? v) => v == null ? 'not set' : field == 'days_per_week' ? '$v days' : _planValueNames[v] ?? v;
+
+/// Confirms on the server (which checks it again and writes the setting), then rebuilds the plan with generate-plan
+/// and refreshes the app. Null when done, else the reason to show.
+Future<String?> confirmPlanChangeOnServer(int id) async {
+  try {
+    await supabase.functions.invoke('coach-chat', body: {'confirmPlanChange': id});
+  } on FunctionException catch (e) {
+    final d = e.details;
+    return d is Map && d['error'] is String ? d['error'] as String : 'Could not change your plan. Try again.';
+  }
+  try {
+    await supabase.functions.invoke('generate-plan');
+  } catch (_) {
+    swapsChanged.value++;
+    return 'Your setting is saved, but the plan could not be rebuilt. Open Protocol and save to rebuild it.';
+  }
+  swapsChanged.value++;
+  return null;
+}
+
+/// The card for a plan change. Nothing changes until the person taps Change plan; Not now removes the proposal.
+class PlanChangeCard extends StatelessWidget {
+  const PlanChangeCard({super.key, required this.proposal, this.confirm, this.dismiss});
+  final PlanChangeProposal proposal;
+  final Future<String?> Function(int id)? confirm; // tests; the app confirms on the server
+  final Future<void> Function(int id)? dismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = proposal;
+    final numbers = [
+      if (p.energyKcal != null) '${p.energyKcal} kcal a day',
+      if (p.proteinG != null) '${p.proteinG} g protein a day',
+      if (p.trainingDays != null) '${p.trainingDays} training days a week',
+    ].join(' · ');
+    return _ActionCard(
+      key: ValueKey('plan-change-${p.id}'),
+      label: 'CHANGE YOUR PLAN?',
+      line: '${planFieldNames[p.field]}: ${planValueName(p.field, p.from)} → ${planValueName(p.field, p.value)}',
+      note: '${numbers.isEmpty ? '' : 'New plan: $numbers, worked out by the plan engine. '}Your plan is rebuilt only if you tap Change plan.',
+      confirmText: 'Change plan',
+      doneText: 'Done. Your plan is rebuilt.',
+      onConfirm: () => (confirm ?? confirmPlanChangeOnServer)(p.id),
+      onDismiss: () => (dismiss ?? (id) => supabase.from('plan_changes').delete().eq('id', id))(p.id),
+    );
+  }
 }
 
 const _weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];

@@ -1327,7 +1327,7 @@ class _ProtocolScreen extends StatefulWidget {
 class _ProtocolScreenState extends State<_ProtocolScreen> {
   Map<String, dynamic>? _p; // profile fields being edited
   Map<String, dynamic>? _d; // diet fields being edited
-  final _max = TextEditingController(), _water = TextEditingController();
+  final _max = TextEditingController(), _water = TextEditingController(), _kitchenOther = TextEditingController();
   bool _saving = false;
   String? _error;
 
@@ -1343,14 +1343,15 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
   void dispose() {
     _max.dispose();
     _water.dispose();
+    _kitchenOther.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
     try {
       final [p, d] = await Future.wait<dynamic>([
-        supabase.from('profiles').select('days_per_week, session_minutes, equipment, weight_goal, daily_activity, water_target_ml').eq('id', _uid).single(),
-        supabase.from('dietary_profiles').select('diet_type, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, diet_pace').eq('user_id', _uid).single(),
+        supabase.from('profiles').select('days_per_week, session_minutes, equipment, weight_goal, daily_activity, water_target_ml, training_days, training_time').eq('id', _uid).single(),
+        supabase.from('dietary_profiles').select('diet_type, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, diet_pace, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals').eq('user_id', _uid).single(),
       ]);
       if (!mounted) return;
       setState(() {
@@ -1359,6 +1360,7 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
         final daily = _d!['budget_max_inr'] as int?;
         _max.text = daily == null ? '' : '${monthlyFromDaily(daily)}';
         _water.text = '${_p!['water_target_ml'] ?? waterTarget(widget.data.profile)}';
+        _kitchenOther.text = (_d!['kitchen_other'] as String?) ?? '';
       });
     } catch (_) {
       if (mounted) setState(() => _error = 'Could not load your protocol. Check your connection.');
@@ -1377,6 +1379,9 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
       d['budget_min_inr'] = null;
       d['budget_max_inr'] = null;
     }
+    final other = _kitchenOther.text.trim();
+    if (other.length > 200) return setState(() => _error = 'Keep other equipment or limits under 200 characters.');
+    d['kitchen_other'] = other.isEmpty ? null : other;
     if (p['water_target_ml'] != null) {
       final water = num(_water);
       if (water == null || water < 1000 || water > 6000) return setState(() => _error = 'Water target must be 1000 to 6000 ml.');
@@ -1405,6 +1410,80 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Cooking equipment, mess meals and the person's own notes (dietary_profiles). Shows the older kitchen answer until
+  /// they change it; the first change saves an explicit list, and the older column is kept in step.
+  Widget _kitchen(Map<String, dynamic> d) {
+    final t = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final have = equipmentOf(d['kitchen'] as String?, d['kitchen_equipment'] as List?);
+    final mess = {...((d['mess_meals'] as List?) ?? const []).cast<String>()};
+    void setHave(Set<String> next) => setState(() {
+          d['kitchen_equipment'] = equipmentList(next);
+          d['kitchen'] = legacyKitchen(next);
+        });
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('What you can cook with', style: t.titleMedium),
+        Text('Meals you make use only what this equipment can make.', style: t.bodySmall?.copyWith(color: muted)),
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final (k, title) in kitchenEquipmentOptions)
+            FilterChip(label: Text(title), selected: have.contains(k), onSelected: (on) => setHave(on ? {...have, k} : ({...have}..remove(k)))),
+          FilterChip(label: const Text('No cooking equipment'), selected: have.isEmpty, onSelected: (_) => setHave({})),
+        ]),
+        const SizedBox(height: 14),
+        Text('Meals from a hostel or PG mess', style: t.titleMedium),
+        Text('These meals are planned from what a mess kitchen serves.', style: t.bodySmall?.copyWith(color: muted)),
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final (k, title) in messMealOptions)
+            FilterChip(
+              label: Text(title),
+              selected: mess.contains(k),
+              onSelected: (on) => setState(() => d['mess_meals'] = [for (final (m, _) in messMealOptions) if (m == k ? on : mess.contains(m)) m]),
+            ),
+        ]),
+        const SizedBox(height: 14),
+        TextField(
+          controller: _kitchenOther,
+          maxLength: 200,
+          onChanged: (_) => setState(() {}),
+          decoration: InputDecoration(
+            labelText: 'Other equipment (optional)',
+            hintText: 'For example: rice cooker, toaster',
+            helperText: customEquipmentNote(_kitchenOther.text) ?? 'Separate items with commas. Skip this if nothing else applies.',
+            helperMaxLines: 3,
+          ),
+        ),
+      ]),
+    );
+  }
+
+  /// The weekdays the person can train (profiles.training_days); none picked means any day.
+  Widget _weekdays(Map<String, dynamic> p) {
+    final t = Theme.of(context).textTheme;
+    final days = {...((p['training_days'] as List?) ?? const []).whereType<int>()};
+    final short = days.isNotEmpty && days.length < ((p['days_per_week'] as int?) ?? 0);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Days you can train', style: t.titleMedium),
+        Text(short ? 'Fewer weekdays than days a week: your plan fits into these ${days.length}.' : 'None picked: any day. Sessions go on these days.',
+            style: t.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final (i, name) in const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexed)
+            FilterChip(
+              label: Text(name),
+              selected: days.contains(i + 1),
+              onSelected: (on) => setState(() => p['training_days'] = ([...days.where((d) => d != i + 1), if (on) i + 1]..sort())),
+            ),
+        ]),
+      ]),
+    );
   }
 
   Widget _chips<T>(String title, String? help, T? value, List<(T, String)> options, ValueChanged<T> onPick) {
@@ -1455,6 +1534,9 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
         Text('TRAINING', style: monoLabel(context)),
         const SizedBox(height: 10),
         _chips<int>('Days a week', 'At least one full rest day is kept.', p['days_per_week'] as int?, [for (var i = 1; i <= 7; i++) (i, '$i')], (v) => p['days_per_week'] = v),
+        _weekdays(p),
+        _chips<String>('When you can train', 'Shift work or no fixed time: pick It varies.', p['training_time'] as String? ?? 'varies',
+            trainingTimeOptions, (v) => p['training_time'] = v),
         _chips<int>('Minutes a session', null, p['session_minutes'] as int?, [for (final m in const [20, 30, 45, 60, 75, 90]) (m, '$m')], (v) => p['session_minutes'] = v),
         _chips<String>('Equipment', null, p['equipment'] as String?, [('none', 'None'), ('home', 'Home dumbbells'), ('gym', 'Gym'), if (p['equipment'] == 'custom') ('custom', 'My own kit')], (v) => p['equipment'] = v),
         _chips<String>('Body goal', 'The plan may still adjust this for safety, and will tell you why.', p['weight_goal'] as String?,
@@ -1485,6 +1567,9 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
         _chips<String>('Pace', 'How fast a cut or a bulk moves. Easy is gentler and easier to keep up; hard asks more and is harder to sustain. '
             'Maintenance and recomposition are not changed.', d['diet_pace'] as String? ?? 'balanced',
             const [('easy', 'Easy'), ('balanced', 'Balanced'), ('hard', 'Hard')], (v) => d['diet_pace'] = v),
+        _kitchen(d),
+        _chips<String>('Cooking time', 'Short leaves out soaked pulses and batters made the day before.', d['cook_time'] as String? ?? 'plenty',
+            [for (final (k, title, _) in cookTimeOptions) (k, title)], (v) => d['cook_time'] = v),
         _chips<String>('Regional staples', 'The grains, dals and fish your meal plan leans on. A preference: other foods still appear to meet your targets.',
             d['cuisine_region'] as String? ?? 'any',
             [for (final (k, title, _) in regionOptions) (k, title)], (v) => d['cuisine_region'] = v),
@@ -1775,7 +1860,9 @@ const _dataUse = [
       'it keeps one only if you confirm it, and you can edit or delete each one in Memory. Confirmed facts go to our AI provider with your messages; '
       'an injury fact only when you ask about training, movement or pain. In a long chat, a summary of its older messages is sent too. '
       'When you ask to change today\'s session it also gets today\'s moves and checked replacements, or this week\'s free days; when you ask to '
-      'log a meal, the names of foods from your own diary. Swaps, lighter or moved sessions and meals change only after you confirm them. '
+      'log a meal, the names of foods from your own diary; when you ask to change your body goal, pace or training days, your current pace and '
+      'the plan engine\'s figures for each change your plan allows. Swaps, lighter or moved sessions, meals and plan changes change only after '
+      'you confirm them. '
       'You can delete chats any time.'),
   ('Your photos', 'Progress photos are stored privately in your account. Nobody else can open them.'),
   ('You are in control', 'Edit most of your details in Profile and Protocol; email us to correct the rest. Delete your account in Profile (or '
@@ -1831,14 +1918,17 @@ const _privacyPolicy = [
   // coach-chat function is confirmed to match it and LLM_BASE_URL is confirmed unset or pointing at Groq.
   ('What Levlofit AI sends', 'Groq runs Levlofit AI and may process your messages outside India. Each time you send a message, Groq gets: '
       'your message as you typed it (trimmed, up to 2,000 characters) and up to 12 earlier messages from that chat; your first name; your equipment, training days, '
-      'session length, daily activity, sleep hours and water target; the date, goal and minutes of workouts logged in the last 14 days; a '
-      'summary of your plan (phase, weight goal, goals and levels, sessions, next steps, calorie and protein targets); the facts you confirmed in Memory (an injury fact only when the chat is about training, movement or pain, at most three; '
+      'session length, daily activity, sleep hours, water target and the weekdays and time of day you can train; the date, goal and minutes of workouts logged in the last 14 days; a '
+      'summary of your plan (phase, weight goal, goals and levels, sessions, next steps, calorie and protein targets with the BMR, activity factor and maintenance estimate behind them); the facts you confirmed in Memory (an injury fact only when the chat is about training, movement or pain, at most three; '
       'suggestions you have not confirmed are never sent); and two yes-or-no flags: whether your '
       'health check asks you to see a doctor first, and whether you noted an injury (in the health check or as a confirmed Memory fact). Only when the chat is about food, or a reply has to be '
-      'checked against your food settings: your diet type, allergies and intolerances, foods you exclude, food budget and suggested supplements, and your food diary totals '
+      'checked against your food settings: your diet type, allergies and intolerances, foods you exclude, food budget and suggested supplements, the health conditions and protein shakes a day you chose in Build my plate, your kitchen equipment, cooking time, meals from a hostel or PG mess and your own kitchen notes, and your food diary totals '
       'for each of the last 7 days you logged (energy, protein, carbohydrate, fat and fibre; not the foods themselves). Only when the chat is '
       'about lifting: for each move you logged in the last 14 days, its name, how many days you trained it, the last day and your best set '
-      '(reps and weight). Only when the chat is about steps or walking, and only if you switched on sharing in Progress: your daily step totals '
+      '(reps and weight). Only when the chat is about your progress (results, consistency, effort, soreness or pain, weight): figures our server '
+      'works out from your records: sessions logged in the last 28 days against your plan, your effort ratings, how many sessions you marked as '
+      'mildly painful or stopped by pain, your weight trend over 6 weeks as a percentage a week (not your weight itself), and your food diary '
+      'averages against your targets. Only when the chat is about steps or walking, and only if you switched on sharing in Progress: your daily step totals '
       'for the last 7 days from Health Connect.'),
   // REVIEW GATE (legal): a second AI provider is used only if the owner sets one up and approves its data terms.
   ('If Groq is unavailable', 'We may set up a second AI provider that answers when Groq is down or busy. It would receive exactly what Groq '

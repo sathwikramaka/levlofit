@@ -132,14 +132,18 @@ const sections: LegalSection[] = [
             deployed coach-chat function is confirmed to match it and LLM_BASE_URL is confirmed unset or pointing at Groq. */}
         <p>
           <strong>What Levlofit AI sends to Groq.</strong> Each time you send a message, our server sends Groq: your message as you typed it (trimmed, up to 2,000 characters), and up to 12
-          earlier messages from that chat; your first name; your equipment, training days, session length, daily activity, sleep hours and water target; the date,
+          earlier messages from that chat; your first name; your equipment, training days, session length, daily activity, sleep hours, water target and the weekdays and time of day you can train; the date,
           goal and minutes of each workout logged in the last 14 days; a summary of your current plan (phase, weight goal, goals and levels, sessions per week, next steps, and
-          calorie and protein targets); the facts you confirmed in Memory (an injury fact only when your chat is about training, movement or pain, at most three;
+          calorie and protein targets, with the BMR, activity factor and maintenance estimate behind them); the facts you confirmed in Memory (an injury fact only when your chat is about training, movement or pain, at most three;
           suggestions you have not confirmed are never sent); and two yes-or-no flags: whether your health check asks you to see a doctor first, and
           whether you noted an injury (in your health check or as a confirmed Memory fact). Only when your chat is about food, or a reply has to be checked against your food settings, it also sends your diet type,
-          allergies and intolerances, foods you exclude, food budget and any suggested supplements, and your food diary totals for each of the last 7 days you
+          allergies and intolerances, foods you exclude, food budget and any suggested supplements, the health conditions and protein shakes a day you chose in
+          Build my plate, your kitchen equipment, cooking time, meals from a hostel or PG mess and your own kitchen notes, and your food diary totals for each of the last 7 days you
           logged (energy, protein, carbohydrate, fat and fibre; not the foods themselves). Only when your chat is about lifting, it sends, for each move you
           logged in the last 14 days, its name, how many days you trained it, the last day and your best set (reps and weight). Only when your chat is about
+          your progress (results, consistency, effort, soreness or pain, weight), it sends figures our server works out from your records: sessions logged in
+          the last 28 days against your plan, your effort ratings, how many sessions you marked as mildly painful or stopped by pain, your weight trend over
+          6 weeks as a percentage a week (not your weight itself), and your food diary averages against your targets. Only when your chat is about
           steps or walking, and only if you switched on sharing in the app&rsquo;s Progress page, it sends your daily step totals for the last 7 days from
           Health Connect.
         </p>
@@ -148,7 +152,9 @@ const sections: LegalSection[] = [
           Groq only the previous summary and the older messages of that chat, nothing else. Only when you ask to change today&rsquo;s session, it sends the
           names of today&rsquo;s moves and the replacements Levlofit has checked against your equipment and injury notes; when you ask to train on another day,
           the free days later this week; when you ask for an easier day, only that a lighter session is possible. Only when you ask to log something you
-          ate, it sends the names of up to 30 foods from your own food diary that fit your diet, so it can propose diary entries for you to confirm.
+          ate, it sends the names of up to 30 foods from your own food diary that fit your diet, so it can propose diary entries for you to confirm. Only when you ask to change your body goal, diet pace or
+          training days, it sends your current pace and, for each change your plan&rsquo;s checks allow, the calorie, protein and training-day figures the
+          plan engine would set; nothing changes unless you confirm.
         </p>
         <p>
           {/* REVIEW GATE (legal): level check and research search (2026-10-28); publish with the coach-chat deploy that adds them. */}

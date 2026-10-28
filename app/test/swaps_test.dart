@@ -203,4 +203,56 @@ void main() {
     await tester.pump();
     expect(g.calls, ['dismissChange 8']);
   });
+  // ---- B5: plan changes ----------------------------------------------------------------------------------------
+
+  test('plan change: only the three settings parse; the numbers are the server preview', () {
+    final p = planChangeFromJson({'id': 3, 'field': 'diet_pace', 'value': 'easy', 'from': 'balanced', 'preview': {'energyKcal': 2210, 'proteinG': 160, 'trainingDaysPerWeek': 3}});
+    expect(p?.energyKcal, 2210);
+    expect(p?.proteinG, 160);
+    expect(planChangeFromJson({'id': 3, 'field': 'energy_kcal', 'value': '1200'}), isNull);
+    expect(planChangeFromJson({'id': 'x', 'field': 'diet_pace', 'value': 'easy'}), isNull);
+  });
+
+  testWidgets('plan change card: shows the change, Not now dismisses only, Change plan confirms', (tester) async {
+    final calls = <String>[];
+    final p = planChangeFromJson({'id': 9, 'field': 'weight_goal', 'value': 'maintain', 'from': 'cut', 'preview': {'energyKcal': 2600, 'proteinG': 128, 'trainingDaysPerWeek': 3}})!;
+    Future<void> show() => tester.pumpWidget(MaterialApp(home: Scaffold(body: PlanChangeCard(
+          proposal: p,
+          confirm: (id) async {
+            calls.add('confirm $id');
+            return null;
+          },
+          dismiss: (id) async => calls.add('dismiss $id'),
+        ))));
+    await show();
+    expect(find.text('Body goal: Cut (lose fat) → Maintain'), findsOneWidget);
+    expect(find.textContaining('2600 kcal a day · 128 g protein a day · 3 training days a week'), findsOneWidget);
+    expect(find.textContaining('days a day'), findsNothing, reason: 'device test 2026-10-28: was "3 training days a day"');
+    expect(calls, isEmpty, reason: 'nothing happens until a tap');
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
+    expect(calls, ['dismiss 9']);
+    expect(find.text('Kept as planned.'), findsOneWidget);
+    calls.clear();
+    await tester.pumpWidget(const SizedBox());
+    await show();
+    await tester.tap(find.text('Change plan'));
+    await tester.pumpAndSettle();
+    expect(calls, ['confirm 9']);
+    expect(find.text('Done. Your plan is rebuilt.'), findsOneWidget);
+  });
+
+  testWidgets('plan change card: a refused confirm shows why and keeps the buttons', (tester) async {
+    final p = planChangeFromJson({'id': 4, 'field': 'days_per_week', 'value': '6', 'from': '3'})!;
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: PlanChangeCard(
+          proposal: p,
+          confirm: (_) async => 'Your plan stays light until a doctor clears you, so more training days were not added.',
+          dismiss: (_) async {},
+        ))));
+    expect(find.text('Training days a week: 3 days → 6 days'), findsOneWidget);
+    await tester.tap(find.text('Change plan'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('doctor clears you'), findsOneWidget);
+    expect(find.text('Change plan'), findsOneWidget);
+  });
 }

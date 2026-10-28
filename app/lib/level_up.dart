@@ -127,10 +127,11 @@ class _LevelUpCardState extends State<LevelUpCard> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(color: c.surfaceContainerHigh, borderRadius: BorderRadius.circular(24), border: Border.all(color: c.outline)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('LEVEL UP', style: monoLabel(context)),
+        // XP rank, not a curriculum level: goal Levels 0 to 5 are earned only through level checks (audit F16).
+        Text('YOUR RANK', style: monoLabel(context)),
         const SizedBox(height: 10),
         Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text('Level $level', style: t.headlineSmall),
+          Text('Rank $level', style: t.headlineSmall),
           const Spacer(),
           Text('${widget.xp} XP', style: monoNumber(context, size: 15)),
         ]),
@@ -140,7 +141,7 @@ class _LevelUpCardState extends State<LevelUpCard> {
           child: LinearProgressIndicator(value: levelProgress(widget.xp), minHeight: 8, backgroundColor: c.surfaceContainerHighest),
         ),
         const SizedBox(height: 4),
-        Text('${xpForLevel(level + 1) - widget.xp} XP to level ${level + 1}. Sessions, complete days, water and active minutes all count.',
+        Text('${xpForLevel(level + 1) - widget.xp} XP to rank ${level + 1}. Sessions, complete days, water and active minutes all count; your goal levels move only with level checks.',
             style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
         const SizedBox(height: 16),
         Row(children: [

@@ -34,7 +34,7 @@ import 'swaps.dart';
 import 'theme.dart';
 import 'tools.dart';
 import 'update_check.dart';
-import 'week_schedule.dart' show addOnLine, reminderSessions, weekPlan;
+import 'week_schedule.dart' show addOnLine, reminderSessions, trainingTimeLabel, trainingTimeOptions, weekPlan;
 
 part 'dashboard_menu.dart';
 part 'dashboard_tabs.dart';
@@ -404,7 +404,7 @@ class _DashboardState extends State<Dashboard> {
             _Tab.hydration => _HydrationScreen(data: d),
             _Tab.habits => _HabitsScreen(data: d, logged: _logged),
             _Tab.calendar => _CalendarScreen(plan: d.plan),
-            _Tab.progress => _ProgressScreen(data: d),
+            _Tab.progress => _ProgressScreen(data: d, onPlanChanged: () => setState(() { _data = _load(); })),
             _Tab.foods => _FoodsScreen(data: d),
             _Tab.foodDiary => FoodDiaryScreen(
                 leading: const _ShellMenu(),
@@ -670,6 +670,8 @@ class _Bento extends StatelessWidget {
               blocks: ownAddOn == null ? todayBlocks : const [],
               injury: data.profile['injuries'] as String?,
               lighter: data.lighter,
+              medicalHold: data.plan['medicalHold'] == true,
+              gym: data.tier == Tier.gym,
               done: logged.contains(today),
               saving: saving,
               // An add-on day logs its own length (the block and a warm-up), not the full session setting.
@@ -874,11 +876,13 @@ class _TodayCard extends StatelessWidget {
     this.blocks = const [],
     this.injury,
     this.lighter = false,
+    this.medicalHold = false,
+    this.gym = false,
     required this.done,
     required this.saving,
     required this.onToggle,
   });
-  final bool isTrainingDay, done, saving, lighter;
+  final bool isTrainingDay, done, saving, lighter, medicalHold, gym;
   final _Json goal;
   final _Json? levelRow;
   final int? minutes;
@@ -897,7 +901,7 @@ class _TodayCard extends StatelessWidget {
     void start() => Navigator.push(
           context,
           MaterialPageRoute<void>(
-              builder: (_) => SessionScreen(title: name, ids: ids, level: level, blocks: blocks, done: done, onFinish: done ? null : onToggle, injury: injury, sessionMinutes: minutes, lighter: lighter)),
+              builder: (_) => SessionScreen(title: name, ids: ids, level: level, blocks: blocks, done: done, onFinish: done ? null : onToggle, injury: injury, sessionMinutes: minutes, lighter: lighter, medicalHold: medicalHold, kind: (goal['kind'] as String?) ?? 'strength', gym: gym)),
         );
     return _Tile(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -912,13 +916,13 @@ class _TodayCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(isTrainingDay ? meta : 'Sleep, walk, eat well. Or train anyway, it still counts.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
         const SizedBox(height: 16),
-        MoveStrip(ids: ids, level: level, tile: 112, injury: injury),
+        MoveStrip(ids: ids, level: level, tile: 112, injury: injury, lighter: lighter || medicalHold),
         for (final b in blocks) ...[
           const SizedBox(height: 12),
           Text(blockSummary(b).toUpperCase(), style: monoLabel(context)),
           if (b.ids.isNotEmpty) ...[
             const SizedBox(height: 8),
-            MoveStrip(ids: b.ids, level: b.level, tile: 88, injury: injury),
+            MoveStrip(ids: b.ids, level: b.level, tile: 88, injury: injury, lighter: lighter || medicalHold),
           ],
         ],
         const SizedBox(height: 14),
@@ -1341,7 +1345,10 @@ List<Widget> _fuelDetails(BuildContext context, _Json plan, List<_Json> proteins
     Text('FUEL, DAILY', style: monoLabel(context)),
     const SizedBox(height: 6),
     Text('${food['energyKcal']} kcal', style: t.headlineMedium),
+    Text('Your daily target. Maintenance is what keeps your weight steady; the target adds your goal.', style: t.bodySmall?.copyWith(color: muted)),
     const SizedBox(height: 12),
+    // Plan engine 3.5: the working behind the target, read from the plan (older plans show the target only).
+    for (final (a, b, v) in energyWorking(food) ?? const <(String, String, String)>[]) row(a, b, v),
     row('Protein', '${food['proteinPerKg']} g per kg', '${food['proteinG']} g'),
     row('Soya chunks', 'dry weight, max', soya == 0 ? 'none' : '$soya g'),
     if ((food['customExclusions'] as List?)?.isNotEmpty ?? false)

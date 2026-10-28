@@ -155,7 +155,7 @@ policy "own levels"); no data is deleted by the forward migration.
 
 Then: deploy coach-chat, generate-plan, delete-account; smoke test with a test account.
 
-## Pending production items (19), updated 2026-10-28 (documentation only; nothing applied)
+## Pending production items (24), updated 2026-10-29 (documentation only; nothing applied)
 
 **Read-only state, 2026-10-28 (step A1, owner-approved, no writes):** migration history has 33 rows, last
 20261007092712 remove_pilates; none of the 17 items below is recorded. Functions: delete-account v8, generate-plan v13,
@@ -241,6 +241,11 @@ to the isolated local stack and covered by pgTAP (59/59) and the CI database job
 | 17 | 20261027300000_app_errors | Not applied | New table app_errors (insert-only for users, 30 a day, 90-day removal, cascade on account delete) | None (new table) | 16 |
 | 18 | 20261028100000_ifct_release | Not applied | Sets food_sources ifct2017 release_allowed = true (owner decision A20) | Reference visibility only | 13 |
 | 19 | 20261028200000_handbook_v4_book | Not applied | Replaces handbook_chapters with the 43-chapter v4 book (ids renumbered, slugs unchanged); stops if any goal_catalog.handbook_chapter is set (owner step A24) | Handbook text only | 1 |
+| 20 | 20261029100000_plate_conditions_account | Not applied | Adds dietary_profiles.health_conditions (8 allowed keys, default '{}') and whey_scoops (0 to 3, default 0) for Build my plate (batch B2); generate-plan with plan engine 3.3.0 and coach-chat read them | None (defaults keep every row and plan unchanged) | 15 |
+| 21 | 20261029200000_plan_changes | Not applied | New table plan_changes (body goal, diet pace or training days proposed by Levlofit AI; server-only writes, owner may read and delete); coach-chat with plan-change confirm reads and writes it (batch B5) | None (new table) | 20 |
+| 22 | 20261029300000_cooking_and_schedule | Not applied | Adds dietary_profiles.kitchen (full/stove_only/no_stove, default full) and cook_time (plenty/short, default plenty); profiles.training_days (weekdays 1-7, default empty) and training_time (default varies) with update grants; plan engine 3.4.0 and the meal planner read them (batch B6) | None (defaults keep every row, plan and meal plan unchanged) | 21 |
+| 23 | 20261029400000_replace_user_goals | Not applied | New function replace_user_goals(jsonb), security invoker, authenticated only: replaces a person's goals in one transaction (audit F3; the app falls back to delete then insert until it exists) | None (no table changes) | none |
+| 24 | 20261029500000_kitchen_equipment_mess | Not applied | Adds dietary_profiles.kitchen_equipment (9 allowed values, default '{}' = use the older kitchen answer), kitchen_other (up to 200 characters) and mess_meals (breakfast/lunch/snack/dinner); widens cook_time to allow 'minimal' (owner request 2026-10-29) | None (defaults keep every row and meal plan unchanged) | 22 |
 | 13 | 20261025100000_food_sources | Not applied | New table food_sources (licence metadata); foods.source, source_ref; the foods read policy shows only allowed sources | No rows changed or deleted. **Hides IFCT values from app roles** (see the update above) | foods present |
 
 Items 3-7 were written after the 2026-10-13 cloud inspection, so their preflight checks below are the first evidence

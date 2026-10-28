@@ -17,6 +17,49 @@ const weekPattern = {
   7: [1, 2, 3, 4, 5, 6, 7],
 };
 
+/// profiles.training_time, as the Protocol tab offers it (B6).
+const trainingTimeOptions = [
+  ('early_morning', 'Early morning'), ('morning', 'Morning'), ('midday', 'Midday'), ('evening', 'Evening'), ('night', 'Night'),
+  ('varies', 'It varies (shifts)'),
+];
+
+/// The time of day the plan's sessions are for, or null when it varies or was never set.
+String? trainingTimeLabel(Json plan) {
+  final t = (plan['schedule'] as Map?)?['trainingTime'];
+  if (t == null || t == 'varies') return null;
+  return trainingTimeOptions.where((o) => o.$1 == t).firstOrNull?.$2;
+}
+
+/// The weekdays for [n] sessions (B6). Without chosen weekdays: [weekPattern]. With them: the [n] chosen days with the
+/// fewest back-to-back pairs (earliest first on a tie), so sessions keep rest between them where the days allow. More
+/// sessions than chosen days (an older plan): every chosen day, then the pattern's other days to fill.
+List<int> trainingDaysFor(int n, List<int> preferred) {
+  n = n.clamp(1, 7);
+  final chosen = {...preferred.where((d) => d >= 1 && d <= 7)}.toList()..sort();
+  if (chosen.isEmpty) return weekPattern[n]!;
+  if (chosen.length <= n) {
+    final fill = [for (var d = 1; d <= 7; d++) if (!chosen.contains(d)) d]
+      ..sort((a, b) => (weekPattern[n]!.contains(b) ? 1 : 0) - (weekPattern[n]!.contains(a) ? 1 : 0));
+    return ([...chosen, ...fill.take(n - chosen.length)])..sort();
+  }
+  int pairs(List<int> days) {
+    final set = days.toSet();
+    return days.where((d) => set.contains(d == 7 ? 1 : d + 1)).length; // Sunday then Monday counts too
+  }
+  List<int>? best;
+  void pick(int from, List<int> sofar) {
+    if (sofar.length == n) {
+      if (best == null || pairs(sofar) < pairs(best!)) best = [...sofar];
+      return;
+    }
+    for (var i = from; i < chosen.length; i++) {
+      pick(i + 1, [...sofar, chosen[i]]);
+    }
+  }
+  pick(0, []);
+  return best!;
+}
+
 /// Session kinds that load the whole body hard enough to want a day between them (ACSM: about 48 h before
 /// training the same muscles hard again). Endurance sessions here are easy-pace runs; mobility is light.
 const hardKinds = {'strength', 'hybrid', 'skill'};
@@ -127,7 +170,13 @@ WeekPlan weekPlan(Json plan, {int? sessionMinutes, int? Function(Json session, i
   if (queue.length > 7) {
     notices.add('Your plan lists ${queue.length} sessions, more than the 7 days in a week. Rebuild the plan from Edit goals.');
   }
-  final dayList = weekPattern[queue.length.clamp(1, 7)]!;
+  // B6: the weekdays the person can train (plan.schedule.preferredDays, plan engine 3.4), else the usual pattern.
+  final preferred = ((plan['schedule'] as Map?)?['preferredDays'] as List?)?.whereType<int>().toList() ?? const <int>[];
+  final dayList = trainingDaysFor(queue.length, preferred);
+  if (preferred.isNotEmpty && queue.length > preferred.toSet().length) {
+    notices.add('Your plan has ${queue.length} sessions but you chose ${preferred.toSet().length} weekdays, so some sessions are on other days. '
+        'Save your Protocol to rebuild the plan for your days.');
+  }
   final placed = _arrange(dayList, queue.take(dayList.length).toList());
   final days = {for (final (i, d) in dayList.indexed) d: placed[i]};
 
