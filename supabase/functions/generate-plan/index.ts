@@ -79,7 +79,11 @@ export default {
         trainingTime: p.training_time ?? undefined,
       });
     } catch (e) {
-      return Response.json({ error: (e as Error).message }, { status: 400 });
+      // The plan engine's own checks throw a plain Error with a readable reason; anything else (a TypeError from an
+      // unexpected shape) is logged and answered generically, so internals never reach the app.
+      if (e instanceof Error && e.constructor === Error) return Response.json({ error: e.message }, { status: 400 });
+      console.error(JSON.stringify({ event: 'plan_input_unexpected', kind: e instanceof Error ? e.name : typeof e }));
+      return Response.json({ error: 'Could not read your answers' }, { status: 400 });
     }
 
     const plan = generatePlan(input);

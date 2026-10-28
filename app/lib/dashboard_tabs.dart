@@ -1966,8 +1966,8 @@ const _privacyPolicy = [
       'fails, your account is not deleted and you can try again. Then your account is deleted, along with the records linked to it in our '
       'database: profile and answers, goals, plans, logs, food diary and recipes, measurements, chats, AI notes, reminder settings, feedback and error reports. '
       'If deleting the account itself fails after the photos are gone, the photos stay deleted, the rest stays and you can try again. '
-      'Reminders scheduled on this phone are cancelled when you delete your account or sign out. Before a major update we take '
-      'an encrypted backup, kept offline on our own device and deleted within 90 days; your data stays in it until then. Copies may also '
+      'Reminders scheduled on this phone are cancelled when you delete your account or sign out. We back up the database daily '
+      'and before major updates, encrypted and kept privately, and delete backups within 90 days; your data stays in them until then. Copies may also '
       'remain for a short time in our service providers\' backups and logs, under their own retention practices. Messages already sent to '
       'Groq cannot be deleted by us; Groq handles them under its own terms. Website contact messages are not linked to your account; we '
       'delete them manually once the matter is handled.'),

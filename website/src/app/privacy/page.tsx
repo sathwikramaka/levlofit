@@ -199,7 +199,8 @@ const sections: LegalSection[] = [
           scheduled on your phone are cancelled when you delete your account or sign out.
         </p>
         <p>
-          Before a major update we take an encrypted backup of the database, kept offline on our own device and deleted within 90 days. If you delete your
+          We back up the database every day and before major updates. Backups are encrypted before they leave our server, kept privately (on our own
+          device and in our private GitHub storage, which cannot read them) and deleted within 90 days; daily copies within 30. If you delete your
           account, your data stays in such a backup until it is deleted; we never restore it into the live service except to recover from a fault, and then we
           delete your account again. Copies may also remain for a short time in our service providers&rsquo; backups and logs, under their own retention
           practices. Messages already sent to Groq to answer your questions cannot be deleted by us; Groq handles them under its own terms. Contact form messages
