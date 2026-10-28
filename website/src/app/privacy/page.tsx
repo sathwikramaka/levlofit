@@ -124,7 +124,7 @@ const sections: LegalSection[] = [
             <strong>ExerciseDB</strong> (AscendAPI) supplies the exercise animations. When the app loads them, its servers may receive your IP address.
           </li>
           <li>
-            <strong>Cloudflare</strong> (Pages) hosts this website and the app download. The website&rsquo;s fonts are served with the site itself, not loaded from Google. The app asks this
+            <strong>Cloudflare</strong> (Pages) hosts this website, the Android download and the iPhone web app. The website&rsquo;s fonts are served with the site itself, not loaded from Google. The app asks this
             website once per start whether a newer version exists, so the host may receive your IP address.
           </li>
         </ul>

@@ -28,7 +28,8 @@ const _googleG =
 
 /// Where email links (confirm, reset) return. Must be in Supabase Auth > URL Configuration > Redirect URLs.
 /// Mobile scheme is registered in AndroidManifest.xml and ios/Runner/Info.plist.
-String get authRedirect => kIsWeb ? Uri.base.origin : 'com.levlofit.app://login-callback';
+/// On the web the app lives under the website's /app/ path, so the page's own path is kept (query and hash dropped).
+String get authRedirect => kIsWeb ? '${Uri.base.origin}${Uri.base.path}' : 'com.levlofit.app://login-callback';
 
 String _authError(Object e) => switch (e) {
   AuthRetryableFetchException() => _offline, // never show the raw client error or endpoint

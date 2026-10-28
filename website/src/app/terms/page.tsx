@@ -106,7 +106,7 @@ const sections: LegalSection[] = [
     body: (
       <p>
         The app, the Handbook, the design and the Levlofit name and logo belong to Levlofit. All rights reserved. Sources we cite, and the data, media and
-        code we use from others, belong to their owners and are credited on our <Link href="/licences">licences page</Link>. Your own data stays yours.
+        code we use from others, belong to their owners and are credited under <Link href="/#licences">Licences and credits</Link> at the bottom of every page. Your own data stays yours.
       </p>
     ),
   },

@@ -45,3 +45,6 @@ graphify-out/
 
 # Local-only visual-check account for the local Supabase stack (never commit)
 tools/local-test-user.txt
+
+# Cloudflare wrangler local state
+.wrangler/

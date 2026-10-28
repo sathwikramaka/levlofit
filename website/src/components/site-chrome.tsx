@@ -145,7 +145,7 @@ export function SiteChrome() {
         aria-hidden={!open}
       >
         <ul className="flex h-full flex-col justify-center gap-2 px-8">
-          {[...links, { href: "/privacy", label: "Privacy" }, { href: "/terms", label: "Terms" }, { href: "/licences", label: "Licences" }].map((l, i) => (
+          {[...links, { href: "/privacy", label: "Privacy" }, { href: "/terms", label: "Terms" }].map((l, i) => (
             <li key={l.href} className="overflow-hidden">
               <a
                 href={l.href}
