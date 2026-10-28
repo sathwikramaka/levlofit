@@ -1088,6 +1088,12 @@ test('food diary: daily totals come from the food values; days without entries a
   assert.deepEqual(summariseFoodLog([]), []);
 });
 
+test('food diary: packaged foods count in the daily totals like table foods', async () => {
+  const { summariseFoodLog } = await import('../_shared/coach-context.ts');
+  const [d] = summariseFoodLog([{ day: '2026-10-16', grams: 40, foods: null, packaged_foods: { kcal: 380, protein_g: 12, fat_g: 7, carb_g: 65, fiber_g: null } }]);
+  assert.deepEqual(d, { day: '2026-10-16', kcal: 152, proteinG: 4.8, carbG: 26, fatG: 2.8, fiberG: 0, entries: 1 });
+});
+
 test('food diary: a food question carries the logged totals', async () => {
   useDb(tables({ food_log: { data: FOOD_ROWS } }));
   fakeLlm('ok');

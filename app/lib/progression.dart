@@ -100,3 +100,35 @@ String liftHint(List<SetLog> last, List<Advice> advice) {
   }
   return step;
 }
+
+/// A lift's best set on its first and latest logged day (heaviest load, then most reps), for the Progress page.
+typedef LiftProgress = ({String id, DateTime from, SetLog first, DateTime to, SetLog latest});
+
+/// Lifts logged on at least two different days, from set_logs rows (exercise_id, performed_on, reps, kg), most
+/// improved first. Compares best sets only, so one weak set on a tired day does not read as going backwards.
+List<LiftProgress> liftProgress(List<Map<String, dynamic>> rows) {
+  final byLift = <String, Map<DateTime, SetLog>>{};
+  bool better(SetLog a, SetLog b) => (a.kg ?? 0) != (b.kg ?? 0) ? (a.kg ?? 0) > (b.kg ?? 0) : a.reps > b.reps;
+  for (final r in rows) {
+    final day = DateTime.parse(r['performed_on'] as String);
+    final s = (reps: r['reps'] as int, kg: (r['kg'] as num?)?.toDouble());
+    final days = byLift.putIfAbsent(r['exercise_id'] as String, () => {});
+    final best = days[day];
+    if (best == null || better(s, best)) days[day] = s;
+  }
+  final out = <LiftProgress>[
+    for (final MapEntry(key: id, value: days) in byLift.entries)
+      if (days.length >= 2)
+        () {
+          final sorted = days.keys.toList()..sort();
+          return (id: id, from: sorted.first, first: days[sorted.first]!, to: sorted.last, latest: days[sorted.last]!);
+        }(),
+  ];
+  double gain(LiftProgress p) => p.first.kg != null && p.first.kg! > 0 && p.latest.kg != null
+      ? (p.latest.kg! - p.first.kg!) / p.first.kg!
+      : (p.latest.reps - p.first.reps) / p.first.reps;
+  return out..sort((a, b) => gain(b).compareTo(gain(a)));
+}
+
+/// "40 kg x 8" or "12 reps" for a set without load.
+String setLabel(SetLog s) => s.kg == null || s.kg == 0 ? '${s.reps} reps' : '${s.kg!.toStringAsFixed(s.kg! % 1 == 0 ? 0 : 1)} kg x ${s.reps}';

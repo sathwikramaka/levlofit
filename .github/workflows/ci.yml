@@ -117,6 +117,7 @@ jobs:
             supabase/functions/_shared/body-check.test.ts \
             supabase/functions/_shared/llm.test.ts \
             supabase/functions/_shared/handbook.test.ts \
+            supabase/functions/_shared/rate.test.ts \
             supabase/functions/coach-chat/coach-chat.test.ts \
             supabase/functions/delete-account/delete-account.test.ts \
             supabase/functions/generate-plan/generate-plan.test.ts \

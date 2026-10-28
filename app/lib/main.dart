@@ -12,6 +12,8 @@ import 'dashboard.dart';
 import 'error_report.dart';
 import 'exercises.dart' show animationNotice, drawingNotice;
 import 'mark.dart';
+import 'offline_cache.dart';
+import 'secure_session.dart';
 import 'move_animation.dart' show DemoFigure, demoFigure;
 import 'onboarding.dart';
 import 'reminders.dart';
@@ -59,6 +61,12 @@ void registerBundledLicenses() => LicenseRegistry.addLicense(() async* {
       yield LicenseEntryWithLineBreaks(['Muscle map outlines: react-native-body-highlighter'], await rootBundle.loadString('assets/licenses/react-native-body-highlighter-LICENSE'));
       // Exercise drawings, CC BY-SA 4.0 (assets/drawings/everkinetic/SOURCE.md). Section 3(a): creator, a link to the
       // material, that it is unmodified, and the licence text (which carries the disclaimer).
+      // Barcode reading: zxing-cpp (Apache-2.0) and zint (BSD-3-Clause), compiled into flutter_zxing.
+      yield LicenseEntryWithLineBreaks(['zxing-cpp'], await rootBundle.loadString('assets/licenses/zxing-cpp-LICENSE'));
+      yield LicenseEntryWithLineBreaks(['zint'], await rootBundle.loadString('assets/licenses/zint-LICENSE'));
+      yield const LicenseEntryWithLineBreaks(['Packaged food data: Open Food Facts'],
+          'Product data from Open Food Facts (https://openfoodfacts.org), made available under the Open Database License (ODbL 1.0), '
+          'https://opendatacommons.org/licenses/odbl/1-0/. Individual contents under the Database Contents License.');
       yield const LicenseEntryWithLineBreaks(['Exercise animations: CDC Growing Stronger (public domain)'], animationNotice);
       yield LicenseEntryWithLineBreaks(['Exercise drawings: Everkinetic by Greg Priday (CC BY-SA 4.0)'],
           '$drawingNotice\n\n${await rootBundle.loadString('assets/drawings/everkinetic/LICENSE')}');
@@ -72,9 +80,13 @@ Future<void> main() async {
     runApp(MaterialApp(home: Scaffold(body: Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(problem))))));
     return;
   }
-  await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
+  prefs = await SharedPreferences.getInstance(); // before Supabase: the secure session store moves an old session out of it
+  await Supabase.initialize(
+    url: supabaseUrl,
+    publishableKey: supabaseKey,
+    authOptions: FlutterAuthClientOptions(localStorage: kIsWeb ? null : SecureSessionStorage(sessionKeyFor(supabaseUrl))),
+  );
   installErrorReporting();
-  prefs = await SharedPreferences.getInstance();
   themeMode.value = ThemeMode.values.asNameMap()[prefs.getString('theme')] ?? ThemeMode.system;
   demoFigure.value = DemoFigure.values.asNameMap()[prefs.getString(demoFigureKey)] ?? DemoFigure.man;
   runApp(const LevloApp());
@@ -359,9 +371,15 @@ class _GateState extends State<Gate> {
   }
 
   Future<bool> _loadOnboarded() async {
-    // Self-heal a missing profile row (RLS: own id only, id column only; no-op when it exists).
-    await supabase.from('profiles').upsert({'id': _userId}, ignoreDuplicates: true);
-    return (await supabase.from('profiles').select('onboarding_complete').eq('id', _userId!).single())['onboarding_complete'] as bool;
+    try {
+      // Self-heal a missing profile row (RLS: own id only, id column only; no-op when it exists).
+      await supabase.from('profiles').upsert({'id': _userId}, ignoreDuplicates: true).timeout(const Duration(seconds: 8));
+      return (await supabase.from('profiles').select('onboarding_complete').eq('id', _userId!).single())['onboarding_complete'] as bool;
+    } catch (e) {
+      // No connection, but this phone holds a plan from an earlier visit: open it read-only (offline_cache.dart).
+      if (e is! PostgrestException && e is! AuthException && hasOfflineRows(_userId!)) return true;
+      rethrow;
+    }
   }
 
   @override

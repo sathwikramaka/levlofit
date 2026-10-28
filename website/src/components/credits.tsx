@@ -12,7 +12,8 @@ const groups: [string, React.ReactNode][] = [
     "Food data",
     <>
       USDA FoodData Central, U.S. Department of Agriculture, public domain (CC0 1.0). Indian food names and groups follow the Indian Food Composition Tables
-      2017 (National Institute of Nutrition, ICMR), cited, not copied.
+      2017 (National Institute of Nutrition, ICMR), cited, not copied. Packaged food lookups: Open Food Facts (openfoodfacts.org), Open Database License
+      (ODbL 1.0); a product is shown only to the person who looked it up and saved with the values they checked against the pack.
     </>,
   ],
   [

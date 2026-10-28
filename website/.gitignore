@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# copied from supabase/functions/_shared before dev and build (package.json "engine")
+/src/lib/plan-engine.ts

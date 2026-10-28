@@ -6,3 +6,7 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+# Report-only first (browsers log violations in the console, nothing is blocked). Covers this site and the Flutter web
+# app under /app/ (CanvasKit from gstatic, Google Fonts, Supabase, ExerciseDB GIFs). Switch the header name to
+# Content-Security-Policy once a release shows no violations in the console on every page and in /app/.
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://ndeozgxowggkljluaccz.supabase.co https://static.exercisedb.dev; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://ndeozgxowggkljluaccz.supabase.co wss://ndeozgxowggkljluaccz.supabase.co https://fonts.gstatic.com https://fonts.googleapis.com https://www.gstatic.com https://static.exercisedb.dev; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'

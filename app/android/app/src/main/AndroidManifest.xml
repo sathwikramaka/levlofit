@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
     <!-- Release builds need this to reach Supabase; debug adds it automatically. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Reminders: show notifications (Android 13+) and restore scheduled ones after a reboot. -->
@@ -8,7 +8,15 @@
          Android 14+); without it reminders fall back to inexact alarms. USE_EXACT_ALARM is not used: Google Play
          restricts it to alarm-clock and calendar apps. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <!-- No backup: SharedPreferences hold the Supabase session (access and refresh tokens), so a backup or device
+    <!-- Barcode scanning (flutter_zxing): the camera, only while the scan screen is open. The camera plugin also
+         asks for the microphone and shared storage for video recording; Levlofit never records, so they are removed. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove"/>
+    <!-- No backup: the Supabase session (access and refresh tokens) lives in the secure store (secure_session.dart; older
+         versions kept it in SharedPreferences), so a backup or device
          transfer would copy a live login. Account data lives on the server and reminder settings in reminder_prefs,
          so signing in on a new phone restores everything; only the light/dark choice is device-local.
          allowBackup covers cloud and adb backup; dataExtractionRules also covers device-to-device transfer on

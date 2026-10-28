@@ -27,6 +27,18 @@ void main() {
     expect(groupAt(frontMuscles, const Offset(2, 2)), isNull); // empty corner
   });
 
+  test('a near miss beside a thin muscle still selects it at the phone tap slop; the head stays empty', () {
+    final forearm = frontMuscles.firstWhere((s) => s.label.toLowerCase().contains('forearm'));
+    final xs = [for (final p in forearm.polygons) for (var i = 0; i < p.length; i += 2) p[i]];
+    final ys = [for (final p in forearm.polygons) for (var i = 1; i < p.length; i += 2) p[i]];
+    final left = xs.reduce((a, b) => a < b ? a : b), midY = (ys.reduce((a, b) => a < b ? a : b) + ys.reduce((a, b) => a > b ? a : b)) / 2;
+    final miss = Offset(left - 4, midY);
+    expect(muscleAt(frontMuscles, miss), isNull, reason: 'outside the old 2-unit slop');
+    expect(muscleAt(frontMuscles, miss, slop: 6)?.group, forearm.group);
+    expect(muscleAt(frontMuscles, const Offset(50, 26), slop: 6), isNull); // head
+    expect(muscleAt(frontMuscles, const Offset(2, 2), slop: 6), isNull);
+  });
+
   test('filters combine and every guide move gets an equipment kind and a difficulty', () {
     for (final e in moveGuide.entries) {
       expect(equipmentKinds, contains(equipmentKind(e.value)));

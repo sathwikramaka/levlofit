@@ -14,6 +14,8 @@ const fail = (status: number, error: string) => Response.json({ error }, { statu
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
     if (req.method !== 'POST') return fail(405, 'Method not allowed');
+    // Refuse oversized uploads before reading them: base64 is 4/3 of the photo, plus a little JSON.
+    if (Number(req.headers.get('content-length') ?? 0) > MAX_IMAGE_BYTES * 1.4 + 1024) return fail(413, 'That photo is too large. Try a smaller one.');
     let body: { image?: unknown; mime?: unknown };
     try {
       body = await req.json();

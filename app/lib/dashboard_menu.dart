@@ -884,7 +884,7 @@ class _PlateChoices extends StatelessWidget {
     final c = Theme.of(context).colorScheme;
     String pick(List<(String, String, String)> options, Object? v) => options.where((o) => o.$1 == v).firstOrNull?.$2 ?? '';
     final line = [
-      pick(regionOptions, choices['cuisine_region'] ?? 'any'),
+      regionLabel(choices['cuisine_region'] as String?),
       _dietNames[choices['diet_type']] ?? '',
       choices['budget_tier'] == 'custom' && choices['budget_max_inr'] != null
           ? rupeesAMonth(monthlyFromDaily(choices['budget_max_inr'] as int))
@@ -1036,7 +1036,9 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
 
   List<Widget> _tiles(String key, List<(String, String, String)> options) => [
         for (final (k, title, sub) in options) ...[
-          ChoiceTile(title: title, subtitle: sub, selected: _d[key] == k, onTap: () => setState(() => _d[key] = k)),
+          key == 'cuisine_region'
+              ? ChoiceTile(title: title, subtitle: sub, selected: regionSelected(_d[key] as String?, k), onTap: () => setState(() => _d[key] = toggleRegion(_d[key] as String?, k)))
+              : ChoiceTile(title: title, subtitle: sub, selected: _d[key] == k, onTap: () => setState(() => _d[key] = k)),
           const SizedBox(height: 10),
         ],
       ];
@@ -1685,6 +1687,7 @@ class _ProgressScreen extends StatefulWidget {
 class _ProgressScreenState extends State<_ProgressScreen> {
   List<_Json>? _logs;
   List<_Json> _body = [];
+  List<_Json> _sets = [];
   List<_Photo> _photos = [];
   String? _error;
   bool _uploading = false;
@@ -1699,10 +1702,13 @@ class _ProgressScreenState extends State<_ProgressScreen> {
 
   Future<void> _fetch() async {
     try {
-      final [logs, body, photos] = await Future.wait([
+      final [logs, body, photos, sets] = await Future.wait([
         supabase.from('workout_logs').select('performed_on, duration_min').eq('user_id', _uid).order('performed_on', ascending: true).limit(2000),
         supabase.from('body_metrics').select().eq('user_id', _uid).order('measured_on', ascending: true).limit(730),
         supabase.from('progress_photos').select('id, path, taken_on').eq('user_id', _uid).order('taken_on', ascending: false).limit(60),
+        // Lift sets of the last 12 weeks for the strength card.
+        supabase.from('set_logs').select('exercise_id, performed_on, reps, kg').eq('user_id', _uid)
+            .gte('performed_on', _iso(DateTime.now().subtract(const Duration(days: 84)))).limit(2000),
       ]);
       // Private bucket: each photo gets a short-lived signed link.
       final urls = <String, String>{
@@ -1714,6 +1720,7 @@ class _ProgressScreenState extends State<_ProgressScreen> {
       setState(() {
         _logs = logs;
         _body = body;
+        _sets = sets;
         _photos = [
           for (final p in photos) (id: p['id'] as String, path: p['path'] as String, day: DateTime.parse(p['taken_on'] as String), url: urls[p['path']]),
         ];
@@ -1915,6 +1922,7 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         plan: widget.data.plan,
         logs: logs,
         body: _body,
+        sets: _sets,
         photos: _photos,
         uploading: _uploading,
         onLogWeight: () => _logBody(tape: false),
@@ -1942,6 +1950,7 @@ List<Widget> _progressBody(
   required _Json plan,
   required List<_Json> logs,
   required List<_Json> body,
+  List<_Json> sets = const [],
   required List<_Photo> photos,
   required bool uploading,
   required VoidCallback onLogWeight,
@@ -1969,6 +1978,7 @@ List<Widget> _progressBody(
   ];
   final v = verdict(plan['weightGoal'] as String?, weeklyTrendPct([for (final w in weights) if (now.difference(w.day).inDays <= 42) w]));
   final change = weights.length > 1 ? weights.last.kg - weights.first.kg : null;
+  final lifts = liftProgress(sets);
   final fat = body.lastWhere((b) => b['body_fat_pct'] != null, orElse: () => const {})['body_fat_pct'];
   final tape = [
     for (final (k, label) in _measureFields)
@@ -2008,6 +2018,33 @@ List<Widget> _progressBody(
         Expanded(child: _Stat(value: '${days.length}', label: 'SESSIONS')),
         const SizedBox(width: 10),
         Expanded(child: _Stat(value: '${_Bento._weekStreak(days, monday, perWeek)}', label: 'WEEK STREAK')),
+      ]),
+    ),
+    const SizedBox(height: 12),
+    _Tile(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const _Label('STRENGTH  ·  LAST 12 WEEKS'),
+        if (lifts.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text('Log your sets in a session, on two or more days, and your best set for each lift shows here.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+          )
+        else ...[
+          for (final l in lifts.take(6))
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(border: Border(top: BorderSide(color: c.outline))),
+              child: Row(children: [
+                Expanded(child: Text(moveName({'id': l.id, 'name': l.id.replaceAll('_', ' ')}), style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600))),
+                Text('${setLabel(l.first)}  →  ', style: monoNumber(context, size: 13).copyWith(color: c.onSurfaceVariant)),
+                Text(setLabel(l.latest), style: monoNumber(context, size: 15)),
+              ]),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text('Best set on your first and latest day. A flat week is normal; look at the change over a month.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          ),
+        ],
       ]),
     ),
     const SizedBox(height: 12),

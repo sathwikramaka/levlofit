@@ -271,13 +271,14 @@ export const PROGRESS_RULES = `PROGRESS (when listed) is computed by the app fro
 export interface FoodDay { day: string; kcal: number; proteinG: number; carbG: number; fatG: number; fiberG: number; entries: number }
 
 /**
- * Daily totals from food_log rows joined to foods ({ day, grams, foods: { kcal, protein_g, ... } }). Rows without a
+ * Daily totals from food_log rows joined to foods or packaged_foods ({ day, grams, foods: { kcal, protein_g, ... } }). Rows without a
  * food are left out rather than guessed. Days without entries do not appear: not logged is not the same as zero.
  */
 export function summariseFoodLog(rows: Json[]): FoodDay[] {
   const days = new Map<string, FoodDay>();
   for (const r of rows) {
-    const f = r.foods as Json | null | undefined;
+    // A table food or one of their own packaged foods (same per-100 g columns).
+    const f = (r.foods ?? r.packaged_foods) as Json | null | undefined;
     const grams = Number(r.grams);
     if (!f || !Number.isFinite(grams) || grams <= 0) continue;
     const k = grams / 100;

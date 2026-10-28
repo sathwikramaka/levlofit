@@ -1,16 +1,16 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type Entry = { title: string; hint: string; href: string; words?: string };
+export type Entry = { title: string; hint: string; href: string; words?: string };
 
 // Everything on the site worth finding. Keep in step with page.tsx, privacy and terms.
 const INDEX: Entry[] = [
   { title: "How it works", hint: "Home", href: "/#how", words: "answer check explain plan review" },
-  { title: "The Handbook", hint: "Home", href: "/#handbook", words: "chapters form exercise search guide" },
+  { title: "The Handbook", hint: "All chapters", href: "/handbook", words: "chapters form exercise search guide" },
   { title: "Indian food", hint: "Home", href: "/#food", words: "ifct dal paneer rajma soya allergy beef pork nutrition" },
   { title: "Where the rules come from", hint: "Home", href: "/#sources", words: "who acsm issn icmr nin lally science source" },
+  { title: "Estimate your daily target", hint: "Home", href: "/#estimate", words: "calories tdee protein maintenance calculator kcal" },
   { title: "Download the Android app", hint: "Home", href: "/#download", words: "download apk android install app get" },
   { title: "Inside the app", hint: "Home", href: "/#features", words: "features muscle map meals rank up level challenge body check reminders ai kitchen mess warm-up" },
   { title: "Where do the numbers come from?", hint: "FAQ", href: "/#faq", words: "protein calories rules" },
@@ -24,18 +24,18 @@ const INDEX: Entry[] = [
 ];
 
 /** Site search: a keyboard-first dialog (Ctrl or Cmd + K, or the header button). */
-export function Search() {
+export function Search({ extra = [] }: { extra?: Entry[] }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
-  const router = useRouter();
 
   const results = useMemo(() => {
     const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
     if (!terms.length) return INDEX;
-    return INDEX.filter((e) => terms.every((t) => `${e.title} ${e.hint} ${e.words ?? ""}`.toLowerCase().includes(t)));
-  }, [q]);
+    // Handbook chapters join only once something is typed, so the empty list stays short.
+    return [...INDEX, ...extra].filter((e) => terms.every((t) => `${e.title} ${e.hint} ${e.words ?? ""}`.toLowerCase().includes(t)));
+  }, [q, extra]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -66,7 +66,8 @@ export function Search() {
   const go = (e: Entry) => {
     close();
     if (e.href === "#contact") dispatchEvent(new Event("open-contact"));
-    else router.push(e.href);
+    // Native navigation: router.push left the page in place for same-page anchors (/#handbook from /).
+    else location.assign(e.href);
   };
 
   return (
@@ -116,7 +117,7 @@ export function Search() {
         <ul className="max-h-[50vh] overflow-y-auto p-2" role="listbox">
           {results.length === 0 && <li className="px-3 py-6 text-center text-[15px] text-muted">Nothing found for &ldquo;{q}&rdquo;.</li>}
           {results.map((r, i) => (
-            <li key={r.title} role="option" aria-selected={i === active}>
+            <li key={r.href + r.title} role="option" aria-selected={i === active}>
               <button
                 type="button"
                 tabIndex={open ? 0 : -1}

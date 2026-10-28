@@ -420,6 +420,20 @@ WorkoutDay workoutDay(List<PlanMeal> meals, String? trainingTime) {
 }
 
 const cuisineRegions = ['any', 'north', 'south', 'east', 'west'];
+
+/// dietary_profiles.cuisine_region holds 'any' or several regions joined by commas ("north,south", migration
+/// 20261029600000): people often eat from more than one. The planner prefers the staples of every listed region.
+Set<String> regionsOf(String? value) => {for (final r in (value ?? 'any').split(',')) if (regionStaples.containsKey(r)) r};
+
+/// The stored value after tapping [region]: Mixed clears the list, a region is added or removed.
+String toggleRegion(String? value, String region) {
+  if (region == 'any') return 'any';
+  final s = regionsOf(value);
+  if (!s.remove(region)) s.add(region);
+  return s.isEmpty ? 'any' : [for (final r in cuisineRegions) if (s.contains(r)) r].join(',');
+}
+
+bool regionSelected(String? value, String region) => region == 'any' ? regionsOf(value).isEmpty : regionsOf(value).contains(region);
 const regionStaples = <String, Set<String>>{
   'north': {'A019', 'A003', 'B020', 'B002', 'L003', 'dish:besan-chilla', 'dish:moong-chilla', 'dish:poha', 'dish:thepla'},
   'south': {'A015', 'A010', 'B021', 'B010', 'dish:idli', 'dish:dosa', 'dish:ragi-dosa', 'dish:upma'},
@@ -505,6 +519,12 @@ const regionOptions = [
   ('west', 'West Indian', 'Thepla, poha, bhakri'),
   ('any', 'Mixed', 'A bit of every region'),
 ];
+
+/// "North Indian + South Indian", or Mixed.
+String regionLabel(String? value) {
+  final s = regionsOf(value);
+  return s.isEmpty ? 'Mixed' : [for (final (k, title, _) in regionOptions) if (s.contains(k)) title].join(' + ');
+}
 
 /// Budget tier from the protocol: low, medium, high, or the user's own rupee range. For a custom range the
 /// tier follows its upper end (under ₹150 a day budget foods only, under ₹300 adds paneer, chicken, fish
@@ -794,7 +814,7 @@ DayPlan planDay({
   String? region,
   Map<int, Set<String>>? mealCodes,
 }) {
-  final regional = regionStaples[region] ?? const <String>{};
+  final regional = {for (final r in regionsOf(region)) ...regionStaples[r]!};
   bool allowed(String code, int maxTier) => _allowed(foods, code, tier: maxTier, excluded: excluded, custom: custom, soyaCapG: soyaCapG);
   bool ok(String code) => allowed(code, tier);
   // Kitchen and mess (mealCodes): a meal the person makes uses only foods their equipment can make; null = any.

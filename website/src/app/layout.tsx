@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Contact } from "@/components/contact";
 import { Credits } from "@/components/credits";
 import { Search } from "@/components/search";
+import { chapters } from "@/lib/handbook";
 import { SiteChrome } from "@/components/site-chrome";
 import { Wordmark } from "@/components/wordmark";
 import "./globals.css";
@@ -52,7 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
           <Credits />
         </footer>
-        <Search />
+        <Search extra={chapters.map((c) => ({ title: c.title, hint: "Handbook", href: `/handbook/${c.slug}`, words: c.summary }))} />
         <Contact />
       </body>
     </html>

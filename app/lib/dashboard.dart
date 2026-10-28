@@ -23,7 +23,9 @@ import 'icons.dart';
 import 'main.dart';
 import 'mark.dart';
 import 'move_animation.dart' show DemoFigure, demoFigure;
+import 'offline_cache.dart';
 import 'onboarding.dart';
+import 'progression.dart' show liftProgress, setLabel;
 import 'dashboard_layout.dart';
 import 'reminders.dart';
 import 'level_up.dart';
@@ -124,6 +126,7 @@ class _DashboardState extends State<Dashboard> {
   Map<DateTime, int> _minutes = {}; // minutes trained on those days, when known
   bool _saving = false;
   _Data? _loaded; // for the menu, which can open before or after the first load
+  DateTime? _offlineAt; // set while showing the saved copy because the server could not be reached
   _Tab _tab = _Tab.home;
   final _back = <_Tab>[]; // pages to return to, for tabs opened from another page rather than the menu
 
@@ -192,27 +195,51 @@ class _DashboardState extends State<Dashboard> {
 
   Future<_Data> _load() async {
     final now = DateTime.now();
-    final [profile, latest] = await Future.wait([
-      supabase.from('profiles').select('display_name, sex, birth_year, height_cm, weight_kg, equipment, equipment_items, injuries, days_per_week, session_minutes, water_target_ml, avatar').eq('id', _uid).single(),
+    late _Json profile, latest;
+    late List<Object?> results;
+    try {
+      [profile, latest] = await Future.wait([
+      supabase.from('profiles').select('display_name, sex, birth_year, height_cm, weight_kg, equipment, equipment_items, injuries, health_flags, days_per_week, session_minutes, water_target_ml, avatar').eq('id', _uid).single(),
       supabase.from('generated_plans').select('plan, input').eq('user_id', _uid).order('created_at', ascending: false).limit(1).single(),
-    ]);
-    final plan = latest['plan'] as _Json;
-    // Until a figure is picked on a move page, demonstrations follow the profile.
-    if (!prefs.containsKey(demoFigureKey)) demoFigure.value = profile['sex'] == 'female' ? DemoFigure.woman : DemoFigure.man;
-    if (profile['avatar'] == 'photo') profile['avatar_url'] = await avatarPhotoUrl(_uid);
-    final goals = (plan['goals'] as List).cast<_Json>();
-    final results = await Future.wait<Object?>([
+    ]).timeout(const Duration(seconds: 8)); // a dead network can hang far longer; then the saved copy opens instead
+    final goals = ((latest['plan'] as _Json)['goals'] as List).cast<_Json>();
+    results = await Future.wait<Object?>([
       supabase.from('curriculum_levels').select('goal, level, title, practice, advance_when, coach_recommended, source').inFilter('goal', [for (final g in goals) g['goal']]),
-      _proteinSources(plan),
+      _proteinSources(latest['plan'] as _Json),
       // 7 weeks for the rings and week strip, and at least a full 66-day challenge for Level up.
       supabase.from('workout_logs').select('performed_on, duration_min').eq('user_id', _uid).gte('performed_on', _iso(_day(now).subtract(const Duration(days: levelUpWindow + 7)))),
       supabase.from('goal_levels').select('goal').eq('user_id', _uid),
       supabase.from('water_intake').select('taken_at, ml').eq('user_id', _uid).gte('taken_at', _day(now).subtract(const Duration(days: levelUpWindow - 1)).toUtc().toIso8601String()),
       supabase.from('habit_logs').select('day, habit').eq('user_id', _uid).gte('day', _iso(_day(now).subtract(const Duration(days: levelUpWindow - 1)))),
-      loadSwaps(_iso(now)), // never fails: an empty map shows the session as planned
-      loadLighter(_iso(now)), // never fails: false keeps the planned doses
-      loadSessionMoves(_iso(_monday(now)), _iso(_monday(now).add(const Duration(days: 6)))), // never fails: empty keeps the plan's days
     ]);
+      saveOfflineRows(_uid, {'profile': profile, 'latest': latest, 'results': results});
+      _offlineAt = null;
+    } on PostgrestException {
+      rethrow; // the server answered: not an offline case
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      // No connection: show the last plan the server sent, read-only (offline_cache.dart).
+      final saved = readOfflineRows(_uid);
+      if (saved == null) rethrow;
+      profile = (saved.rows['profile'] as Map).cast<String, dynamic>();
+      latest = (saved.rows['latest'] as Map).cast<String, dynamic>();
+      results = saved.rows['results'] as List;
+      _offlineAt = saved.at;
+    }
+    final plan = planForHealth(latest['plan'] as _Json, latest['input'] as _Json?, profile['health_flags'] as List?);
+    final goals = (plan['goals'] as List).cast<_Json>();
+    // Until a figure is picked on a move page, demonstrations follow the profile.
+    if (!prefs.containsKey(demoFigureKey)) demoFigure.value = profile['sex'] == 'female' ? DemoFigure.woman : DemoFigure.man;
+    if (profile['avatar'] == 'photo' && _offlineAt == null) profile['avatar_url'] = await avatarPhotoUrl(_uid);
+    results = [
+      ...results,
+      ...await Future.wait<Object?>([
+        loadSwaps(_iso(now)), // never fails: an empty map shows the session as planned
+        loadLighter(_iso(now)), // never fails: false keeps the planned doses
+        loadSessionMoves(_iso(_monday(now)), _iso(_monday(now).add(const Duration(days: 6)))), // never fails: empty keeps the plan's days
+      ]),
+    ];
     final water = <DateTime, int>{};
     for (final r in (results[4] as List).cast<_Json>()) {
       final d = _day(DateTime.parse(r['taken_at'] as String).toLocal());
@@ -231,7 +258,7 @@ class _DashboardState extends State<Dashboard> {
         for (final r in rows)
           if (goals.any((g) => g['goal'] == r['goal'] && g['startLevel'] == r['level'])) r['goal'] as String: r,
       },
-      proteins: results[1] as List<_Json>,
+      proteins: (results[1] as List).cast<_Json>(),
       tier: tierFor(profile['equipment'] as String?, profile['equipment_items'] as List?),
       assessed: {for (final r in (results[3] as List).cast<_Json>()) r['goal'] as String},
       water: water,
@@ -462,7 +489,7 @@ class _DashboardState extends State<Dashboard> {
               );
             }
             if (!snap.hasData) return const Center(child: LevloMark(size: 56, animate: true));
-            return _Bento(
+            final bento = _Bento(
               data: snap.data!,
               logged: _logged,
               minutes: _minutes,
@@ -478,6 +505,25 @@ class _DashboardState extends State<Dashboard> {
               onChooseTasks: _chooseTasks,
               onCelebrated: _onCelebrated,
             );
+            final at = _offlineAt;
+            if (at == null) return bento;
+            return Column(children: [
+              Material(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: InkWell(
+                  onTap: () => setState(() { _data = _load(); }),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                    child: Row(children: [
+                      const Icon(LvIcons.warningCircle, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(offlineLine(at, DateTime.now()), style: Theme.of(context).textTheme.bodySmall)),
+                    ]),
+                  ),
+                ),
+              ),
+              Expanded(child: bento),
+            ]);
           },
         ),
       );
@@ -1548,4 +1594,35 @@ class _DailyGoalSheetState extends State<_DailyGoalSheet> {
       ),
     );
   }
+}
+
+/// The plan as it should be shown for the health answers saved now. When the answers changed after the plan was
+/// built (a rebuild failed or was never run), a new medical flag puts the plan on a medical hold and a stop note asks
+/// for a rebuild, so an old plan never runs at full dose past a new health flag.
+Map<String, dynamic> planForHealth(Map<String, dynamic> plan, Map<String, dynamic>? input, List<dynamic>? savedFlags) {
+  if (savedFlags == null) return plan;
+  final saved = {for (final f in savedFlags) '$f'};
+  final used = {for (final f in (input?['healthFlags'] as List?) ?? const []) '$f'};
+  if (saved.length == used.length && saved.containsAll(used)) return plan;
+  return {
+    ...plan,
+    if (saved.any((f) => f != 'pregnancy')) 'medicalHold': true,
+    'review': [
+      {
+        'level': 'stop',
+        'title': 'Your health answers changed',
+        'why': 'This plan was built before your latest health answers. Until it is rebuilt, train light only. '
+            'Open Edit goals and finish the steps to rebuild it, and see a doctor before hard training.',
+        'source': 'ACSM pre-participation health screening (Riebe et al., Med Sci Sports Exerc 2015)',
+      },
+      ...((plan['review'] as List?) ?? const []),
+    ],
+  };
+}
+
+/// The banner over a dashboard shown from the saved copy.
+String offlineLine(DateTime savedAt, DateTime now) {
+  final mins = now.difference(savedAt).inMinutes;
+  final age = mins < 60 ? '$mins min' : mins < 48 * 60 ? '${mins ~/ 60} h' : '${mins ~/ (24 * 60)} days';
+  return 'Offline. Showing your plan as of $age ago. Logging needs a connection. Tap to retry.';
 }
