@@ -11,10 +11,16 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
 ];
 
-const nextConfig: NextConfig = {
-  async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
-  },
-};
+// Cloudflare Pages serves a static export (out/), with the same headers from public/_headers. Next's own headers()
+// only apply when Next serves the site, so they are left out of an export to avoid a build warning.
+const exportSite = process.env.LEVLOFIT_STATIC_EXPORT !== "false";
+
+const nextConfig: NextConfig = exportSite
+  ? { output: "export" }
+  : {
+      async headers() {
+        return [{ source: "/(.*)", headers: securityHeaders }];
+      },
+    };
 
 export default nextConfig;

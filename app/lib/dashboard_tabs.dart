@@ -1762,7 +1762,8 @@ class _AppSettingsScreen extends StatelessWidget {
           _row(context, LvIcons.bookOpen, 'Privacy policy', () => sheet('Privacy policy', _privacyPolicy)),
         ]),
         _section(context, 'ABOUT', [
-          _row(context, LvIcons.sparkle, 'Levlofit 1.0', () => showLicensePage(context: context, applicationName: 'Levlofit', applicationVersion: '1.0.0'), trailing: 'Licences'),
+          _row(context, LvIcons.sparkle, 'Levlofit 1.0', () => showLicensePage(context: context, applicationName: 'Levlofit', applicationVersion: '1.0.0', applicationLegalese: '© 2026 Levlofit. All rights reserved.'
+              '\nTerms: levlofit.pages.dev/terms  ·  Credits: levlofit.pages.dev/licences'), trailing: 'Licences'),
         ]),
         FoodCredit(lead: '$exerciseMediaCredit. ', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ],
@@ -1960,22 +1961,24 @@ const _privacyPolicy = [
       'totals for the last 7 days while you look at Progress. They stay on this phone: they are not stored on our servers. If you switch on '
       '"Share step totals with Levlofit AI", those 7 totals are sent with your coach messages and pass to the AI provider like the rest of '
       'the chat context. Disconnect in Progress, or remove access in Health Connect, at any time.'),
-  // REVIEW: backup and log retention periods at Supabase are not verified; replace "may" with the real periods once confirmed.
   ('How long we keep it', 'Until you delete your account. Every plan built for you is kept, each with a copy of the answers it used (including '
       'any injury you described); the app shows the latest. Deleting your account first removes your progress photos and profile picture; if that '
       'fails, your account is not deleted and you can try again. Then your account is deleted, along with the records linked to it in our '
       'database: profile and answers, goals, plans, logs, food diary and recipes, measurements, chats, AI notes, reminder settings, feedback and error reports. '
       'If deleting the account itself fails after the photos are gone, the photos stay deleted, the rest stays and you can try again. '
-      'Reminders scheduled on this phone are cancelled when you delete your account or sign out. Copies may remain '
-      'in our service providers\' backups and service logs after deletion, under their own retention practices. Messages already sent to '
+      'Reminders scheduled on this phone are cancelled when you delete your account or sign out. Before a major update we take '
+      'an encrypted backup, kept offline on our own device and deleted within 90 days; your data stays in it until then. Copies may also '
+      'remain for a short time in our service providers\' backups and logs, under their own retention practices. Messages already sent to '
       'Groq cannot be deleted by us; Groq handles them under its own terms. Website contact messages are not linked to your account; we '
       'delete them manually once the matter is handled.'),
   ('Your rights', "Under India's Digital Personal Data Protection Act, 2023, you can see, correct or erase your data, withdraw consent "
       'and raise a complaint. Most of this you can do in the app: edit most answers in Profile and Protocol, and delete your account in '
-      'Profile. For the rest, email us and we reply within 30 days.'),
-  ('Health', 'Levlofit gives general fitness guidance, not medical advice. See a doctor for pain, illness, or before hard training if you have a health condition.'),
+      'Profile. You can also nominate someone to act for you if you die or cannot act. For the rest, email us (our grievance contact); we '
+      'reply within 30 days. If not satisfied, you can complain to the Data Protection Board of India.'),
+  ('Health', 'Levlofit gives general fitness guidance, not medical advice. See a doctor for pain, illness, or before hard training if you have a health condition. '
+      'Not for emergencies: call 112.'),
   ('Age', 'Levlofit is for adults aged 18 to 80.'),
-  ('Changes', 'If this policy changes in a way that affects your data, we tell you in the app first. Last updated 27 October 2026.'),
+  ('Changes', 'If this policy changes in a way that affects your data, we tell you in the app first. Last updated 28 October 2026.'),
 ];
 
 // ---------------------------------------------------------------- glossary

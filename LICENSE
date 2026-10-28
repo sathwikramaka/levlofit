@@ -1,0 +1,25 @@
+Levlofit
+Copyright (c) 2026 Sathwikramaka (Levlofit). All rights reserved.
+
+This repository contains the Levlofit app, website, server functions, database
+schema, plan rules and Handbook. It is proprietary software, not open source.
+
+No licence is granted to copy, modify, publish, distribute, sublicense, sell
+or create derivative works from any part of it, in whole or in part, without
+prior written permission from the copyright holder. Viewing the source does
+not grant any rights to use it.
+
+Downloading and installing the official Levlofit app from
+https://levlofit.pages.dev gives you a personal, non-transferable,
+non-exclusive, revocable right to use it under the Terms and conditions at
+https://levlofit.pages.dev/terms.
+
+Third-party components keep their own licences, which apply to those
+components only. They are listed in docs/SOURCE_LICENCE_REGISTER.md, on
+https://levlofit.pages.dev/licences and in the app under
+Profile > Levlofit 1.0 > Licences.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, TO THE EXTENT PERMITTED BY LAW.
+
+Permission requests: levlofit.app@gmail.com

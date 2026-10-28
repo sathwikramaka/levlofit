@@ -124,7 +124,7 @@ const sections: LegalSection[] = [
             <strong>ExerciseDB</strong> (AscendAPI) supplies the exercise animations. When the app loads them, its servers may receive your IP address.
           </li>
           <li>
-            A web hosting provider serves this website. The website&rsquo;s fonts are served with the site itself, not loaded from Google. The app asks this
+            <strong>Cloudflare</strong> (Pages) hosts this website and the app download. The website&rsquo;s fonts are served with the site itself, not loaded from Google. The app asks this
             website once per start whether a newer version exists, so the host may receive your IP address.
           </li>
         </ul>
@@ -198,9 +198,10 @@ const sections: LegalSection[] = [
           If deleting the account itself fails after the photos are gone, the photos stay deleted, everything else stays, and you can try again. Reminders
           scheduled on your phone are cancelled when you delete your account or sign out.
         </p>
-        {/* REVIEW: backup and log retention periods at Supabase are not verified; replace "may" with the real periods once confirmed. */}
         <p>
-          Copies may remain in our service providers&rsquo; backups and service logs after your account is deleted, under those providers&rsquo; own retention
+          Before a major update we take an encrypted backup of the database, kept offline on our own device and deleted within 90 days. If you delete your
+          account, your data stays in such a backup until it is deleted; we never restore it into the live service except to recover from a fault, and then we
+          delete your account again. Copies may also remain for a short time in our service providers&rsquo; backups and logs, under their own retention
           practices. Messages already sent to Groq to answer your questions cannot be deleted by us; Groq handles them under its own terms. Contact form messages
           are not linked to your account. We delete them manually once the matter is handled.
         </p>
@@ -216,7 +217,13 @@ const sections: LegalSection[] = [
           Under India&rsquo;s Digital Personal Data Protection Act, 2023, you can ask to see, correct or erase your personal data, withdraw consent, and raise a
           grievance. Most of this you can do in the app: edit most answers in Profile and Protocol (email us to correct the rest), or delete your account in Profile (steps, including deleting without the app: <Link href="/delete-account">delete your account</Link>).
         </p>
-        <p>For anything else, email {CONTACT_EMAIL}. We reply within 30 days.</p>
+        <p>
+          You can also nominate someone to exercise these rights for you if you die or become unable to. Tell us their name and email from your account email.
+        </p>
+        <p>
+          For anything else, email {CONTACT_EMAIL}. This is also our grievance contact. We reply within 30 days. If you are not satisfied with our answer,
+          you can complain to the Data Protection Board of India.
+        </p>
       </>
     ),
   },
@@ -248,7 +255,7 @@ export default function Privacy() {
       eyebrow="Privacy"
       title="Privacy policy"
       intro="What Levlofit collects, why, who processes it, and how you delete it. Written to be read, not skimmed past."
-      updated="27 October 2026"
+      updated="28 October 2026"
       sections={sections}
     />
   );

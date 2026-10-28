@@ -29,6 +29,14 @@ const sections: LegalSection[] = [
           Talk to a doctor before starting if you have a medical condition, are pregnant, take regular medication, or feel pain, dizziness or chest discomfort when
           active. Stop exercising and seek help if any of these happen during training.
         </p>
+        <p>
+          <strong>Not for emergencies.</strong> Levlofit and Levlofit AI cannot respond to an emergency. If you or someone near you is in danger, call 112
+          (India) or your local emergency number.
+        </p>
+        <p>
+          If your health check needs a doctor, Levlofit holds back the harder training until you say a doctor has cleared you. That answer is yours to give
+          truthfully.
+        </p>
       </>
     ),
   },
@@ -53,8 +61,10 @@ const sections: LegalSection[] = [
     title: "Levlofit AI",
     body: (
       <p>
-        Levlofit AI explains your plan in plain words. Its numbers come from your plan, which is built by fixed, cited rules. Like any AI, it can still word things
-        wrongly. If an answer seems off, trust the plan and the Handbook, and ask us.
+        Levlofit AI explains your plan in plain words. Its numbers come from your plan, which is built by fixed, cited rules. It may suggest a change to your
+        goal, pace or training days, but nothing changes until you confirm it, and the new plan is still built by the same rules. Like any AI, it can word
+        things wrongly. If an answer seems off, trust the plan and the Handbook, and ask us. Do not type other people&rsquo;s personal or health details into
+        the chat.
       </p>
     ),
   },
@@ -70,6 +80,17 @@ const sections: LegalSection[] = [
     ),
   },
   {
+    id: "install",
+    title: "Installing and updates",
+    body: (
+      <p>
+        Install Levlofit only from <a href="https://levlofit.pages.dev">levlofit.pages.dev</a>. Copies from anywhere else may be changed or unsafe, and we
+        cannot support them. The app tells you when a new version is out; you choose when to install it. We may stop supporting old versions when an update
+        fixes a safety or security problem.
+      </p>
+    ),
+  },
+  {
     id: "price",
     title: "Price",
     body: (
@@ -82,15 +103,22 @@ const sections: LegalSection[] = [
   {
     id: "content",
     title: "Our content",
-    body: <p>The app, the Handbook, the design and the Levlofit name and logo belong to Levlofit. Sources we cite belong to their authors and are credited.</p>,
+    body: (
+      <p>
+        The app, the Handbook, the design and the Levlofit name and logo belong to Levlofit. All rights reserved. Sources we cite, and the data, media and
+        code we use from others, belong to their owners and are credited on our <Link href="/licences">licences page</Link>. Your own data stays yours.
+      </p>
+    ),
   },
   {
     id: "liability",
     title: "Limits of responsibility",
     body: (
       <p>
-        We work hard to keep Levlofit accurate and available, but we provide it as it is, without guarantees. To the extent the law allows, Levlofit is not
-        responsible for injury, loss or damage arising from how you use the guidance. Nothing here limits rights you have under Indian consumer law.
+        We work hard to keep Levlofit accurate and available, but we provide it as it is and as available, without guarantees that it is error-free or
+        always online. You choose how hard to train and what to eat; listen to your body. To the extent the law allows, Levlofit is not responsible for
+        injury, loss or damage arising from how you use the guidance. Nothing here limits rights you have under Indian consumer law, or responsibility that
+        the law does not allow us to limit.
       </p>
     ),
   },
@@ -102,7 +130,7 @@ const sections: LegalSection[] = [
   {
     id: "law",
     title: "Law",
-    body: <p>These terms are governed by the laws of India.</p>,
+    body: <p>These terms are governed by the laws of India. Please write to us first; most problems are fixed faster that way.</p>,
   },
   {
     id: "changes",
@@ -112,5 +140,5 @@ const sections: LegalSection[] = [
 ];
 
 export default function Terms() {
-  return <LegalPage eyebrow="Terms" title="Terms and conditions" intro="The rules for using Levlofit, in plain words." updated="29 September 2026" sections={sections} />;
+  return <LegalPage eyebrow="Terms" title="Terms and conditions" intro="The rules for using Levlofit, in plain words." updated="28 October 2026" sections={sections} />;
 }
