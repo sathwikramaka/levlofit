@@ -17,7 +17,8 @@ const _profiles = <_Profile>[
   (label: 'F30', kcal: 1450.0, protein: 110.0, tier: 1, excluded: _veg, passing: 0),
   (label: 'M35', kcal: 2040.0, protein: 170.0, tier: 1, excluded: {'beef', 'dairy', 'egg', 'fish', 'honey', 'meat', 'pork', 'poultry', 'shellfish'}, passing: 0),
   (label: 'M20', kcal: 2540.0, protein: 104.0, tier: 3, excluded: {'beef', 'fish', 'meat', 'pork', 'poultry', 'shellfish'}, passing: 7),
-  (label: 'F45', kcal: 1760.0, protein: 140.0, tier: 2, excluded: {'beef', 'dairy', 'fish', 'meat', 'pork', 'poultry', 'shellfish'}, passing: 7),
+  (label: 'F45', kcal: 1760.0, protein: 130.0, // 140 g no longer fits real minimum portions (2026-10-28)
+    tier: 2, excluded: {'beef', 'dairy', 'fish', 'meat', 'pork', 'poultry', 'shellfish'}, passing: 7),
   (label: 'M28', kcal: 2260.0, protein: 96.0, tier: 1, excluded: _veg, passing: 7),
 ];
 
@@ -170,7 +171,7 @@ void main() {
       {'beef', 'pork', 'meat', 'poultry', 'fish', 'shellfish'},
       {'beef', 'pork', 'meat', 'poultry', 'fish', 'shellfish', 'egg'},
     ]) {
-      final week = planWeek((foods: foodsForTest, kcal: 2290.0, protein: 144.0, excluded: excluded, custom: const <String>[], tier: 2, soyaCapG: 50.0, proteinPowder: false, region: null));
+      final week = planWeek((foods: foodsForTest, kcal: 2290.0, protein: 125.0, excluded: excluded, custom: const <String>[], tier: 2, soyaCapG: 50.0, proteinPowder: false, region: null));
       for (final d in week) {
         expect(d.check.fatEnergyShare, lessThanOrEqualTo(0.32), reason: excluded.contains('egg') ? 'vegetarian' : 'eggitarian');
         expect(d.check.proteinShare, greaterThanOrEqualTo(minProteinShare));

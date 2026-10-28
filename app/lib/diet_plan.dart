@@ -115,8 +115,9 @@ Map<String, Food> withDishes(Map<String, Food> foods) => {
           ),
     };
 
-/// Most a single portion of a food should reach in one meal, so the solver never asks for a bowl of peanuts.
-const _maxPortion = {'H012': 40.0, 'B002': 80.0, 'B021': 90.0, 'B010': 90.0, 'B013': 90.0, 'B020': 90.0, 'L003': 150.0, 'M004': 200.0, 'N003': 220.0, 'S006': 220.0};
+/// Most a single portion of a food should reach in one meal, so the solver never asks for a bowl of peanuts; dals,
+/// rajma and chana stop at 2 katoris a meal.
+const _maxPortion = {'H012': 40.0, 'B002': 70.0, 'B021': 60.0, 'B010': 60.0, 'B013': 60.0, 'B020': 70.0, 'L003': 100.0, 'M004': 150.0, 'N003': 220.0, 'S006': 220.0};
 
 /// Planner food -> its USDA FoodData Central row (CC0; data/fdc/planner_map.csv, built by data/build_foods_fdc.py into
 /// 20261025200000_foods_usda_fdc.sql; a test keeps the two in step). The planner uses these first. A food without a
@@ -175,8 +176,8 @@ final _meals = <(String, String, List<_Slot>, double)>[
     _s(['E012', 'E049', 'E028', 'E001'], 120, 120, 120, _Scale.fixed, floor: 120),
   ], 0.2),
   ('Lunch', '1 pm', [
-    _s(['A015'], 60, 40, 150, _Scale.energy, floor: 20),
-    _s(['A019', 'A005'], 40, 30, 120, _Scale.energy, floor: 20),
+    // One grain at lunch, rice or roti or bhakri, as the region eats it (owner request 2026-10-28: not both).
+    _s(['A015', 'A019', 'A005'], 100, 50, 200, _Scale.energy, floor: 20),
     _s(['B021', 'B010', 'B013', 'B020', 'B002'], 40, 30, 90, _Scale.protein),
     _s(['D036', 'D056', 'C015', 'F002', 'C033'], 150, 150, 150, _Scale.fixed),
     _s(['D043'], 100, 100, 100, _Scale.fixed),
@@ -187,7 +188,7 @@ final _meals = <(String, String, List<_Slot>, double)>[
     _s(['L002'], 200, 200, 200, _Scale.fixed, step: 200, floor: 0), // a glass of milk or chaas for those who take dairy; left out, never halved, on a tight day
   ], 0.0),
   ('Dinner', '8 pm', [
-    _s(['A019', 'A005', 'A003'], 60, 30, 150, _Scale.energy, floor: 20),
+    _s(['A019', 'A005', 'A003'], 60, 30, 180, _Scale.energy, floor: 20),
     _s(['N003', 'S006', 'L003', 'M004', 'X001', 'B020', 'B013'], 100, 25, 220, _Scale.protein, prefer: 4),
     _s(['C033', 'D076', 'C015', 'D036', 'D056'], 150, 150, 150, _Scale.fixed),
     // Used only when the day is still short of protein: the densest food the person can eat, within its caps, as a
@@ -308,7 +309,26 @@ PlanItem _item(Food f, double g) {
 typedef _Pick = (int, _Slot, Food); // meal index, slot, food
 
 /// One whole boiled egg is counted as 50 g (a Levlofit kitchen convention), so egg portions move in whole eggs.
-double _stepFor(String code, _Slot s) => code == 'M004' ? 50 : (_wholePieces.contains(code) ? _servings[code]!.$1 : s.step);
+double _stepFor(String code, _Slot s) => code == 'M004' ? 50 : (_wholePieces.contains(code) ? _servings[code]!.$1 : (_stepOf[code] ?? s.step));
+
+/// Kitchen steps for foods measured by the cup or katori: half a cup of rice, half a katori of dal.
+const _stepOf = {'A015': 25.0, 'B021': 15.0, 'B010': 15.0, 'B013': 15.0, 'B020': 17.5, 'B002': 17.5, 'dish:poha': 30.0, 'dish:upma': 25.0, 'dish:vermicelli': 25.0, 'dish:sprouts': 20.0};
+
+/// The smallest portion a plate shows of a food (owner request 2026-10-28: nobody eats 20 g of rice): one cup of
+/// rice, two rotis or bhakris, one katori of dal, a plate of poha, two idlis, 50 g paneer, 75 g chicken or fish. Slots that start empty
+/// (floor 0) may still leave the food out altogether.
+const _minServing = {
+  'A015': 50.0, 'A019': 60.0, 'A005': 80.0, 'A003': 80.0, 'B021': 30.0, 'B010': 30.0, 'B013': 30.0, 'B020': 35.0, 'B002': 35.0, 'H012': 20.0,
+  'dish:poha': 60.0, 'dish:upma': 50.0, 'dish:vermicelli': 50.0, 'dish:idli': 30.0, 'dish:sprouts': 40.0,
+  'L003': 50.0, 'N003': 75.0, 'S006': 75.0,
+};
+
+/// Lowest portion of [code] in slot [s]: the slot's floor, raised to the food's smallest real serving, on its steps.
+double _floorFor(String code, _Slot s) {
+  if (s.floor <= 0) return 0;
+  final step = _stepFor(code, s);
+  return (math.max(s.floor, _minServing[code] ?? 0) / step).ceil() * step;
+}
 
 /// Foods served as whole pieces (rotis, bhakris, idlis, dosas, chillas, theplas): portions move one piece at a time,
 /// so a plan never says "½ roti".
@@ -353,7 +373,7 @@ List<_Layer> _layers(Map<String, Food> foods, bool Function(String) ok, double s
                 for (final code in slot.codes.where(ok))
                   // Soya starts at one step: when the day limit is split between slots, a shown portion can sit
                   // below the slot floor, and every portion the planner can show must be in the search.
-                  for (var g = slot.floor <= 0 ? 0.0 : (code == 'X001' ? 5.0 : (slot.floor / _stepFor(code, slot)).ceil() * _stepFor(code, slot));
+                  for (var g = slot.floor <= 0 ? 0.0 : (code == 'X001' ? 5.0 : _floorFor(code, slot));
                       g <= _capFor(code, slot) + 1e-9 && (code != 'X001' || g <= soyaCapG + 1e-9);
                       g += _stepFor(code, slot))
                     (foods[code]!, g),
@@ -591,7 +611,7 @@ DayPlan planDay({
         final f = (1 + (protein - totalProtein()) / fromP).clamp(0.5, 2.0);
         for (final i in pIdx) {
           final hi = picks[i].$3.code == 'X001' ? math.min(picks[i].$2.max, soyaShare) : maxFor(i);
-          grams[i] = (grams[i] * f).clamp(math.min(picks[i].$2.min, hi), hi);
+          grams[i] = (grams[i] * f).clamp(math.min(math.max(picks[i].$2.min, _floorFor(picks[i].$3.code, picks[i].$2)), hi), hi);
         }
       }
       final eIdx = [for (final (i, p) in picks.indexed) if (p.$2.scale == _Scale.energy) i];
@@ -599,7 +619,7 @@ DayPlan planDay({
       if (fromE > 0) {
         final f = (1 + (kcal - totalKcal()) / fromE).clamp(0.5, 2.0);
         for (final i in eIdx) {
-          grams[i] = (grams[i] * f).clamp(picks[i].$2.min, picks[i].$2.max);
+          grams[i] = (grams[i] * f).clamp(math.max(picks[i].$2.min, _floorFor(picks[i].$3.code, picks[i].$2)), picks[i].$2.max);
         }
       }
     }
@@ -619,7 +639,7 @@ DayPlan planDay({
     }
 
     double stepOf(int i) => _stepFor(picks[i].$3.code, picks[i].$2);
-    bool canTrim(int i) => grams[i] - stepOf(i) >= picks[i].$2.floor - 1e-9;
+    bool canTrim(int i) => grams[i] - stepOf(i) >= (picks[i].$3.code == 'X001' ? picks[i].$2.floor : _floorFor(picks[i].$3.code, picks[i].$2)) - 1e-9;
     double d(int i) => density(picks[i].$3);
     var moves = 3000; // hard bound: the loops always end; reaching it is reported in the check
     for (var pass = 0; pass < 4 && moves > 0; pass++) {
@@ -924,6 +944,35 @@ String exactLabel(PlanItem i) => i.unit == 'scoop'
       'dry' => '${i.grams.round()} g dry ${i.name.replaceAll(RegExp(r'\s*\(.*\)'), '').toLowerCase()}',
       _ => '${i.grams.round()} g',
     };
+
+/// What a plate item is for, shown as a small label: grain, dal, protein, vegetable, salad, fruit, dairy, snack, shake.
+String itemRole(PlanItem i) => switch (i.code) {
+      _ when i.unit == 'scoop' => 'SHAKE',
+      _ when i.code.startsWith('dish:') => i.code == 'dish:sprouts' ? 'PROTEIN' : 'BREAKFAST DISH',
+      'A015' || 'A019' || 'A005' || 'A003' || 'A010' || 'A011' => 'GRAIN',
+      'B021' || 'B010' || 'B013' || 'B020' || 'B002' => 'DAL',
+      'X001' || 'L003' || 'N003' || 'S006' || 'M004' => 'PROTEIN',
+      'D043' || 'D076' => 'SALAD',
+      'L002' => 'DAIRY',
+      'H012' => 'SNACK',
+      'T012' || 'T006' => 'OIL',
+      _ when i.code.startsWith('E') => 'FRUIT',
+      _ => 'VEGETABLE',
+    };
+
+/// A meal named as a plate, oil and drinks left out: "Roti + Rajma + Carrot sabzi + Cucumber salad".
+String mealTitle(PlanMeal m) {
+  String name(PlanItem i) {
+    final d = _dishes[i.code];
+    if (d != null) return d.$1;
+    if (i.unit == 'scoop') return 'Protein shake';
+    final one = _servings[i.code]?.$2 ?? i.name.toLowerCase();
+    final bare = one.replaceFirst(RegExp(r'^(katori|bowl|cup cooked|glass|plate|boiled) '), '');
+    return bare[0].toUpperCase() + bare.substring(1);
+  }
+
+  return m.items.where((i) => i.unit != 'oil').map(name).toSet().join(' + ');
+}
 
 /// One line for the whole meal, oil left out: "2 rotis + 1 katori moong dal + 1 katori palak sabzi".
 String mealSummary(PlanMeal m) => m.items.where((i) => i.unit != 'oil').map(servingLabel).join(' + ');

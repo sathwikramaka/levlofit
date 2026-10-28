@@ -23,7 +23,8 @@ const _profiles = <_Profile>[
   (label: 'F30 cut, vegetarian, sedentary, low budget', kcal: 1450.0, protein: 110.0, tier: 1, excluded: _veg, mustPass: false),
   (label: 'M35 cut, vegan, low budget', kcal: 2040.0, protein: 170.0, tier: 1, excluded: _vegan, mustPass: false),
   (label: 'M20 bulk, eggitarian, high budget', kcal: 2540.0, protein: 104.0, tier: 3, excluded: {'beef', 'fish', 'meat', 'pork', 'poultry', 'shellfish'}, mustPass: true),
-  (label: 'F45 recomp, eggitarian, lactose-free, mid budget', kcal: 1760.0, protein: 140.0, tier: 2, excluded: _eggNoDairy, mustPass: true),
+  // Misses since real minimum portions (2026-10-28: two rotis, a cup of rice, a katori of dal): about 125 g fits (eggs up to 3 and paneer up to 100 g a meal).
+  (label: 'F45 recomp, eggitarian, lactose-free, mid budget', kcal: 1760.0, protein: 140.0, tier: 2, excluded: _eggNoDairy, mustPass: false),
   (label: 'M28 bulk, vegetarian, low budget', kcal: 2260.0, protein: 96.0, tier: 1, excluded: _veg, mustPass: true),
 ];
 
@@ -55,11 +56,11 @@ typedef _TSlot = (List<String> codes, double floor, double base, double max, boo
 const _templates = <_TSlot>[
   (['dish:poha', 'dish:idli', 'dish:besan-chilla', 'dish:upma', 'dish:dosa', 'dish:moong-chilla', 'dish:thepla', 'dish:ragi-dosa', 'dish:vermicelli'], 20, 60, 150, false),
   (['M004', 'L003'], 0, 0, 150, false), (['L002'], 200, 200, 200, true), (['E012', 'E049', 'E028', 'E001'], 120, 120, 120, true),
-  (['A015'], 20, 60, 150, false), (['A019', 'A005'], 20, 40, 120, false), (['B021', 'B010', 'B013', 'B020', 'B002'], 30, 40, 90, false), (['D036', 'D056', 'C015', 'F002', 'C033'], 150, 150, 150, true), (['D043'], 100, 100, 100, true),
+  (['A015', 'A019', 'A005'], 20, 100, 200, false), (['B021', 'B010', 'B013', 'B020', 'B002'], 30, 40, 90, false), (['D036', 'D056', 'C015', 'F002', 'C033'], 150, 150, 150, true), (['D043'], 100, 100, 100, true),
   (['dish:sprouts', 'B002', 'H012'], 20, 30, 60, false), (['E028', 'E047', 'E012', 'E049'], 120, 120, 120, true), (['L002'], 0, 200, 200, true), (['M004', 'X001', 'L003', 'B013', 'B010', 'B021'], 0, 0, 100, false),
-  (['A019', 'A005', 'A003'], 20, 60, 150, false), (['N003', 'S006', 'L003', 'M004', 'X001', 'B020', 'B013'], 25, 100, 220, false), (['C033', 'D076', 'C015', 'D036', 'D056'], 150, 150, 150, true),
+  (['A019', 'A005', 'A003'], 20, 60, 180, false), (['N003', 'S006', 'L003', 'M004', 'X001', 'B020', 'B013'], 25, 100, 220, false), (['C033', 'D076', 'C015', 'D036', 'D056'], 150, 150, 150, true),
 ];
-const _foodCap = {'H012': 40.0, 'B002': 80.0, 'B021': 90.0, 'B010': 90.0, 'B013': 90.0, 'B020': 90.0, 'L003': 150.0, 'M004': 200.0, 'N003': 220.0, 'S006': 220.0};
+const _foodCap = {'H012': 40.0, 'B002': 70.0, 'B021': 60.0, 'B010': 60.0, 'B013': 60.0, 'B020': 70.0, 'L003': 100.0, 'M004': 150.0, 'N003': 220.0, 'S006': 220.0};
 
 double _oilKcalShown(double kcal) {
   final g = (27 * kcal / 2000).clamp(20.0, 30.0).roundToDouble();
@@ -183,7 +184,7 @@ void main() {
   }
 
   test('F45 regression: a template day meets the targets, so it is no longer reported as impossible', () {
-    const kcal = 1760.0, protein = 140.0;
+    const kcal = 1760.0, protein = 130.0; // 140 before real minimum portions (2026-10-28)
     // Independent evidence that the targets are reachable within the templates.
     expect(dualBound(kcal: kcal, tier: 2, excluded: _eggNoDairy), greaterThanOrEqualTo(protein * minProteinShare));
     for (var day = 0; day < 7; day++) {
@@ -204,7 +205,7 @@ void main() {
 
   group('variety search falls back safely', () {
     // F45 settings with a smaller food list: the only dals are moong, masoor and kala chana. The weekday rotation
-    // picks the lunch dal as pool[(day + slot 2 + meal 1) % 3] (the planner's rotation rule, mirrored here).
+    // picks the lunch dal as pool[(day + slot 1 + meal 1) % 3] (the planner's rotation rule, mirrored here).
     // Variety attempts always keep that weekday dal, so a day showing another dal came from the full search.
     final foods = {...foodsForTest}..remove('B021')..remove('B020')..removeWhere((k, _) => k.startsWith('dish:')); // the pre-dish list
     const dalPool = ['B010', 'B013', 'B002'];
@@ -213,7 +214,7 @@ void main() {
     test('when no varied day passes, the passing full-search day is returned', () {
       var fallbacks = 0;
       for (var day = 0; day < 7; day++) {
-        final d = planDay(foods: foods, kcal: 1760, protein: 138, excluded: _eggNoDairy, tier: 2, day: day);
+        final d = planDay(foods: foods, kcal: 1760, protein: 129, excluded: _eggNoDairy, tier: 2, day: day);
         expect(d.check.feasible, isTrue, reason: 'day $day: ${d.check.issues}');
         // Independently recomputed from the food table.
         var k = 0.0, pr = 0.0;
@@ -225,12 +226,12 @@ void main() {
           expect(foods.containsKey(i.code), isTrue, reason: 'day $day uses ${i.name}, which is not in the food list');
         }
         expect((k - 1760).abs() / 1760, lessThanOrEqualTo(kcalTolerance), reason: 'day $day energy $k');
-        expect(pr / 138, greaterThanOrEqualTo(minProteinShare), reason: 'day $day protein $pr');
-        if (dalOf(d) != dalPool[(day + 3) % 3]) {
+        expect(pr / 129, greaterThanOrEqualTo(minProteinShare), reason: 'day $day protein $pr');
+        if (dalOf(d) != dalPool[(day + 2) % 3]) {
           fallbacks++;
           expect(d.check.proteinCeiling, isNotNull, reason: 'day $day: only the full search shows another dal');
         }
-        final again = planDay(foods: foods, kcal: 1760, protein: 138, excluded: _eggNoDairy, tier: 2, day: day);
+        final again = planDay(foods: foods, kcal: 1760, protein: 129, excluded: _eggNoDairy, tier: 2, day: day);
         expect(_items(again).map((i) => '${i.code}:${i.grams}').join(','), _items(d).map((i) => '${i.code}:${i.grams}').join(','));
       }
       expect(fallbacks, greaterThan(0), reason: 'this profile should exercise the fallback');
@@ -238,10 +239,10 @@ void main() {
 
     test('when no day passes at all, the miss is reported honestly', () {
       for (var day = 0; day < 7; day++) {
-        final d = planDay(foods: foods, kcal: 1760, protein: 146, excluded: _eggNoDairy, tier: 2, day: day);
+        final d = planDay(foods: foods, kcal: 1760, protein: 132, excluded: _eggNoDairy, tier: 2, day: day);
         expect(d.check.feasible, isFalse, reason: 'day $day');
         expect(d.check.issues.first, startsWith('Protein:'));
-        expect(d.check.proteinCeiling!, lessThan(146 * minProteinShare));
+        expect(d.check.proteinCeiling!, lessThan(132 * minProteinShare));
         expect(d.check.proteinCeiling!, lessThanOrEqualTo(dualBound(kcal: 1760, tier: 2, excluded: _eggNoDairy) + 2));
         for (final i in _items(d)) {
           expect(foodsForTest[i.code]!.tags.any(_eggNoDairy.contains), isFalse, reason: 'day $day ${i.name}');
@@ -274,7 +275,7 @@ void main() {
   });
 
   test('F45 week varies across days while every day passes and respects every setting', () {
-    const kcal = 1760.0, protein = 140.0;
+    const kcal = 1760.0, protein = 130.0;
     final week = planWeek((foods: foodsForTest, kcal: kcal, protein: protein, excluded: _eggNoDairy, custom: const [], tier: 2, soyaCapG: 50, proteinPowder: false, region: null));
     final distinct = <String>{}, dals = <String>{}, staples = <String>{};
     for (final (day, d) in week.indexed) {
