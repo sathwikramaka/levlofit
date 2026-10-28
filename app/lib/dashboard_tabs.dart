@@ -1763,7 +1763,7 @@ class _AppSettingsScreen extends StatelessWidget {
         ]),
         _section(context, 'ABOUT', [
           _row(context, LvIcons.sparkle, 'Levlofit 1.0', () => showLicensePage(context: context, applicationName: 'Levlofit', applicationVersion: '1.0.0', applicationLegalese: '© 2026 Levlofit. All rights reserved.'
-              '\nTerms: levlofit.pages.dev/terms  ·  Credits: levlofit.pages.dev/licences'), trailing: 'Licences'),
+              '\nTerms: levlofit.pages.dev/terms  ·  Credits: levlofit.pages.dev/#licences'), trailing: 'Licences'),
         ]),
         FoodCredit(lead: '$exerciseMediaCredit. ', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ],

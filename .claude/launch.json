@@ -4,20 +4,45 @@
     {
       "name": "levlo-web",
       "runtimeExecutable": "python",
-      "runtimeArgs": [".claude/serve_web.py"],
+      "runtimeArgs": [
+        ".claude/serve_web.py"
+      ],
       "port": 8090
     },
     {
       "name": "levlofit-site",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "website", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "website",
+        "run",
+        "dev"
+      ],
       "port": 3000
     },
     {
       "name": "media-review",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8095", "--directory", "media"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8095",
+        "--directory",
+        "media"
+      ],
       "port": 8095
+    },
+    {
+      "name": "levlofit-out",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8097",
+        "--directory",
+        "website/out"
+      ],
+      "port": 8097
     }
   ]
 }

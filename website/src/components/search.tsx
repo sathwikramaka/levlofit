@@ -19,7 +19,7 @@ const INDEX: Entry[] = [
   { title: "Allergies and intolerances", hint: "FAQ", href: "/#faq", words: "lactose gluten peanut" },
   { title: "Privacy policy", hint: "Legal", href: "/privacy", words: "data personal information dpdp groq supabase delete" },
   { title: "Terms and conditions", hint: "Legal", href: "/terms", words: "rules use medical liability" },
-  { title: "Licences and credits", hint: "Legal", href: "/licences", words: "licence license copyright credits open source exercisedb usda fonts" },
+  { title: "Licences and credits", hint: "Legal", href: "/#licences", words: "licence license copyright credits open source exercisedb usda fonts" },
   { title: "Contact us", hint: "Help", href: "#contact", words: "email message support help" },
 ];
 

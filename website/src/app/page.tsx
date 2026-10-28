@@ -1,4 +1,4 @@
-import { DownloadButton, DownloadSection } from "@/components/download";
+import { DownloadButton, DownloadSection, webAppUrl } from "@/components/download";
 import { Vial } from "@/components/vial";
 import { Wordmark } from "@/components/wordmark";
 
@@ -129,7 +129,12 @@ const faqs = [
     "Is the download safe?",
     "It comes only from this website, signed with Levlofit's own key. Android installs updates only when they carry the same signature, and the SHA-256 checksum next to the button lets you check the file.",
   ],
-  ["Does it work on iPhone?", "Not yet. Levlofit is Android only for now."],
+  [
+    "Does it work on iPhone?",
+    webAppUrl
+      ? "Yes. iPhones cannot install Android apps, so on iPhone you open Levlofit in Safari and add it to your Home Screen. Same account, plans and data. Reminders while the app is closed and step counts are Android only for now."
+      : "Not yet. Levlofit is Android only for now.",
+  ],
 ];
 
 export default function Home() {
