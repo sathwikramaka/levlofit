@@ -1,0 +1,66 @@
+# Daily encrypted backup of the production database (Supabase free plan has no daily backups).
+# Same dumps as tools/backup_prod.sh, so docs/BACKUP_RECOVERY_PLAN.md restores either. Storage files (progress photos)
+# are not included; tools/backup_prod.sh still covers them before each release.
+#
+# Repository secrets (Settings > Secrets and variables > Actions):
+#   SUPABASE_DB_URL     Supabase > Connect > Session pooler URI, with the database password filled in
+#   BACKUP_PASSPHRASE   long random passphrase; keep a copy offline, a lost passphrase means unreadable backups
+#
+# Output: one gpg (AES-256) file per day as a workflow artifact, private to the repo, deleted after 30 days.
+# Decrypt: gpg --decrypt levlofit-db-<stamp>.tar.gz.gpg > db.tar.gz
+name: Daily database backup
+
+on:
+  schedule:
+    - cron: "30 20 * * *" # 02:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.118.0
+
+      - name: Dump and encrypt
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          [ -n "$DB_URL" ] && [ -n "$PASSPHRASE" ] || { echo "Set SUPABASE_DB_URL and BACKUP_PASSPHRASE secrets."; exit 1; }
+          umask 077
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          dir="levlofit-db-$stamp"
+          mkdir "$dir"
+          dump() { f=$1; shift; supabase db dump --db-url "$DB_URL" -f "$dir/$f" "$@" >/dev/null 2>&1 || { echo "FAIL $f"; exit 1; }; [ -s "$dir/$f" ] || { echo "EMPTY $f"; exit 1; }; echo "OK $f $(wc -c < "$dir/$f") bytes"; }
+          dump roles.sql --role-only
+          dump schema.sql
+          dump data.sql --data-only --use-copy
+          dump platform_schema.sql --schema auth,storage,supabase_functions,supabase_migrations
+          dump migration_history.sql --data-only --use-copy --schema supabase_migrations
+          tar -czf "$dir.tar.gz" "$dir"
+          rm -rf "$dir"
+          printf '%s' "$PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 -o "$dir.tar.gz.gpg" "$dir.tar.gz"
+          rm -f "$dir.tar.gz"
+          # Round trip: the artifact must decrypt with the same passphrase.
+          printf '%s' "$PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 -d "$dir.tar.gz.gpg" | tar -tz > /dev/null
+          sha256sum "$dir.tar.gz.gpg" | tee "$dir.tar.gz.gpg.sha256"
+          echo "NAME=$dir" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NAME }}
+          path: ${{ env.NAME }}.tar.gz.gpg*
+          retention-days: 30
+          if-no-files-found: error
