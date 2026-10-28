@@ -2,6 +2,18 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-10-29: release 1.0.1 (owner-approved: migrations, functions, APK, website)
+
+| What | Value | How checked |
+|---|---|---|
+| Backup before changes | db-backup run 40777558939: 5 dumps, AES-256, decrypt round trip OK | GitHub Actions log |
+| Migrations | 20261029600000_mixed_regions, 20261029700000_packaged_foods applied with apply_migration; preflight: no multi-region values, 0 food_log rows without food_code | Read-only preflight; schema fingerprint after = local stack (colgrant 523 2949448d1566, column 274 8f4ad631d3a6, constraint 201 1f6f1a812d91, function 15 8ff793963657, index 65, policy 38 43717f6f6703, trigger 11) |
+| Android APK | com.levlofit.app 1.0.1, versionCode 2003, 13.0 MB (native libraries now compressed: Cloudflare Pages refuses files over 25 MiB), same release certificate 7c510c35...4c431384, not debuggable, allowBackup false; permissions add CAMERA (barcode scan only), no microphone or storage | aapt2, apksigner |
+| APK SHA-256 | 52c849f4dfd429e0c841601b4e5b076f075086b46c47b9d920668a977bc1ce06, equal on the live download and the site | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 083cc000 (branch main): /, /handbook (43 chapters), /privacy, /terms, /delete-account, /app/, /version.json = 1.0.1 build 3; report-only CSP served, no violations on the home page; search opens Handbook chapters | curl and browser |
+| Edge Functions | Not yet deployed: the Supabase CLI here is not logged in, and the connector would need ~400 KB of source pasted by hand | |
+| CI | Run 40777242775 on 6b274a9: all 6 jobs green | gh run view |
+
 ## 2026-10-29: state of the live release (read-only checks, owner-approved)
 
 | What | Value | How checked |
