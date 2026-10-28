@@ -11,8 +11,21 @@
 // falling back to self-reported experience. Without the basics in the main goal (Level 0 or 1) the plan is a
 // foundation phase: only the main goal, plus the WHO strength minimum. Extra goals unlock one at a time as the
 // main goal climbs (Level 2 unlocks one, Level 3 a second); anything beyond waits, with the reason shown.
+//
+// 3.2: medical hold. Any health-screen flag other than pregnancy means light activity until a doctor clears the person
+// (ACSM screen): every goal trains at Level 1 or below, a cut or bulk becomes maintenance, and plan.medicalHold tells the
+// app to use the lighter session dose. Before 3.2 the flag only added a finding and the plan trained as normal.
+//
+// 3.3: Build my plate health conditions come from the account (dietary_profiles.health_conditions). Pregnancy there
+// applies the pregnancy rule; kidney disease removes the creatine suggestion and adds a see-your-doctor note.
+//
+// 3.4: the weekdays and time of day the person can train (profiles.training_days, training_time). Chosen weekdays cap
+// the training days; both are copied to plan.schedule, where the app's week view places the sessions.
+//
+// 3.5: the energy working is stored, not only the result: estimated maintenance (TDEE), the activity factor and what
+// set it, the goal factor and any safety floor. The app shows them; Levlofit AI quotes them and never recalculates.
 
-export const ENGINE_VERSION = '3.1.0';
+export const ENGINE_VERSION = '3.5.0';
 export const MAX_GOALS = 6; // one primary + up to five optional extras
 
 // Goals live in the goal_catalog table; generate-plan passes each goal's kind and coach rule in.
@@ -29,6 +42,12 @@ export type Pace = (typeof PACES)[number];
 export const EQUIPMENT = ['none', 'home', 'gym', 'custom'] as const;
 export const HEALTH_FLAGS = ['heart_condition', 'chest_pain', 'dizziness', 'pregnancy', 'other_medical'] as const;
 export const SUPPLEMENTS = ['protein_powder', 'creatine'] as const;
+// Build my plate health conditions (dietary_profiles.health_conditions, 3.3). Only kidney and pregnancy change the plan;
+// the rest show a see-your-doctor note in the app.
+export const CONDITIONS = ['diabetes', 'pcos', 'thyroid', 'hypertension', 'cholesterol', 'kidney', 'ibs', 'pregnancy'] as const;
+export type Condition = (typeof CONDITIONS)[number];
+export const TRAINING_TIMES = ['early_morning', 'morning', 'midday', 'evening', 'night', 'varies'] as const;
+export type TrainingTime = (typeof TRAINING_TIMES)[number];
 
 export type Experience = (typeof EXPERIENCE)[number];
 export type Diet = (typeof DIETS)[number];
@@ -73,6 +92,9 @@ export interface PlanInput {
   equipmentItems?: string[];
   supplements?: Supplement[]; // what the user is willing to use
   pace?: Pace; // how far a cut or bulk moves from maintenance (balanced when absent)
+  conditions?: Condition[]; // Build my plate health conditions (3.3)
+  trainingDays?: number[]; // weekdays the person can train, 1 = Monday (3.4); absent or empty = any day
+  trainingTime?: TrainingTime; // when they usually can train (3.4)
 }
 
 export type FindingLevel = 'stop' | 'change' | 'advice' | 'info';
@@ -110,6 +132,8 @@ export interface Plan {
   chosenWeightGoal: WeightGoal; // what the user picked
   weightGoal: WeightGoal; // what the plan uses after review
   phase: { id: 'foundation' | 'build'; title: string; why: string; source: string };
+  medicalHold: boolean; // a medical flag: light training only (Level 1 or below, lighter dose) until a doctor clears it
+  schedule: { preferredDays: number[]; trainingTime: TrainingTime }; // 3.4: where the app's week view puts sessions
   review: Finding[];
   snapshot: {
     bmi: { value: number; category: 'underweight' | 'normal' | 'overweight' | 'obese' };
@@ -125,7 +149,15 @@ export interface Plan {
   activityGuideline: { moderateMinutesPerWeek: [number, number] };
   nutrition: {
     bmrKcal: number;
-    energyKcal: number;
+    energyKcal: number; // the goal-adjusted daily target
+    // 3.5: how energyKcal was reached. maintenanceKcal = BMR x activity.factor (estimated TDEE); energyKcal =
+    // maintenance x goalFactor, raised to a floor when floor is set. All rounded to 10 kcal like energyKcal.
+    energy: {
+      maintenanceKcal: number;
+      activity: { factor: number; from: 'training_days' | 'daily_activity'; trainingDaysPerWeek: number; dailyActivity: Activity | null };
+      goalFactor: number; // 0.8-0.9 cut, 1.05-1.15 bulk, 1.0 otherwise
+      floor: 'bmr' | 'cut_minimum' | null; // which safety floor raised the target, if any
+    };
     proteinPerKg: number;
     proteinG: number;
     maxSoyaChunksDryG: number;
@@ -177,6 +209,32 @@ const ACTIVITY_FACTOR: Record<Activity, number> = { sedentary: 1.2, light: 1.375
 // 100:60-67) found no effect of soy or isoflavones on male reproductive hormones; it covers men only and sets no
 // intake limit, so it is not the source of this cap.
 const MAX_SOYA_CHUNKS_DRY_G = 50;
+
+// Words people type in "anything else to avoid" that name a whole food group (owner report 2026-10-29: "milk" typed
+// there still let paneer and whey through). Each becomes the group's tag, so everything made from it is left out, not
+// only foods whose name contains the word. Allergy or dislike is treated the same: the food is never offered.
+const OTHER_WORD_TAGS: Record<string, string[]> = {
+  milk: ['dairy'], dairy: ['dairy'], lactose: ['dairy'], whey: ['dairy'], paneer: ['dairy'], curd: ['dairy'], dahi: ['dairy'],
+  cheese: ['dairy'], ghee: ['dairy'], casein: ['dairy'],
+  egg: ['egg'], eggs: ['egg'],
+  peanut: ['peanut'], peanuts: ['peanut'], groundnut: ['peanut'], groundnuts: ['peanut'],
+  nut: ['tree_nut'], nuts: ['tree_nut'], 'tree nut': ['tree_nut'], 'tree nuts': ['tree_nut'],
+  soy: ['soy'], soya: ['soy'], tofu: ['soy'],
+  gluten: ['wheat', 'barley', 'rye'], wheat: ['wheat'],
+  fish: ['fish'], prawn: ['shellfish'], prawns: ['shellfish'], shrimp: ['shellfish'], shellfish: ['shellfish'], crab: ['shellfish'],
+  chicken: ['poultry'], mutton: ['meat'], meat: ['meat'],
+};
+
+/** Food-group tags named by the person's own exclusion words ("milk", "no dairy please" -> dairy). */
+export function tagsFromWords(words: string[]): string[] {
+  const out = new Set<string>();
+  for (const w of words) {
+    // Plant milks are not dairy: "coconut milk" must not exclude every dairy food.
+    const text = ` ${w.toLowerCase().replace(/[^a-z ]+/g, ' ').replace(/\b(coconut|soy|soya|almond|oat|rice|cashew|peanut) milk\b/g, ' ')} `;
+    for (const [word, tags] of Object.entries(OTHER_WORD_TAGS)) if (text.includes(` ${word} `)) tags.forEach((t) => out.add(t));
+  }
+  return [...out];
+}
 
 // Product rule for an India-first app: never offered, for any diet.
 const ALWAYS_EXCLUDED = ['beef', 'pork'];
@@ -241,6 +299,11 @@ export function validateInput(raw: unknown): PlanInput {
     return [...new Set((v as string[]).map((o) => o.trim().toLowerCase()))];
   };
 
+  const weekdays = (v: unknown) => {
+    if (!Array.isArray(v) || v.some((d) => !Number.isInteger(d) || d < 1 || d > 7)) throw new Error('trainingDays must be weekdays 1 to 7');
+    return [...new Set(v as number[])].sort((a, b) => a - b);
+  };
+
   const goals = x.goals;
   if (!Array.isArray(goals) || goals.length < 1 || goals.length > MAX_GOALS) throw new Error(`goals must list 1 to ${MAX_GOALS} goals`);
   const seen = new Set<string>();
@@ -294,6 +357,9 @@ export function validateInput(raw: unknown): PlanInput {
     equipmentItems: x.equipmentItems == null ? undefined : textList('equipmentItems', 20, 40),
     supplements: x.supplements == null ? undefined : listOf('supplements', SUPPLEMENTS),
     pace: optOneOf('pace', PACES),
+    conditions: x.conditions == null ? undefined : listOf('conditions', CONDITIONS),
+    trainingDays: x.trainingDays == null ? undefined : weekdays(x.trainingDays),
+    trainingTime: optOneOf('trainingTime', TRAINING_TIMES),
   };
   for (const [k, v] of Object.entries(optional)) if (v !== undefined) (input as unknown as Record<string, unknown>)[k] = v;
   return input;
@@ -318,13 +384,22 @@ export function reviewInput(input: PlanInput): { weightGoal: WeightGoal; finding
   let weightGoal = input.weightGoal;
 
   // Safety first: any symptom or condition on the screen means clearance before hard training.
-  const flags = input.healthFlags ?? [];
+  // Pregnancy picked in Build my plate counts the same as on the health screen (3.3).
+  const flags = [...(input.healthFlags ?? []), ...(input.conditions?.includes('pregnancy') ? ['pregnancy' as const] : [])];
   if (flags.some((f) => f !== 'pregnancy')) {
     findings.push({
       id: 'medical_clearance',
       level: 'stop',
       title: 'Check with a doctor before hard training',
       why: 'You reported a heart condition, chest pain, dizziness or another medical condition. Start with light activity only until a doctor clears you for harder training.',
+      source: SRC.acsmScreen,
+    });
+    if (weightGoal === 'cut' || weightGoal === 'bulk') weightGoal = 'maintain';
+    findings.push({
+      id: 'medical_hold',
+      level: 'change',
+      title: 'Light training until a doctor clears you',
+      why: `Until then every goal trains at Level ${MEDICAL_MAX_LEVEL} or below with the lighter session dose${input.weightGoal === 'cut' || input.weightGoal === 'bulk' ? ', and energy stays at maintenance instead of a cut or bulk' : ''}.`,
       source: SRC.acsmScreen,
     });
   }
@@ -463,6 +538,10 @@ export function levelOf(g: GoalInput): number {
 // Level first: Level 0-1 in the main goal means the basics are not there yet, so only the main goal trains.
 // Curriculum p.2 and ch.29: one main goal plus one or two others, added as the main goal matures.
 const FOUNDATION_MAX_LEVEL = 1;
+// Medical hold (3.2): the highest level any goal trains at until a doctor clears the person; the same cap as the
+// level check with a health flag (assess.ts).
+export const MEDICAL_MAX_LEVEL = 1;
+const hasMedicalFlag = (input: PlanInput) => (input.healthFlags ?? []).some((f) => f !== 'pregnancy');
 const extrasAllowed = (primaryLevel: number) => (primaryLevel <= FOUNDATION_MAX_LEVEL ? 0 : primaryLevel === 2 ? 1 : RECOMMENDED_MAX_GOALS - 1);
 
 function planGoals(input: PlanInput, maxDays: number): GoalPlan[] {
@@ -519,7 +598,9 @@ function planGoals(input: PlanInput, maxDays: number): GoalPlan[] {
 
 function supplementAdvice(input: PlanInput, proteinG: number, excluded: Set<string>): SupplementAdvice[] {
   const willing = input.supplements ?? [];
-  const medical = (input.healthFlags ?? []).length > 0;
+  // Kidney disease (Build my plate, 3.3) rules out creatine: ISSN's safety evidence is for healthy adults.
+  const kidney = input.conditions?.includes('kidney') ?? false;
+  const medical = (input.healthFlags ?? []).length > 0 || kidney || (input.conditions?.includes('pregnancy') ?? false);
   const out: SupplementAdvice[] = [];
   if (willing.includes('creatine') && !medical && input.goals.some((g) => g.kind === 'strength' || g.kind === 'hybrid')) {
     out.push({
@@ -542,16 +623,32 @@ function supplementAdvice(input: PlanInput, proteinG: number, excluded: Set<stri
     out.push({
       name: 'Ask your doctor first',
       how: 'Check any supplement with your doctor before starting.',
-      why: 'You reported a medical condition on the health screen.',
+      why: kidney
+        ? 'You told Build my plate about kidney disease: creatine is not suggested, and your doctor should also check how much protein suits you.'
+        : 'You reported a medical condition on the health screen or in Build my plate.',
       source: SRC.acsmScreen,
     });
   }
   return out;
 }
 
-export function generatePlan(input: PlanInput): Plan {
+export function generatePlan(raw: PlanInput): Plan {
+  const medicalHold = hasMedicalFlag(raw);
+  // Medical hold: every goal trains as if at Level 1 or below, whatever was assessed or self-rated.
+  const input = medicalHold ? { ...raw, goals: raw.goals.map((g) => ({ ...g, currentLevel: Math.min(levelOf(g), MEDICAL_MAX_LEVEL) })) } : raw;
   const { weightGoal, findings } = reviewInput(input);
-  const maxDays = Math.min(MAX_TRAINING_DAYS, input.daysPerWeek ?? MAX_TRAINING_DAYS);
+  // 3.4: chosen weekdays cap the week; a rest day is still kept (MAX_TRAINING_DAYS).
+  const preferredDays = [...new Set(input.trainingDays ?? [])].sort((a, b) => a - b);
+  const maxDays = Math.min(MAX_TRAINING_DAYS, input.daysPerWeek ?? MAX_TRAINING_DAYS, preferredDays.length || MAX_TRAINING_DAYS);
+  if (preferredDays.length && input.daysPerWeek !== undefined && preferredDays.length < input.daysPerWeek) {
+    findings.push({
+      id: 'days_by_weekday',
+      level: 'info',
+      title: `Up to ${preferredDays.length} days, on the weekdays you can train`,
+      why: `You offered ${input.daysPerWeek} days a week but can train on ${preferredDays.length} weekdays, so the plan fits into those.`,
+      source: `${SRC.curriculum}, ch. 8 and 29`,
+    });
+  }
   const goals = planGoals(input, maxDays);
   const goalDays = goals.reduce((s, g) => s + g.sessionsPerWeek, 0);
 
@@ -615,6 +712,7 @@ export function generatePlan(input: PlanInput): Plan {
   // Safety floors: never below estimated BMR; a cut never below the sex floor (capped at maintenance).
   let energy = Math.max(bmr, maintenance * factor);
   if (weightGoal === 'cut') energy = Math.max(energy, Math.min(CUT_FLOOR_KCAL[input.sex], maintenance));
+  const floor = energy === maintenance * factor ? null : energy === bmr ? 'bmr' as const : 'cut_minimum' as const;
 
   const proteinPerKg = Math.min(PROTEIN_RANGE[1], Math.max(PROTEIN_RANGE[0], PROTEIN_PER_KG[weightGoal]));
   const proteinG = Math.round(input.weightKg * proteinPerKg);
@@ -623,6 +721,7 @@ export function generatePlan(input: PlanInput): Plan {
     ...ALWAYS_EXCLUDED,
     ...DIET_EXCLUDES[input.diet],
     ...input.restrictions.flatMap((r) => RESTRICTION_EXCLUDES[r]),
+    ...tagsFromWords(input.otherRestrictions ?? []),
   ]);
 
   const levels = input.goals.map((g) => ({ name: g.name, level: levelOf(g) }));
@@ -633,6 +732,8 @@ export function generatePlan(input: PlanInput): Plan {
     chosenWeightGoal: input.weightGoal,
     weightGoal,
     phase,
+    medicalHold,
+    schedule: { preferredDays, trainingTime: input.trainingTime ?? 'varies' },
     review: findings,
     snapshot: {
       bmi,
@@ -649,6 +750,17 @@ export function generatePlan(input: PlanInput): Plan {
     nutrition: {
       bmrKcal: Math.round(bmr),
       energyKcal: Math.round(energy / 10) * 10,
+      energy: {
+        maintenanceKcal: Math.round(maintenance / 10) * 10,
+        activity: {
+          factor: activity,
+          from: activity === trainingFactor ? 'training_days' : 'daily_activity',
+          trainingDaysPerWeek,
+          dailyActivity: input.dailyActivity ?? null,
+        },
+        goalFactor: factor,
+        floor,
+      },
       proteinPerKg,
       proteinG,
       maxSoyaChunksDryG: excluded.has('soy') ? 0 : MAX_SOYA_CHUNKS_DRY_G,

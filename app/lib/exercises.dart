@@ -864,7 +864,7 @@ class _MuscleExercisesScreenState extends State<MuscleExercisesScreen> {
           .then((rows) => rows.where((r) => _forThisMuscle(widget.muscle, r['name'] as String? ?? '')).toList());
 
   // The catalogue tags both front and rear shoulder moves "deltoids": split them by name.
-  static final _rear = RegExp(r'rear|reverse fly|face pull', caseSensitive: false);
+  static final _rear = RegExp(r'\brear\b|reverse fly|face pull', caseSensitive: false);
   static bool _forThisMuscle(String muscle, String name) => switch (muscle) {
         'Rear shoulders' => _rear.hasMatch(name),
         'Front shoulders' => !_rear.hasMatch(name),

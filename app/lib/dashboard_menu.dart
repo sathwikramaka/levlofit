@@ -299,7 +299,8 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
           const SizedBox(height: 8),
         ],
         const SizedBox(height: 20),
-        Text('THIS WEEK  ·  ${dayGoal.length} DAYS${minutes == null ? '' : '  ·  $minutes MIN'}', style: monoLabel(context)),
+        Text('THIS WEEK  ·  ${dayGoal.length} DAYS${minutes == null ? '' : '  ·  $minutes MIN'}${switch (trainingTimeLabel(plan)) { final l? => '  ·  ${l.toUpperCase()}', _ => '' }}',
+            style: monoLabel(context)),
         const SizedBox(height: 8),
         for (final a in week.addOns)
           Padding(
@@ -383,6 +384,9 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
                           done: done,
                           injury: data.profile['injuries'] as String?,
                           sessionMinutes: minutes,
+                          medicalHold: data.plan['medicalHold'] == true,
+                          kind: g['kind'] as String? ?? 'strength',
+                          gym: data.tier == Tier.gym,
                           onFinish: isToday && !done
                               ? () async {
                                   // An add-on day logs its own length (the block and a warm-up), not the session setting.
@@ -398,13 +402,13 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
                   ),
                 ]),
                 const SizedBox(height: 12),
-                MoveStrip(ids: ids, level: level, tile: 104, injury: data.profile['injuries'] as String?),
+                MoveStrip(ids: ids, level: level, tile: 104, injury: data.profile['injuries'] as String?, lighter: data.plan['medicalHold'] == true),
                 for (final b in blocks) ...[
                   const SizedBox(height: 10),
                   Text(blockSummary(b).toUpperCase(), style: monoLabel(context)),
                   if (b.ids.isNotEmpty) ...[
                     const SizedBox(height: 6),
-                    MoveStrip(ids: b.ids, level: b.level, tile: 80, injury: data.profile['injuries'] as String?),
+                    MoveStrip(ids: b.ids, level: b.level, tile: 80, injury: data.profile['injuries'] as String?, lighter: data.plan['medicalHold'] == true),
                   ],
                 ],
               ]),
@@ -607,20 +611,38 @@ class _DietScreenState extends State<_DietScreen> {
     if (changed == true) widget.onChanged();
   }
 
+  /// Choices made before B2 live only on this phone: copy them to the account once, then forget the phone's copy.
+  /// Kidney disease and pregnancy change the plan (plan engine 3.3), so the plan is rebuilt for them.
+  Future<void> _movePlateToAccount(PlateChoices plate) async {
+    try {
+      await supabase.from('dietary_profiles').update({'health_conditions': plate.conditions, 'whey_scoops': plate.scoops}).eq('user_id', supabase.auth.currentUser!.id);
+      await prefs.remove(_conditionsKey);
+      await prefs.remove(_scoopsKey);
+      if (plate.conditions.any(planConditions.contains)) {
+        await supabase.functions.invoke('generate-plan');
+        widget.onChanged();
+      }
+    } catch (_) {
+      // Best effort: the phone's copy stays and is used until a later move succeeds.
+    }
+  }
+
   Future<void> _fetch() async {
     try {
       final [rows, diet] = await Future.wait<dynamic>([
         supabase.from('foods').select('code, name, tags, kcal, protein_g, carb_g, fat_g, fiber_g').inFilter('code', plannerCodes),
-        supabase.from('dietary_profiles').select('diet_type, diet_pace, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, restrictions, supplements').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
+        supabase.from('dietary_profiles').select('diet_type, diet_pace, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, restrictions, supplements, health_conditions, whey_scoops, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
       ]);
       final tier = diet?['budget_tier'] as String?;
       final hi = diet?['budget_max_inr'] as int?;
       if (!mounted) return;
+      final plate = plateChoices((diet as _Json?) ?? const {}, localConditions: prefs.getStringList(_conditionsKey), localScoops: prefs.getInt(_scoopsKey));
+      if (plate.fromPhone && diet != null) unawaited(_movePlateToAccount(plate));
       setState(() {
         _foods = plannerFoods((rows as List).cast<Map<String, dynamic>>());
         _tier = budgetTier(tier, hi);
         _region = diet?['cuisine_region'] as String?;
-        _choices = Map.of((diet as _Json?) ?? const {});
+        _choices = {...?diet, 'health_conditions': plate.conditions, 'whey_scoops': plate.scoops};
         _budget = tier == 'custom' && hi != null
             ? rupeesAMonth(monthlyFromDaily(hi))
             : budgetOptions.where((o) => o.$1 == tier).firstOrNull?.$2 ?? budgetOptions[1].$2;
@@ -654,7 +676,13 @@ class _DietScreenState extends State<_DietScreen> {
     final supps = ((food['supplements'] as List?) ?? const []).cast<_Json>();
     final excluded = {...(food['excludedFoodTags'] as List).cast<String>()};
     // Whey step of Build my plate (scoops kept on this device): the food is planned around the shakes.
-    final scoops = prefs.getInt(_scoopsKey) ?? 0;
+    final scoops = _choices['whey_scoops'] as int? ?? 0;
+    // Kitchen and mess: meals made at home use only what the equipment and time allow; mess meals are not limited.
+    final have = equipmentOf(_choices['kitchen'] as String?, _choices['kitchen_equipment'] as List?, _choices['kitchen_other'] as String?);
+    final messMeals = ((_choices['mess_meals'] as List?) ?? const []).cast<String>();
+    final cookTime = _choices['cook_time'] as String?;
+    final conditions = ((_choices['health_conditions'] as List?) ?? const []).cast<String>();
+    final powderAdvised = supps.any((x) => x['name'] == 'Protein powder');
     final WeekRequest request = (
       foods: foods,
       kcal: kcal - scoopKcal * scoops,
@@ -665,6 +693,10 @@ class _DietScreenState extends State<_DietScreen> {
       soyaCapG: ((food['maxSoyaChunksDryG'] as num?) ?? 50).toDouble(),
       proteinPowder: supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')),
       region: _region,
+      mealCodes: mealCodes(foods.keys, have: have, cookTime: cookTime, messMeals: messMeals),
+      // Protein powder only when they said they are open to it (the plan's advice lists it), chose no fixed shakes,
+      // the budget is above the lowest band, and they did not tell Build my plate about kidney disease or pregnancy.
+      topUpScoop: powderAdvised && scoops == 0 && _tier >= 2 && !conditions.contains('kidney') && !conditions.contains('pregnancy'),
     );
     final key = weekKey(request);
     final week = _weekCache.get(key);
@@ -678,7 +710,10 @@ class _DietScreenState extends State<_DietScreen> {
       ]);
     }
     final plan = addShake(week[_day], scoops, kcal: kcal, protein: protein, plant: excluded.contains('dairy'));
-    final conditions = prefs.getStringList(_conditionsKey) ?? const <String>[];
+    // A training day (the week view's days, 1 = Monday): mark the pre- and post-workout meals; no food is added.
+    final training = weekPlan(widget.data.plan).days.containsKey(_day + 1)
+        ? workoutDay(plan.meals, (widget.data.plan['schedule'] as _Json?)?['trainingTime'] as String?)
+        : null;
     final short = protein - plan.protein;
     Widget macro(String label, double v, double? target, String unit) => Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -694,6 +729,10 @@ class _DietScreenState extends State<_DietScreen> {
       children: [
         _PlateChoices(choices: _choices, onTap: _openBuilder),
         const SizedBox(height: 12),
+        if (kitchenNote(have, cookTime, messMeals) case final note?) ...[
+          Text(note, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 12),
+        ],
         if (conditions.isNotEmpty) ...[
           _Tile(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -791,8 +830,18 @@ class _DietScreenState extends State<_DietScreen> {
           ),
         ],
         const SizedBox(height: 16),
-        for (final m in plan.meals) ...[
-          _MealCard(meal: m),
+        if (training != null) ...[
+          Text(training.note, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 12),
+        ],
+        for (final (mi, m) in (training?.meals ?? plan.meals).indexed) ...[
+          _MealCard(
+            meal: m,
+            tag: training == null ? null : mi == training.pre ? 'PRE-WORKOUT' : mi == training.post ? 'POST-WORKOUT' : null,
+            fromMess: messMeals.contains(_messKeyOf(m.name)),
+            messExtra: messProteinHint(excluded, ((food['customExclusions'] as List?) ?? const []).cast<String>()),
+            prep: messMeals.contains(_messKeyOf(m.name)) ? null : prepNote(m, have),
+          ),
           const SizedBox(height: 10),
         ],
         if (dayOilGrams(plan) > 0) Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Text(dayOilLabel(plan), style: t.bodyMedium)),
@@ -858,13 +907,34 @@ class _PlateChoices extends StatelessWidget {
   }
 }
 
+// Before B2 these lived only on the phone; now they are read once, moved to dietary_profiles and removed.
 String get _scoopsKey => 'whey_scoops:${supabase.auth.currentUser?.id}';
 String get _conditionsKey => 'plate_conditions:${supabase.auth.currentUser?.id}';
+
+/// Build my plate conditions that change the plan itself (plan engine 3.3); the others only add a doctor note.
+const planConditions = {'kidney', 'pregnancy'};
+
+typedef PlateChoices = ({List<String> conditions, int scoops, bool fromPhone});
+
+/// Build my plate's health conditions and shake scoops: the account's (dietary_profiles, B2) when it has any, else the
+/// ones this phone kept before B2 (fromPhone: they still need moving to the account). Unknown values are dropped,
+/// scoops kept to 0 to 3, as the database allows.
+PlateChoices plateChoices(Map<String, dynamic> account, {List<String>? localConditions, int? localScoops}) {
+  List<String> known(Iterable<Object?> xs) => [for (final x in xs) if (_conditionNames.containsKey(x)) x as String];
+  final conditions = known((account['health_conditions'] as List?) ?? const []);
+  final scoops = (account['whey_scoops'] as int?) ?? 0;
+  final phone = known(localConditions ?? const []);
+  final phoneScoops = (localScoops ?? 0).clamp(0, 3);
+  final useAccount = conditions.isNotEmpty || scoops > 0 || (phone.isEmpty && phoneScoops == 0);
+  return useAccount
+      ? (conditions: conditions, scoops: scoops.clamp(0, 3), fromPhone: false)
+      : (conditions: phone, scoops: phoneScoops, fromPhone: true);
+}
 
 /// Health step of Build my plate. Lactose and gluten change the food list (dietary_profiles.restrictions); the
 /// others are not diets Levlofit can plan without a clinician, so the plan shows a see-your-doctor note instead.
 const _foodConditions = [
-  ('lactose', 'Lactose intolerance', 'Milk and paneer are left out; the protein shake becomes a plant protein'),
+  ('lactose', 'Milk allergy or lactose intolerance', 'No milk, paneer, curd, ghee or whey; a protein shake becomes plant protein'),
   ('gluten', 'Gluten intolerance', 'Wheat is left out: rice, millets, idli and dosa instead'),
 ];
 const _conditionNames = {
@@ -905,8 +975,8 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
     'diet_pace': widget.choices['diet_pace'] ?? 'balanced',
   };
   late final Set<String> _restrictions = {...((widget.choices['restrictions'] as List?) ?? const []).cast<String>()};
-  late final Set<String> _conditions = {...?prefs.getStringList(_conditionsKey)};
-  late int _scoops = prefs.getInt(_scoopsKey) ?? 0;
+  late final Set<String> _conditions = {...((widget.choices['health_conditions'] as List?) ?? const []).cast<String>()};
+  late int _scoops = widget.choices['whey_scoops'] as int? ?? 0;
   late final _monthly = TextEditingController(
       text: widget.choices['budget_max_inr'] == null ? '' : '${monthlyFromDaily(widget.choices['budget_max_inr'] as int)}');
   int _step = 0;
@@ -944,9 +1014,11 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
         'budget_max_inr': _d['budget_tier'] == 'custom' ? dailyFromMonthly(_ownMonthly!) : null,
         'restrictions': _restrictions.toList(),
         'supplements': supps.toList(),
+        'health_conditions': _conditions.toList(),
+        'whey_scoops': _scoops,
       }).eq('user_id', supabase.auth.currentUser!.id);
-      await prefs.setInt(_scoopsKey, _scoops);
-      await prefs.setStringList(_conditionsKey, _conditions.toList());
+      await prefs.remove(_scoopsKey); // the account holds them now (B2)
+      await prefs.remove(_conditionsKey);
       saved = true;
       await supabase.functions.invoke('generate-plan');
       HapticFeedback.heavyImpact();
@@ -987,7 +1059,8 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
             if (age != null) ('Age', '$age years'),
             ('Height', '${p['height_cm'] ?? '-'} cm'),
             ('Weight', '${p['weight_kg'] ?? '-'} kg'),
-            ('Energy a day', '${(food['energyKcal'] as num).round()} kcal'),
+            if (food['energy'] case {'maintenanceKcal': final num m}) ('Maintenance (TDEE)', '${m.round()} kcal'),
+            ('Target a day', '${(food['energyKcal'] as num).round()} kcal'),
             ('Protein a day', '${(food['proteinG'] as num).round()} g'),
           ])
             Padding(
@@ -1084,8 +1157,15 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
   }
 }
 
+/// The mess_meals key of a planner meal name.
+String? _messKeyOf(String meal) => switch (meal) { 'Breakfast' => 'breakfast', 'Lunch' => 'lunch', 'Evening snack' => 'snack', 'Dinner' => 'dinner', _ => null };
+
 class _MealCard extends StatelessWidget {
-  const _MealCard({required this.meal});
+  const _MealCard({required this.meal, this.tag, this.fromMess = false, this.prep, this.messExtra = 'dal'});
+  final String messExtra; // mess foods to ask for when protein is short, already filtered by diet and allergies
+  final String? tag; // PRE-WORKOUT or POST-WORKOUT on a training day
+  final bool fromMess; // eaten from the hostel or PG mess: pick the closest items there
+  final String? prep; // how to make it with a kettle, microwave or blender
   final PlanMeal meal;
 
   @override
@@ -1098,7 +1178,7 @@ class _MealCard extends StatelessWidget {
         Row(children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(meal.time.toUpperCase(), style: monoLabel(context).copyWith(color: c.tertiary)),
+              Text([meal.time.toUpperCase(), ?tag, if (fromMess) 'FROM THE MESS'].join('  ·  '), style: monoLabel(context).copyWith(color: c.tertiary)),
               Text(meal.name, style: t.titleLarge),
             ]),
           ),
@@ -1110,6 +1190,20 @@ class _MealCard extends StatelessWidget {
         const SizedBox(height: 8),
         // The plate named as dishes; each part below in household servings, exact grams and nutrients behind Details.
         Text(mealTitle(meal), style: t.titleMedium),
+        if (fromMess)
+          Text('From your mess: take the closest items to these amounts. Short on protein? Add an extra serving of $messExtra if served.',
+              style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        if (prep != null) Text(prep!, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        if (tag != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              tag == 'PRE-WORKOUT'
+                  ? 'Eat this before you train. It is part of your day\'s food, not extra.'
+                  : 'Eat this after you train: it brings your protein. It is part of your day\'s food, not extra.',
+              style: t.bodyMedium?.copyWith(color: c.primary, fontWeight: FontWeight.w600),
+            ),
+          ),
         const SizedBox(height: 8),
         for (final i in meal.items.where((i) => i.unit != 'oil')) // oil is shown once for the whole day
           Container(
@@ -1551,9 +1645,38 @@ double? weeklyTrendPct(List<({DateTime day, double kg})> points) {
   };
 }
 
+/// Plan weight change from real weigh-ins (batch B3): the average of the readings in the 7 days up to the newest one,
+/// to 0.1 kg, when it is 2 % or more away from the weight the plan uses; null otherwise. One reading alone moves with
+/// water and food, so a week's average is used. Only weights the plan engine accepts (30 to 250 kg) are proposed.
+double? proposedPlanWeight(num? planKg, List<({DateTime day, double kg})> weighIns) {
+  if (planKg == null || planKg <= 0 || weighIns.isEmpty) return null;
+  final newest = weighIns.map((w) => w.day).reduce((a, b) => a.isAfter(b) ? a : b);
+  final week = [for (final w in weighIns) if (!w.day.isAfter(newest) && newest.difference(w.day).inDays < 7) w.kg];
+  final avg = (week.reduce((a, b) => a + b) / week.length * 10).round() / 10;
+  if (avg < 30 || avg > 250) return null;
+  return (avg - planKg).abs() / planKg >= 0.02 ? avg : null;
+}
+
+/// Asks before the plan changes: true only when the person taps Update plan.
+Future<bool> confirmPlanWeight(BuildContext context, {required num fromKg, required double toKg}) async =>
+    await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text('Update your plan to $toKg kg?'),
+        content: Text('Your weigh-ins this week average $toKg kg; your plan still uses $fromKg kg. Calories, protein and '
+            'your meal plan are worked out from your weight, so updating recalculates them. Nothing else changes.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Not now')),
+          FilledButton(onPressed: () => Navigator.pop(d, true), child: const Text('Update plan')),
+        ],
+      ),
+    ) ??
+    false;
+
 class _ProgressScreen extends StatefulWidget {
-  const _ProgressScreen({required this.data});
+  const _ProgressScreen({required this.data, required this.onPlanChanged});
   final _Data data;
+  final VoidCallback onPlanChanged; // the person confirmed a new plan weight and the plan was rebuilt
 
   @override
   State<_ProgressScreen> createState() => _ProgressScreenState();
@@ -1609,6 +1732,34 @@ class _ProgressScreenState extends State<_ProgressScreen> {
       await _fetch();
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save. Check the numbers and your connection.')));
+      return;
+    }
+    if (values.containsKey('weight_kg')) await _offerPlanWeight();
+  }
+
+  /// After a weigh-in: propose the week's average as the plan weight; the plan changes only when the person confirms.
+  Future<void> _offerPlanWeight() async {
+    final planKg = widget.data.profile['weight_kg'] as num?;
+    final to = proposedPlanWeight(planKg, [
+      for (final b in _body)
+        if (b['weight_kg'] != null) (day: DateTime.parse(b['measured_on'] as String), kg: (b['weight_kg'] as num).toDouble()),
+    ]);
+    if (to == null || !mounted || !await confirmPlanWeight(context, fromKg: planKg!, toKg: to)) return;
+    var saved = false;
+    try {
+      await supabase.from('profiles').update({'weight_kg': to}).eq('id', _uid);
+      saved = true;
+      await supabase.functions.invoke('generate-plan');
+      widget.onPlanChanged();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plan updated for $to kg.')));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(saved
+              ? 'Your weight is saved, but the plan could not be rebuilt. Save your details in Profile to retry.'
+              : 'Could not update your plan. Check your connection.'),
+        ));
+      }
     }
   }
 
@@ -1675,9 +1826,9 @@ class _ProgressScreenState extends State<_ProgressScreen> {
     final values = <String, num>{
       for (final e in controllers.entries) e.key: ?double.tryParse(e.value.text),
     };
-    for (final c in controllers.values) {
-      c.dispose();
-    }
+    // Not disposed here: the sheet is still animating out (and rebuilding as the keyboard closes) when this runs, and
+    // a disposed controller in it throws (found on the phone, 2026-10-28). They hold no resources and are collected
+    // with the sheet.
     if (saved == true && values.isNotEmpty) await _saveBody(day, values);
   }
 

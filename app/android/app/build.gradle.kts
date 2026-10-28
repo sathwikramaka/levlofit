@@ -35,6 +35,11 @@ val debugSignedRelease = System.getenv("LEVLOFIT_DEBUG_SIGNED_RELEASE") == "true
 // minimum), so Android 7.x is not supported by such a build.
 val healthConnect = rootProject.findProject(":healthconnect") != null
 
+// Local test app: off unless LEVLOFIT_LOCAL_TEST=true (or -Plevlofit.localTest=true). It installs as a separate app,
+// com.levlofit.app.localtest labelled "Levlofit test", next to the store app, with its own data and its own sign-in
+// link scheme. Never for a store: it is refused for release builds signed with the release key (check below).
+val localTest = System.getenv("LEVLOFIT_LOCAL_TEST") == "true" || (findProperty("levlofit.localTest") as String?) == "true"
+
 android {
     namespace = "com.levlofit.app"
     compileSdk = flutter.compileSdkVersion
@@ -60,6 +65,9 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        if (localTest) applicationId = "com.levlofit.app.localtest"
+        manifestPlaceholders["appLabel"] = if (localTest) "Levlofit test" else "Levlofit"
+        manifestPlaceholders["authScheme"] = if (localTest) "com.levlofit.app.localtest" else "com.levlofit.app"
     }
 
     signingConfigs {
@@ -98,6 +106,9 @@ tasks.configureEach {
                         "Set the LEVLOFIT_* environment variables or create android/key.properties (see key.properties.example). " +
                         "For a local test build only: LEVLOFIT_DEBUG_SIGNED_RELEASE=true.",
                 )
+            }
+            if (localTest && hasReleaseSigning && !debugSignedRelease) {
+                throw GradleException("LEVLOFIT_LOCAL_TEST builds are for local testing only and are never signed with the release key.")
             }
             if (hasReleaseSigning && !file(releaseStoreFile!!).isFile) {
                 throw GradleException("Release keystore not found at the configured LEVLOFIT_KEYSTORE_FILE / storeFile path.")

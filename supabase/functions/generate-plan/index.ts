@@ -18,17 +18,23 @@ export default {
     }
 
     const [profile, goals, diet, levels] = await Promise.all([
-      ctx.supabase.from('profiles').select('display_name, birth_year, sex, height_cm, weight_kg, weight_goal, body_type, days_per_week, session_minutes, daily_activity, sleep_hours, health_flags, injuries, equipment, equipment_items').eq('id', userId).single(),
+      ctx.supabase.from('profiles').select('display_name, birth_year, sex, height_cm, weight_kg, weight_goal, body_type, days_per_week, session_minutes, daily_activity, sleep_hours, health_flags, injuries, equipment, equipment_items, training_days, training_time').eq('id', userId).single(),
       ctx.supabase
         .from('user_goals')
         .select('goal, experience, goal_catalog(name, kind, coach_led_from_level)')
         .eq('user_id', userId)
         .order('priority', { ascending: true }),
-      ctx.supabase.from('dietary_profiles').select('diet_type, restrictions, other_restrictions, supplements, diet_pace').eq('user_id', userId).maybeSingle(),
+      ctx.supabase.from('dietary_profiles').select('diet_type, restrictions, other_restrictions, supplements, diet_pace, health_conditions').eq('user_id', userId).maybeSingle(),
       ctx.supabase.from('goal_levels').select('goal, level').eq('user_id', userId),
     ]);
-    if (profile.error || goals.error || diet.error) return Response.json({ error: 'Could not read your answers' }, { status: 500 });
+    // A failed levels read would silently plan from the self-rating instead of the assessed level: fail, save nothing.
+    if (profile.error || goals.error || diet.error || levels.error) return Response.json({ error: 'Could not read your answers' }, { status: 500 });
     if (!profile.data.birth_year || !diet.data) return Response.json({ error: 'Finish onboarding first' }, { status: 409 });
+    // A goal without its catalogue row (removed from the catalogue, or not readable) cannot be planned.
+    if (goals.data.some((g) => !g.goal_catalog)) {
+      console.error(JSON.stringify({ event: 'goal_catalog_missing' }));
+      return Response.json({ error: 'One of your goals is no longer available. Edit your goals and try again.' }, { status: 409 });
+    }
 
     const assessed = new Map((levels.data ?? []).map((l) => [l.goal as string, Math.min(l.level as number, MAX_SELF_ASSESSED_LEVEL)]));
     const p = profile.data;
@@ -66,6 +72,11 @@ export default {
         equipmentItems: p.equipment_items,
         supplements: diet.data.supplements,
         pace: diet.data.diet_pace ?? undefined,
+        // Build my plate health conditions (migration 20261029100000); absent before it, so older rows plan as before.
+        conditions: diet.data.health_conditions ?? undefined,
+        // Training weekdays and time (migration 20261029300000); absent before it, so older rows plan as before.
+        trainingDays: p.training_days ?? undefined,
+        trainingTime: p.training_time ?? undefined,
       });
     } catch (e) {
       return Response.json({ error: (e as Error).message }, { status: 400 });

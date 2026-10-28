@@ -340,4 +340,23 @@ void main() {
     await tester.scrollUntilVisible(find.textContaining('1 move could not be loaded'), 300);
     expect(find.textContaining('1 move could not be loaded'), findsOneWidget);
   });
+  testWidgets('medical hold: the session shows the doctor notice, uses the lighter dose and gives no add-weight hint', (tester) async {
+    tester.view.physicalSize = const Size(390, 2400) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final main = sessionIds('strength', Tier.gym, 1, 0);
+    final rows = {for (final id in main) id: {'id': id, 'name': 'move $id', 'gif_url': 'https://media.invalid/$id.gif', 'target_muscles': <String>[]}};
+    await tester.pumpWidget(MaterialApp(
+      home: SessionScreen(title: 'Strength', ids: main, level: 1, medicalHold: true, moves: (ids) async => resolveMoves(ids, rows)),
+    ));
+    await tester.pump(const Duration(seconds: 2));
+    final lightSets = main.fold<int>(0, (s, id) => s + setsFor(id, 1, lighter: true));
+    expect(lightSets, lessThan(main.fold<int>(0, (s, id) => s + setsFor(id, 1))), reason: 'the hold must remove sets');
+    expect(find.textContaining('OF $lightSets SETS'), findsOneWidget);
+    expect(find.text('SEE A DOCTOR FIRST'), findsOneWidget);
+    expect(find.text(medicalHoldNotice), findsOneWidget);
+    expect(find.text(lighterNotice), findsNothing, reason: 'the doctor notice replaces the lighter-day line');
+    expect(find.textContaining('left in the tank'), findsWidgets);
+    expect(find.textContaining('1–3 left in the tank'), findsNothing);
+  });
 }

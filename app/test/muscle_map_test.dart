@@ -115,4 +115,20 @@ void main() {
     await tester.tapAt(tester.getTopLeft(figure) + const Offset(58, 52) * (tester.getSize(figure).width / 100));
     expect(opened, 'Chest');
   });
+
+  testWidgets('rear and front shoulders split by name (the pattern had stray control characters, so "rear" never matched)', (tester) async {
+    tester.view.physicalSize = const Size(390, 1600) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    Future<List<Map<String, dynamic>>> catalogue(List<String> names) async => [
+          {'id': 'X000101', 'name': 'dumbbell rear delt raise', 'gif_url': null, 'target_muscles': names},
+          {'id': 'X000102', 'name': 'dumbbell front raise', 'gif_url': null, 'target_muscles': names},
+        ];
+    await tester.pumpWidget(MaterialApp(home: MuscleExercisesScreen(muscle: 'Rear shoulders', loadCatalogue: catalogue)));
+    await tester.pump();
+    expect(find.text('MORE EXERCISES  ·  1'), findsOneWidget);
+    await tester.pumpWidget(MaterialApp(home: MuscleExercisesScreen(muscle: 'Front shoulders', loadCatalogue: catalogue)));
+    await tester.pump();
+    expect(find.text('MORE EXERCISES  ·  1'), findsOneWidget);
+  });
 }

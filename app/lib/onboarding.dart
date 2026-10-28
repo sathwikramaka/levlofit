@@ -7,11 +7,12 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'account.dart';
-import 'diet_plan.dart' show budgetOptions, dailyFromMonthly, regionOptions;
+import 'diet_plan.dart' show budgetOptions, cookTimeOptions, customEquipmentNote, dailyFromMonthly, equipmentList, kitchenEquipmentOptions, legacyKitchen, messMealOptions, regionOptions;
 import 'icons.dart';
 import 'main.dart';
 import 'mark.dart';
 import 'theme.dart';
+import 'week_schedule.dart' show trainingTimeOptions;
 
 typedef _Goal = ({String id, String name, String category});
 
@@ -23,7 +24,7 @@ const _experience = {
 };
 
 const _restrictions = {
-  'lactose': 'Lactose intolerance',
+  'lactose': 'Milk allergy or lactose intolerance',
   'gluten': 'Gluten (coeliac or sensitivity)',
   'peanut': 'Peanuts',
   'tree_nut': 'Tree nuts',
@@ -102,6 +103,43 @@ enum _Step { name, primary, extras, experience, body, phase, schedule, health, e
 
 const _maxExtras = 5; // plan engine MAX_GOALS = 6 including the primary
 
+/// Replaces the person's goals (main goal first) in one database transaction (replace_user_goals, B7), so a failed
+/// save keeps the old goals instead of leaving none. [legacy] (delete then insert) runs only when the database does not
+/// have the function yet (PGRST202, before migration 20261029400000); every other error is thrown as it is.
+Future<void> replaceGoals(
+  List<Map<String, Object?>> goals, {
+  required Future<Object?> Function(List<Map<String, Object?>> goals) rpc,
+  required Future<void> Function(List<Map<String, Object?>> goals) legacy,
+}) async {
+  try {
+    await rpc(goals);
+  } on PostgrestException catch (e) {
+    if (e.code != 'PGRST202') rethrow;
+    await legacy(goals);
+  }
+}
+
+/// The B6 constraints as onboarding saves them: training weekdays (sorted; empty = any day) and time on profiles,
+/// kitchen and cooking time on dietary_profiles. The same columns, values and defaults as the Protocol tab.
+({Map<String, Object> profile, Map<String, Object> diet}) constraintFields({
+  required Set<int> trainingDays,
+  required String trainingTime,
+  required Set<String> equipment,
+  required String cookTime,
+  List<String> messMeals = const [],
+  String customEquipment = '',
+}) =>
+    (
+      profile: {'training_days': [for (final d in trainingDays) if (d >= 1 && d <= 7) d]..sort(), 'training_time': trainingTime},
+      diet: {
+        'kitchen': legacyKitchen(equipment),
+        'kitchen_equipment': equipmentList(equipment),
+        'mess_meals': [for (final (k, _) in messMealOptions) if (messMeals.contains(k)) k],
+        'kitchen_other': ?(customEquipment.trim().isEmpty ? null : customEquipment.trim()),
+        'cook_time': cookTime,
+      },
+    );
+
 class Onboarding extends StatefulWidget {
   const Onboarding({super.key, required this.onDone, this.goalsOnly = false, this.initialGoals = const [], this.initialLevels = const {}});
   final VoidCallback onDone;
@@ -115,7 +153,8 @@ class Onboarding extends StatefulWidget {
 
 class _OnboardingState extends State<Onboarding> {
   late final List<_Step> _steps = widget.goalsOnly
-      ? const [_Step.primary, _Step.extras, _Step.experience, _Step.build]
+      // Editing goals runs the same level check: picking a goal is a preference, not a level (owner report 2026-10-29).
+      ? const [_Step.primary, _Step.extras, _Step.experience, _Step.assess, _Step.build]
       : _Step.values.where((s) => s != _Step.review).toList();
   late var _step = _steps.first;
   List<_Goal>? _catalog;
@@ -146,6 +185,13 @@ class _OnboardingState extends State<Onboarding> {
   bool _noRestrictions = false;
   String? _diet, _sex, _weightGoal, _gear, _budget;
   String _region = 'any';
+  // B6 constraints, with the database defaults preselected so the steps stay quick.
+  final Set<int> _trainDays = {}; // none = any day
+  String _trainTime = 'varies';
+  final Set<String> _equip = {'stove', 'pressure_cooker'}; // the database's old default kitchen, preselected
+  final Set<String> _mess = {};
+  final _customEquip = TextEditingController(); // optional: equipment not in the list
+  String _cookTime = 'plenty';
   final _monthly = TextEditingController(); // own monthly food budget, when _budget is 'custom'
   // Level check with Levlofit AI (coach-chat assess): the chat so far, the levels it proposed, or a skip.
   final _assessTurns = <({String role, String content})>[];
@@ -166,6 +212,36 @@ class _OnboardingState extends State<Onboarding> {
     _goals.addAll(widget.initialGoals);
     _level.addAll(widget.initialLevels);
     _loadCatalog();
+    if (widget.goalsOnly) _loadSaved();
+  }
+
+  /// Editing goals: the level check needs the saved body numbers, schedule and health answers (read only; this mode
+  /// saves goals and levels, never the profile). A failed read leaves them out; the plan engine's limits still apply.
+  Future<void> _loadSaved() async {
+    try {
+      final p = await supabase
+          .from('profiles')
+          .select('birth_year, sex, height_cm, weight_kg, body_type, weight_goal, daily_activity, days_per_week, session_minutes, equipment, health_flags, injuries')
+          .eq('id', supabase.auth.currentUser!.id)
+          .single();
+      if (!mounted) return;
+      setState(() {
+        _birthYear.text = '${p['birth_year'] ?? ''}';
+        _height.text = '${p['height_cm'] ?? ''}';
+        _weight.text = '${p['weight_kg'] ?? ''}';
+        _injuries.text = (p['injuries'] as String?) ?? '';
+        _sex = p['sex'] as String?;
+        _bodyType = p['body_type'] as String?;
+        _weightGoal = p['weight_goal'] as String?;
+        _activityLevel = p['daily_activity'] as String?;
+        _days = p['days_per_week'] as int?;
+        _minutes = p['session_minutes'] as int?;
+        _gear = p['equipment'] as String?;
+        _health.addAll(((p['health_flags'] as List?) ?? const []).cast<String>());
+      });
+    } catch (_) {
+      // The check still runs with what it has.
+    }
   }
 
   Future<void> _loadCatalog() async {
@@ -184,7 +260,7 @@ class _OnboardingState extends State<Onboarding> {
 
   @override
   void dispose() {
-    for (final c in [_name, _birthYear, _height, _weight, _otherInput, _search, _sleep, _injuries, _itemInput, _monthly, _assessInput]) {
+    for (final c in [_customEquip, _name, _birthYear, _height, _weight, _otherInput, _search, _sleep, _injuries, _itemInput, _monthly, _assessInput]) {
       c.dispose();
     }
     super.dispose();
@@ -363,11 +439,14 @@ class _OnboardingState extends State<Onboarding> {
     final uid = supabase.auth.currentUser!.id;
     try {
       if (!widget.goalsOnly) await _saveProfileAndDiet(uid);
-      // ponytail: delete + insert is not atomic; a failed insert is fixed by retrying. Move to an RPC if it bites.
-      await supabase.from('user_goals').delete().eq('user_id', uid);
-      await supabase.from('user_goals').insert([
-        for (final (i, g) in _goals.indexed) {'user_id': uid, 'goal': g, 'experience': _level[g], 'priority': i + 1},
-      ]);
+      await replaceGoals(
+        [for (final g in _goals) {'goal': g, 'experience': _level[g]}],
+        rpc: (goals) => supabase.rpc('replace_user_goals', params: {'p_goals': goals}),
+        legacy: (goals) async {
+          await supabase.from('user_goals').delete().eq('user_id', uid);
+          await supabase.from('user_goals').insert([for (final (i, g) in goals.indexed) {...g, 'user_id': uid, 'priority': i + 1}]);
+        },
+      );
       // Levels from the level check replace the self-rating (0 to 3, as the goal_levels policy allows).
       final assessed = _assessLevels;
       if (assessed != null && !_assessSkipped) {
@@ -390,6 +469,7 @@ class _OnboardingState extends State<Onboarding> {
   }
 
   Future<void> _saveProfileAndDiet(String uid) async {
+    final extra = constraintFields(trainingDays: _trainDays, trainingTime: _trainTime, equipment: _equip, cookTime: _cookTime, messMeals: _mess.toList(), customEquipment: _customEquip.text);
     await supabase
         .from('profiles')
         .update({
@@ -408,6 +488,7 @@ class _OnboardingState extends State<Onboarding> {
           'sleep_hours': double.tryParse(_sleep.text),
           'health_flags': _health.toList(),
           'injuries': _injuries.text.trim().isEmpty ? null : _injuries.text.trim(),
+          ...extra.profile,
         })
         .eq('id', uid);
     await supabase.from('dietary_profiles').upsert({
@@ -419,6 +500,7 @@ class _OnboardingState extends State<Onboarding> {
       'restrictions': _avoid.toList(),
       'other_restrictions': _other,
       'supplements': _supp.toList(),
+      ...extra.diet,
     });
   }
 
@@ -806,6 +888,37 @@ class _OnboardingState extends State<Onboarding> {
             gap,
           ],
           const SizedBox(height: 16),
+          const FieldLabel('What you can cook with'),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final (k, title) in kitchenEquipmentOptions)
+              _Pill(title, selected: _equip.contains(k), onTap: () => setState(() => _equip.contains(k) ? _equip.remove(k) : _equip.add(k))),
+            _Pill('No cooking equipment', selected: _equip.isEmpty, onTap: () => setState(_equip.clear)),
+          ]),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _customEquip,
+            maxLength: 200,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: 'Other equipment (optional)',
+              hintText: 'For example: rice cooker, toaster',
+              helperText: customEquipmentNote(_customEquip.text) ?? 'Separate items with commas. Skip this if nothing else applies.',
+              helperMaxLines: 3,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const FieldLabel('Meals from a hostel or PG mess (optional)'),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final (k, title) in messMealOptions)
+              _Pill(title, selected: _mess.contains(k), onTap: () => setState(() => _mess.contains(k) ? _mess.remove(k) : _mess.add(k))),
+          ]),
+          const SizedBox(height: 16),
+          const FieldLabel('Time to cook'),
+          for (final (k, title, sub) in cookTimeOptions) ...[
+            ChoiceTile(title: title, subtitle: sub, selected: _cookTime == k, onTap: () => setState(() => _cookTime = k)),
+            gap,
+          ],
+          const SizedBox(height: 16),
           const FieldLabel('Open to supplements?'),
           ChoiceTile(
             title: 'No supplements',
@@ -930,6 +1043,28 @@ class _OnboardingState extends State<Onboarding> {
             spacing: 8,
             runSpacing: 8,
             children: [for (final m in _minuteOptions) _Pill('$m min', selected: _minutes == m, onTap: () => setState(() => _minutes = m))],
+          ),
+          const SizedBox(height: 20),
+          const FieldLabel('Days you can train (optional)'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final (i, name) in const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexed)
+                _Pill(name, selected: _trainDays.contains(i + 1), onTap: () => setState(() => _trainDays.contains(i + 1) ? _trainDays.remove(i + 1) : _trainDays.add(i + 1))),
+            ],
+          ),
+          if (_trainDays.isNotEmpty && _days != null && _trainDays.length < _days!)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text('Fewer weekdays than days a week: your plan fits into these ${_trainDays.length}.', style: Theme.of(context).textTheme.bodySmall),
+            ),
+          const SizedBox(height: 20),
+          const FieldLabel('When you can usually train'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [for (final (k, title) in trainingTimeOptions) _Pill(title, selected: _trainTime == k, onTap: () => setState(() => _trainTime = k))],
           ),
           const SizedBox(height: 20),
           const FieldLabel('Outside training, your day is'),

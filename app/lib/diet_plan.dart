@@ -31,22 +31,22 @@ Food foodFromRow(Map<String, dynamic> r) {
 
 /// Display name, cost tier (1 budget, 2 mid, 3 premium) and how it is weighed.
 const _catalogue = <String, (String, int, String)>{
-  'A011': ('Poha (rice flakes)', 1, 'dry'),
-  'A010': ('Ragi flour', 1, 'dry'),
-  'A019': ('Wheat atta (roti)', 1, 'dry'),
+  'A011': ('Poha (flattened rice)', 1, 'dry'),
+  'A010': ('Finger millet (ragi) flour', 1, 'dry'),
+  'A019': ('Whole-wheat flour (for roti)', 1, 'dry'),
   'A015': ('Rice', 1, 'raw'),
-  'A005': ('Jowar flour (bhakri)', 1, 'dry'),
-  'A003': ('Bajra flour (roti)', 1, 'dry'),
-  'B021': ('Toor dal', 1, 'dry'),
-  'B010': ('Moong dal', 1, 'dry'),
-  'B013': ('Masoor dal', 1, 'dry'),
-  'B020': ('Rajma', 1, 'dry'),
-  'B002': ('Kala chana', 1, 'dry'),
+  'A005': ('Sorghum (jowar) flour', 1, 'dry'),
+  'A003': ('Pearl millet (bajra) flour', 1, 'dry'),
+  'B021': ('Toor dal (split pigeon peas)', 1, 'dry'),
+  'B010': ('Moong dal (split mung beans)', 1, 'dry'),
+  'B013': ('Masoor dal (red lentils)', 1, 'dry'),
+  'B020': ('Kidney beans (rajma)', 1, 'dry'),
+  'B002': ('Black chickpeas (kala chana)', 1, 'dry'),
   'X001': ('Soya chunks', 1, 'dry'),
   'H012': ('Peanuts', 1, 'raw'),
   'L002': ('Cow milk', 1, 'ml'),
   'M004': ('Eggs, boiled', 1, 'egg'),
-  'L003': ('Paneer', 2, 'raw'),
+  'L003': ('Paneer (Indian cottage cheese)', 2, 'raw'),
   'N003': ('Chicken breast', 2, 'raw'),
   'S006': ('Rohu fish', 2, 'raw'),
   'E012': ('Banana', 1, 'raw'),
@@ -55,25 +55,25 @@ const _catalogue = <String, (String, int, String)>{
   'E001': ('Apple', 2, 'raw'),
   'E047': ('Orange', 2, 'raw'),
   'D036': ('Cauliflower', 1, 'raw'),
-  'D056': ('Bhindi', 1, 'raw'),
+  'D056': ('Okra (bhindi)', 1, 'raw'),
   'C015': ('Cabbage', 1, 'raw'),
-  'C033': ('Spinach (palak)', 1, 'raw'),
+  'C033': ('Spinach', 1, 'raw'),
   'F002': ('Carrot', 1, 'raw'),
   'D043': ('Cucumber salad', 1, 'raw'),
   'D076': ('Tomato', 1, 'raw'),
   'T012': ('Sunflower oil', 1, 'oil'),
   'T006': ('Mustard oil', 1, 'oil'),
   // Dishes (dishRecipes): budget tier, weighed as the dry mix.
-  'dish:idli': ('Idli', 1, 'dry'),
-  'dish:dosa': ('Dosa', 1, 'dry'),
-  'dish:ragi-dosa': ('Ragi dosa', 1, 'dry'),
-  'dish:poha': ('Poha with peanuts', 1, 'dry'),
-  'dish:upma': ('Rava upma', 1, 'dry'),
-  'dish:vermicelli': ('Vermicelli upma', 1, 'dry'),
-  'dish:besan-chilla': ('Besan chilla', 1, 'dry'),
-  'dish:moong-chilla': ('Moong dal chilla', 1, 'dry'),
-  'dish:thepla': ('Thepla', 1, 'dry'),
-  'dish:sprouts': ('Sprouts chaat', 1, 'dry'),
+  'dish:idli': ('Idli (steamed rice cakes)', 1, 'dry'),
+  'dish:dosa': ('Dosa (rice and lentil crepe)', 1, 'dry'),
+  'dish:ragi-dosa': ('Ragi dosa (finger millet crepe)', 1, 'dry'),
+  'dish:poha': ('Poha (flattened rice) with peanuts', 1, 'dry'),
+  'dish:upma': ('Rava upma (savoury semolina)', 1, 'dry'),
+  'dish:vermicelli': ('Savoury vermicelli', 1, 'dry'),
+  'dish:besan-chilla': ('Besan chilla (gram flour pancake)', 1, 'dry'),
+  'dish:moong-chilla': ('Moong dal chilla (lentil pancake)', 1, 'dry'),
+  'dish:thepla': ('Thepla (spiced flatbread)', 1, 'dry'),
+  'dish:sprouts': ('Sprouted mung salad', 1, 'dry'),
 };
 
 /// Breakfast and snack dishes (owner request 2026-10-28: plans people actually eat; nobody wants roti and sabzi at
@@ -81,16 +81,16 @@ const _catalogue = <String, (String, int, String)>{
 /// those ingredients' stored values (oil is counted once for the day, as for every meal). Code -> (name, recipe as
 /// ingredient code and share of the dry weight). Kitchen conventions, not lab analyses.
 const dishRecipes = <String, (String, List<(String, double)>)>{
-  'dish:idli': ('Idli', [('A015', 0.75), ('B003', 0.25)]),
-  'dish:dosa': ('Dosa', [('A015', 0.75), ('B003', 0.25)]),
-  'dish:ragi-dosa': ('Ragi dosa', [('A010', 0.75), ('B003', 0.25)]),
-  'dish:poha': ('Poha with peanuts', [('A011', 0.85), ('H012', 0.15)]),
-  'dish:upma': ('Rava upma', [('A022', 1.0)]),
-  'dish:vermicelli': ('Vermicelli upma', [('A023', 1.0)]),
-  'dish:besan-chilla': ('Besan chilla', [('B001', 1.0)]),
-  'dish:moong-chilla': ('Moong dal chilla', [('B010', 1.0)]),
-  'dish:thepla': ('Thepla', [('A019', 0.85), ('B001', 0.15)]),
-  'dish:sprouts': ('Sprouts chaat', [('B011', 1.0)]),
+  'dish:idli': ('Idli (steamed rice cakes)', [('A015', 0.75), ('B003', 0.25)]),
+  'dish:dosa': ('Dosa (rice and lentil crepe)', [('A015', 0.75), ('B003', 0.25)]),
+  'dish:ragi-dosa': ('Ragi dosa (finger millet crepe)', [('A010', 0.75), ('B003', 0.25)]),
+  'dish:poha': ('Poha (flattened rice) with peanuts', [('A011', 0.85), ('H012', 0.15)]),
+  'dish:upma': ('Rava upma (savoury semolina)', [('A022', 1.0)]),
+  'dish:vermicelli': ('Savoury vermicelli', [('A023', 1.0)]),
+  'dish:besan-chilla': ('Besan chilla (gram flour pancake)', [('B001', 1.0)]),
+  'dish:moong-chilla': ('Moong dal chilla (lentil pancake)', [('B010', 1.0)]),
+  'dish:thepla': ('Thepla (spiced flatbread)', [('A019', 0.85), ('B001', 0.15)]),
+  'dish:sprouts': ('Sprouted mung salad', [('B011', 1.0)]),
 };
 
 /// Ingredients only dishes use, read with the planner's foods.
@@ -146,6 +146,279 @@ Map<String, Food> plannerFoods(Iterable<Map<String, dynamic>> rows) {
 
 /// Everyday staples by region (owner request 2026-10-27): Levlofit's own grouping of the planner's grains, dals and
 /// fish, used as a preference in the weekday rotation, never as a rule. 'any' (or null) mixes all regions.
+// ---- energy working (plan engine 3.5) ---------------------------------------------------------------------------
+
+const _activityNames = {'sedentary': 'mostly sitting', 'light': 'light', 'active': 'on your feet', 'very_active': 'very active'};
+String _kcal(num v) => '${v.round()} kcal';
+
+/// The plan engine's energy working as display rows (label, how, value): BMR, the activity factor and what set it,
+/// estimated maintenance (TDEE), the goal adjustment and the daily target. Every number is read from the stored plan,
+/// never recalculated here. Null for a plan built before engine 3.5, which stored only the target.
+List<(String, String, String)>? energyWorking(Map<String, dynamic> nutrition) {
+  final e = nutrition['energy'];
+  if (e is! Map || e['maintenanceKcal'] is! num || e['activity'] is! Map || e['goalFactor'] is! num || nutrition['energyKcal'] is! num) return null;
+  final a = e['activity'] as Map;
+  final f = (e['goalFactor'] as num).toDouble();
+  final pct = ((f - 1).abs() * 100).round();
+  return [
+    if (nutrition['bmrKcal'] is num) ('BMR', 'Mifflin-St Jeor, at rest', _kcal(nutrition['bmrKcal'] as num)),
+    (
+      'Activity factor',
+      a['from'] == 'daily_activity' ? 'set by your day: ${_activityNames[a['dailyActivity']] ?? a['dailyActivity']}' : 'set by ${a['trainingDaysPerWeek']} training days a week',
+      '× ${a['factor']}',
+    ),
+    ('Maintenance (TDEE)', 'estimated: BMR × activity factor', _kcal(e['maintenanceKcal'] as num)),
+    ('Goal adjustment', f == 1 ? 'none: you eat at maintenance' : f < 1 ? '$pct % below maintenance' : '$pct % above maintenance', '× $f'),
+    (
+      'Your daily target',
+      switch (e['floor']) { 'bmr' => 'raised to your BMR', 'cut_minimum' => 'raised to the minimum for a cut', _ => 'maintenance × goal adjustment' },
+      _kcal(nutrition['energyKcal'] as num),
+    ),
+  ];
+}
+
+// ---- kitchen equipment, mess meals and cooking time ----------------------------------------------------------------
+
+/// dietary_profiles.kitchen_equipment, as onboarding and Protocol offer it: (value, title).
+const kitchenEquipmentOptions = [
+  ('stove', 'Gas stove'),
+  ('induction', 'Induction cooktop'),
+  ('pressure_cooker', 'Pressure cooker'),
+  ('kettle', 'Electric kettle (hot water)'),
+  ('multi_kettle', 'Multi-purpose electric kettle (boils and cooks)'),
+  ('blender', 'Blender or mixer'),
+  ('microwave', 'Microwave'),
+  ('fridge', 'Refrigerator'),
+];
+
+/// dietary_profiles.mess_meals: meals that come from a hostel or PG mess. Meal index in the planner: 0 to 3.
+const messMealOptions = [('breakfast', 'Breakfast'), ('lunch', 'Lunch'), ('snack', 'Evening snack'), ('dinner', 'Dinner')];
+
+/// dietary_profiles.cook_time: (value, title, what it changes).
+const cookTimeOptions = [
+  ('plenty', 'I can plan ahead', 'Soaked pulses and batters such as idli and dosa are fine'),
+  ('short', 'About 30 minutes, nothing ahead', 'No soaking or fermented batters'),
+  ('minimal', 'Under 10 minutes', 'Only foods that need no cooking, a kettle or a microwave'),
+];
+
+/// The equipment a person has. The saved list when they answered it; otherwise their older kitchen answer
+/// (full = stove and pressure cooker, stove_only = stove, no_stove = nothing), so an unchanged account plans as before.
+/// 'none' means no personal cooking equipment.
+Set<String> equipmentOf(String? kitchen, [List<Object?>? saved, String? custom]) {
+  final list = {...?saved?.whereType<String>()};
+  final base = list.isNotEmpty
+      ? (list..remove('none'))
+      : switch (kitchen) { 'no_stove' => <String>{}, 'stove_only' => {'stove'}, _ => {'stove', 'pressure_cooker'} };
+  return {...base, ...customEquipment(custom).used.values};
+}
+
+/// Custom equipment words the planner understands, and what they count as. Anything else is kept for Levlofit AI but
+/// never assumed by the planner (owner rule: never plan with equipment the person may not have).
+const _customWords = {
+  'rice cooker': 'multi_kettle', 'electric cooker': 'multi_kettle', 'egg boiler': 'multi_kettle', 'multi-purpose kettle': 'multi_kettle',
+  'hot plate': 'induction', 'hotplate': 'induction', 'induction': 'induction', 'electric stove': 'induction',
+  'gas stove': 'stove', 'stove': 'stove', 'burner': 'stove', 'pressure cooker': 'pressure_cooker',
+  'kettle': 'kettle', 'microwave': 'microwave', 'blender': 'blender', 'mixer': 'blender', 'grinder': 'blender',
+  'fridge': 'fridge', 'refrigerator': 'fridge',
+};
+
+/// The person's own equipment list (dietary_profiles.kitchen_other, items separated by commas or semicolons): items the
+/// planner uses, with what they count as, and the rest, which it does not use.
+({Map<String, String> used, List<String> unused}) customEquipment(String? custom) {
+  final items = (custom ?? '').split(RegExp(r'[,;\n]')).map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+  final used = <String, String>{}, unused = <String>[];
+  for (final item in items) {
+    final low = item.toLowerCase();
+    final hit = _customWords.entries.where((e) => low.contains(e.key)).firstOrNull;
+    if (hit == null) {
+      unused.add(item);
+    } else {
+      used[item] = hit.value;
+    }
+  }
+  return (used: used, unused: unused);
+}
+
+/// One line under the custom equipment box: what the planner will and will not use.
+String? customEquipmentNote(String? custom) {
+  final c = customEquipment(custom);
+  if (c.used.isEmpty && c.unused.isEmpty) return null;
+  final names = {for (final (k, t) in kitchenEquipmentOptions) k: t.toLowerCase()};
+  return [
+    if (c.used.isNotEmpty) 'Used for meals: ${c.used.entries.map((e) => '${e.key} (as ${names[e.value]})').join(', ')}.',
+    if (c.unused.isNotEmpty) 'Not used for planning (kept for Levlofit AI): ${c.unused.join(', ')}.',
+  ].join(' ');
+}
+
+const _heat = [{'stove'}, {'induction'}];
+const _pressure = [{'stove', 'pressure_cooker'}, {'induction', 'pressure_cooker'}];
+const _noCook = [<String>{}];
+
+/// Ways each planner food can be made at home; any one is enough. Levlofit kitchen conventions, not tested recipes:
+/// a kettle soaks poha and soya chunks in boiling water; a multi-purpose kettle also boils eggs and cooks rice and
+/// quick dals; a microwave cooks rice, vegetables, soya chunks and poha. Foods not listed need a stove or induction.
+const _makeWith = <String, List<Set<String>>>{
+  'L002': _noCook, 'H012': _noCook, 'L003': _noCook, 'D043': _noCook, // milk, peanuts, paneer, cucumber salad
+  'E012': _noCook, 'E049': _noCook, 'E028': _noCook, 'E001': _noCook, 'E047': _noCook, // fruit
+  'dish:sprouts': _noCook, // sprouted at home over a day; nothing is cooked
+  'B021': _pressure, 'B020': _pressure, 'B002': _pressure, // toor dal, kidney beans, black chickpeas
+  'A015': [{'stove'}, {'induction'}, {'microwave'}, {'multi_kettle'}], // rice
+  'B010': [{'stove'}, {'induction'}, {'multi_kettle'}], 'B013': [{'stove'}, {'induction'}, {'multi_kettle'}], // moong, masoor dal
+  'M004': [{'stove'}, {'induction'}, {'multi_kettle'}], // boiled eggs
+  'X001': [{'stove'}, {'induction'}, {'microwave'}, {'multi_kettle'}, {'kettle'}], // soya chunks
+  'dish:poha': [{'stove'}, {'induction'}, {'microwave'}, {'kettle'}, {'multi_kettle'}], // poha soaks in hot water
+  'D036': [{'stove'}, {'induction'}, {'microwave'}], 'D056': [{'stove'}, {'induction'}, {'microwave'}],
+  'C015': [{'stove'}, {'induction'}, {'microwave'}], 'C033': [{'stove'}, {'induction'}, {'microwave'}],
+  'F002': [{'stove'}, {'induction'}, {'microwave'}], 'D076': [{'stove'}, {'induction'}, {'microwave'}],
+};
+
+/// Made the day before: soaked pulses, sprouts and fermented batters.
+const _ahead = {'B020', 'B002', 'dish:sprouts', 'dish:idli', 'dish:dosa', 'dish:ragi-dosa', 'dish:moong-chilla'};
+const _quick = {'kettle', 'microwave'}; // the only equipment a 'minimal' cooking time uses
+
+/// Whether [code] can be made at home with [have] in the time the person has.
+bool canMake(String code, Set<String> have, {String? cookTime}) {
+  if ((cookTime == 'short' || cookTime == 'minimal') && _ahead.contains(code)) return false;
+  return (_makeWith[code] ?? _heat).any((way) => have.containsAll(way) && (cookTime != 'minimal' || way.every(_quick.contains)));
+}
+
+/// The older dietary_profiles.kitchen value that matches [have], so older readers stay consistent.
+String legacyKitchen(Set<String> have) {
+  final heat = have.contains('stove') || have.contains('induction');
+  return heat && have.contains('pressure_cooker') ? 'full' : heat ? 'stove_only' : 'no_stove';
+}
+
+/// The saved list for [have]: sorted, or ['none'] for no personal cooking equipment.
+List<String> equipmentList(Set<String> have) => have.isEmpty ? const ['none'] : ([...have]..sort());
+
+/// Older entry point (B6): whether the old kitchen answer can make [code].
+bool fitsKitchen(String code, {String? kitchen, String? cookTime}) => canMake(code, equipmentOf(kitchen), cookTime: cookTime);
+
+/// The planner's foods the person can make at home with the old kitchen answer (every meal made at home).
+Map<String, Food> foodsForKitchen(Map<String, Food> foods, {String? kitchen, String? cookTime}) =>
+    {for (final e in foods.entries) if (fitsKitchen(e.key, kitchen: kitchen, cookTime: cookTime)) e.key: e.value};
+
+/// Per planner meal (0 breakfast, 1 lunch, 2 evening snack, 3 dinner), the foods it may use: a mess meal any food a
+/// mess kitchen serves (everything), a meal made at home only what [have] and [cookTime] allow. Null when nothing
+/// is restricted, so an unchanged full kitchen plans exactly as before.
+Map<int, Set<String>>? mealCodes(Iterable<String> codes, {required Set<String> have, String? cookTime, List<String> messMeals = const []}) {
+  final home = {for (final c in codes) if (canMake(c, have, cookTime: cookTime)) c};
+  if (home.length == codes.toSet().length) return null;
+  return {
+    for (final (i, (key, _)) in messMealOptions.indexed)
+      if (!messMeals.contains(key)) i: home,
+  };
+}
+
+/// Mess foods to ask for when a mess meal is short on protein, only those the person can eat (diet, allergies,
+/// own exclusions): "dal, soya chunks or chicken".
+String messProteinHint(Set<String> excluded, [List<String> custom = const []]) {
+  const options = [('dal', <String>[]), ('paneer', ['dairy']), ('curd', ['dairy']), ('eggs', ['egg']), ('chicken', ['poultry']), ('fish', ['fish']), ('soya chunks', ['soy'])];
+  final ok = [
+    for (final (name, tags) in options)
+      if (!tags.any(excluded.contains) && !custom.any((c) => c.trim().isNotEmpty && name.contains(c.trim().toLowerCase()))) name,
+  ];
+  if (ok.length == 1) return ok.single;
+  return '${ok.sublist(0, ok.length - 1).join(', ')} or ${ok.last}';
+}
+
+/// The line above the meal plan when the kitchen, cooking time or mess narrows it; null when nothing does.
+String? kitchenNote(Set<String> have, String? cookTime, [List<String> messMeals = const []]) {
+  final full = have.containsAll(['stove', 'pressure_cooker']) || have.containsAll(['induction', 'pressure_cooker']);
+  final kit = have.isEmpty
+      ? 'no cooking equipment'
+      : full
+      ? null
+      : 'your ${[for (final (k, t) in kitchenEquipmentOptions) if (have.contains(k)) t.toLowerCase()].join(', ')}';
+  final mess = [for (final (k, t) in messMealOptions) if (messMeals.contains(k)) t.toLowerCase()];
+  final parts = [
+    ?kit,
+    if (cookTime == 'short') 'about 30 minutes a meal with nothing made ahead',
+    if (cookTime == 'minimal') 'under 10 minutes a meal',
+  ];
+  final home = parts.isEmpty ? null : 'Meals you make are planned for ${parts.join(' and ')}.';
+  final fromMess = mess.isEmpty ? null : 'Your ${mess.join(', ')} ${mess.length == 1 ? 'comes' : 'come'} from the mess: pick the closest items there.';
+  return home == null && fromMess == null ? null : '${[?home, ?fromMess].join(' ')} Change it in Protocol.';
+}
+
+/// How to make a home meal with a kettle, multi-purpose kettle, microwave or blender, when that is what the person
+/// has instead of a stove; null when they have a stove or induction, or nothing applies.
+String? prepNote(PlanMeal m, Set<String> have) {
+  if (have.contains('stove') || have.contains('induction')) return null;
+  final codes = {for (final i in m.items) i.code};
+  final tips = [
+    if (have.contains('kettle') || have.contains('multi_kettle'))
+      if (codes.contains('dish:poha')) 'Poha: cover with just-boiled water from the kettle for 3 to 4 minutes, drain, add lemon, salt and peanuts.',
+    if (have.contains('kettle') || have.contains('multi_kettle') || have.contains('microwave'))
+      if (codes.contains('X001')) 'Soya chunks: soak in boiling water for 10 minutes, squeeze out the water, then season.',
+    if (have.contains('multi_kettle') && codes.intersection({'A015', 'B010', 'B013', 'M004'}).isNotEmpty)
+      'Rice, dal and eggs cook in the multi-purpose kettle: follow its manual for water and time.',
+    if (have.contains('microwave') && codes.intersection({'A015', 'D036', 'D056', 'C015', 'C033', 'F002', 'D076'}).isNotEmpty)
+      'Rice and vegetables cook in a microwave-safe bowl with a little water, covered, stirring halfway.',
+    if (have.contains('blender') && codes.contains('L002') && codes.any((c) => c.startsWith('E')))
+      'With a blender, the milk and fruit make a smoothie.',
+  ];
+  return tips.isEmpty ? null : tips.join(' ');
+}
+
+// ---- pre- and post-workout meals ----------------------------------------------------------------------------------
+
+/// When a session usually starts for each profiles.training_time, in hours (Levlofit conventions).
+const _trainingHour = {'early_morning': 6.0, 'morning': 10.0, 'midday': 13.0, 'evening': 18.0, 'night': 20.5};
+
+double _hourOf(String time) {
+  final m = RegExp(r'^(\d+)(?::(\d+))? (am|pm)$').firstMatch(time);
+  if (m == null) return -1;
+  final h = int.parse(m.group(1)!) % 12 + (m.group(3) == 'pm' ? 12 : 0);
+  return h + int.parse(m.group(2) ?? '0') / 60;
+}
+
+String _clock(double hour) {
+  final h = hour.floor(), min = ((hour - h) * 60).round();
+  return '${h % 12 == 0 ? 12 : h % 12}${min == 0 ? '' : ':${min.toString().padLeft(2, '0')}'} ${h < 12 ? 'am' : 'pm'}';
+}
+
+typedef WorkoutDay = ({List<PlanMeal> meals, int? pre, int? post, String note});
+
+/// A training day's meals with the pre- and post-workout meals marked (owner request 2026-10-29). These are the
+/// day's planned meals, never extra food: the meal 1 to 3 hours before the session is the pre-workout meal and the
+/// first meal up to 4 hours after it the post-workout one. When no meal falls before an early session, a piece of
+/// fruit from the day's plan moves to just before it (same food, same totals). The Handbook's meal-timing chapter
+/// (Kerksick 2017) is the basis: when daily calories and protein are met, exact timing matters little.
+WorkoutDay workoutDay(List<PlanMeal> meals, String? trainingTime) {
+  const why = 'They are part of your planned food, not extra. When your daily calories and protein are met, exact timing matters little.';
+  final start = _trainingHour[trainingTime];
+  if (start == null) {
+    return (meals: meals, pre: null, post: null,
+        note: 'On training days, eat one of your meals a few hours before training and one with protein after it. $why');
+  }
+  final list = [...meals];
+  int? pre = list.lastIndexWhere((m) => _hourOf(m.time) >= start - 3 && _hourOf(m.time) <= start - 1);
+  if (pre < 0) {
+    pre = null;
+    // Fruit nearest before the session, else the first fruit of the day.
+    final fruitAt = [for (final (i, m) in list.indexed) if (m.items.any((it) => it.code.startsWith('E'))) i];
+    if (fruitAt.isNotEmpty) {
+      final before = fruitAt.where((i) => _hourOf(list[i].time) < start).toList();
+      final from = before.isNotEmpty ? before.last : fruitAt.first;
+      final fruit = list[from].items.firstWhere((it) => it.code.startsWith('E'));
+      list[from] = (name: list[from].name, time: list[from].time, items: [...list[from].items]..remove(fruit));
+      if (list[from].items.isEmpty) list.removeAt(from);
+      final meal = (name: 'Before training', time: _clock(start - 0.75), items: [fruit]);
+      final at = list.indexWhere((m) => _hourOf(m.time) > start - 0.75);
+      list.insert(at < 0 ? list.length : at, meal);
+      pre = list.indexOf(meal);
+    }
+  }
+  var post = list.indexWhere((m) => _hourOf(m.time) >= start + 1 && _hourOf(m.time) <= start + 4);
+  final late = post < 0;
+  if (late) post = list.length - 1; // a late session: the last meal of the day, eaten after training
+  final when = _clock(start);
+  final note = 'Training around $when: ${pre == null ? '' : '${list[pre].name} is your pre-workout meal and '}'
+      '${list[post].name} your post-workout meal${late ? ' (eat it after training)' : ''}. $why';
+  return (meals: list, pre: pre, post: post, note: note);
+}
+
 const cuisineRegions = ['any', 'north', 'south', 'east', 'west'];
 const regionStaples = <String, Set<String>>{
   'north': {'A019', 'A003', 'B020', 'B002', 'L003', 'dish:besan-chilla', 'dish:moong-chilla', 'dish:poha', 'dish:thepla'},
@@ -169,7 +442,7 @@ final _meals = <(String, String, List<_Slot>, double)>[
   ('Breakfast', '8 am', [
     // A breakfast dish, rotated through the week (never roti and sabzi at 8 am).
     _s(['dish:poha', 'dish:idli', 'dish:besan-chilla', 'dish:upma', 'dish:dosa', 'dish:moong-chilla', 'dish:thepla', 'dish:ragi-dosa',
-        'dish:vermicelli'], 60, 30, 150, _Scale.energy, floor: 20),
+        'dish:vermicelli', ..._breakfastFallback], 60, 30, 150, _Scale.energy, floor: 20),
     // Eggs or paneer bhurji only when the day needs the protein; the breakfast dish and milk come first.
     _s(['M004', 'L003'], 0, 0, 150, _Scale.protein, floor: 0, dense: true),
     _s(['L002'], 200, 200, 200, _Scale.fixed, step: 200, floor: 200),
@@ -337,6 +610,19 @@ const _wholePieces = {'A019', 'A005', 'A003', 'A010', 'dish:idli', 'dish:dosa', 
 /// Largest portion of [code] in slot [s]: fixed slots stop at their usual amount, others at the slot or food cap.
 double _capFor(String code, _Slot s) => s.scale == _Scale.fixed ? s.base : math.min(s.max, _maxPortion[code] ?? double.infinity);
 
+/// Breakfast foods used only when no breakfast dish can be made (no cooking at home, or under 10 minutes without a
+/// kettle): sprouted mung or roasted peanuts with the milk and fruit, so breakfast is never fruit alone.
+const _breakfastFallback = ['dish:sprouts', 'H012'];
+
+/// The planner's per-meal check: [ok] (diet, allergies, budget), the meal's kitchen or mess limits, and the breakfast
+/// fallback only when no breakfast dish passes.
+bool Function(int, String) _mealCheck(bool Function(String) ok, Map<int, Set<String>>? mealCodes) {
+  bool base(int mi, String c) => ok(c) && (mealCodes?[mi]?.contains(c) ?? true);
+  // Only when the kitchen limits breakfast (mealCodes[0]); an unlimited kitchen plans exactly as before.
+  final dishOk = mealCodes?[0] == null || _meals[0].$3[0].codes.where((c) => !_breakfastFallback.contains(c)).any((c) => base(0, c));
+  return (mi, c) => mi == 0 && _breakfastFallback.contains(c) ? !dishOk && base(0, c) : base(mi, c);
+}
+
 /// Whether a food may be planned: present in the food table, within budget, not excluded by a tag or by the
 /// person's own exclusion words (matched against the IFCT name and the planner's label), and soya allowed.
 bool _allowed(Map<String, Food> foods, String code, {required int tier, required Set<String> excluded, required List<String> custom, required double soyaCapG}) {
@@ -356,21 +642,22 @@ Food? _oilFor(Map<String, Food> foods, Set<String> excluded, List<String> custom
     ['T012', 'T006'].where((c) => _allowed(foods, c, tier: 3, excluded: excluded, custom: custom, soyaCapG: 0)).map((c) => foods[c]!).firstOrNull;
 
 /// Oil grams as shown per meal (rounded per meal), summed over the day.
-double _oilShown(double oilG) => _meals.fold(0.0, (s, m) => s + (m.$4 > 0 ? (oilG * m.$4).roundToDouble() : 0.0));
+double _oilShown(double oilG, [bool Function(int meal)? cooks]) =>
+    _meals.indexed.fold(0.0, (s, e) => s + (e.$2.$4 > 0 && (cooks?.call(e.$1) ?? true) ? (oilG * e.$2.$4).roundToDouble() : 0.0));
 
 typedef _Layer = ({int meal, _Slot slot, List<(Food, double)> options});
 
 /// Every portion the planner can show, slot by slot: each allowed food from the slot's floor to its cap in that
 /// food's kitchen steps (soya never above the day's limit). Slots with no allowed food drop out, as in planDay.
-List<_Layer> _layers(Map<String, Food> foods, bool Function(String) ok, double soyaCapG) => [
+List<_Layer> _layers(Map<String, Food> foods, bool Function(int meal, String code) okAt, double soyaCapG) => [
       for (final (mi, (_, _, slots, _)) in _meals.indexed)
         for (final slot in slots)
-          if (slot.codes.any(ok))
+          if (slot.codes.any((c) => okAt(mi, c)))
             (
               meal: mi,
               slot: slot,
               options: [
-                for (final code in slot.codes.where(ok))
+                for (final code in slot.codes.where((c) => okAt(mi, c)))
                   // Soya starts at one step: when the day limit is split between slots, a shown portion can sit
                   // below the slot floor, and every portion the planner can show must be in the search.
                   for (var g = slot.floor <= 0 ? 0.0 : (code == 'X001' ? 5.0 : _floorFor(code, slot));
@@ -480,11 +767,12 @@ double templateProteinCeiling({
   List<String> custom = const [],
   int tier = 2,
   double soyaCapG = 50,
+  Map<int, Set<String>>? mealCodes,
 }) {
-  bool ok(String c) => _allowed(foods, c, tier: tier, excluded: excluded, custom: custom, soyaCapG: soyaCapG);
+  final okAt = _mealCheck((c) => _allowed(foods, c, tier: tier, excluded: excluded, custom: custom, soyaCapG: soyaCapG), mealCodes);
   final oil = _oilFor(foods, excluded, custom);
-  final oilKcal = oil == null ? 0.0 : oil.kcal * _oilShown(oilGrams(kcal)) / 100;
-  final layers = _layers(foods, ok, soyaCapG);
+  final oilKcal = oil == null ? 0.0 : oil.kcal * _oilShown(oilGrams(kcal), (mi) => mealCodes?[mi]?.contains(oil.code) ?? true) / 100;
+  final layers = _layers(foods, okAt, soyaCapG);
   return _gridSearch(layers, budgetKcal: kcal * (1 + kcalTolerance) - oilKcal, soyaCapG: soyaCapG, targetFoodKcal: kcal - oilKcal, wantProtein: double.infinity).ceiling;
 }
 
@@ -504,10 +792,13 @@ DayPlan planDay({
   double soyaCapG = 50,
   bool proteinPowder = false,
   String? region,
+  Map<int, Set<String>>? mealCodes,
 }) {
   final regional = regionStaples[region] ?? const <String>{};
   bool allowed(String code, int maxTier) => _allowed(foods, code, tier: maxTier, excluded: excluded, custom: custom, soyaCapG: soyaCapG);
   bool ok(String code) => allowed(code, tier);
+  // Kitchen and mess (mealCodes): a meal the person makes uses only foods their equipment can make; null = any.
+  final okAt = _mealCheck(ok, mealCodes);
   double density(Food f) => f.kcal <= 0 ? 0 : f.protein / f.kcal;
 
   DayCheck check(double k, double p, bool hasFood, {double? ceiling, bool hitStepLimit = false, double? fatShare, List<String> fatUnknown = const []}) {
@@ -532,7 +823,7 @@ DayPlan planDay({
     final picks = <_Pick>[];
     for (final (mi, (_, _, slots, _)) in _meals.indexed) {
       for (final (si, slot) in slots.indexed) {
-        final all = slot.codes.where(ok).toList();
+        final all = slot.codes.where((c) => okAt(mi, c)).toList();
         if (all.isEmpty) continue; // a vegan breakfast has no milk
         if (slot.dense || (denseProtein && slot.scale == _Scale.protein)) {
           // Soya shares one daily limit, so a second soya slot would add almost nothing: take the next best.
@@ -542,7 +833,7 @@ DayPlan planDay({
           picks.add((mi, slot, foods[best]!));
           continue;
         }
-        final preferred = slot.codes.take(slot.prefer).where(ok).toList();
+        final preferred = slot.codes.take(slot.prefer).where((c) => okAt(mi, c)).toList();
         final local = (preferred.isEmpty ? all : preferred).where(regional.contains).toList();
         final pool = local.isNotEmpty ? local : (preferred.isEmpty ? all : preferred);
         picks.add((mi, slot, foods[pool[(day + si + mi) % pool.length]]!));
@@ -553,8 +844,9 @@ DayPlan planDay({
 
   final oil = _oilFor(foods, excluded, custom);
   final oilG = oil == null ? 0.0 : oilGrams(kcal);
-  final oilKcal = oil == null ? 0.0 : oil.kcal * _oilShown(oilG) / 100;
-  final oilFat = oil == null ? 0.0 : oil.fat * _oilShown(oilG) / 100;
+  bool cooks(int mi) => oil != null && (mealCodes?[mi]?.contains(oil.code) ?? true);
+  final oilKcal = oil == null ? 0.0 : oil.kcal * _oilShown(oilG, cooks) / 100;
+  final oilFat = oil == null ? 0.0 : oil.fat * _oilShown(oilG, cooks) / 100;
 
   // Portions in kitchen steps (soya rounded down so the day limit holds, eggs in whole eggs), totals from what is shown.
   DayPlan assemble(List<_Pick> picks, List<double> grams, {double? ceiling, bool hitStepLimit = false}) {
@@ -569,7 +861,7 @@ DayPlan planDay({
                   ? (grams[i] / 5).floor() * 5.0
                   : math.max(_stepFor(p.$3.code, p.$2), (grams[i] / _stepFor(p.$3.code, p.$2)).round() * _stepFor(p.$3.code, p.$2)),
             ),
-        if (oil != null && oilShare > 0) _item(oil, (oilG * oilShare).roundToDouble()),
+        if (oil != null && oilShare > 0 && cooks(mi)) _item(oil, (oilG * oilShare).roundToDouble()),
       ]..removeWhere((it) => it.grams <= 0);
       if (items.isNotEmpty) meals.add((name: name, time: time, items: items));
     }
@@ -706,7 +998,7 @@ DayPlan planDay({
       for (final (i, p) in bestPicks.indexed) {
         if (p.$2.scale != _Scale.protein || fatRatioOf(p.$3) <= maxFatEnergyShare) continue;
         final soyaElsewhere = bestPicks.indexed.any((e) => e.$1 != i && e.$2.$3.code == 'X001');
-        final options = p.$2.codes.where((c) => ok(c) && c != p.$3.code && !(c == 'X001' && soyaElsewhere)).map((c) => foods[c]!).toList()
+        final options = p.$2.codes.where((c) => okAt(p.$1, c) && c != p.$3.code && !(c == 'X001' && soyaElsewhere)).map((c) => foods[c]!).toList()
           ..sort((a, b) => fatRatioOf(a).compareTo(fatRatioOf(b)));
         if (options.isEmpty || fatRatioOf(options.first) >= fatRatioOf(p.$3)) continue;
         final tried = [...bestPicks]..[i] = (p.$1, p.$2, options.first);
@@ -733,7 +1025,7 @@ DayPlan planDay({
 
   // Neither passed: search every day the planner can show. Its best day is used when it passes; its protein
   // ceiling makes any impossibility statement exact for the planner's rules.
-  final layers = _layers(foods, ok, soyaCapG);
+  final layers = _layers(foods, okAt, soyaCapG);
   final grid = _gridSearch(layers,
       budgetKcal: kcal * (1 + kcalTolerance) - oilKcal,
       soyaCapG: soyaCapG,
@@ -854,47 +1146,48 @@ String amountLabel(PlanItem i) => switch (i.unit) {
 
 /// Household servings (owner request 2026-10-28: plates a person recognises, not raw ingredients). Levlofit's own
 /// approximate conversions, shown next to the exact grams: 1 roti = 30 g atta, 1 jowar or bajra bhakri = 40 g flour,
-/// 1 ragi roti = 30 g, 1 plate poha = 50 g dry, 1 cup cooked rice = 50 g raw, 1 katori cooked dal = 30 g dry
-/// (rajma, chana 35 g, soya chunks 25 g), 1 glass milk = 200 ml, 1 egg = 50 g, 1 tsp oil = 5 g, 1 katori sabzi =
-/// 150 g vegetables, 1 bowl salad = 100 g; fruit by the piece.
+/// Household servings in plain units (owner request 2026-10-29: no katori or sabzi). Levlofit kitchen conventions, not
+/// lab yields: 1 roti = 30 g flour; a 150 ml bowl of cooked dal = 30 g dry dal (kidney beans, chickpeas 35 g; soya
+/// chunks 25 g); 1 cup (240 ml) cooked rice = 50 g raw; a 200 ml glass of milk; 1 egg = 50 g; 1 tsp oil = 5 g;
+/// vegetables and salads by their raw weight; fruit by the piece.
 typedef _Serving = (double per, String one, String many);
 const _servings = <String, _Serving>{
-  'A019': (30, 'roti', 'rotis'),
-  'A005': (40, 'jowar bhakri', 'jowar bhakris'),
-  'A003': (40, 'bajra roti', 'bajra rotis'),
-  'A010': (30, 'ragi roti', 'ragi rotis'),
-  'A011': (50, 'plate poha', 'plates poha'),
-  'A015': (50, 'cup cooked rice', 'cups cooked rice'),
-  'B021': (30, 'katori toor dal', 'katoris toor dal'),
-  'B010': (30, 'katori moong dal', 'katoris moong dal'),
-  'B013': (30, 'katori masoor dal', 'katoris masoor dal'),
-  'B020': (35, 'katori rajma', 'katoris rajma'),
-  'B002': (35, 'katori kala chana', 'katoris kala chana'),
-  'X001': (25, 'katori soya chunks curry', 'katoris soya chunks curry'),
-  'L002': (200, 'glass milk', 'glasses milk'),
+  'A019': (30, 'roti (whole-wheat flatbread)', 'rotis (whole-wheat flatbreads)'),
+  'A005': (40, 'jowar (sorghum) flatbread', 'jowar (sorghum) flatbreads'),
+  'A003': (40, 'bajra (pearl millet) flatbread', 'bajra (pearl millet) flatbreads'),
+  'A010': (30, 'ragi (finger millet) flatbread', 'ragi (finger millet) flatbreads'),
+  'A011': (50, 'serving poha (50 g dry flattened rice)', 'servings poha (50 g dry flattened rice each)'),
+  'A015': (50, 'cup (240 ml) cooked rice', 'cups (240 ml each) cooked rice'),
+  'B021': (30, 'bowl (150 ml) toor dal', 'bowls (150 ml each) toor dal'),
+  'B010': (30, 'bowl (150 ml) moong dal', 'bowls (150 ml each) moong dal'),
+  'B013': (30, 'bowl (150 ml) masoor dal', 'bowls (150 ml each) masoor dal'),
+  'B020': (35, 'bowl (150 ml) kidney bean curry (rajma)', 'bowls (150 ml each) kidney bean curry (rajma)'),
+  'B002': (35, 'bowl (150 ml) black chickpea curry (kala chana)', 'bowls (150 ml each) black chickpea curry (kala chana)'),
+  'X001': (25, 'bowl (150 ml) soya chunk curry', 'bowls (150 ml each) soya chunk curry'),
+  'L002': (200, 'glass (200 ml) milk', 'glasses (200 ml each) milk'),
   'M004': (50, 'boiled egg', 'boiled eggs'),
   'E012': (120, 'banana', 'bananas'),
-  'E049': (120, 'bowl papaya', 'bowls papaya'),
+  'E049': (120, 'serving papaya (120 g)', 'servings papaya (120 g each)'),
   'E028': (100, 'guava', 'guavas'),
   'E001': (150, 'apple', 'apples'),
   'E047': (130, 'orange', 'oranges'),
-  'D036': (150, 'katori cauliflower sabzi', 'katoris cauliflower sabzi'),
-  'D056': (150, 'katori bhindi sabzi', 'katoris bhindi sabzi'),
-  'C015': (150, 'katori cabbage sabzi', 'katoris cabbage sabzi'),
-  'C033': (150, 'katori palak sabzi', 'katoris palak sabzi'),
-  'F002': (150, 'katori carrot sabzi', 'katoris carrot sabzi'),
-  'D043': (100, 'bowl cucumber salad', 'bowls cucumber salad'),
-  'D076': (100, 'bowl tomato salad', 'bowls tomato salad'),
-  'dish:idli': (15, 'idli', 'idlis'),
-  'dish:dosa': (35, 'dosa', 'dosas'),
-  'dish:ragi-dosa': (35, 'ragi dosa', 'ragi dosas'),
-  'dish:poha': (60, 'plate poha with peanuts', 'plates poha with peanuts'),
-  'dish:upma': (50, 'bowl rava upma', 'bowls rava upma'),
-  'dish:vermicelli': (50, 'bowl vermicelli upma', 'bowls vermicelli upma'),
-  'dish:besan-chilla': (30, 'besan chilla', 'besan chillas'),
-  'dish:moong-chilla': (30, 'moong dal chilla', 'moong dal chillas'),
-  'dish:thepla': (30, 'thepla', 'theplas'),
-  'dish:sprouts': (40, 'katori sprouts chaat', 'katoris sprouts chaat'),
+  'D036': (150, 'serving cooked cauliflower (150 g)', 'servings cooked cauliflower (150 g each)'),
+  'D056': (150, 'serving cooked okra (150 g)', 'servings cooked okra (150 g each)'),
+  'C015': (150, 'serving cooked cabbage (150 g)', 'servings cooked cabbage (150 g each)'),
+  'C033': (150, 'serving cooked spinach (150 g)', 'servings cooked spinach (150 g each)'),
+  'F002': (150, 'serving cooked carrots (150 g)', 'servings cooked carrots (150 g each)'),
+  'D043': (100, 'serving cucumber salad (100 g)', 'servings cucumber salad (100 g each)'),
+  'D076': (100, 'serving tomato salad (100 g)', 'servings tomato salad (100 g each)'),
+  'dish:idli': (15, 'idli (steamed rice cake)', 'idlis (steamed rice cakes)'),
+  'dish:dosa': (35, 'dosa (rice and lentil crepe)', 'dosas (rice and lentil crepes)'),
+  'dish:ragi-dosa': (35, 'ragi dosa (finger millet crepe)', 'ragi dosas (finger millet crepes)'),
+  'dish:poha': (60, 'serving poha (flattened rice) with peanuts (60 g dry)', 'servings poha (flattened rice) with peanuts (60 g dry each)'),
+  'dish:upma': (50, 'serving rava upma, savoury semolina (50 g dry)', 'servings rava upma, savoury semolina (50 g dry each)'),
+  'dish:vermicelli': (50, 'serving savoury vermicelli (50 g dry)', 'servings savoury vermicelli (50 g dry each)'),
+  'dish:besan-chilla': (30, 'besan chilla (gram flour pancake)', 'besan chillas (gram flour pancakes)'),
+  'dish:moong-chilla': (30, 'moong dal chilla (lentil pancake)', 'moong dal chillas (lentil pancakes)'),
+  'dish:thepla': (30, 'thepla (spiced flatbread)', 'theplas (spiced flatbreads)'),
+  'dish:sprouts': (40, 'serving sprouted mung salad (40 g dry)', 'servings sprouted mung salad (40 g dry each)'),
   'T012': (5, 'tsp cooking oil', 'tsp cooking oil'),
   'T006': (5, 'tsp mustard oil', 'tsp mustard oil'),
 };
@@ -906,15 +1199,16 @@ String _count(double x) {
   return halves.isOdd ? (whole == 0 ? '½' : '$whole½') : '$whole';
 }
 
-/// Foods weighed rather than counted, named as the dish that is cooked: "Paneer bhurji (100 g paneer)".
+/// Foods weighed rather than counted, named as the dish that is cooked: "Paneer, scrambled or with vegetables (100 g paneer)".
 const _dishes = {
-  'L003': ('Paneer bhurji or sabzi', 'paneer'),
+  'L003': ('Paneer, scrambled or cooked with vegetables', 'paneer'),
   'N003': ('Chicken curry', 'boneless chicken'),
   'S006': ('Fish curry', 'rohu'),
   'H012': ('Roasted peanuts', 'peanuts'),
 };
 
-/// What to put on the plate, e.g. "2 rotis", "1 katori moong dal", "Chicken curry (150 g boneless chicken)".
+/// What to put on the plate, e.g. "2 rotis (whole-wheat flatbreads)", "1 bowl (150 ml) moong dal",
+/// "Chicken curry (150 g boneless chicken)".
 String servingLabel(PlanItem i) {
   if (i.unit == 'scoop') {
     final n = (i.grams / scoopGrams).round();
@@ -960,21 +1254,23 @@ String itemRole(PlanItem i) => switch (i.code) {
       _ => 'VEGETABLE',
     };
 
-/// A meal named as a plate, oil and drinks left out: "Roti + Rajma + Carrot sabzi + Cucumber salad".
+/// A meal named as a plate, oil left out: "Roti (whole-wheat flatbread) + Kidney bean curry (rajma) + Cooked carrots".
 String mealTitle(PlanMeal m) {
   String name(PlanItem i) {
     final d = _dishes[i.code];
     if (d != null) return d.$1;
     if (i.unit == 'scoop') return 'Protein shake';
     final one = _servings[i.code]?.$2 ?? i.name.toLowerCase();
-    final bare = one.replaceFirst(RegExp(r'^(katori|bowl|cup cooked|glass|plate|boiled) '), '');
+    final bare = one
+        .replaceFirst(RegExp(r'^(bowl \(150 ml\)|cup \(240 ml\) cooked|glass \(200 ml\)|serving cooked|serving|boiled) '), '')
+        .replaceFirst(RegExp(r' \((\d+ g|\d+ g dry|50 g dry flattened rice|60 g dry)\)$'), '');
     return bare[0].toUpperCase() + bare.substring(1);
   }
 
   return m.items.where((i) => i.unit != 'oil').map(name).toSet().join(' + ');
 }
 
-/// One line for the whole meal, oil left out: "2 rotis + 1 katori moong dal + 1 katori palak sabzi".
+/// One line for the whole meal, oil left out: "2 rotis (whole-wheat flatbreads) + 1 bowl (150 ml) moong dal + ...".
 String mealSummary(PlanMeal m) => m.items.where((i) => i.unit != 'oil').map(servingLabel).join(' + ');
 
 /// Cooking oil for the whole day in teaspoons, shown once rather than per meal, as a dietitian writes it.
@@ -1062,6 +1358,8 @@ typedef WeekRequest = ({
   double soyaCapG,
   bool proteinPowder,
   String? region,
+  Map<int, Set<String>>? mealCodes, // per meal index, the foods that meal may use (kitchen and mess); null = any
+  bool topUpScoop, // the person is open to protein powder and it is suitable: a short day may add one scoop
 });
 
 /// A key over every input that changes a week: each food's full values and whether its fat is known (name included, since exclusion words
@@ -1073,7 +1371,8 @@ String weekKey(WeekRequest r) {
     return [c, f.name, (f.tags.toList()..sort()).join('+'), f.kcal, f.protein, f.carb, f.fat, f.fiber, f.fatKnown].join(':');
   }).join(',');
   final custom = r.custom.map((c) => c.trim().toLowerCase()).where((c) => c.isNotEmpty).toSet().toList()..sort();
-  return [foods, r.kcal, r.protein, (r.excluded.toList()..sort()).join('+'), custom.join('+'), r.tier, r.soyaCapG, r.proteinPowder, r.region ?? 'any'].join('|');
+  final meals = r.mealCodes == null ? 'any' : (r.mealCodes!.entries.toList()..sort((a, b) => a.key - b.key)).map((e) => '${e.key}:${(e.value.toList()..sort()).join('+')}').join(';');
+  return [foods, r.kcal, r.protein, (r.excluded.toList()..sort()).join('+'), custom.join('+'), r.tier, r.soyaCapG, r.proteinPowder, r.region ?? 'any', meals, r.topUpScoop].join('|');
 }
 
 // ---- protein shake (Build my plate, whey step) ----------------------------------------------------------------
@@ -1128,21 +1427,30 @@ DayPlan addShake(DayPlan d, int scoops, {required double kcal, required double p
 }
 
 /// The seven days (index 0 = Monday) for one request. Top-level and pure, so it can run in a background isolate.
-List<DayPlan> planWeek(WeekRequest r) => [
-      for (var day = 0; day < 7; day++)
-        planDay(
-          foods: r.foods,
-          kcal: r.kcal,
-          protein: r.protein,
-          excluded: r.excluded,
-          custom: r.custom,
-          tier: r.tier,
-          day: day,
-          soyaCapG: r.soyaCapG,
-          proteinPowder: r.proteinPowder,
-          region: r.region,
-        ),
-    ];
+List<DayPlan> planWeek(WeekRequest r) => [for (var day = 0; day < 7; day++) _planOne(r, day)];
+
+/// One day of [planWeek]. With [WeekRequest.topUpScoop], a day the foods cannot bring to the protein target is planned
+/// again for the targets minus one scoop, and the scoop is added: the day still lands on its calorie target, and the
+/// powder is used only where food falls short (as the plan's supplement advice says). Never without topUpScoop.
+DayPlan _planOne(WeekRequest r, int day) {
+  DayPlan plan(double kcal, double protein) => planDay(
+        foods: r.foods,
+        kcal: kcal,
+        protein: protein,
+        excluded: r.excluded,
+        custom: r.custom,
+        tier: r.tier,
+        day: day,
+        soyaCapG: r.soyaCapG,
+        proteinPowder: r.proteinPowder,
+        region: r.region,
+        mealCodes: r.mealCodes,
+      );
+  final d = plan(r.kcal, r.protein);
+  if (!r.topUpScoop || d.check.proteinShare >= minProteinShare) return d;
+  final topped = addShake(plan(r.kcal - scoopKcal, r.protein - scoopProtein), 1, kcal: r.kcal, protein: r.protein, plant: r.excluded.contains('dairy'));
+  return topped.check.proteinShare > d.check.proteinShare ? topped : d;
+}
 
 /// [planWeek] off the UI thread: Flutter's compute() uses a background isolate on mobile and desktop, and runs
 /// the work in the same thread on the web, where isolates are not available.

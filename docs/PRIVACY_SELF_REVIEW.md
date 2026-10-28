@@ -1,8 +1,9 @@
 # Privacy self-review by the owner (2026-10-27)
 
 The owner decided to release with their own privacy review instead of a lawyer's (2026-10-27). This is a checklist
-against India's DPDP Act 2023 and Google Play's user-data policy, checked against the code on 2026-10-27. It is not
-legal advice. A lawyer review remains recommended before the app takes payments (planned subscription).
+against India's DPDP Act 2023 and Google Play's user-data policy, checked against the code on 2026-10-27; rows 19 to 23
+checked against the local code on 2026-10-29 (batches B2 to B6 and the onboarding and maintenance-calorie follow-up,
+not yet deployed). It is not legal advice. A lawyer review remains recommended before the app takes payments (planned subscription).
 
 Owner sign-off: ____________________  Date: __________
 
@@ -40,7 +41,12 @@ Owner sign-off: ____________________  Date: __________
 | 15 | Grievance contact | Email in "Your rights" | Owner: make sure the address on the website is monitored |
 | 17 | Body check photos (added 2026-10-27) | Consent each time, sent once to Groq, never stored; both policy texts | Done in code; deploy `body-check` only after you approve |
 | 18 | Error reports and update check (added 2026-10-27) | app_errors: signed-in only, masked emails, 30 a day, 90 days, deleted with the account; update check contacts the website host | Done in code; both policy texts |
-| 16 | Play Data safety form | docs/PLAY_DATA_SAFETY_DRAFT.md | Fill from this list when a Play listing is made |
+| 19 | Build my plate health conditions and protein-shake scoops (added 2026-10-29) | **Stored in the account:** dietary_profiles.health_conditions (diabetes, PCOS, thyroid, blood pressure, cholesterol, kidney, IBS, pregnancy) and whey_scoops (0 to 3); a copy of the conditions in generated_plans.input with each plan. Phones copy older on-device choices up once, then delete them. **Sent to Groq:** only in FOOD SETTINGS (food questions, or a reply checked against food settings), with a rule not to give condition-specific advice | Done in code; both policy texts; ships with migration 20261029100000 and the coach-chat deploy |
+| 20 | Progress summary for the coach (added 2026-10-29) | **Nothing new stored:** computed on the server from existing workout_logs, body_metrics and food_log rows. **Sent to Groq:** only for progress questions: sessions logged in the last 28 days against the plan, average and last effort rating, counts of mild and stopped pain answers with the last stopped date, the weight trend as % of body weight a week with its verdict (no kilograms), and food-diary averages against targets. Session notes text is never sent | Done in code; both policy texts; ships with the coach-chat deploy |
+| 21 | Kitchen, cooking time, training days and time (added 2026-10-29) | **Stored in the account:** dietary_profiles.kitchen, cook_time, kitchen_equipment, kitchen_other (own words, up to 200 characters) and mess_meals (added 2026-10-29); profiles.training_days and training_time (onboarding and Protocol); copied into generated_plans.input and plan.schedule. **Sent to Groq:** training days and time with every message (ABOUT YOU); kitchen, equipment, own kitchen notes, mess meals and cooking time only in FOOD SETTINGS | Done in code; both policy texts; ships with migration 20261029300000 and the coach-chat deploy |
+| 22 | Plan changes proposed by the coach (added 2026-10-29) | **Stored in the account:** plan_changes (field, proposed value, value at proposal, status; server writes only; the person can delete). **Sent to Groq:** only when the person asks about body goal, pace or training days: the current body goal, diet pace and days, and for each change the plan's checks allow, the engine's body goal, calorie, protein and training-day figures. Nothing changes until the person confirms | Done in code; both policy texts; ships with migration 20261029200000 and the coach-chat deploy |
+| 23 | Energy working in the plan (added 2026-10-29) | **Stored in the account:** generated_plans.plan.nutrition.energy (maintenance estimate, activity factor and what set it, goal factor, any floor) and the BMR, derived from age, sex, height, weight and activity. **Sent to Groq:** with every message as part of the plan summary; the raw age, height and weight are still not sent in normal chat | Done in code; in-app text and website text; ships with the generate-plan and coach-chat deploys |
+| 16 | Play Data safety form | docs/PLAY_DATA_SAFETY_DRAFT.md | Fill from this list when a Play listing is made; updated for rows 19 to 23 on 2026-10-29 |
 
 ## Not covered by this review
 

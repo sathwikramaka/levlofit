@@ -462,6 +462,68 @@ List<AddOnBlock> blocksFor(WeekPlan week, int day, Tier tier, Set<Kit>? kit, Lis
 /// The line above a session the person made lighter with Levlofit AI.
 const lighterNotice = 'Lighter day: one set fewer on each move, and finish every set with 3 or more reps in reserve.';
 
+/// One warm-up step: what to do, how much, and how.
+typedef WarmUpStep = ({String move, String dose, String how});
+
+/// The warm-up before the main moves (owner request 2026-10-29), about the 5 minutes [estimateMinutes] already counts:
+/// easy pulse-raising work, joint movement, then lighter ramp-up sets of the first lift. Not part of the session's sets
+/// and never ticked. Short holds only: the Handbook's warming-up chapter keeps static stretches under 60 s (Behm 2016).
+/// Adapted to the session kind, the equipment ([gym]), the level, a lighter day or medical hold, and an injury note.
+List<WarmUpStep> warmUpFor({required String kind, required int level, bool gym = false, String? injury, bool light = false}) {
+  final hurt = (injury ?? '').toLowerCase();
+  bool has(List<String> words) => words.any(hurt.contains);
+  final knee = has(['knee', 'ankle', 'hip']), upper = has(['shoulder', 'wrist', 'elbow']), back = has(['back', 'spine', 'disc']);
+  final pulse = (
+    move: 'Easy cardio',
+    dose: '${light ? 3 : 2}–3 minutes',
+    how: gym
+        ? 'Walk briskly, or use a bike, rower or treadmill at an easy pace, until you feel warm and breathe a little faster.'
+        : 'Brisk walking or marching on the spot at an easy pace, until you feel warm and breathe a little faster.',
+  );
+  final joints = [
+    (move: 'Arm circles', dose: '10 forward, 10 back', how: 'Arms out to the sides, small circles growing bigger. Keep it pain-free.'),
+    (move: 'Hip circles', dose: '5 each way', how: 'Hands on hips, feet apart, draw slow circles with your hips.'),
+    if (back)
+      (move: 'Cat-cow', dose: '6 slow reps', how: 'On hands and knees, gently round then arch your back within a comfortable range.')
+    else
+      (move: 'Hip hinge', dose: '8 slow reps', how: 'Hands on hips, push your hips back with a flat back, then stand tall.'),
+    if (knee)
+      (move: 'Glute bridge', dose: '10 slow reps', how: 'Lying on your back, knees bent, lift your hips and lower slowly. Skips deep knee bending.')
+    else
+      (move: 'Bodyweight squat', dose: '${level <= 1 ? 6 : 10} slow reps', how: 'To a comfortable depth, heels down, chest up.'),
+    if (upper)
+      (move: 'Shoulder blade squeezes', dose: '10 reps', how: 'Arms by your sides, squeeze your shoulder blades together and relax. No weight on your hands.')
+    else
+      (move: 'Wall push-up', dose: '8 slow reps', how: 'Hands on a wall at shoulder height, lower your chest towards it and push back.'),
+  ];
+  final specific = switch (kind) {
+    'endurance' => (move: 'Very easy jog', dose: '3–5 minutes', how: 'Slower than your main run; you should be able to talk in full sentences.'),
+    'mobility' => (move: 'Slow breathing', dose: '5 breaths', how: 'Breathe in through the nose and out slowly before the first pose.'),
+    _ => (
+        move: 'Ramp-up sets',
+        dose: light ? '1 light set of 5 reps' : '1–2 light sets of 5 reps',
+        how: 'Before your first main move, do it with about half the weight (or an easier version) to rehearse the movement. '
+            'These are not counted in your sets.',
+      ),
+  };
+  return [pulse, ...joints, specific];
+}
+
+/// The cooldown after the main moves: easy movement, then short, gentle stretches (holds of 30 s or less, as the
+/// Handbook's warming-up chapter advises against long holds before strength work; Behm 2016). Not counted in sets.
+List<WarmUpStep> cooldownFor({required String kind}) => [
+      (
+        move: kind == 'endurance' ? 'Easy walk' : 'Easy walk or slow marching',
+        dose: '2–3 minutes',
+        how: 'Let your breathing settle before you stop.',
+      ),
+      (move: 'Gentle stretches', dose: '20–30 seconds each', how: 'Thighs, hips and chest or shoulders: ease into a comfortable stretch, no bouncing, no pain.'),
+    ];
+
+/// The line above every session while the plan is on a medical hold (plan-engine 3.2, ACSM pre-participation screen).
+const medicalHoldNotice = 'Light training only until a doctor clears you: one set fewer on each move, 3 or more reps in reserve, '
+    'and no added weight. Stop and get help for chest pain, dizziness or feeling unwell.';
+
 /// How much of a move, in words. Lifting doses: Handbook "Sets, reps and progress" (ACSM 2026).
 /// Stretch holds stay under the 60 s that can blunt strength for a while (Behm 2016).
 String doseFor(String id, int level, {bool lighter = false}) {
@@ -472,8 +534,9 @@ String doseFor(String id, int level, {bool lighter = false}) {
   if (_stretches.contains(id)) return 'Hold 30 s or less, each side';
   if (_drills.contains(id)) return 'Warm-up, until you feel loose';
   if (_carries.contains(id)) return '$sets walks, stop before grip or posture fades';
-  if (_core.contains(id)) return '$sets sets, slow and controlled';
-  return lighter ? '$sets sets × 8–12 reps, 3 or more left in the tank' : '$sets sets × 8–12 reps, 1–3 left in the tank';
+  final setWord = sets == 1 ? 'set' : 'sets';
+  if (_core.contains(id)) return '$sets $setWord, slow and controlled';
+  return lighter ? '$sets $setWord × 8–12 reps, 3 or more left in the tank' : '$sets $setWord × 8–12 reps, 1–3 left in the tank';
 }
 
 final _cache = <String, Map<String, dynamic>>{};
@@ -522,7 +585,8 @@ String moveName(Map<String, dynamic> m) => _poseNames[m['id']] ?? moveGuide[m['i
 
 /// A horizontal strip of animated moves with names and doses. Tapping a move opens its detail.
 class MoveStrip extends StatelessWidget {
-  const MoveStrip({super.key, required this.ids, required this.level, this.tile = 128, this.injury});
+  const MoveStrip({super.key, required this.ids, required this.level, this.tile = 128, this.injury, this.lighter = false});
+  final bool lighter; // a lighter day or a medical hold: the preview shows the dose the session will ask for
   final List<String> ids;
   final int level;
   final double tile;
@@ -586,7 +650,7 @@ class MoveStrip extends StatelessWidget {
                       // Flexible: with large system text the second dose line gives way instead of overflowing the strip.
                       Flexible(
                         child: Text(
-                          m == null ? ' ' : doseFor(m['id'] as String, level),
+                          m == null ? ' ' : doseFor(m['id'] as String, level, lighter: lighter),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: t.bodySmall?.copyWith(fontSize: 11, height: 1.3, color: c.onSurfaceVariant),
@@ -607,7 +671,9 @@ class MoveStrip extends StatelessWidget {
 /// One session, move by move: animation, dose, and a box per set to tick. Finishing logs the day.
 class SessionScreen extends StatefulWidget {
   const SessionScreen(
-      {super.key, required this.title, required this.ids, required this.level, this.onFinish, this.done = false, this.injury, this.sessionMinutes, this.blocks = const [], this.moves, this.lighter = false});
+      {super.key, required this.title, required this.ids, required this.level, this.onFinish, this.done = false, this.injury, this.sessionMinutes, this.blocks = const [], this.moves, this.lighter = false, this.medicalHold = false, this.kind = 'strength', this.gym = false});
+  final String kind; // the goal's session kind, for the warm-up
+  final bool gym; // gym equipment, for the warm-up's cardio options
   final String title;
   final List<String> ids;
   final int level;
@@ -618,12 +684,14 @@ class SessionScreen extends StatefulWidget {
   final String? injury; // the user's injury note (profiles.injuries); null keeps the session as planned
   final int? sessionMinutes; // the person's session length, for the over-time notice
   final bool lighter; // a lighter day the person confirmed with Levlofit AI: one set fewer, more reps in reserve
+  final bool medicalHold; // plan.medicalHold: a health-screen flag, so every session uses the lighter dose, no added load
 
   @override
   State<SessionScreen> createState() => _SessionScreenState();
 }
 
 class _SessionScreenState extends State<SessionScreen> {
+  bool get _light => widget.lighter || widget.medicalHold;
   // The injury check runs over the whole day; each part (main session, each block) keeps its own moves that passed.
   late final _check = checkInjury([...widget.ids, for (final b in widget.blocks) ...b.ids], widget.injury);
   late final List<AddOnBlock> _blocks = [
@@ -866,7 +934,7 @@ class _SessionScreenState extends State<SessionScreen> {
     super.dispose();
   }
 
-  int get _totalSets => _ids.where((id) => !_missing.contains(id)).fold(0, (s, id) => s + setsFor(id, _levelOf(id), lighter: widget.lighter));
+  int get _totalSets => _ids.where((id) => !_missing.contains(id)).fold(0, (s, id) => s + setsFor(id, _levelOf(id), lighter: _light));
   int get _doneSets => _ids.fold(0, (s, id) => s + (_ticked[id] ?? 0)); // a left-out move's sets stop counting
 
   Future<void> _finish() async {
@@ -959,7 +1027,10 @@ class _SessionScreenState extends State<SessionScreen> {
                     Text(note, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
                     const SizedBox(height: 12),
                   ],
-                  if (widget.lighter) ...[
+                  if (widget.medicalHold) ...[
+                    _InjuryNotice(label: 'SEE A DOCTOR FIRST', lines: const [medicalHoldNotice]),
+                    const SizedBox(height: 12),
+                  ] else if (widget.lighter) ...[
                     Text(lighterNotice, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
                     const SizedBox(height: 12),
                   ],
@@ -967,6 +1038,10 @@ class _SessionScreenState extends State<SessionScreen> {
                     _InjuryNotice(lines: injuryNotice(_check)),
                     const SizedBox(height: 12),
                   ],
+                  _WarmUp(steps: warmUpFor(kind: widget.kind, level: widget.level, gym: widget.gym, injury: widget.injury, light: _light)),
+                  const SizedBox(height: 12),
+                  Text('MAIN SESSION', style: monoLabel(context)),
+                  const SizedBox(height: 10),
                   for (final (i, m) in moves.indexed) ...[
                     if (headers[m['id']] case final b?) ...[
                       const SizedBox(height: 8),
@@ -977,9 +1052,10 @@ class _SessionScreenState extends State<SessionScreen> {
                       number: i + 1,
                       move: m,
                       level: _levelOf(m['id'] as String),
-                      lighter: widget.lighter,
+                      lighter: _light,
                       ticked: _ticked[m['id']] ?? 0,
-                      hint: isLift(m['id'] as String) ? liftHint(_last[m['id']] ?? const [], _advice) : null,
+                      // No "add weight" hints while a doctor has not cleared harder training.
+                      hint: !widget.medicalHold && isLift(m['id'] as String) ? liftHint(_last[m['id']] ?? const [], _advice) : null,
                       care: _check.care[m['id']] == null ? null : careNote(_check.care[m['id']]!),
                       onSet: (s) {
                         HapticFeedback.selectionClick();
@@ -1012,6 +1088,8 @@ class _SessionScreenState extends State<SessionScreen> {
                     ErrorLine('${missingMovesText(missing.length)} Your other moves and sets still count.'),
                     const SizedBox(height: 12),
                   ],
+                  _WarmUp(steps: cooldownFor(kind: widget.kind), title: 'COOLDOWN  ·  ABOUT 5 MIN', note: 'After your last set. Not counted in your sets.'),
+                  const SizedBox(height: 12),
                   Text('Warm up first, stop any move that hurts, and rest long enough to repeat good reps. $exerciseMediaCredit.',
                       style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
                 ]),
@@ -1143,9 +1221,40 @@ class HowItWentSheetState extends State<HowItWentSheet> {
 }
 
 /// The injury check's notes at the top of a session.
+/// The warm-up section above the main moves: about 5 minutes, nothing to tick.
+class _WarmUp extends StatelessWidget {
+  const _WarmUp({required this.steps, this.title = 'WARM-UP  ·  ABOUT 5 MIN', this.note = 'Not counted in your sets. Stop any move that hurts.'});
+  final List<WarmUpStep> steps;
+  final String title, note;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), border: Border.all(color: c.outline)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: monoLabel(context)),
+        const SizedBox(height: 4),
+        Text(note, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        for (final (i, s) in steps.indexed)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${i + 1}. ${s.move}  ·  ${s.dose}', style: t.titleSmall),
+              Text(s.how, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            ]),
+          ),
+      ]),
+    );
+  }
+}
+
 class _InjuryNotice extends StatelessWidget {
-  const _InjuryNotice({required this.lines});
+  const _InjuryNotice({required this.lines, this.label = 'INJURY CHECK'});
   final List<String> lines;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -1155,7 +1264,7 @@ class _InjuryNotice extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), border: Border.all(color: c.error.withValues(alpha: 0.5))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('INJURY CHECK', style: monoLabel(context).copyWith(color: c.error)),
+        Text(label, style: monoLabel(context).copyWith(color: c.error)),
         const SizedBox(height: 6),
         for (final l in lines) Padding(padding: const EdgeInsets.only(top: 4), child: Text(l, style: t.bodySmall)),
       ]),

@@ -1525,3 +1525,291 @@ test('research: an evidence question gets review abstracts in the prompt and a s
   assert.equal(searched.length, 1);
   assert.doesNotMatch(searched[0], /72|kg\b|ACL|torn/);
 });
+
+test('B2: Build my plate conditions and shakes reach the coach for food talk only, filtered, with the doctor rule', async () => {
+  const { buildCoachContext } = await import('../_shared/coach-context.ts');
+  const plan = generatePlan(validateInput({ ageYears: 30, sex: 'female', heightCm: 160, weightKg: 60, weightGoal: 'maintain', goals: [{ goal: 'strength', name: 'Strength', kind: 'strength', coachLedFromLevel: null, experience: 'beginner' }], diet: 'vegetarian', restrictions: [] })) as unknown as Record<string, unknown>;
+  const inputs = {
+    profile: { display_name: 'Asha' }, plan, planCreatedAt: '2026-10-28', logs: [], facts: [], handbookTitles: [], recentUserMessages: [],
+    diet: { diet_type: 'vegetarian', restrictions: [], health_conditions: ['kidney', 'not-a-condition'], whey_scoops: 2 },
+  };
+  const food = buildCoachContext({ ...inputs, question: 'what should I eat for dinner?' }).text;
+  assert.match(food, /"healthConditions":\["kidney"\]/);
+  assert.match(food, /"proteinShakesPerDay":2/);
+  assert.match(food, /never give condition-specific diet or supplement advice/);
+  const other = buildCoachContext({ ...inputs, question: 'how many sets should I do?' }).text;
+  assert.doesNotMatch(other, /healthConditions|kidney/);
+});
+
+// ---- B4: progress from the person's own records ------------------------------------------------------------
+
+const daysAgo = (n: number) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+const cutPlan = generatePlan(validateInput({
+  ageYears: 30, sex: 'male', heightCm: 175, weightKg: 80, weightGoal: 'cut', daysPerWeek: 3,
+  goals: [{ goal: 'strength', name: 'Strength', kind: 'strength', coachLedFromLevel: null, experience: 'beginner' }], diet: 'vegetarian', restrictions: [],
+}));
+const progressOf = (system: string) => {
+  const m = /PROGRESS, FROM THEIR RECORDS[^\n]*\n(.+)/.exec(system);
+  return m ? JSON.parse(m[1]) : null;
+};
+
+test('B4 progress: exact values from stored rows reach the coach, with its rules; no kilograms, no notes text', async () => {
+  useDb(tables({
+    generated_plans: { data: { plan: cutPlan, created_at: new Date(Date.now() - 60 * 864e5).toISOString() } },
+    workout_logs: { data: [
+      { performed_on: daysAgo(9), rpe: 7, notes: 'pain: none' },
+      { performed_on: daysAgo(5), rpe: 8, notes: 'pain: mild' },
+      { performed_on: daysAgo(2), rpe: 9, notes: 'pain: stopped' },
+      { performed_on: daysAgo(40), rpe: 3, notes: 'pain: stopped' }, // outside the 28-day window
+    ] },
+    body_metrics: { data: [
+      { measured_on: daysAgo(21), weight_kg: 80 }, { measured_on: daysAgo(14), weight_kg: 79.6 },
+      { measured_on: daysAgo(7), weight_kg: 79.2 }, { measured_on: daysAgo(0), weight_kg: 78.8 },
+    ] },
+  }));
+  fakeLlm('ok');
+  assert.equal((await post({ message: 'How is my progress going?', threadId: THREAD })).status, 200);
+  const system = calls[0].body.messages[0].content as string;
+  const p = progressOf(system);
+  assert.ok(p, 'PROGRESS block sent');
+  const planned = cutPlan.trainingDaysPerWeek;
+  assert.deepEqual(p.training, { windowDays: 28, plannedPerWeek: planned, sessionsLogged: 3, adherencePct: Math.min(100, Math.round(300 / (planned * 4))), lastSession: daysAgo(2), daysSinceLast: 2 });
+  assert.deepEqual(p.effort, { sessionsRated: 3, averageRpeLast5: 8, lastRpe: 9 });
+  assert.deepEqual(p.pain, { sessionsAnswered: 3, mild: 1, stopped: 1, lastStopped: daysAgo(2) });
+  // 0.4 kg a week over a mean of 79.4 kg = -0.50 % a week: on track for a cut (0.5 to 1 %).
+  assert.equal(p.weight.weighIns, 4);
+  assert.equal(p.weight.trendPctPerWeek, -0.5);
+  assert.equal(p.weight.verdict, 'on track');
+  assert.match(system, /PROGRESS \(when listed\) is computed by the app/);
+  assert.match(system, /ask one short, specific question/);
+  assert.doesNotMatch(system.split('PROGRESS, FROM')[1].split('\n')[1], /78\.8|79\.2|weight_kg|pain: /);
+});
+
+test('B4 progress: nothing logged is reported as nothing, never as a value or a trend', async () => {
+  useDb(tables({
+    generated_plans: { data: { plan: cutPlan, created_at: new Date(Date.now() - 60 * 864e5).toISOString() } },
+    workout_logs: { data: [] }, body_metrics: { data: [] }, food_log: { data: [] },
+  }));
+  fakeLlm('ok');
+  await post({ message: 'Am I on track?', threadId: THREAD });
+  const p = progressOf(calls[0].body.messages[0].content);
+  assert.equal(p.training.sessionsLogged, 0);
+  assert.equal(p.training.lastSession, null);
+  assert.deepEqual(p.effort, { sessionsRated: 0, averageRpeLast5: null, lastRpe: null });
+  assert.deepEqual(p.pain, { sessionsAnswered: 0, mild: 0, stopped: 0, lastStopped: null });
+  assert.equal(p.weight.trendPctPerWeek, null);
+  assert.match(p.weight.verdict, /^not enough data/);
+  assert.deepEqual(p.food, { daysLogged: 0, avgKcal: null, avgProteinG: null, kcalPctOfTarget: null, proteinPctOfTarget: null });
+});
+
+test('B4 progress: a failed read is null (not empty), and other questions get no PROGRESS block', async () => {
+  useDb(tables({
+    generated_plans: { data: { plan: cutPlan, created_at: new Date(Date.now() - 60 * 864e5).toISOString() } },
+    body_metrics: { data: null, error: { message: 'read failed' } },
+  }));
+  fakeLlm('ok');
+  await post({ message: 'Is my weight trend ok?', threadId: THREAD });
+  assert.equal(progressOf(calls[0].body.messages[0].content).weight, null);
+  useDb(tables());
+  fakeLlm('ok');
+  await post({ message: 'How many sets today?', threadId: THREAD });
+  assert.doesNotMatch(calls[0].body.messages[0].content, /PROGRESS, FROM|PROGRESS \(when listed\)/);
+  assert.ok(!ops.some((o: any) => o.table === 'body_metrics'), 'body_metrics not read for a non-progress question');
+});
+
+test('B4 progress: a new plan is judged only on its own days; food averages cover logged days only', async () => {
+  const { summariseProgress } = await import('../_shared/coach-context.ts');
+  const now = Date.parse('2026-10-28T12:00:00Z');
+  const p = summariseProgress({
+    workouts: [{ performed_on: '2026-10-20', rpe: null, notes: null }, { performed_on: '2026-10-27', rpe: 6, notes: 'felt good' }],
+    weights: [], plan: cutPlan as unknown as Record<string, unknown>, planCreatedAt: '2026-10-25T08:00:00Z', nowMs: now,
+    food: [{ day: '2026-10-26', kcal: 2000, proteinG: 100, carbG: 0, fatG: 0, fiberG: 0, entries: 3 }, { day: '2026-10-27', kcal: 1000, proteinG: 50, carbG: 0, fatG: 0, fiberG: 0, entries: 1 }],
+  });
+  assert.equal(p.training!.windowDays, 4);
+  assert.equal(p.training!.sessionsLogged, 1, 'a session before the plan does not count');
+  assert.equal(p.training!.adherencePct, null, 'under a week: no adherence figure');
+  assert.equal(p.pain!.sessionsAnswered, 0, 'free notes are not pain answers');
+  assert.equal(p.food!.avgKcal, 1500);
+  assert.equal(p.food!.kcalPctOfTarget, Math.round((100 * 1500) / cutPlan.nutrition.energyKcal));
+});
+
+// ---- B5: plan changes the coach may propose, confirmed by the person -----------------------------------------
+
+const { checkPlanChange, planOptions } = await import('../_shared/plan-change.ts');
+const b5Input = validateInput({
+  ageYears: 30, sex: 'male', heightCm: 175, weightKg: 80, weightGoal: 'cut', daysPerWeek: 3, pace: 'balanced',
+  goals: [{ goal: 'strength', name: 'Strength', kind: 'strength', coachLedFromLevel: null, experience: 'beginner' }], diet: 'vegetarian', restrictions: [],
+});
+const heldInput = validateInput({ ...b5Input, weightGoal: 'maintain', healthFlags: ['heart_condition'] });
+const planRow = (input: unknown) => ({ data: { plan: generatePlan(input as never), input, created_at: new Date(Date.now() - 864e5).toISOString() } });
+
+test('B5 checks: a valid change carries the engine\'s own numbers; unchanged, unknown and target fields are refused', () => {
+  const c = checkPlanChange(b5Input, 'pace', 'easy');
+  assert.ok(c.ok);
+  const engine = generatePlan({ ...b5Input, pace: 'easy' });
+  assert.deepEqual(c.ok && c.preview, { weightGoal: 'cut', energyKcal: engine.nutrition.energyKcal, proteinG: engine.nutrition.proteinG, trainingDaysPerWeek: engine.trainingDaysPerWeek });
+  assert.equal(c.ok && c.from, 'balanced');
+  assert.deepEqual(checkPlanChange(b5Input, 'pace', 'balanced'), { ok: false, reason: 'unchanged' });
+  assert.equal((checkPlanChange(b5Input, 'pace', 'extreme') as { reason: string }).reason, 'unknown');
+  assert.equal((checkPlanChange(b5Input, 'energy_kcal', '1200') as { reason: string }).reason, 'unknown');
+  assert.equal((checkPlanChange(b5Input, 'days', '9') as { reason: string }).reason, 'unknown');
+  assert.equal((checkPlanChange(validateInput({ ...b5Input, weightGoal: 'maintain' }), 'pace', 'hard') as { reason: string }).reason, 'pace_needs_cut_or_bulk');
+  // Underweight: the engine would turn a cut into maintenance, so a cut is never offered.
+  const thin = validateInput({ ...b5Input, weightKg: 52, weightGoal: 'maintain' });
+  assert.equal((checkPlanChange(thin, 'weight_goal', 'cut') as { reason: string }).reason, 'engine_overrides');
+  assert.ok(!planOptions(thin).some((o) => o.field === 'weight_goal' && o.value === 'cut'));
+});
+
+test('B5 checks: a medical hold allows no cut, bulk, pace or extra days; fewer days are allowed', () => {
+  for (const v of ['cut', 'bulk']) assert.equal((checkPlanChange(heldInput, 'weight_goal', v) as { reason: string }).reason, 'engine_overrides');
+  assert.equal((checkPlanChange(heldInput, 'days', '5') as { reason: string }).reason, 'medical_hold');
+  assert.ok(checkPlanChange(heldInput, 'days', '2').ok);
+  const opts = planOptions(heldInput);
+  assert.ok(!opts.some((o) => o.field === 'pace' || ['cut', 'bulk'].includes(o.value) || (o.field === 'days' && Number(o.value) > 3)), JSON.stringify(opts));
+});
+
+test('B5 propose: a listed change is stored as a proposal with engine numbers; the line never shows', async () => {
+  useDb(tables({ generated_plans: planRow(b5Input), plan_changes: { data: null, nextId: 77 } }));
+  fakeLlm(['Easing off makes it easier to stick with.\nPLAN: pace=easy']);
+  const res = await post({ message: 'This cut feels too aggressive, can we go slower?', threadId: THREAD });
+  const out = await res.json();
+  assert.match(calls[0].body.messages[0].content, /PLAN CHANGES THAT PASS THE APP'S CHECKS/);
+  assert.doesNotMatch(out.reply, /PLAN:/);
+  assert.equal(out.planChange.id, 77);
+  assert.equal(out.planChange.field, 'diet_pace');
+  assert.equal(out.planChange.value, 'easy');
+  assert.equal(out.planChange.from, 'balanced');
+  assert.equal(out.planChange.preview.energyKcal, generatePlan({ ...b5Input, pace: 'easy' }).nutrition.energyKcal);
+  assert.ok(ops.some((o: any) => o.table === 'plan_changes' && o.op === 'insert'));
+  assert.ok(!ops.some((o: any) => (o.table === 'profiles' || o.table === 'dietary_profiles') && o.op === 'update'), 'proposing changes no setting');
+});
+
+test('B5 propose: an unlisted or unsafe line is dropped and nothing is stored', async () => {
+  useDb(tables({ generated_plans: planRow(heldInput) }));
+  fakeLlm(['A cut would help.\nPLAN: weight_goal=cut']);
+  const held = await (await post({ message: 'I want to switch to a cut', threadId: THREAD })).json();
+  assert.equal(held.planChange, null);
+  assert.doesNotMatch(held.reply, /PLAN:/);
+  useDb(tables({ generated_plans: planRow(b5Input) }));
+  fakeLlm(['Here is your session.\nPLAN: days=5']);
+  const off = await (await post({ message: 'What should I do today?', threadId: THREAD })).json();
+  assert.equal(off.planChange, null, 'not offered for this question');
+  assert.ok(!ops.some((o: any) => o.table === 'plan_changes' && o.op === 'insert'));
+});
+
+test('B5 confirm: re-checked, the setting written by the server, the row confirmed', async () => {
+  useDb(tables({
+    generated_plans: planRow(b5Input),
+    plan_changes: { data: { id: 5, field: 'diet_pace', value: 'easy', from_value: 'balanced', status: 'proposed' } },
+  }));
+  const res = await post({ confirmPlanChange: 5 });
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { planChanged: true, field: 'diet_pace', value: 'easy' });
+  const write = ops.find((o: any) => o.table === 'dietary_profiles' && o.op === 'update');
+  assert.deepEqual(write?.args, { diet_pace: 'easy' });
+  assert.ok(ops.some((o: any) => o.table === 'plan_changes' && o.op === 'update'));
+});
+
+test('B5 confirm: medical hold, stale settings and bad ids are refused and change nothing', async () => {
+  useDb(tables({ generated_plans: planRow(heldInput), plan_changes: { data: { id: 6, field: 'days_per_week', value: '6', from_value: '3', status: 'proposed' } } }));
+  const held = await post({ confirmPlanChange: 6 });
+  assert.equal(held.status, 409);
+  assert.equal((await held.json()).reason, 'medical_hold');
+  useDb(tables({ generated_plans: planRow(b5Input), plan_changes: { data: { id: 7, field: 'days_per_week', value: '4', from_value: '5', status: 'proposed' } } }));
+  const stale = await post({ confirmPlanChange: 7 });
+  assert.equal(stale.status, 409);
+  assert.equal((await stale.json()).reason, 'changed');
+  assert.ok(!ops.some((o: any) => (o.table === 'profiles' || o.table === 'dietary_profiles') && o.op === 'update'));
+  assert.equal((await post({ confirmPlanChange: 'drop table' })).status, 400);
+});
+
+test('B6: the coach knows when they can train and what they can cook (food talk only for the kitchen)', async () => {
+  const { buildCoachContext } = await import('../_shared/coach-context.ts');
+  const inputs = {
+    profile: { display_name: 'Asha', training_days: [1, 3, 5], training_time: 'night' },
+    plan: generatePlan(b5Input) as unknown as Record<string, unknown>, planCreatedAt: '2026-10-28', logs: [], facts: [], handbookTitles: [], recentUserMessages: [],
+    diet: { diet_type: 'vegetarian', restrictions: [], kitchen: 'no_stove', cook_time: 'short' },
+  };
+  const food = buildCoachContext({ ...inputs, question: 'what can I eat after the gym?' }).text;
+  assert.match(food, /"trainingDays":\[1,3,5\],"trainingTime":"night"/);
+  assert.match(food, /"kitchen":"no_stove"/);
+  assert.match(food, /"cookTime":"short"/);
+  assert.match(food, /must be makeable with their kitchenEquipment/);
+  const other = buildCoachContext({ ...inputs, question: 'how many sets should I do?' }).text;
+  assert.match(other, /"trainingTime":"night"/);
+  assert.doesNotMatch(other, /no_stove/);
+  const older = buildCoachContext({ ...inputs, profile: { display_name: 'Asha' }, diet: { diet_type: 'vegan' }, question: 'dinner ideas?' }).text;
+  assert.match(older, /"trainingDays":\[\],"trainingTime":null/);
+  assert.match(older, /"kitchen":"full"/);
+  assert.match(older, /"kitchenEquipment":null,"otherKitchenNotes":null,"mealsFromMess":\[\],"cookTime":"plenty"/);
+});
+
+// ---- B7 / F7: the person's own calendar day ----------------------------------------------------------------
+
+test('F7: localDayOf takes the phone day within a day of UTC, else the UTC date', async () => {
+  const { localDayOf } = await import('../_shared/coach-context.ts');
+  const night = Date.parse('2026-10-28T20:00:00Z'); // 01:30 on 29 October in India
+  assert.equal(localDayOf('2026-10-29', night), '2026-10-29');
+  assert.equal(localDayOf('2026-10-27', night), '2026-10-27', 'a day behind (the Americas) is allowed');
+  assert.equal(localDayOf('2026-10-31', night), '2026-10-28', 'further away is refused');
+  assert.equal(localDayOf('2026-02-30', night), '2026-10-28', 'not a real date');
+  assert.equal(localDayOf(undefined, night), '2026-10-28');
+  assert.equal(localDayOf('29/10/2026', night), '2026-10-28');
+});
+
+test('F7: the coach\'s TODAY is the day the app sent, not the server\'s UTC date', async () => {
+  const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+  useDb(tables());
+  fakeLlm('ok');
+  await post({ message: 'How many sets today?', threadId: THREAD, localDay: tomorrow });
+  const expected = new Date(`${tomorrow}T12:00:00Z`).toUTCString().slice(0, 16);
+  assert.match(calls[0].body.messages[0].content, new RegExp(`TODAY: ${expected}`));
+  useDb(tables());
+  fakeLlm('ok');
+  await post({ message: 'How many sets today?', threadId: THREAD, localDay: 'not a day' });
+  assert.match(calls[0].body.messages[0].content, new RegExp(`TODAY: ${new Date().toUTCString().slice(0, 16)}`));
+});
+
+test('3.5: the coach gets maintenance and the factors from the plan, and the rule not to redo them', async () => {
+  useDb(tables({ generated_plans: { data: { plan: cutPlan, created_at: new Date().toISOString() } } }));
+  fakeLlm('ok');
+  await post({ message: 'How did you work out my calories?', threadId: THREAD });
+  const system = calls[0].body.messages[0].content as string;
+  const card = JSON.parse(/PLAN \(built [^\n]*\n(.+)/.exec(system)![1]);
+  assert.deepEqual(card.nutrition.energyWorking, cutPlan.nutrition.energy);
+  assert.equal(card.nutrition.energyKcal, cutPlan.nutrition.energyKcal);
+  assert.match(system, /never redo the sums/);
+});
+
+test('kitchen equipment, mess meals and own notes reach the coach for food talk; English units rule', async () => {
+  const { buildCoachContext } = await import('../_shared/coach-context.ts');
+  const ctx = buildCoachContext({
+    profile: { display_name: 'Asha' }, plan: generatePlan(b5Input) as unknown as Record<string, unknown>, planCreatedAt: '2026-10-29', logs: [], facts: [], handbookTitles: [], recentUserMessages: [],
+    diet: { diet_type: 'vegetarian', restrictions: [], kitchen: 'no_stove', kitchen_equipment: ['kettle', 'blender'], kitchen_other: 'hostel room\nno hot plate', mess_meals: ['lunch', 'dinner'], cook_time: 'minimal' },
+    question: 'what can I eat for breakfast?',
+  }).text;
+  assert.match(ctx, /"kitchenEquipment":\["kettle","blender"\]/);
+  assert.match(ctx, /"otherKitchenNotes":"hostel room no hot plate"/);
+  assert.match(ctx, /"mealsFromMess":\["lunch","dinner"\]/);
+  assert.match(ctx, /Never assume equipment they do not have/);
+  useDb(tables());
+  fakeLlm('ok');
+  await post({ message: 'How many sets today?', threadId: THREAD });
+  assert.match(calls[0].body.messages[0].content, /do not use katori or sabzi/);
+});
+
+test('allergy and dislike words reach the coach food check: lactose or "milk" rule out ghee, butter and whey too', async () => {
+  const { restrictedTerms } = await import('../_shared/coach-context.ts');
+  const allergy = restrictedTerms({ diet_type: 'vegetarian', restrictions: ['lactose'] });
+  for (const t of ['milk', 'paneer', 'whey', 'ghee', 'butter', 'curd']) assert.ok(allergy.includes(t), t);
+  const dislike = restrictedTerms({ diet_type: 'vegetarian', restrictions: [], other_restrictions: ['milk'] });
+  for (const t of ['milk', 'paneer', 'whey']) assert.ok(dislike.includes(t), t);
+  const plantMilk = restrictedTerms({ diet_type: 'vegetarian', restrictions: [], other_restrictions: ['coconut milk'] });
+  assert.ok(!plantMilk.includes('paneer'), 'coconut milk is not dairy');
+});
+
+test('multi-goal assessment: the main goal is a preference, the model recommends a lead goal and never changes goals', async () => {
+  const { ASSESS_RULES } = await import('../_shared/assess.ts');
+  assert.match(ASSESS_RULES, /main goal is their preference, not proof they are ready/);
+  assert.match(ASSESS_RULES, /Never change their goals yourself/);
+});

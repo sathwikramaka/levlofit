@@ -71,7 +71,10 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('Level 3'), findsOneWidget);
+    // XP shows as a rank, never as a Level, so it cannot be mistaken for a goal level (audit F16).
+    expect(find.text('Rank 3'), findsOneWidget);
+    expect(find.text('YOUR RANK'), findsOneWidget);
+    expect(find.textContaining('Level'), findsNothing);
     expect(find.text('60'), findsOneWidget); // overall rating
     await tester.tap(find.text('Start the 66 days'));
     await tester.pump();

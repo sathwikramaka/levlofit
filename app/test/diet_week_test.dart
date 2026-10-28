@@ -20,7 +20,7 @@ WeekRequest _req({
   double soyaCapG = 50,
   bool proteinPowder = false,
 }) =>
-    (foods: foods ?? foodsForTest, kcal: kcal, protein: protein, excluded: excluded, custom: custom, tier: tier, soyaCapG: soyaCapG, proteinPowder: proteinPowder, region: null);
+    (foods: foods ?? foodsForTest, kcal: kcal, protein: protein, excluded: excluded, custom: custom, tier: tier, soyaCapG: soyaCapG, proteinPowder: proteinPowder, region: null, mealCodes: null, topUpScoop: false);
 
 String _dayKey(DayPlan d) =>
     '${d.check.feasible}|${d.meals.map((m) => '${m.name}:${m.items.map((i) => '${i.code}=${i.grams}').join(',')}').join(';')}|${d.check.issues.join('/')}';

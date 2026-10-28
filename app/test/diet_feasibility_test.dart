@@ -276,7 +276,7 @@ void main() {
 
   test('F45 week varies across days while every day passes and respects every setting', () {
     const kcal = 1760.0, protein = 130.0;
-    final week = planWeek((foods: foodsForTest, kcal: kcal, protein: protein, excluded: _eggNoDairy, custom: const [], tier: 2, soyaCapG: 50, proteinPowder: false, region: null));
+    final week = planWeek((foods: foodsForTest, kcal: kcal, protein: protein, excluded: _eggNoDairy, custom: const [], tier: 2, soyaCapG: 50, proteinPowder: false, region: null, mealCodes: null, topUpScoop: false));
     final distinct = <String>{}, dals = <String>{}, staples = <String>{};
     for (final (day, d) in week.indexed) {
       // Independently recomputed from the food table and checked against the acceptance criteria.
@@ -304,7 +304,7 @@ void main() {
 
   test('identical inputs give identical F45 weeks', () {
     String key(List<DayPlan> w) => w.map((d) => _items(d).map((i) => '${i.code}:${i.grams}').join(',')).join('|');
-    WeekRequest r() => (foods: {...foodsForTest}, kcal: 1760.0, protein: 140.0, excluded: {..._eggNoDairy}, custom: const <String>[], tier: 2, soyaCapG: 50.0, proteinPowder: false, region: null);
+    WeekRequest r() => (foods: {...foodsForTest}, kcal: 1760.0, protein: 140.0, excluded: {..._eggNoDairy}, custom: const <String>[], tier: 2, soyaCapG: 50.0, proteinPowder: false, region: null, mealCodes: null, topUpScoop: false);
     expect(key(planWeek(r())), key(planWeek(r())));
   });
 

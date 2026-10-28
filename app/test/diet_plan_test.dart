@@ -110,18 +110,18 @@ void main() {
   test('household servings: what goes on the plate, with exact grams kept', () {
     PlanItem item(String code, String name, double g, String unit) =>
         (code: code, name: name, grams: g, unit: unit, kcal: 0, protein: 0, carb: 0, fat: 0, fiber: 0);
-    expect(servingLabel(item('A019', 'Wheat atta (roti)', 60, 'dry')), '2 rotis');
-    expect(servingLabel(item('A019', 'Wheat atta (roti)', 45, 'dry')), '1½ rotis');
-    expect(servingLabel(item('B010', 'Moong dal', 30, 'dry')), '1 katori moong dal');
-    expect(servingLabel(item('A015', 'Rice', 100, 'raw')), '2 cups cooked rice');
-    expect(servingLabel(item('L002', 'Cow milk', 200, 'ml')), '1 glass milk');
+    expect(servingLabel(item('A019', 'Wheat atta (roti)', 60, 'dry')), '2 rotis (whole-wheat flatbreads)');
+    expect(servingLabel(item('A019', 'Wheat atta (roti)', 45, 'dry')), '1½ rotis (whole-wheat flatbreads)');
+    expect(servingLabel(item('B010', 'Moong dal', 30, 'dry')), '1 bowl (150 ml) moong dal');
+    expect(servingLabel(item('A015', 'Rice', 100, 'raw')), '2 cups (240 ml each) cooked rice');
+    expect(servingLabel(item('L002', 'Cow milk', 200, 'ml')), '1 glass (200 ml) milk');
     expect(servingLabel(item('M004', 'Eggs, boiled', 100, 'egg')), '2 boiled eggs');
     expect(servingLabel(item('T012', 'Sunflower oil', 10, 'oil')), '2 tsp cooking oil');
     expect(servingLabel(item('E012', 'Banana', 60, 'raw')), '½ banana');
     expect(servingLabel(item('N003', 'Chicken breast', 150, 'raw')), 'Chicken curry (150 g boneless chicken)');
     expect(exactLabel(item('A019', 'Wheat atta (roti)', 60, 'dry')), '60 g dry wheat atta');
     final meal = (name: 'Lunch', time: '1 pm', items: [item('A019', 'Wheat atta (roti)', 60, 'dry'), item('B010', 'Moong dal', 30, 'dry'), item('T012', 'Sunflower oil', 10, 'oil')]);
-    expect(mealSummary(meal), '2 rotis + 1 katori moong dal');
+    expect(mealSummary(meal), '2 rotis (whole-wheat flatbreads) + 1 bowl (150 ml) moong dal');
     final day = planDay(foods: foodsForTest, kcal: 2200, protein: 110, excluded: {'beef', 'pork'});
     expect(dayOilLabel(day), startsWith('Cooking oil for the whole day: '));
     // Breakfast is a breakfast dish (idli, poha, chilla...), never roti and sabzi, for every diet and region.
@@ -171,7 +171,7 @@ void main() {
       item('A019', 'Wheat atta (roti)', 60, 'dry'), item('B020', 'Rajma', 35, 'dry'), item('D036', 'Cauliflower', 150, 'raw'),
       item('D043', 'Cucumber salad', 100, 'raw'), item('T012', 'Sunflower oil', 10, 'oil'),
     ]);
-    expect(mealTitle(lunch), 'Roti + Rajma + Cauliflower sabzi + Cucumber salad');
+    expect(mealTitle(lunch), 'Roti (whole-wheat flatbread) + Kidney bean curry (rajma) + Cauliflower + Cucumber salad');
     expect([for (final i in lunch.items) itemRole(i)], ['GRAIN', 'DAL', 'VEGETABLE', 'SALAD', 'OIL']);
     expect(mealTitle((name: 'Dinner', time: '8 pm', items: [item('N003', 'Chicken breast', 150, 'raw')])), 'Chicken curry');
     expect(itemRole(item('dish:idli', 'Idli', 45, 'dry')), 'BREAKFAST DISH');

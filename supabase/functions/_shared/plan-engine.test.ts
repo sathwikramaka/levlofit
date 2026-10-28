@@ -2,7 +2,7 @@
 // Guards every cited bound. A failure here means a plan would ship outside the science.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { bmiCategory, CUT_FLOOR_KCAL, buildRoadmap, DIETS, EXPERIENCE, type Experience, generatePlan, type GoalInput, validateInput, WEIGHT_GOALS, type PlanInput } from './plan-engine.ts';
+import { bmiCategory, CUT_FLOOR_KCAL, MEDICAL_MAX_LEVEL, buildRoadmap, DIETS, EXPERIENCE, type Experience, generatePlan, type GoalInput, validateInput, WEIGHT_GOALS, type PlanInput } from './plan-engine.ts';
 
 // Fixture mirroring goal_catalog rows: every session kind, plus coach-led combat.
 const CATALOG: Omit<GoalInput, 'experience'>[] = [
@@ -171,6 +171,42 @@ test('review: health screen flags stop hard training advice and block supplement
   assert.equal(pregnant.weightGoal, 'maintain');
 });
 
+test('3.2 medical hold: a flag with self-rated advanced and no level check trains at Level 1 or below, no deficit', () => {
+  const plan = generatePlan({
+    ...base, weightGoal: 'cut', daysPerWeek: 5, healthFlags: ['heart_condition'],
+    goals: [g('strength', 'advanced'), g('running', 'advanced'), g('yoga', 'intermediate')],
+  });
+  assert.equal(plan.medicalHold, true);
+  assert.ok(plan.goals.every((x) => x.startLevel <= MEDICAL_MAX_LEVEL), JSON.stringify(plan.goals.map((x) => x.startLevel)));
+  assert.equal(plan.phase.id, 'foundation');
+  assert.ok(plan.goals.slice(1).every((x) => x.status === 'queued'));
+  assert.equal(plan.weightGoal, 'maintain');
+  assert.equal(plan.chosenWeightGoal, 'cut');
+  assert.equal(finding(plan, 'medical_clearance')?.level, 'stop');
+  assert.equal(finding(plan, 'medical_hold')?.level, 'change');
+  // Energy at maintenance: the same as the identical unflagged plan asked to maintain at Level 1.
+  const maint = generatePlan({ ...base, weightGoal: 'maintain', daysPerWeek: 5, goals: [g('strength', 'beginner'), g('running', 'advanced'), g('yoga', 'intermediate')] });
+  assert.equal(plan.nutrition.energyKcal, maint.nutrition.energyKcal);
+  // An assessed level is capped too, and a bulk also becomes maintenance.
+  const assessed = generatePlan({ ...base, weightGoal: 'bulk', healthFlags: ['dizziness'], goals: [{ ...g('strength', 'advanced'), currentLevel: 3 }] });
+  assert.equal(assessed.goals[0].startLevel, 1);
+  assert.equal(assessed.weightGoal, 'maintain');
+  // Level 0 stays 0; recomp is already maintenance energy and is kept.
+  const zero = generatePlan({ ...base, weightGoal: 'recomp', healthFlags: ['other_medical'], goals: [g('strength', 'none')] });
+  assert.equal(zero.goals[0].startLevel, 0);
+  assert.equal(zero.weightGoal, 'recomp');
+});
+
+test('3.2 medical hold: pregnancy alone and no flags leave the hold off and levels unchanged', () => {
+  const pregnant = generatePlan({ ...base, sex: 'female', healthFlags: ['pregnancy'], goals: [g('strength', 'advanced')] });
+  assert.equal(pregnant.medicalHold, false);
+  assert.equal(pregnant.goals[0].startLevel, 3);
+  assert.equal(finding(pregnant, 'medical_hold'), undefined);
+  const clear = generatePlan({ ...base, goals: [g('strength', 'advanced')] });
+  assert.equal(clear.medicalHold, false);
+  assert.equal(clear.goals[0].startLevel, 3);
+});
+
 test('review: too many goals, few days, short sleep and injuries are explained', () => {
   const plan = generatePlan({
     ...base,
@@ -297,7 +333,11 @@ test('properties: across 600 random valid inputs, energy never falls below BMR, 
     }
     if (n.excludedFoodTags.includes('soy')) assert.equal(n.maxSoyaChunksDryG, 0, `${at}: soya allowed despite soy exclusion`);
     const f = input.healthFlags ?? [];
-    if (f.some((x) => x !== 'pregnancy')) assert.ok(plan.review.some((r) => r.id === 'medical_clearance' && r.level === 'stop'), `${at}: no clearance stop`);
+    if (f.some((x) => x !== 'pregnancy')) {
+      assert.ok(plan.review.some((r) => r.id === 'medical_clearance' && r.level === 'stop'), `${at}: no clearance stop`);
+      assert.ok(plan.medicalHold && plan.goals.every((x) => x.startLevel <= MEDICAL_MAX_LEVEL), `${at}: medical hold not applied`);
+      assert.ok(plan.weightGoal !== 'cut' && plan.weightGoal !== 'bulk', `${at}: deficit or surplus under a medical hold`);
+    }
     if (f.includes('pregnancy')) {
       assert.ok(plan.review.some((r) => r.id === 'pregnancy' && r.level === 'stop'), `${at}: no pregnancy stop`);
       assert.notEqual(plan.weightGoal, 'cut', `${at}: cutting in pregnancy`);
@@ -324,4 +364,85 @@ test('a cut never drops below the sex floor, and the floor never exceeds mainten
   const maintain = generatePlan({ ...small, weightGoal: 'maintain' }).nutrition.energyKcal;
   assert.ok(cut >= Math.min(CUT_FLOOR_KCAL.female, maintain) - 1, `cut ${cut}, maintenance ${maintain}`);
   assert.ok(cut <= maintain);
+});
+
+test('3.3 Build my plate conditions: kidney disease removes creatine; pregnancy applies the pregnancy rule', () => {
+  const kidney = generatePlan({ ...base, supplements: ['creatine', 'protein_powder'], conditions: ['kidney'] });
+  assert.ok(!kidney.nutrition.supplements.some((s) => s.name.startsWith('Creatine')));
+  assert.ok(kidney.nutrition.supplements.find((s) => s.name === 'Ask your doctor first')?.why.includes('kidney'));
+  assert.equal(kidney.medicalHold, false, 'kidney disease alone does not put training on hold');
+  const pregnant = generatePlan({ ...base, sex: 'female', weightGoal: 'cut', supplements: ['creatine'], conditions: ['pregnancy'] });
+  assert.equal(pregnant.weightGoal, 'maintain');
+  assert.equal(finding(pregnant, 'pregnancy')?.level, 'stop');
+  assert.ok(!pregnant.nutrition.supplements.some((s) => s.name.startsWith('Creatine')));
+  // A note-only condition changes nothing in the plan.
+  const plain = generatePlan({ ...base, supplements: ['creatine'] });
+  const noted = generatePlan({ ...base, supplements: ['creatine'], conditions: ['thyroid'] });
+  assert.deepEqual(noted.nutrition, plain.nutrition);
+  assert.throws(() => validateInput({ ...base, conditions: ['cancer'] }));
+  assert.deepEqual(validateInput({ ...base, conditions: ['kidney', 'kidney'] }).conditions, ['kidney']);
+});
+
+test('3.4 schedule: chosen weekdays cap the week and are copied to the plan; none chosen changes nothing', () => {
+  const free = generatePlan({ ...base, daysPerWeek: 5, goals: [g('strength', 'intermediate'), g('running', 'beginner')] });
+  assert.deepEqual(free.schedule, { preferredDays: [], trainingTime: 'varies' });
+  const fixed = generatePlan({ ...base, daysPerWeek: 5, trainingDays: [6, 1, 3], trainingTime: 'evening', goals: [g('strength', 'intermediate'), g('running', 'beginner')] });
+  assert.deepEqual(fixed.schedule, { preferredDays: [1, 3, 6], trainingTime: 'evening' });
+  assert.ok(fixed.trainingDaysPerWeek <= 3, `${fixed.trainingDaysPerWeek} days on 3 weekdays`);
+  assert.equal(finding(fixed, 'days_by_weekday')?.level, 'info');
+  assert.ok(free.trainingDaysPerWeek > 3);
+  assert.throws(() => validateInput({ ...base, trainingDays: [0] }));
+  assert.throws(() => validateInput({ ...base, trainingTime: 'whenever' }));
+  assert.deepEqual(validateInput({ ...base, trainingDays: [5, 5, 2] }).trainingDays, [2, 5]);
+});
+
+test('protein for BMI 30 or more stays on body weight until a reference-weight source is approved (B6 blocker)', () => {
+  // No source in data/handbook_v4/sources_register.csv supports a reference or adjusted body weight, so the engine
+  // keeps g/kg of actual weight (ISSN). This test records today's behaviour; change it with a sourced rule only.
+  const heavy = generatePlan({ ...base, heightCm: 170, weightKg: 110, weightGoal: 'cut' }); // BMI 38.1
+  assert.equal(heavy.nutrition.proteinG, Math.round(110 * heavy.nutrition.proteinPerKg));
+});
+
+test('3.5 energy working: maintenance, activity factor and goal factor are stored and match the target', () => {
+  const cut = generatePlan({ ...base, weightGoal: 'cut', daysPerWeek: 4, dailyActivity: 'light', goals: [g('strength', 'intermediate')] });
+  const e = cut.nutrition.energy;
+  const bmr = 10 * 72 + 6.25 * 175 - 5 * 28 + 5;
+  assert.equal(e.activity.factor, 1.55);
+  assert.equal(e.activity.from, 'training_days');
+  assert.equal(e.maintenanceKcal, Math.round((bmr * 1.55) / 10) * 10);
+  assert.equal(e.goalFactor, 0.85);
+  assert.equal(e.floor, null);
+  assert.equal(cut.nutrition.energyKcal, Math.round((bmr * 1.55 * 0.85) / 10) * 10, 'the target is maintenance x goal factor');
+  assert.ok(cut.nutrition.energyKcal < e.maintenanceKcal);
+  // A busy day job beats few training days, and the plan says so.
+  const job = generatePlan({ ...base, daysPerWeek: 2, dailyActivity: 'very_active' });
+  assert.deepEqual([job.nutrition.energy.activity.factor, job.nutrition.energy.activity.from], [1.725, 'daily_activity']);
+  assert.equal(job.nutrition.energyKcal, job.nutrition.energy.maintenanceKcal, 'maintain: target = maintenance');
+  // A small, inactive person cutting hard hits the cut minimum; the plan names the floor.
+  const small = generatePlan({ ...base, sex: 'female', heightCm: 150, weightKg: 45, ageYears: 60, weightGoal: 'cut', pace: 'hard', daysPerWeek: 1, dailyActivity: 'sedentary' });
+  assert.notEqual(small.nutrition.energy.floor, null);
+  assert.ok(small.nutrition.energyKcal >= small.nutrition.bmrKcal - 5);
+  // Across many inputs, the stored working always reproduces the stored target.
+  for (const weightGoal of ['cut', 'bulk', 'recomp', 'maintain', 'general'] as const) {
+    for (const daysPerWeek of [1, 3, 5, 7]) {
+      const p = generatePlan({ ...base, weightGoal, daysPerWeek, dailyActivity: 'active' });
+      const w = p.nutrition.energy;
+      if (w.floor === null) {
+        const raw = (10 * 72 + 6.25 * 175 - 5 * 28 + 5) * w.activity.factor * w.goalFactor;
+        assert.equal(p.nutrition.energyKcal, Math.round(raw / 10) * 10, `${weightGoal} ${daysPerWeek}`);
+      }
+    }
+  }
+});
+
+test('own exclusion words name whole food groups: "milk" leaves out all dairy; plant milks and peanut butter do not', () => {
+  const plan = (otherRestrictions: string[]) => generatePlan({ ...base, otherRestrictions, supplements: ['protein_powder'] });
+  assert.ok(plan(['milk']).nutrition.excludedFoodTags.includes('dairy'));
+  assert.ok(plan(['no dairy please']).nutrition.excludedFoodTags.includes('dairy'));
+  assert.match(plan(['milk']).nutrition.supplements.find((s) => s.name === 'Protein powder')!.how, /pea or soy protein/, 'never whey');
+  assert.ok(!plan(['coconut milk']).nutrition.excludedFoodTags.includes('dairy'));
+  assert.ok(!plan(['peanut butter']).nutrition.excludedFoodTags.includes('dairy'));
+  assert.ok(plan(['peanut butter']).nutrition.excludedFoodTags.includes('peanut'));
+  assert.ok(plan(['prawns']).nutrition.excludedFoodTags.includes('shellfish'));
+  assert.deepEqual(plan(['sesame']).nutrition.excludedFoodTags, plan([]).nutrition.excludedFoodTags, 'unknown words only match food names');
 });
