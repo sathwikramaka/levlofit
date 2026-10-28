@@ -98,7 +98,7 @@ const _supplements = {'protein_powder': ('Protein powder', 'Whey or plant protei
 
 const _minuteOptions = [20, 30, 45, 60, 75, 90];
 
-enum _Step { name, primary, extras, experience, body, phase, schedule, health, equipment, restrictions, diet, build, review }
+enum _Step { name, primary, extras, experience, body, phase, schedule, health, equipment, restrictions, diet, assess, build, review }
 
 const _maxExtras = 5; // plan engine MAX_GOALS = 6 including the primary
 
@@ -147,6 +147,12 @@ class _OnboardingState extends State<Onboarding> {
   String? _diet, _sex, _weightGoal, _gear, _budget;
   String _region = 'any';
   final _monthly = TextEditingController(); // own monthly food budget, when _budget is 'custom'
+  // Level check with Levlofit AI (coach-chat assess): the chat so far, the levels it proposed, or a skip.
+  final _assessTurns = <({String role, String content})>[];
+  final _assessInput = TextEditingController();
+  Map<String, int>? _assessLevels;
+  bool _assessBusy = false, _assessSkipped = false;
+  String? _assessError;
   bool _busy = false;
   String? _error;
 
@@ -178,7 +184,7 @@ class _OnboardingState extends State<Onboarding> {
 
   @override
   void dispose() {
-    for (final c in [_name, _birthYear, _height, _weight, _otherInput, _search, _sleep, _injuries, _itemInput]) {
+    for (final c in [_name, _birthYear, _height, _weight, _otherInput, _search, _sleep, _injuries, _itemInput, _monthly, _assessInput]) {
       c.dispose();
     }
     super.dispose();
@@ -193,6 +199,7 @@ class _OnboardingState extends State<Onboarding> {
     _Step.experience => _goals.every(_level.containsKey),
     _Step.restrictions => _noRestrictions || _avoid.isNotEmpty || _other.isNotEmpty,
     _Step.diet => _diet != null && _budget != null && (_budget != 'custom' || (int.tryParse(_monthly.text) ?? 0) >= 900) && (_noSupp || _supp.isNotEmpty),
+    _Step.assess => !_assessBusy && (_assessLevels != null || _assessSkipped),
     _Step.body => _sex != null && _bodyType != null,
     _Step.phase => _weightGoal != null,
     _Step.schedule => _days != null && _minutes != null && _activityLevel != null,
@@ -210,7 +217,8 @@ class _OnboardingState extends State<Onboarding> {
     _Step.extras => 'Anything else you want to train? You can add up to five, but the curriculum recommends one or two for real progress. Extras get fewer sessions so your main goal keeps moving.',
     _Step.experience => 'How much have you trained for each? You start where you are, and move up by passing tests.',
     _Step.restrictions => 'Before we talk food: any allergies or intolerances? I keep these out of every meal.',
-    _Step.diet => 'Last one. How do you eat, what can you spend on food, and are you open to supplements? Levlofit never suggests beef or pork.',
+    _Step.diet => 'How do you eat, what can you spend on food, and are you open to supplements? Levlofit never suggests beef or pork.',
+    _Step.assess => "Last step. Before I build anything, let me check where you really are, not just where you rated yourself.",
     _Step.body => 'A few numbers and how you see your body today. Only you can see them.',
     _Step.phase => 'What do you want your body to do right now? I check this against your numbers before building anything.',
     _Step.schedule => 'How much time can you give training? The plan fits your week, not the other way round.',
@@ -237,6 +245,57 @@ class _OnboardingState extends State<Onboarding> {
         _step = _steps[_index + 1];
         _search.clear();
       });
+      if (_step == _Step.assess && _assessTurns.isEmpty && _assessLevels == null) _assessSend(null);
+    }
+  }
+
+  /// One turn of the level check: the answers so far go to coach-chat (assess), which replies with its next question
+  /// or, at the end, a verdict with a level 0 to 3 for each goal.
+  Future<void> _assessSend(String? answer) async {
+    if (answer != null) _assessTurns.add((role: 'user', content: answer));
+    setState(() {
+      _assessBusy = true;
+      _assessError = null;
+    });
+    final birth = int.tryParse(_birthYear.text);
+    try {
+      final res = await supabase.functions.invoke('coach-chat', body: {
+        'assess': {
+          'goals': [for (final g in _goals) {'id': g, 'name': _nameOf(g), 'experience': _level[g]}],
+          'body': {
+            'sex': _sex,
+            if (birth != null) 'age': _thisYear - birth,
+            'heightCm': double.tryParse(_height.text),
+            'weightKg': double.tryParse(_weight.text),
+            'bodyType': _bodyType,
+            'weightGoal': _weightGoal,
+            'activity': _activityLevel,
+            'daysPerWeek': _days,
+            'minutes': _minutes,
+            'equipment': _gear,
+            'healthFlag': _health.isNotEmpty,
+            'injury': _injuries.text.trim().isNotEmpty,
+          },
+          'turns': [for (final t in _assessTurns) {'role': t.role, 'content': t.content}],
+        },
+      });
+      final data = (res.data as Map).cast<String, dynamic>();
+      _assessTurns.add((role: 'assistant', content: data['reply'] as String));
+      final levels = data['levels'];
+      if (levels is Map) _assessLevels = {for (final e in levels.entries) e.key as String: (e.value as num).toInt()};
+    } on FunctionException catch (e) {
+      final d = e.details;
+      _assessError = d is Map && d['error'] is String ? d['error'] as String : 'Levlofit AI could not answer. Try again, or skip.';
+      if (answer != null) _assessTurns.removeLast(); // keep the answer in the box to resend
+      if (answer != null) _assessInput.text = answer;
+    } catch (_) {
+      _assessError = 'Could not reach Levlofit AI. Check your connection, or skip.';
+      if (answer != null) {
+        _assessTurns.removeLast();
+        _assessInput.text = answer;
+      }
+    } finally {
+      if (mounted) setState(() => _assessBusy = false);
     }
   }
 
@@ -309,6 +368,14 @@ class _OnboardingState extends State<Onboarding> {
       await supabase.from('user_goals').insert([
         for (final (i, g) in _goals.indexed) {'user_id': uid, 'goal': g, 'experience': _level[g], 'priority': i + 1},
       ]);
+      // Levels from the level check replace the self-rating (0 to 3, as the goal_levels policy allows).
+      final assessed = _assessLevels;
+      if (assessed != null && !_assessSkipped) {
+        await supabase.from('goal_levels').upsert([
+          for (final g in _goals)
+            if (assessed[g] != null) {'goal': g, 'level': assessed[g]!.clamp(0, 3), 'assessed_at': DateTime.now().toUtc().toIso8601String()},
+        ]);
+      }
       final res = await supabase.functions.invoke('generate-plan');
       _plan = ((res.data as Map)['plan'] as Map).cast<String, dynamic>();
       _step = _Step.review; // explain the plan before showing it
@@ -633,6 +700,74 @@ class _OnboardingState extends State<Onboarding> {
               ],
             ),
           ],
+        ];
+
+      case _Step.assess:
+        final t = Theme.of(context).textTheme;
+        final c = Theme.of(context).colorScheme;
+        return [
+          for (final turn in _assessTurns)
+            Align(
+              alignment: turn.role == 'user' ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                constraints: const BoxConstraints(maxWidth: 320),
+                decoration: BoxDecoration(
+                  color: turn.role == 'user' ? c.secondary : c.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(turn.content, style: t.bodyMedium?.copyWith(color: turn.role == 'user' ? c.onSecondary : c.onSurface, height: 1.4)),
+              ),
+            ),
+          if (_assessBusy) const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: LinearProgressIndicator(minHeight: 3)),
+          if (_assessError != null) ...[ErrorLine(_assessError!), gap],
+          if (_assessLevels != null) ...[
+            Text('YOUR STARTING LEVELS', style: monoLabel(context)),
+            const SizedBox(height: 6),
+            for (final g in _goals) Text('${_nameOf(g)}: Level ${_assessLevels![g]}', style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Text('You can move up any time by passing the level check in Workout.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          ] else if (!_assessSkipped) ...[
+            Row(children: [
+              Expanded(
+                child: TextField(
+                  controller: _assessInput,
+                  enabled: !_assessBusy && _assessTurns.isNotEmpty,
+                  textInputAction: TextInputAction.send,
+                  maxLength: 600,
+                  decoration: const InputDecoration(hintText: 'Your answer', counterText: ''),
+                  onSubmitted: (v) {
+                    if (v.trim().isEmpty || _assessBusy) return;
+                    _assessInput.clear();
+                    _assessSend(v.trim());
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filled(
+                tooltip: 'Send',
+                onPressed: _assessBusy
+                    ? null
+                    : () {
+                        if (_assessTurns.isEmpty) {
+                          _assessSend(null);
+                          return;
+                        }
+                        final v = _assessInput.text.trim();
+                        if (v.isEmpty) return;
+                        _assessInput.clear();
+                        _assessSend(v);
+                      },
+                icon: Icon(_assessTurns.isEmpty ? LvIcons.arrowsClockwise : LvIcons.arrowUp),
+              ),
+            ]),
+            TextButton(
+              onPressed: _assessBusy ? null : () => setState(() => _assessSkipped = true),
+              child: const Text('Skip and use my own ratings'),
+            ),
+          ] else
+            Text('Your own ratings will be used. The plan still checks your body numbers.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
         ];
 
       case _Step.diet:

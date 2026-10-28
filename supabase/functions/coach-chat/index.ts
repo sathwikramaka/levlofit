@@ -1,4 +1,8 @@
 // POST /coach-chat  { message: string, threadId?: uuid, editFrom?: message id }
+// POST /coach-chat  { assess: { goals, body, turns } }: the first assessment before a plan (_shared/assess.ts); returns
+// { reply, done, levels } and stores nothing (the app saves the levels to goal_levels, 0 to 3 as its policy allows).
+// Research: factual questions also get live review abstracts from Europe PMC and a Wikipedia summary (_shared/research.ts);
+// only topic words from the question are searched, never anything about the person.
 // Levlofit AI: a personal assistant for one user. It sees an allowlisted summary of that user (coach-context.ts):
 // first name, schedule, a plan card, recent training, the facts the person confirmed and the Handbook's chapter titles.
 // Long chats: the 12 newest messages, plus a rolling summary of older ones (coach_threads.summary, made by a separate
@@ -25,6 +29,8 @@ import {
   type SwapRules,
 } from '../_shared/swap.ts';
 import { checkMeal, diaryFoods, isMealLogTalk, loggableFoods, mealBlock, MEAL_LINE } from '../_shared/meal.ts';
+import { ASSESS_RULES, assessContext, type LadderRow, parseAssess, parseLevels, questionsAsked } from '../_shared/assess.ts';
+import { citeResearch, isResearchTalk, researchBlock, researchQuery, RESEARCH_RULES, searchResearch, type ResearchHit } from '../_shared/research.ts';
 
 const MAX_CHARS = 2000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -33,6 +39,7 @@ const RULES = `You are Levlofit AI, the personal fitness assistant inside the Le
 How to talk:
 - Talk like a sharp, warm personal coach who remembers. Use their first name now and then, not every message. Refer back to things they told you before when it helps.
 - Answer exactly what they asked, directly, first sentence first. Then add one useful, specific next step if there is one.
+- Be honest, not agreeable. When what they say, believe or plan is wrong, unsafe or not supported by evidence (a crash diet, training through sharp pain, a supplement myth, a goal that does not fit their body or level), say so plainly and kindly, explain why in a sentence or two, and give the better option. Do not flatter and do not change a correct answer just because they push back; change it only for new information or better evidence.
 - Be brief by default, like a good chat assistant: 2 to 4 sentences unless they ask for a plan, steps, a comparison or more detail. Never recap their whole plan unprompted.
 - When the answer depends on something you do not know and cannot read from the data or the conversation (which supplement or food "it" is, which event, how much time, what equipment), ask one short question first instead of guessing. You may add one general line meanwhile, but no specific dose, amount or plan built on a guess.
 - Never repeat a reply or an opener you already used in this conversation. Never end with a generic menu of things you can do. Never describe yourself unless asked.
@@ -202,10 +209,44 @@ async function confirmChange(ctx: { supabase: Db; supabaseAdmin: Db; userClaims:
   return Response.json(done);
 }
 
+/** The first assessment: one model turn of the level-check chat. Stores nothing; the app saves the levels. */
+async function assess(
+  ctx: { supabase: Db },
+  raw: unknown,
+  llm: { cfg: LlmConfig; fallback: LlmConfig | null; deadline: number },
+): Promise<Response> {
+  const input = parseAssess(raw);
+  if (!input) return fail(400, 'Bad request');
+  if ((await checkLimits(ctx.supabase, [LIMITS.chatHour, LIMITS.chatDay])) === 'limited') {
+    return fail(429, 'You have sent a lot of messages. Try again a little later.');
+  }
+  // The level ladder is public curriculum data; a failed read only means the model judges without it.
+  const ladder = await ctx.supabase.from('curriculum_levels').select('goal, level, title, advance_when').in('goal', input.goals.map((g) => g.id));
+  const asked = questionsAsked(input.turns);
+  const system = `${ASSESS_RULES}\n\n${assessContext(input.body, input.goals, ((ladder.data ?? []) as LadderRow[]), asked)}`;
+  const turns: Turn[] = input.turns.length ? input.turns : [{ role: 'user', content: 'Please start my assessment.' }];
+  let out = await completeWithFallback(llm.cfg, llm.fallback, { system, turns, deadline: llm.deadline });
+  if (!out.ok) {
+    const status = statusForFailure(out.kind);
+    return fail(status, status === 504 ? 'Levlofit AI took too long, try again' : 'Assistant is busy, try again in a minute');
+  }
+  let result = parseLevels(out.text, input.goals, input.body.healthFlag === true);
+  if (!result.levels && asked >= 3) {
+    // Past the last question: the verdict must close with a complete LEVELS line. One retry.
+    const fix = '\n\nYOUR DRAFT had no complete LEVELS line. Give the verdict now and end with the LEVELS line for every goal.';
+    out = await completeWithFallback(llm.cfg, llm.fallback, { system: system + fix, turns, deadline: llm.deadline });
+    if (out.ok) result = parseLevels(out.text, input.goals, input.body.healthFlag === true);
+  }
+  const reply = result.text.slice(0, 2000);
+  if (!reply) return fail(502, 'Levlofit AI could not answer that properly. Try again.');
+  console.log(JSON.stringify({ event: 'assess', questions: asked, done: result.levels !== null }));
+  return Response.json({ reply, done: result.levels !== null, levels: result.levels });
+}
+
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
     if (req.method !== 'POST') return fail(405, 'Method not allowed');
-    let body: { message?: unknown; threadId?: unknown; editFrom?: unknown; clientMsgId?: unknown; activity?: unknown; today?: unknown; confirmSwap?: unknown; confirmChange?: unknown };
+    let body: { message?: unknown; threadId?: unknown; editFrom?: unknown; clientMsgId?: unknown; activity?: unknown; today?: unknown; confirmSwap?: unknown; confirmChange?: unknown; assess?: unknown };
     try {
       body = await req.json();
     } catch {
@@ -239,6 +280,7 @@ export default {
     const deadline = Date.now() + budget;
     if (fb && !fb.ok) console.error(JSON.stringify({ event: 'llm_fallback_config', reason: fb.reason }));
     const fallback = fb && fb.ok ? fb.config : null;
+    if ('assess' in body) return assess(ctx as never, (body as { assess?: unknown }).assess, { cfg, fallback, deadline });
 
     const message = typeof body.message === 'string' ? body.message.trim().slice(0, MAX_CHARS) : '';
     if (!message) return fail(400, 'Send a question');
@@ -257,6 +299,11 @@ export default {
     }
 
     const uid = ctx.userClaims!.id;
+    // Live research for factual questions: topic words only, at most 5 s of the request budget, never fatal.
+    const researchTerms = !isSmallTalk(message) && isResearchTalk(message) ? researchQuery(message) : null;
+    const researchRun: Promise<ResearchHit[]> = researchTerms
+      ? searchResearch(researchTerms, { fetch: fetch as never, deadline: Math.min(deadline, Date.now() + 5000) }).catch(() => [])
+      : Promise.resolve([]);
     const since = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
     const foodSince = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
     // Lifts are read only for lift questions (data minimisation); the steps are whatever the app was allowed to send.
@@ -323,7 +370,9 @@ export default {
     // passages that name a food this person must avoid. Retrieval matches keywords; it does not validate content.
     const terms = restrictedTerms(diet.data ?? null);
     const hits = retrieve(message, undefined, { exclude: terms });
-    const head = `${RULES}\n${CITATION_RULES}\n\n${handbookBlock(hits)}`;
+    const research = await researchRun;
+    if (researchTerms) console.log(JSON.stringify({ event: 'research', results: research.length }));
+    const head = `${RULES}\n${CITATION_RULES}\n${RESEARCH_RULES}\n\n${handbookBlock(hits)}${research.length ? `\n\n${researchBlock(research)}` : ''}`;
 
     // Swap talk with today's session sent: the moves and the replacements that pass every check go to the model,
     // which may pick one; the pick is checked again below and stored only as a proposal. Optional: a failed read
@@ -421,7 +470,8 @@ export default {
     // [H:...] marker is removed, so the reply never shows a Handbook citation that was not retrieved for it.
     const grounding = validateCitations(raw.replace(NOTE, '').trim(), hits);
     console.log(JSON.stringify({ event: 'handbook', matched: hits.length, cited: grounding.cited.length, invalid: grounding.invalid.length }));
-    let reply = grounding.text;
+    const sourced = citeResearch(grounding.text, research);
+    let reply = sourced.text;
     if (named.length) reply += restrictedFooter(named);
     reply = reply.slice(0, 4000);
     if (!reply) return fail(502, 'Assistant is busy, try again in a minute');

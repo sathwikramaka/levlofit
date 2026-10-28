@@ -36,7 +36,7 @@ handbook4() {  # Handbook v4 book draft (data/handbook_v4): builds the draft onl
   step "handbook4: draft book tests" '^(Ran|OK)' python -I data/handbook_v4/test_book.py
 }
 functions() {
-  step "functions: node tests" '^# pass' node --test $F/_shared/plan-engine.test.ts $F/_shared/llm.test.ts $F/_shared/body-check.test.ts $F/_shared/handbook.test.ts \
+  step "functions: node tests" '^# pass' node --test $F/_shared/plan-engine.test.ts $F/_shared/llm.test.ts $F/_shared/body-check.test.ts $F/_shared/handbook.test.ts $F/_shared/research-assess.test.ts \
     $F/coach-chat/coach-chat.test.ts $F/delete-account/delete-account.test.ts $F/generate-plan/generate-plan.test.ts $F/_eval/eval.test.ts tools/release_docs.test.mjs
   step "functions: offline eval" '^strict:' node $F/_eval/run.ts
   step "functions: strict tsc" '.' bash -c "website/node_modules/.bin/tsc --noEmit --strict --target es2022 --module esnext --moduleResolution bundler \
