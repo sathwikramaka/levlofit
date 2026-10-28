@@ -47,6 +47,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/terms" className="text-muted transition-colors duration-300 hover:text-ink">
                 Terms
               </Link>
+              <Link href="/licences" className="text-muted transition-colors duration-300 hover:text-ink">
+                Licences
+              </Link>
             </nav>
           </div>
         </footer>
