@@ -1108,15 +1108,20 @@ class _MealCard extends StatelessWidget {
           ]),
         ]),
         const SizedBox(height: 8),
-        // The plate in one line, in household servings; exact grams and nutrients sit below and behind Details.
-        Text(mealSummary(meal), style: t.titleMedium),
+        // The plate named as dishes; each part below in household servings, exact grams and nutrients behind Details.
+        Text(mealTitle(meal), style: t.titleMedium),
         const SizedBox(height: 8),
         for (final i in meal.items.where((i) => i.unit != 'oil')) // oil is shown once for the whole day
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(border: Border(top: BorderSide(color: c.outline))),
             child: Row(children: [
-              Expanded(child: Text(servingLabel(i), style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600))),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(itemRole(i), style: monoLabel(context).copyWith(fontSize: 10, color: c.tertiary)),
+                  Text(servingLabel(i), style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                ]),
+              ),
               const SizedBox(width: 10),
               Text(exactLabel(i), style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             ]),

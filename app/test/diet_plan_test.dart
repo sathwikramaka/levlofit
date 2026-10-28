@@ -163,4 +163,26 @@ void main() {
     expect(budgetTier('custom', dailyFromMonthly(6000)), 2);
     expect(budgetTier('custom', dailyFromMonthly(12000)), 3);
   });
+
+  test('plates read as dishes: meal title and part labels', () {
+    PlanItem item(String code, String name, double g, String unit) =>
+        (code: code, name: name, grams: g, unit: unit, kcal: 0, protein: 0, carb: 0, fat: 0, fiber: 0);
+    final lunch = (name: 'Lunch', time: '1 pm', items: [
+      item('A019', 'Wheat atta (roti)', 60, 'dry'), item('B020', 'Rajma', 35, 'dry'), item('D036', 'Cauliflower', 150, 'raw'),
+      item('D043', 'Cucumber salad', 100, 'raw'), item('T012', 'Sunflower oil', 10, 'oil'),
+    ]);
+    expect(mealTitle(lunch), 'Roti + Rajma + Cauliflower sabzi + Cucumber salad');
+    expect([for (final i in lunch.items) itemRole(i)], ['GRAIN', 'DAL', 'VEGETABLE', 'SALAD', 'OIL']);
+    expect(mealTitle((name: 'Dinner', time: '8 pm', items: [item('N003', 'Chicken breast', 150, 'raw')])), 'Chicken curry');
+    expect(itemRole(item('dish:idli', 'Idli', 45, 'dry')), 'BREAKFAST DISH');
+    // Real portions: no plate shows less than a cup of rice, two rotis or a katori of dal.
+    for (var day = 0; day < 7; day++) {
+      for (final region in ['north', 'south']) {
+        for (final it in planDay(foods: foodsForTest, kcal: 2000, protein: 100, excluded: {'beef', 'pork'}, day: day, region: region).meals.expand((m) => m.items)) {
+          if (it.code == 'A015') expect(it.grams, greaterThanOrEqualTo(50));
+          if (it.code == 'A019') expect(it.grams, greaterThanOrEqualTo(60));
+        }
+      }
+    }
+  });
 }
