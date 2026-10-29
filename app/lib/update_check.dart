@@ -1,17 +1,20 @@
 // Update notice (2026-10-27): Levlofit ships outside the Play Store, so the app asks the website's /version.json for
-// the newest build once per app start and offers it when it is newer than this one. The address comes from
-// --dart-define=LEVLOFIT_UPDATE_URL at build time; without it, or offline, nothing is shown.
+// the newest build once per app start and offers it when it is newer than this one. Production builds ask the live
+// site unless --dart-define=LEVLOFIT_UPDATE_URL overrides it (1.0.0 and 1.0.1 shipped without the define, so they never
+// checked). Other builds, the web app (it cannot install an APK) and offline starts show nothing.
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_version.dart';
-import 'main.dart' show prefs;
+import 'main.dart' show backendChoice, prefs;
 import 'theme.dart';
 
-const updateUrl = String.fromEnvironment('LEVLOFIT_UPDATE_URL');
+const updateUrl = String.fromEnvironment('LEVLOFIT_UPDATE_URL',
+    defaultValue: backendChoice == 'production' ? 'https://levlofit.pages.dev/version.json' : '');
 const _dismissedKey = 'update_dismissed_build';
 
 typedef Update = ({String version, int build, String url});
@@ -34,7 +37,7 @@ Update? parseUpdate(String body, {int currentBuild = appBuild}) {
 Future<Update?>? _check;
 
 Future<Update?> checkForUpdate({http.Client? client}) => _check ??= () async {
-      if (updateUrl.isEmpty) return null;
+      if (updateUrl.isEmpty || kIsWeb) return null;
       try {
         final res = await (client ?? http.Client()).get(Uri.parse(updateUrl)).timeout(const Duration(seconds: 8));
         if (res.statusCode != 200) return null;
