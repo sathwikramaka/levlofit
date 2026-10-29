@@ -1,5 +1,9 @@
 # Levlofit project rules
 
+## Android releases
+
+- Any app change that users should get ships with `tools/release_android.sh` (Git Bash, repo root): it bumps the version past the live `/version.json`, builds the signed APK, deploys the site and checks it. Deploying is outward-facing, so ask the owner before running it. Then commit the bump and add a dated section to `docs/RELEASE_RECORD.md`.
+
 ## Database and Supabase safety (overrides any skill guidance)
 
 - Database writes, production migrations, destructive database operations (DELETE, DROP, TRUNCATE, data rewrites) and any change to the live Supabase project (schema, data, policies, auth settings, secrets, Edge Function deploys) require the owner's explicit approval in chat first. Approval covers one action only.

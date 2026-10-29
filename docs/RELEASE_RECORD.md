@@ -2,6 +2,15 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-10-30: release 1.0.2 (owner-approved: signup guard migration, APK, website)
+
+| What | Value | How checked |
+|---|---|---|
+| Migration | signup_guard (file 20261030100000) applied with apply_migration: before-user-created hook function, hourly purge-unconfirmed-users cron job. The hook is not active until the owner selects it under Authentication > Auth Hooks | apply_migration result; pgTAP on a throwaway stack (215 tests) |
+| Android APK | com.levlofit.app 1.0.2, versionCode 2004, 13.0 MB, release certificate 7c510c35...4c431384. First build with the update check compiled in (levlofit.pages.dev/version.json); 1.0.0 and 1.0.1 never checked, so their users must install 1.0.2 by hand once | aapt2, apksigner, libapp.so string check |
+| APK SHA-256 | 0bb3b03c08bbcd1f6e97e5a39321b78ff356511e2f4705c2db6bd38e44a9cbbb, equal on the live download and the site | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 2017e667 (branch main) by tools/release_android.sh; home links levlofit-1.0.2.apk; /version.json = 1.0.2 build 4 | curl |
+
 ## 2026-10-29: release 1.0.1 (owner-approved: migrations, functions, APK, website)
 
 | What | Value | How checked |
