@@ -6,8 +6,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 SITE=https://levlofit.pages.dev
-VERSION=1.0.1
-BUILD=3   # versionCode build part (pubspec 1.0.0+N); bump with each new APK
+V=$(sed -n 's/^version: *//p' app/pubspec.yaml | tr -d '\r')   # e.g. 1.0.2+4, the APK's own version
+VERSION=${V%+*}
+BUILD=${V#*+}
 APK=app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
 
 [ -f "$APK" ] || { echo "Missing $APK: build the APK first." >&2; exit 1; }
