@@ -1,4 +1,4 @@
-// Deno runtime smoke test for the Edge Function entry points (coach-chat, generate-plan, delete-account), using the real
+// Deno runtime smoke test for the Edge Function entry points (coach-chat, generate-plan, delete-account, body-check), using the real
 // npm:@supabase/server. Run from supabase/functions:
 //   deno run --no-lock --allow-env --allow-read --allow-net=127.0.0.1 _test/deno-smoke.ts
 // Safety: every Supabase and model URL points at 127.0.0.1:9 (nothing listens) and network permission is limited to
@@ -29,9 +29,9 @@ const token = await new SignJWT({ role: 'authenticated', aud: 'authenticated' })
   .setExpirationTime(now + 600)
   .sign(privateKey);
 
-type Case = { fn: string; label: string; method: string; auth?: string; body?: string; status: number; code?: string };
+type Case = { fn: string; label: string; method: string; auth?: string; body?: string; headers?: Record<string, string>; status: number; code?: string };
 const cases: Case[] = [];
-for (const fn of ['coach-chat', 'generate-plan', 'delete-account']) {
+for (const fn of ['coach-chat', 'generate-plan', 'delete-account', 'body-check']) {
   cases.push(
     { fn, label: 'CORS preflight', method: 'OPTIONS', status: 204 },
     { fn, label: 'no credentials', method: 'POST', body: '{}', status: 401, code: 'MISSING_CREDENTIALS' },
@@ -42,17 +42,37 @@ for (const fn of ['coach-chat', 'generate-plan', 'delete-account']) {
 cases.push(
   { fn: 'coach-chat', label: 'bad JSON (signed in)', method: 'POST', auth: `Bearer ${token}`, body: 'not json', status: 400 },
   { fn: 'coach-chat', label: 'database unreachable: no reply, 503', method: 'POST', auth: `Bearer ${token}`, body: JSON.stringify({ message: 'Hi' }), status: 503 },
-  { fn: 'generate-plan', label: 'database unreachable: 500, nothing saved', method: 'POST', auth: `Bearer ${token}`, body: '{}', status: 500 },
+  { fn: 'generate-plan', label: 'rate store unreachable: 503 (fail closed)', method: 'POST', auth: `Bearer ${token}`, body: '{}', status: 503 },
   { fn: 'delete-account', label: 'storage unreachable: account kept', method: 'POST', auth: `Bearer ${token}`, body: '{}', status: 500 },
 );
 
+// Body check: every refusal happens before the rate limit and the model (both unreachable here, so a 503 shows the
+// request got that far). A tiny JPEG header stands in for a photo.
+const jpeg = btoa(String.fromCharCode(0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70, 0, 1));
+const signedIn = `Bearer ${token}`;
+cases.push(
+  { fn: 'body-check', label: 'not JSON content type: 415', method: 'POST', auth: signedIn, body: '{}', headers: { 'content-type': 'text/plain' }, status: 415 },
+  { fn: 'body-check', label: 'declared size over the cap: 413', method: 'POST', auth: signedIn, body: '{}', headers: { 'content-length': '99999999' }, status: 413 },
+  { fn: 'body-check', label: 'oversized body, no Content-Length: 413', method: 'POST', auth: signedIn, body: JSON.stringify({ mime: 'image/jpeg', image: 'A'.repeat(6 * 1024 * 1024) }), status: 413 },
+  { fn: 'body-check', label: 'malformed JSON: 400', method: 'POST', auth: signedIn, body: '{"image":', status: 400 },
+  { fn: 'body-check', label: 'invalid base64: 400', method: 'POST', auth: signedIn, body: JSON.stringify({ mime: 'image/jpeg', image: 'not*base64' }), status: 400 },
+  { fn: 'body-check', label: 'type does not match bytes: 400', method: 'POST', auth: signedIn, body: JSON.stringify({ mime: 'image/png', image: jpeg }), status: 400 },
+  { fn: 'body-check', label: 'decoded photo over 4 MB: 413', method: 'POST', auth: signedIn, body: JSON.stringify({ mime: 'image/jpeg', image: jpeg + 'A'.repeat(5_592_392) }), status: 413 }, // 4 MB + 2 bytes, request under the cap
+  { fn: 'body-check', label: 'valid photo, rate store down: 503', method: 'POST', auth: signedIn, body: JSON.stringify({ mime: 'image/jpeg', image: jpeg }), status: 503 },
+);
+const killed: Case[] = [
+  { fn: 'body-check', label: 'AI_DISABLED: 503 before any model call', method: 'POST', auth: signedIn, body: JSON.stringify({ mime: 'image/jpeg', image: jpeg }), status: 503 },
+  { fn: 'coach-chat', label: 'AI_DISABLED: 503', method: 'POST', auth: signedIn, body: JSON.stringify({ message: 'Hi' }), status: 503 },
+]; // run last, with the AI_DISABLED secret set
+
 const quiet = { log: console.log, error: console.error };
 let failures = 0;
-for (const c of cases) {
+for (const c of [...cases, ...killed]) {
+  if (c === killed[0]) Deno.env.set('AI_DISABLED', '1');
   const mod = await import(new URL(`../${c.fn}/index.ts`, import.meta.url).href);
   const headers: Record<string, string> = c.method === 'OPTIONS'
     ? { origin: 'http://localhost:3000', 'access-control-request-method': 'POST' }
-    : { 'content-type': 'application/json', ...(c.auth ? { authorization: c.auth } : {}) };
+    : { 'content-type': 'application/json', ...(c.auth ? { authorization: c.auth } : {}), ...c.headers };
   console.log = () => {};
   console.error = () => {};
   let status = 0, text = '';
@@ -70,5 +90,5 @@ for (const c of cases) {
   if (!ok) failures++;
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${c.fn.padEnd(15)} ${c.label.padEnd(40)} -> ${status}${ok ? '' : `  ${text.slice(0, 120)}`}`);
 }
-console.log(`${cases.length - failures} passed, ${failures} failed`);
+console.log(`${cases.length + killed.length - failures} passed, ${failures} failed`);
 if (failures) Deno.exit(1);

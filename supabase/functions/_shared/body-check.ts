@@ -9,6 +9,8 @@ export type BodyCheck = { observations: string[]; focus: FocusArea[] };
 
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // decoded size; the app sends a 1024 px JPEG well under this
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+/** The largest request body read: the base64 of a MAX_IMAGE_BYTES photo plus room for the JSON around it. */
+export const MAX_REQUEST_BYTES = Math.ceil(MAX_IMAGE_BYTES / 3) * 4 + 1024;
 
 export const BODY_CHECK_SYSTEM = `You look at one photo of an adult who asked for training advice. Reply with JSON only:
 {"observations": [up to 4 short sentences], "focus": [1 to 3 of ${FOCUS_AREAS.map((f) => `"${f}"`).join(', ')}]}
@@ -34,6 +36,48 @@ export function parseBodyCheck(text: string): BodyCheck | null {
   if (observations.length === 0 || observations.length > 4 || observations.some((o) => o.length > 240 || BANNED.test(o))) return null;
   const focus = [...new Set(r.focus.filter((f): f is FocusArea => (FOCUS_AREAS as readonly string[]).includes(f as string)))].slice(0, 3);
   return { observations, focus };
+}
+
+/**
+ * The request body as text, reading at most [max] bytes as they arrive: null as soon as more come (the stream is
+ * cancelled, nothing more is buffered). Counts real bytes, so a missing or false Content-Length changes nothing.
+ */
+export async function readCapped(req: Request, max: number): Promise<string | null> {
+  if (!req.body) return '';
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let n = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    n += value.byteLength;
+    if (n > max) {
+      await reader.cancel().catch(() => {});
+      return null;
+    }
+    chunks.push(value);
+  }
+  const all = new Uint8Array(n);
+  let at = 0;
+  for (const c of chunks) {
+    all.set(c, at);
+    at += c.byteLength;
+  }
+  return new TextDecoder().decode(all);
+}
+
+/** Whether the photo's first bytes are those of [mime] (JPEG FF D8 FF, PNG signature, WebP RIFF....WEBP). */
+export function imageMatches(mime: string, b64: string): boolean {
+  let head: string;
+  try {
+    head = atob(b64.slice(0, 16));
+  } catch {
+    return false;
+  }
+  if (mime === 'image/jpeg') return head.startsWith('\xFF\xD8\xFF');
+  if (mime === 'image/png') return head.startsWith('\x89PNG\r\n\x1A\n');
+  if (mime === 'image/webp') return head.startsWith('RIFF') && head.slice(8, 12) === 'WEBP';
+  return false;
 }
 
 /** Bytes of a base64 string once decoded. */
