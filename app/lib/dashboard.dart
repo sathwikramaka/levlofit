@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'account.dart';
+import 'app_version.dart' show appBuild, appVersion;
 import 'avatar.dart';
 import 'body_check.dart';
 import 'coach_chat.dart';
