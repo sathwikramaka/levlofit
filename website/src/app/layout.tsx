@@ -16,6 +16,8 @@ const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin"], 
 export const metadata: Metadata = {
   title: { default: "Levlofit: train with reasons", template: "%s · Levlofit" },
   description: "Training and nutrition that checks your answers, explains every decision and cites a source for every rule. Built for Indian kitchens.",
+  // Google Search Console ownership (not a secret; removing it unverifies the property).
+  verification: { google: "mNYHL42gAyyiz16vHkzh6sCTU7Veo6XpGa28k9r6aQM" },
 };
 
 // Runs before paint: a saved theme never flashes the wrong colours, and the intro plays once per visit.
