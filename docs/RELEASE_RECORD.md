@@ -2,6 +2,18 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-03: release 1.0.6, in-app update (owner-approved: APK, website, MIN_APP_BUILD secret)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 405ae8d (Update downloads, SHA-256-checks and installs inside the app; browser fallback) plus version bump; clean worktree, uncommitted send-feedback work not shipped | git worktree at HEAD |
+| App checks | flutter analyze clean; 570 tests passed, 1 skipped; release APK builds | Release worktree |
+| Android APK | com.levlofit.app 1.0.6, versionCode 2008, 13.0 MB, release certificate 7c510c35...4c431384; adds REQUEST_INSTALL_PACKAGES and a FileProvider (com.levlofit.app.updates, cache/updates only) | aapt2, apksigner |
+| APK SHA-256 | f9a9e2372f4a091655d0f1f573992855db8a8cd5a30c92ae7b6705ec01cc592b, equal on the live download, the site and /version.json sha256 | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 2c2e7d1c; /version.json = 1.0.6 build 8, min_build 8, sha256 set | curl |
+| Secret | MIN_APP_BUILD = 8 | supabase secrets list (digest) |
+| Not verified | The in-app install on a real phone (no device here); first exercised by the 1.0.7 update. 1.0.0 and 1.0.1 have no update check and need one manual install | - |
+
 ## 2026-11-03: release 1.0.5, version shown in the menu (owner-approved: APK, website, MIN_APP_BUILD secret)
 
 | What | Value | How checked |
