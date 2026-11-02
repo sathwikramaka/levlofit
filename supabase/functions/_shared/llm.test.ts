@@ -288,3 +288,10 @@ test('fallback: when both fail, the fallback failure is reported', async () => {
   assert.equal(r.ok || r.kind, 'auth');
 });
 
+
+test('AI_DISABLED is a kill switch: any configured provider reads as not configured', () => {
+  const env = (extra: Record<string, string>) => (k: string) => ({ LLM_API_KEY: 'k', ...extra } as Record<string, string>)[k];
+  assert.equal(configFromEnv(env({})).ok, true);
+  for (const v of ['1', 'true', 'YES', ' 1 ']) assert.deepEqual(configFromEnv(env({ AI_DISABLED: v })), { ok: false, reason: 'AI_DISABLED is set' }, v);
+  for (const v of ['', '0', 'false']) assert.equal(configFromEnv(env({ AI_DISABLED: v })).ok, true, v);
+});

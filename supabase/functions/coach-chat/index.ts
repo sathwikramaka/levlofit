@@ -22,7 +22,7 @@ import {
 } from '../_shared/coach-context.ts';
 import { completeWithFallback, configFromEnv, dataUseApproved, fallbackFromEnv, type LlmConfig, statusForFailure, type Turn } from '../_shared/llm.ts';
 import { CITATION_RULES, handbookBlock, retrieve, validateCitations } from '../_shared/handbook.ts';
-import { checkLimits, LIMITS } from '../_shared/rate.ts';
+import { checkLimits, LIMITS, rateRefusal } from '../_shared/rate.ts';
 import {
   allowedEquipment, injuryAreas, isLaterThisWeek, isLighterTalk, isMoveTalk, isSwapTalk, LIGHTER_BLOCK, LIGHTER_LINE, moveBlock, MOVE_LINE, MOVES, parseToday,
   swapBlock, swapOptions, swapRefusal, SWAP_LINE,
@@ -250,9 +250,8 @@ async function assess(
 ): Promise<Response> {
   const input = parseAssess(raw);
   if (!input) return fail(400, 'Bad request');
-  if ((await checkLimits(ctx.supabase, [LIMITS.chatHour, LIMITS.chatDay])) === 'limited') {
-    return fail(429, 'You have sent a lot of messages. Try again a little later.');
-  }
+  const rate = await checkLimits(ctx.supabase, [LIMITS.chatHour, LIMITS.chatDay]);
+  if (rate !== 'ok') return rateRefusal(rate, 'You have sent a lot of messages. Try again a little later.');
   // The level ladder is public curriculum data; a failed read only means the model judges without it.
   const ladder = await ctx.supabase.from('curriculum_levels').select('goal, level, title, advance_when').in('goal', input.goals.map((g) => g.id));
   const asked = questionsAsked(input.turns);
@@ -289,9 +288,8 @@ export default {
     // Confirming a coach action needs no model call. It counts against the chat limits (existing buckets, no new
     // owner-set values), so a script cannot hammer the confirm checks.
     if ('confirmSwap' in body || 'confirmChange' in body || 'confirmPlanChange' in body) {
-      if ((await checkLimits(ctx.supabase, [LIMITS.chatHour, LIMITS.chatDay])) === 'limited') {
-        return fail(429, 'You have made a lot of changes. Try again a little later.');
-      }
+      const rate = await checkLimits(ctx.supabase, [LIMITS.chatHour, LIMITS.chatDay]);
+      if (rate !== 'ok') return rateRefusal(rate, 'You have made a lot of changes. Try again a little later.');
       if ('confirmPlanChange' in body) return confirmPlanChange(ctx as never, body.confirmPlanChange);
       return 'confirmSwap' in body ? confirmSwap(ctx as never, body.confirmSwap) : confirmChange(ctx as never, body.confirmChange, localDayOf(body.localDay, Date.now()));
     }
@@ -328,9 +326,8 @@ export default {
       const saved = await savedTurn(ctx.supabase, clientMsgId);
       if (saved.kind === 'found' || saved.kind === 'noReply') return duplicateAnswer(saved, 'check');
     }
-    if ((await checkLimits(ctx.supabase, [LIMITS.chatHour, LIMITS.chatDay])) === 'limited') {
-      return fail(429, 'You have sent a lot of messages. Try again a little later.');
-    }
+    const rate = await checkLimits(ctx.supabase, [LIMITS.chatHour, LIMITS.chatDay]);
+    if (rate !== 'ok') return rateRefusal(rate, 'You have sent a lot of messages. Try again a little later.');
 
     const uid = ctx.userClaims!.id;
     // The person's own calendar day (F7): the coach's TODAY, the progress window and a logged meal's day.

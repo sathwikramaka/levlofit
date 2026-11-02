@@ -65,7 +65,15 @@ test('rate limit: over the daily limit answers 429 and stores nothing', async ()
   assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update').length, 0);
 });
 
-test('rate limit: before the migration (function missing) plans still build', async () => {
+test('rate limit store missing or failing: 503 (fail closed) and nothing stored', async () => {
+  for (const code of ['PGRST202', '08006']) {
+    useDb({ 'rpc:check_rate': { data: null, error: { code } } });
+    assert.equal((await post()).status, 503, code);
+    assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update').length, 0, code);
+  }
+});
+
+test('rate limit: under the limit plans build', async () => {
   useDb();
   assert.equal((await post()).status, 201);
   assert.ok(ops.some((o) => o.table === 'rpc:check_rate'));

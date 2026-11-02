@@ -30,6 +30,9 @@ const MIN_RETRY_BUDGET_MS = 50; // a retry needs at least this much of the time 
 
 /** Reads the provider settings. Unknown provider, missing key or missing model is a config error, never a guess. */
 export function configFromEnv(get: (k: string) => string | undefined): { ok: true; config: LlmConfig } | { ok: false; reason: string } {
+  // Emergency kill switch: `supabase secrets set AI_DISABLED=1` stops every model call (coach chat, assessment, body
+  // check) without a code change or redeploy; the functions answer 503 as when AI is not configured.
+  if (/^(1|true|yes)$/i.test((get('AI_DISABLED') ?? '').trim())) return { ok: false, reason: 'AI_DISABLED is set' };
   const provider = (get('LLM_PROVIDER') ?? 'groq').trim().toLowerCase();
   const preset = PRESETS[provider];
   if (!preset) return { ok: false, reason: `unknown LLM_PROVIDER "${provider}"` };
