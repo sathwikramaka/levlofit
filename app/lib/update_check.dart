@@ -17,18 +17,19 @@ const updateUrl = String.fromEnvironment('LEVLOFIT_UPDATE_URL',
     defaultValue: backendChoice == 'production' ? 'https://levlofit.pages.dev/version.json' : '');
 const _dismissedKey = 'update_dismissed_build';
 
-typedef Update = ({String version, int build, String url});
+/// [required]: this build is below the site's min_build, so the card has no Later button and cannot be dismissed.
+typedef Update = ({String version, int build, String url, bool required});
 
 /// The offered update from a /version.json body, or null when there is none newer than [currentBuild].
 Update? parseUpdate(String body, {int currentBuild = appBuild}) {
   try {
     final j = jsonDecode(body);
     if (j is! Map) return null;
-    final build = j['build'], url = j['url'], version = j['version'];
+    final build = j['build'], url = j['url'], version = j['version'], minBuild = j['min_build'];
     if (build is! int || url is! String || version is! String || build <= currentBuild) return null;
     final u = Uri.tryParse(url);
     if (u == null || u.scheme != 'https') return null;
-    return (version: version, build: build, url: url);
+    return (version: version, build: build, url: url, required: minBuild is int && currentBuild < minBuild);
   } catch (_) {
     return null;
   }
@@ -47,7 +48,7 @@ Future<Update?> checkForUpdate({http.Client? client}) => _check ??= () async {
         try {
           dismissed = prefs.getInt(_dismissedKey);
         } catch (_) {}
-        return dismissed == u.build ? null : u;
+        return dismissed == u.build && !u.required ? null : u;
       } catch (_) {
         return null;
       }
@@ -82,12 +83,13 @@ class _UpdateBannerState extends State<UpdateBanner> {
               child: Row(children: [
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('UPDATE READY', style: monoLabel(context)),
+                    Text(u.required ? 'UPDATE NEEDED' : 'UPDATE READY', style: monoLabel(context)),
                     const SizedBox(height: 2),
-                    Text('Levlofit ${u.version} is available.', style: t.bodyMedium),
+                    Text(u.required ? 'Install Levlofit ${u.version} to keep using the coach.' : 'Levlofit ${u.version} is available.',
+                        style: t.bodyMedium),
                   ]),
                 ),
-                TextButton(
+                if (!u.required) TextButton(
                   onPressed: () {
                     setState(() => _hidden = true);
                     try {

@@ -27,11 +27,24 @@ void main() {
     expect(parseUpdate('{"version":"","build":0,"url":""}', currentBuild: 1), isNull); // site without a release
     expect(parseUpdate('{"version":"9","build":9,"url":"http://x.test/a.apk"}', currentBuild: 1), isNull);
     expect(parseUpdate('not json'), isNull);
+    expect(parseUpdate('{"version":"1.0.4","build":6,"url":"https://x.test/a.apk","min_build":6}', currentBuild: 5)?.required, isTrue);
+    expect(parseUpdate('{"version":"1.0.4","build":6,"url":"https://x.test/a.apk","min_build":5}', currentBuild: 5)?.required, isFalse);
+    expect(parseUpdate('{"version":"1.0.4","build":6,"url":"https://x.test/a.apk"}', currentBuild: 5)?.required, isFalse);
+  });
+
+  testWidgets('a required update has no Later button', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: UpdateBanner(check: () async => (version: '1.0.4', build: 6, url: 'https://x.test/a.apk', required: true))),
+    ));
+    await tester.pump();
+    expect(find.text('Install Levlofit 1.0.4 to keep using the coach.'), findsOneWidget);
+    expect(find.text('Later'), findsNothing);
+    expect(find.text('Update'), findsOneWidget);
   });
 
   testWidgets('update card shows, and Later hides it', (tester) async {
     await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: UpdateBanner(check: () async => (version: '1.0.1', build: 2, url: 'https://x.test/a.apk'))),
+      home: Scaffold(body: UpdateBanner(check: () async => (version: '1.0.1', build: 2, url: 'https://x.test/a.apk', required: false))),
     ));
     await tester.pump();
     expect(find.text('Levlofit 1.0.1 is available.'), findsOneWidget);

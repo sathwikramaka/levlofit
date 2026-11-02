@@ -41,6 +41,21 @@ export async function checkLimits(db: Rpc, limits: Limit[], log: (line: string) 
   return 'ok';
 }
 
+/** Required update (2026-11-03): the Android app sends its build number in x-levlofit-build (app/lib/main.dart).
+ * With the MIN_APP_BUILD secret set, older builds, including those from before the header (1.0.3 and earlier,
+ * which have no update check of their own), get 426 and a message every version shows in place of a reply.
+ * Browser calls (the web app, always the newest build) carry an Origin header and are never refused here.
+ * Unset or 0 = no check. tools/release_android.sh sets it to each new build once the APK is live. */
+export const UPDATE_MESSAGE = 'A new version of Levlofit is out. Download it from levlofit.pages.dev to keep using this.';
+
+const env = (k: string) => (globalThis as { Deno?: { env: { get(k: string): string | undefined } } }).Deno?.env.get(k);
+
+export function outdatedApp(req: Request, minBuild = Number(env('MIN_APP_BUILD') ?? 0)): Response | null {
+  if (!(minBuild > 0) || req.headers.get('origin')) return null;
+  const build = Number(req.headers.get('x-levlofit-build') ?? 0) || 0;
+  return build >= minBuild ? null : Response.json({ error: UPDATE_MESSAGE, updateRequired: true }, { status: 426 });
+}
+
 /** The refusal for a check that was not 'ok': 429 with [limitedMessage] when over a limit, 503 when the limits could
  * not be checked or the app-wide daily cap is reached. Never carries database or provider details. */
 export function rateRefusal(result: 'limited' | 'unavailable', limitedMessage: string): Response {
