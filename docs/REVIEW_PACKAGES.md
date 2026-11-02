@@ -93,3 +93,12 @@ RULES); each changed Handbook claim is `needs_clinical_review` in `data/evidence
    week's free days, names of up to 30 foods from the person's own diary, and stored offered or confirmed session
    changes (deleted with the account; pgTAP-tested).
 2. Coach memory (batch 2U-2V) disclosure on the Memory sheet and injury suggestion card.
+
+## 7. Added by the remediation check (2026-11-02; nothing reviewed or approved)
+
+| Item | Where | Reviewer | Question |
+|---|---|---|---|
+| Protein for high BMI | supabase/functions/_shared/plan-engine.ts (PROTEIN_PER_KG, actual body weight; test "protein for BMI 30 or more") | Registered dietitian | Keep g/kg of actual weight, or use a reference or adjusted weight above BMI 30? Supply the source. A 110 kg cut gets about 220 g a day today |
+| Slim-but-soft beginner bulk becomes recomposition | plan-engine.ts reviewInput, finding bulk_slim_soft | Dietitian or strength coach | Is the automatic switch right, and should the person be asked to confirm instead of only told on the review step? |
+| Kidney disease, pregnancy, older adults | plan-engine.ts supplementAdvice, reviewInput; protein is not lowered for kidney disease (only a see-your-doctor note) | Physician or renal dietitian | Is a note enough, or must protein targets change or be withheld? |
+| AI crash-diet answers | supabase/functions/_eval/cases.ts extreme-goal (offline only; the live provider was not run) | Dietitian | Is the expected refusal wording and 0.5 kg a week pace acceptable? |

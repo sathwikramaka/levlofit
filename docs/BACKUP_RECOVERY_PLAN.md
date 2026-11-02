@@ -8,6 +8,21 @@ Evidence: PROGRESS batches BS (first drill), BU-BY (v1/v2 proposal, review, appl
 re-verification). The proposal and hardening diffs (v1 never applied, v2 applied, BZ hardening) were removed on 2026-10-27 (owner
 cleanup); the applied result is the current tools/ files.
 
+## Recovery objectives and coverage (2026-11-02, remediation check)
+
+| Data | Backed up by | Recovery point (worst case) | Restore tested |
+|---|---|---|---|
+| Database (public, auth, storage metadata) | db-backup.yml daily, AES-256 artifact, 30 days | about 24 h | Weekly restore-drill.yml (database only), local rehearsals |
+| progress-photos bucket (progress photos, profile pictures) | tools/backup_prod.sh only, run by the owner before a release | since the last manual run: **unbounded**; no production Storage copy has been made yet | Local and synthetic objects only (section 8); never with production files |
+| Body-check photos | not stored anywhere (request only) | n/a | n/a |
+| App offline copy, reminders | phone only, encrypted secure store, never backed up (allowBackup false) | n/a, rebuilt from the server | n/a |
+
+Recovery time is not measured; a restore is a manual runbook (section 7), so plan for hours, not minutes. A restored
+bucket keeps its `public = false` setting from migration 20261003200000_threads_measurements_photos (also in the data dump), and objects are
+copied back with the service key, so private photos stay private; the restore drill checks every storage.objects row
+has its file. Gaps for the owner: run tools/backup_prod.sh against production once (needs credentials), then decide
+whether photos need a scheduled copy (it would need a Storage access secret in GitHub Actions).
+
 ## 1. Tools
 
 | File | Purpose | Run by |

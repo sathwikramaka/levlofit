@@ -4,6 +4,15 @@
 listed. "Verified" means read on the licensor's own page in this or an earlier recorded session; anything else is
 marked unverified. A commercial release needs every row marked "Needed before release" cleared in writing.
 
+**Current state, 2026-11-02 (remediation check; read this before the older sections below).** Two sources ship in
+the free 1.0.2 launch without confirmed commercial or redistribution rights, by owner decision, not by legal
+clearance: IFCT 2017 food values (migration 20261028100000_ifct_release, owner decision 2026-10-27; NIN permission
+never requested or granted, so the 2026-10-24 rows calling IFCT "gated" are superseded) and ExerciseDB free V1
+(non-commercial use only; AscendAPI credit shown). Open Food Facts (ODbL, per-person lookups, credit shown) and USDA
+FDC (CC0) are usable as recorded in docs/SOURCE_LICENCE_REGISTER.md. Before any revenue: NIN written permission or
+IFCT removal, and an ExerciseDB paid plan or replacement media. Nothing here is legal advice; a qualified reviewer
+has not checked it (docs/REVIEW_PACKAGES.md section 5).
+
 | Source | Used for (where) | What is known | Needed before release | Who |
 |---|---|---|---|---|
 | IFCT 2017, National Institute of Nutrition (ICMR) | All 543 foods: energy, macros, 8 micronutrients (migrations 20260929170000_foods_ifct2017, 20261016200000_food_micronutrients; data/build_foods.py, build_food_micros.py) | Values taken from the npm package @ifct2017/compositions 2.0.9, whose **code** is MIT; the **data** is NIN's publication. Reuse permission for a commercial app is **unconfirmed** (GAP_ANALYSIS area 18) | Written permission from NIN for storing and displaying the values in a commercial app, and the exact attribution text | Owner -> NIN |
