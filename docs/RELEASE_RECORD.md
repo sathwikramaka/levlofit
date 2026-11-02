@@ -2,6 +2,17 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-03: release 1.0.5, version shown in the menu (owner-approved: APK, website, MIN_APP_BUILD secret)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 294aa70 (menu row and licence page show appVersion/appBuild instead of a fixed 1.0 / 1.0.0) plus version bump; clean worktree, uncommitted send-feedback work not shipped | git worktree at HEAD |
+| App checks | flutter analyze clean; 569 tests passed, 1 skipped | Release worktree |
+| Android APK | com.levlofit.app 1.0.5, versionCode 2007, 13.0 MB, release certificate 7c510c35...4c431384; sends x-levlofit-build | aapt2, apksigner, libapp.so string check |
+| APK SHA-256 | ef05990056b100b7eb890e767442d1d76046c4c010d6b06c25b9e6b0f1e30d25, equal on the live download and the site | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 82beeec6; /version.json = 1.0.5 build 7, min_build 7; Google verification tag still on the home page | curl |
+| Secret | MIN_APP_BUILD = 7: 1.0.0-1.0.4 are told to update (coach, plan, body check answer 426; 1.0.2+ show the update card, required on 1.0.4) | supabase secrets list (digest) |
+
 ## 2026-11-03: release 1.0.4, required updates (owner-approved: functions, APK, website, MIN_APP_BUILD secret)
 
 | What | Value | How checked |
