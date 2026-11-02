@@ -357,6 +357,8 @@ class _GateState extends State<Gate> {
       if (id == null) Reminders.clearAll().catchError((Object _) {});
       // Steps and the choice to share them belong to the person who made them: forget both on any account change.
       forgetSteps().catchError((Object _) {});
+      // The offline copy holds this account's health data: drop it on sign-out, session loss or a switch of account.
+      clearOfflineRows();
       setState(() {
         _userId = id;
         _onboarded = id == null ? null : _loadOnboarded();
@@ -377,7 +379,7 @@ class _GateState extends State<Gate> {
       return (await supabase.from('profiles').select('onboarding_complete').eq('id', _userId!).single())['onboarding_complete'] as bool;
     } catch (e) {
       // No connection, but this phone holds a plan from an earlier visit: open it read-only (offline_cache.dart).
-      if (e is! PostgrestException && e is! AuthException && hasOfflineRows(_userId!)) return true;
+      if (e is! PostgrestException && e is! AuthException && await hasOfflineRows(_userId!)) return true;
       rethrow;
     }
   }
