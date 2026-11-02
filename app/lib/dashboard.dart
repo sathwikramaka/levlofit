@@ -220,7 +220,7 @@ class _DashboardState extends State<Dashboard> {
       rethrow;
     } catch (_) {
       // No connection: show the last plan the server sent, read-only (offline_cache.dart).
-      final saved = readOfflineRows(_uid);
+      final saved = await readOfflineRows(_uid);
       if (saved == null) rethrow;
       profile = (saved.rows['profile'] as Map).cast<String, dynamic>();
       latest = (saved.rows['latest'] as Map).cast<String, dynamic>();
