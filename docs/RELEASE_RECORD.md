@@ -2,6 +2,20 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-03: release 1.0.3 (owner-approved: remediation migration, functions, APK, website)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 3b0f7d3 (remediation commits 2da6b38..3b0f7d3) plus the version bump ef19091, built from a clean worktree so uncommitted send-feedback work was not shipped | git worktree at HEAD |
+| CI | Run 41500241783 on 3b0f7d3: all jobs green | gh run list |
+| Backup before changes | db-backup run 41500242618, encrypted dump levlofit-db-20261102T182425Z | GitHub Actions log |
+| Migration | ai_daily_caps (file 20261102100000) applied with apply_migration: ai_daily_caps table (no rows, so no app-wide cap yet), rate_events_bucket_at index, check_rate with the cap check | apply_migration result |
+| Edge Functions | coach-chat v24, generate-plan v22, body-check v3 deployed with `supabase functions deploy --use-api` (rate limits fail closed, AI_DISABLED kill switch, body-check byte cap and image checks); all ACTIVE, signed-out POST answers 401, no function errors logged since deploy. delete-account v13 unchanged; send-feedback not deployed | Function list, signed-out probe, function logs |
+| App checks | flutter analyze: no issues; flutter test: 568 passed, 1 skipped | Release worktree |
+| Android APK | com.levlofit.app 1.0.3, versionCode 2005, 13.0 MB, release certificate 7c510c35...4c431384, update check compiled in, no send-feedback call | aapt2, apksigner, libapp.so string check |
+| APK SHA-256 | 52a5c5e245d576f09983e50e0fa3785c091cc33f241cf49e093114a7ce9f6f81, equal on the live download and the site | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 240091ba (branch main); home links levlofit-1.0.3.apk; /version.json = 1.0.3 build 5, so 1.0.2 phones show "Update ready" | curl |
+
 ## 2026-10-30: release 1.0.2 (owner-approved: signup guard migration, APK, website)
 
 | What | Value | How checked |
