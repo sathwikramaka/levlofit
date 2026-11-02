@@ -11,8 +11,16 @@ import 'main.dart';
 /// A product's label values per 100 g. Null = not known yet.
 typedef Packaged = ({String? barcode, String name, String? brand, double? kcal, double? protein, double? fat, double? carb, double? fiber, String source, DateTime? sourceDate});
 
-/// EAN-8, UPC-A (12), EAN-13 or a 14-digit GTIN.
-bool validBarcode(String code) => RegExp(r'^\d{8}$|^\d{12,14}$').hasMatch(code);
+/// EAN-8, UPC-A (12), EAN-13 or a 14-digit GTIN, with a correct GS1 check digit (a misread scan or typo is refused
+/// before any lookup).
+bool validBarcode(String code) {
+  if (!RegExp(r'^\d{8}$|^\d{12,14}$').hasMatch(code)) return false;
+  var sum = 0;
+  for (var i = code.length - 2, w = 3; i >= 0; i--, w = 4 - w) {
+    sum += (code.codeUnitAt(i) - 48) * w;
+  }
+  return (10 - sum % 10) % 10 == code.codeUnitAt(code.length - 1) - 48;
+}
 
 /// Open Food Facts asks every app to name itself and give a contact.
 const offUserAgent = 'Levlofit/1.0 (levlofit.app@gmail.com)';

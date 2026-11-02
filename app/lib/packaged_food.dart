@@ -75,7 +75,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
     if (code != null && validBarcode(code)) {
       _finish(code);
     } else if (code != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('A barcode has 8, 12, 13 or 14 digits.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Check the digits: that is not a valid 8, 12, 13 or 14-digit barcode.')));
     }
   }
 
