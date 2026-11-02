@@ -2,6 +2,18 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-03: release 1.0.4, required updates (owner-approved: functions, APK, website, MIN_APP_BUILD secret)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | b2b396d plus version bump b76e6ee, built from a clean worktree (uncommitted send-feedback work not shipped) | git worktree at HEAD |
+| Edge Functions | coach-chat v26, generate-plan v24, body-check v5 (each deployed, then restarted by the secret change; delete-account v14 restarted only). Builds below MIN_APP_BUILD, and requests without x-levlofit-build (1.0.0-1.0.3), get 426 with the update message; browser requests pass | Function list; node test rate.test.ts. Not exercised live: needs a signed-in test account |
+| Secret | MIN_APP_BUILD = 6 (digest matches) | supabase secrets list |
+| App checks | flutter analyze clean; 573 app tests, 191 Edge Function node tests, 30 Deno smoke tests passed | Local runs before b2b396d |
+| Android APK | com.levlofit.app 1.0.4, versionCode 2006, 13.0 MB, release certificate 7c510c35...4c431384; sends x-levlofit-build; update check compiled in | aapt2, apksigner, libapp.so string check |
+| APK SHA-256 | 4e8be9808b769df3dd96319538a58fdf06bf631022e35a5222b5be4fdfc83f8c, equal on the live download and the site | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 0a92b7a8; /version.json = 1.0.4 build 6, min_build 6, so 1.0.2 and 1.0.3 show an update card with no Later button | curl |
+
 ## 2026-11-03: release 1.0.3 (owner-approved: remediation migration, functions, APK, website)
 
 | What | Value | How checked |
