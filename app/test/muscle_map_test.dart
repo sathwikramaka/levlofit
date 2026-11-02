@@ -29,14 +29,33 @@ void main() {
 
   test('a near miss beside a thin muscle still selects it at the phone tap slop; the head stays empty', () {
     final forearm = frontMuscles.firstWhere((s) => s.label.toLowerCase().contains('forearm'));
-    final xs = [for (final p in forearm.polygons) for (var i = 0; i < p.length; i += 2) p[i]];
-    final ys = [for (final p in forearm.polygons) for (var i = 1; i < p.length; i += 2) p[i]];
-    final left = xs.reduce((a, b) => a < b ? a : b), midY = (ys.reduce((a, b) => a < b ? a : b) + ys.reduce((a, b) => a > b ? a : b)) / 2;
-    final miss = Offset(left - 4, midY);
+    // 4 units straight out from the forearm's outermost corner (outline distance 4).
+    final corners = [for (final p in forearm.polygons) for (var i = 0; i < p.length; i += 2) Offset(p[i], p[i + 1])];
+    final outer = corners.reduce((a, b) => a.dx < b.dx ? a : b);
+    final miss = outer - const Offset(4, 0);
     expect(muscleAt(frontMuscles, miss), isNull, reason: 'outside the old 2-unit slop');
     expect(muscleAt(frontMuscles, miss, slop: 6)?.group, forearm.group);
     expect(muscleAt(frontMuscles, const Offset(50, 26), slop: 6), isNull); // head
     expect(muscleAt(frontMuscles, const Offset(2, 2), slop: 6), isNull);
+  });
+
+  test('fallback is measured to the outline, picks the nearest, is deterministic and never reaches far', () {
+    // An L-shaped muscle whose bounding box covers the gap beside it, and a small square in that gap.
+    const MuscleShape l = (label: 'L', group: 'A', polygons: [[0, 0, 4, 0, 4, 16, 20, 16, 20, 20, 0, 20]]);
+    const MuscleShape sq = (label: 'Sq', group: 'B', polygons: [[13, 2, 17, 2, 17, 6, 13, 6]]);
+    final shapes = [l, sq];
+    expect(muscleAt(shapes, const Offset(2, 10))?.label, 'L', reason: 'exact hit');
+    expect(muscleAt(shapes, const Offset(15, 4))?.label, 'Sq', reason: 'exact hit');
+    expect(muscleAt(shapes, const Offset(10, 11), slop: 4), isNull, reason: "inside L's box, 5 from its outline: no box shortcut");
+    expect(muscleAt(shapes, const Offset(10, 11), slop: 6)?.label, 'L', reason: 'L 5 away beats Sq 5.8 away');
+    expect(muscleAt(shapes, const Offset(15, 9), slop: 6)?.label, 'Sq', reason: 'Sq 3 away beats L 7 away');
+    expect(muscleAt(shapes, const Offset(10, 8)), isNull, reason: 'beyond the default slop: nothing');
+    expect(muscleAt(shapes, const Offset(40, 40), slop: 6), isNull, reason: 'far away: nothing');
+    // Equal distance: the earlier muscle in list order wins.
+    const MuscleShape a = (label: 'a', group: 'A', polygons: [[0, 0, 2, 0, 2, 2, 0, 2]]);
+    const MuscleShape b = (label: 'b', group: 'B', polygons: [[6, 0, 8, 0, 8, 2, 6, 2]]);
+    expect(muscleAt([a, b], const Offset(4, 1), slop: 6)?.label, 'a');
+    expect(muscleAt([b, a], const Offset(4, 1), slop: 6)?.label, 'b');
   });
 
   test('filters combine and every guide move gets an equipment kind and a difficulty', () {
