@@ -2,7 +2,7 @@
 
 ## Android releases
 
-- Any app change that users should get ships with `tools/release_android.sh` (Git Bash, repo root): it bumps the version past the live `/version.json`, builds the signed APK, deploys the site and checks it. Deploying is outward-facing, so ask the owner before running it. Then commit the bump and add a dated section to `docs/RELEASE_RECORD.md`.
+- Any app change that users should get ships with `tools/release_android.sh` (Git Bash, repo root): it bumps the version past the live `/version.json`, builds the signed APK, deploys the site, checks it, then sets the `MIN_APP_BUILD` secret so every older version is told to update (`MIN_BUILD=<n>` to keep older builds allowed). Deploying is outward-facing, so ask the owner before running it. Then commit the bump and add a dated section to `docs/RELEASE_RECORD.md`.
 
 ## Database and Supabase safety (overrides any skill guidance)
 

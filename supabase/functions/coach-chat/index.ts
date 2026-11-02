@@ -22,7 +22,7 @@ import {
 } from '../_shared/coach-context.ts';
 import { completeWithFallback, configFromEnv, dataUseApproved, fallbackFromEnv, type LlmConfig, statusForFailure, type Turn } from '../_shared/llm.ts';
 import { CITATION_RULES, handbookBlock, retrieve, validateCitations } from '../_shared/handbook.ts';
-import { checkLimits, LIMITS, rateRefusal } from '../_shared/rate.ts';
+import { checkLimits, LIMITS, outdatedApp, rateRefusal } from '../_shared/rate.ts';
 import {
   allowedEquipment, injuryAreas, isLaterThisWeek, isLighterTalk, isMoveTalk, isSwapTalk, LIGHTER_BLOCK, LIGHTER_LINE, moveBlock, MOVE_LINE, MOVES, parseToday,
   swapBlock, swapOptions, swapRefusal, SWAP_LINE,
@@ -278,6 +278,8 @@ async function assess(
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
     if (req.method !== 'POST') return fail(405, 'Method not allowed');
+    const outdated = outdatedApp(req);
+    if (outdated) return outdated;
     let body: { message?: unknown; threadId?: unknown; editFrom?: unknown; clientMsgId?: unknown; activity?: unknown; today?: unknown; confirmSwap?: unknown; confirmChange?: unknown; confirmPlanChange?: unknown; assess?: unknown; localDay?: unknown };
     try {
       body = await req.json();

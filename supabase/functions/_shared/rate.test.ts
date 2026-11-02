@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkLimits, LIMITS, rateRefusal } from './rate.ts';
+import { checkLimits, LIMITS, outdatedApp, rateRefusal } from './rate.ts';
 
 const db = (reply: { data: unknown; error: { code?: string } | null }) => ({ rpc: async () => reply });
 const quiet = () => {};
@@ -48,4 +48,17 @@ test('LIMITS match the buckets in check_rate (migration 20261027200000)', () => 
   assert.deepEqual(Object.values(LIMITS).map((l) => [l.bucket, l.limit]), [
     ['coach_chat_hour', 30], ['coach_chat_day', 150], ['generate_plan_day', 20], ['body_check_day', 3],
   ]);
+});
+
+test('required update: old or headerless app builds get 426 once MIN_APP_BUILD is set; browsers and current builds pass', async () => {
+  const req = (h: Record<string, string>) => new Request('http://localhost/coach-chat', { method: 'POST', headers: h });
+  assert.equal(outdatedApp(req({}), 0), null, 'unset: no check');
+  const old = outdatedApp(req({}), 6)!;
+  assert.equal(old.status, 426);
+  assert.deepEqual(await old.json(), { error: 'A new version of Levlofit is out. Download it from levlofit.pages.dev to keep using this.', updateRequired: true });
+  assert.equal(outdatedApp(req({ 'x-levlofit-build': '5' }), 6)?.status, 426);
+  assert.equal(outdatedApp(req({ 'x-levlofit-build': 'junk' }), 6)?.status, 426);
+  assert.equal(outdatedApp(req({ 'x-levlofit-build': '6' }), 6), null);
+  assert.equal(outdatedApp(req({ 'x-levlofit-build': '7' }), 6), null);
+  assert.equal(outdatedApp(req({ origin: 'https://levlofit.pages.dev' }), 6), null, 'web app');
 });

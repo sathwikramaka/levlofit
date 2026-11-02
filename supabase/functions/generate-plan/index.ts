@@ -4,7 +4,7 @@
 // stores an immutable plan snapshot and opens the dashboard gate. Every number comes from the engine.
 import { withSupabase } from 'npm:@supabase/server@1.9.1';
 import { buildRoadmap, generatePlan, type LevelRow, validateInput } from '../_shared/plan-engine.ts';
-import { checkLimits, LIMITS, rateRefusal } from '../_shared/rate.ts';
+import { checkLimits, LIMITS, outdatedApp, rateRefusal } from '../_shared/rate.ts';
 
 // Levels 4 and 5 need a tested pass, which has no server path yet; a client-written level is never trusted above 3.
 export const MAX_SELF_ASSESSED_LEVEL = 3;
@@ -12,6 +12,8 @@ export const MAX_SELF_ASSESSED_LEVEL = 3;
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
     if (req.method !== 'POST') return Response.json({ error: 'Method not allowed' }, { status: 405 });
+    const outdated = outdatedApp(req);
+    if (outdated) return outdated;
     const userId = ctx.userClaims!.id;
     const rate = await checkLimits(ctx.supabase, [LIMITS.planDay]);
     if (rate !== 'ok') return rateRefusal(rate, 'You have rebuilt your plan many times today. Try again tomorrow.');

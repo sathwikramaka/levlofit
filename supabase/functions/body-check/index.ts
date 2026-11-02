@@ -6,7 +6,7 @@
 import { withSupabase } from 'npm:@supabase/server@1.9.1';
 import { base64Bytes, IMAGE_TYPES, imageMatches, MAX_IMAGE_BYTES, MAX_REQUEST_BYTES, parseBodyCheck, readCapped, visionRequest } from '../_shared/body-check.ts';
 import { configFromEnv, dataUseApproved } from '../_shared/llm.ts';
-import { checkLimits, LIMITS, rateRefusal } from '../_shared/rate.ts';
+import { checkLimits, LIMITS, outdatedApp, rateRefusal } from '../_shared/rate.ts';
 
 const DEFAULT_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
 const fail = (status: number, error: string) => Response.json({ error }, { status });
@@ -14,6 +14,8 @@ const fail = (status: number, error: string) => Response.json({ error }, { statu
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
     if (req.method !== 'POST') return fail(405, 'Method not allowed');
+    const outdated = outdatedApp(req);
+    if (outdated) return outdated;
     // Size cap on the bytes actually received (readCapped), not on the declared Content-Length; a declared size over
     // the cap is refused before reading anything. Effective maximum: MAX_REQUEST_BYTES (about 5.3 MB of JSON, a 4 MB
     // photo). Nothing is stored; a refused request never reaches the rate limit or the model.

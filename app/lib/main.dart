@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'account.dart' show signOutEverywhereOrLocally;
+import 'app_version.dart' show appBuild;
 import 'auth_screen.dart';
 import 'dashboard.dart';
 import 'error_report.dart';
@@ -84,6 +85,9 @@ Future<void> main() async {
   await Supabase.initialize(
     url: supabaseUrl,
     publishableKey: supabaseKey,
+    // Lets the Edge Functions tell an outdated Android build to update (MIN_APP_BUILD, functions/_shared/rate.ts).
+    // Not on the web, whose build is always the newest and whose browser requests would need a CORS change for it.
+    headers: kIsWeb ? null : const {'x-levlofit-build': '$appBuild'},
     authOptions: FlutterAuthClientOptions(localStorage: kIsWeb ? null : SecureSessionStorage(sessionKeyFor(supabaseUrl))),
   );
   installErrorReporting();

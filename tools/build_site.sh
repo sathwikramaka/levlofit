@@ -19,6 +19,7 @@ SIZE=$(awk -v b="$(stat -c %s "$APK")" 'BEGIN { printf "%.1f MB", b / 1048576 }'
 
 (cd website && NEXT_PUBLIC_APK_URL="$SITE/download/levlofit-$VERSION.apk" NEXT_PUBLIC_APK_VERSION=$VERSION \
   NEXT_PUBLIC_APK_SIZE="$SIZE" NEXT_PUBLIC_APK_SHA256=$SHA NEXT_PUBLIC_APK_BUILD=$BUILD \
+  NEXT_PUBLIC_APK_MIN_BUILD=${MIN_BUILD:-$BUILD} \
   NEXT_PUBLIC_WEBAPP_URL="$SITE/app/" npm run build)
 
 mkdir -p website/out/download

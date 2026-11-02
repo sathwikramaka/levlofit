@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # One-command Android release: bumps the version past the live one, builds the signed APK, rebuilds the site with it
-# and deploys to Cloudflare Pages. Installed apps then see the new /version.json and show "Update ready".
+# and deploys to Cloudflare Pages. Every installed version is then asked to update: 1.0.2+ apps read /version.json
+# (min_build = this build, so the card cannot be dismissed), and the MIN_APP_BUILD secret makes the AI functions
+# tell any older build, including 1.0.0 and 1.0.1, to download the new version. MIN_BUILD=<n> keeps older builds allowed.
 # Run from Git Bash at the repo root after the app changes are committed:  tools/release_android.sh
 # Needs the release keystore (app/android/key.properties) and a wrangler login (npx wrangler login, once).
 # APK builds stay off CI on purpose: the keystore must never leave this machine (see .github/workflows/ci.yml).
@@ -31,4 +33,6 @@ npx --yes wrangler pages deploy website/out --project-name levlofit --branch mai
 
 served=$(curl -fsS "$SITE/version.json?$(date +%s)" | python -I -c 'import json, sys; print(json.load(sys.stdin)["build"])')
 [ "$served" = "$BUILD" ] || { echo "Deployed, but $SITE/version.json still says build $served." >&2; exit 1; }
+# Only now that the APK is live: older builds' coach, plan and body-check calls answer "update" (functions/_shared/rate.ts).
+supabase secrets set "MIN_APP_BUILD=${MIN_BUILD:-$BUILD}" --project-ref ndeozgxowggkljluaccz
 echo "Live: Levlofit $VERSION (build $BUILD). Commit the version bump and add a row to docs/RELEASE_RECORD.md."
