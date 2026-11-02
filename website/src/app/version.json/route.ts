@@ -10,6 +10,7 @@ export function GET() {
     version: apk.version,
     build: Number(process.env.NEXT_PUBLIC_APK_BUILD ?? 0) || 0,
     url: apk.url,
+    sha256: apk.sha256, // the app checks the downloaded APK against this before its in-app install
     min_build: Number(process.env.NEXT_PUBLIC_APK_MIN_BUILD ?? 0) || 0,
   });
 }
