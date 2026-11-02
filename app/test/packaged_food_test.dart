@@ -12,7 +12,7 @@ void main() {
     for (final ok in ['12345670', '012345678905', '8901058000290', '18901058000297']) {
       expect(validBarcode(ok), isTrue, reason: ok);
     }
-    for (final bad in ['1234567', '1234567890', 'abc12345', '890105800029012']) {
+    for (final bad in ['1234567', '1234567890', 'abc12345', '890105800029012', '8901058000291', '12345678', '012345678900']) {
       expect(validBarcode(bad), isFalse, reason: bad);
     }
   });
