@@ -136,6 +136,7 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    implementation("androidx.core:core:1.13.1") // Apache-2.0; FileProvider for the in-app update (already in the app via plugins)
     if (healthConnect) {
         implementation(project(":healthconnect"))
         implementation("androidx.health.connect:connect-client:1.1.0") // Apache-2.0

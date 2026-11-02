@@ -11,6 +11,8 @@
     <!-- Barcode scanning (flutter_zxing): the camera, only while the scan screen is open. The camera plugin also
          asks for the microphone and shared storage for video recording; Levlofit never records, so they are removed. -->
     <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- In-app update (UpdateInstaller.kt): hand a downloaded, checksum-verified Levlofit APK to Android's installer. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove"/>
@@ -28,6 +30,13 @@
         android:allowBackup="false"
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules">
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/update_paths"/>
+        </provider>
         <activity
             android:name=".MainActivity"
             android:exported="true"
