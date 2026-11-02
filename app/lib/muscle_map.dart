@@ -29,9 +29,26 @@ Rect _bounds(List<double> xy) {
   return Rect.fromLTRB(l, t, r, b);
 }
 
-/// The selectable muscle at [point] (canvas units), or null. Inside a muscle outline first; failing that, the muscle
-/// whose outline box is nearest, within [slop] units (thin muscles such as the forearms, calves and rear deltoids are
-/// hard to hit exactly with a finger). The map passes a finger-sized slop for its drawn size.
+/// Distance from [p] to the nearest edge of the outline [xy].
+double _edgeDistance(List<double> xy, Offset p) {
+  var best = double.infinity;
+  for (var i = 0; i < xy.length; i += 2) {
+    final a = Offset(xy[i], xy[i + 1]);
+    final b = Offset(xy[(i + 2) % xy.length], xy[(i + 3) % xy.length]);
+    final ab = b - a;
+    final len2 = ab.dx * ab.dx + ab.dy * ab.dy;
+    final t = len2 == 0 ? 0.0 : (((p - a).dx * ab.dx + (p - a).dy * ab.dy) / len2).clamp(0.0, 1.0);
+    final d = (p - (a + ab * t)).distance;
+    if (d < best) best = d;
+  }
+  return best;
+}
+
+/// The selectable muscle at [point] (canvas units), or null. Inside a muscle outline first (the first in list order
+/// when outlines overlap); failing that, the muscle whose outline edge is nearest, within [slop] units (thin muscles
+/// such as the forearms, calves and rear deltoids are hard to hit exactly with a finger). Measured to the outline, not
+/// its bounding box, so a tap in a gap between muscles never picks one whose box merely covers it; on an exact tie the
+/// earlier muscle wins, so the answer never depends on anything but the point. The map passes a finger-sized slop.
 MuscleShape? muscleAt(List<MuscleShape> shapes, Offset point, {double slop = 2}) {
   for (final s in shapes) {
     if (s.group == null) continue;
@@ -42,11 +59,8 @@ MuscleShape? muscleAt(List<MuscleShape> shapes, Offset point, {double slop = 2})
   for (final s in shapes) {
     if (s.group == null) continue;
     for (final p in s.polygons) {
-      final b = _bounds(p);
-      final dx = point.dx < b.left ? b.left - point.dx : (point.dx > b.right ? point.dx - b.right : 0.0);
-      final dy = point.dy < b.top ? b.top - point.dy : (point.dy > b.bottom ? point.dy - b.bottom : 0.0);
-      final d = Offset(dx, dy).distance;
-      if (d <= bestD) (best, bestD) = (s, d);
+      final d = _edgeDistance(p, point);
+      if (d < bestD || (best == null && d == bestD)) (best, bestD) = (s, d);
     }
   }
   return best;
