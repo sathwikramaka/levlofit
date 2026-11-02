@@ -882,9 +882,9 @@ test('food exclusions typed by the user are capped like the plan engine (10 item
   assert.ok(!terms.includes('food9') && terms.includes('food8'), 'only the first 10 entries are used');
 });
 
-test('rate limits: rate.ts lists exactly the limits the database enforces (latest check_rate, 20261027200000)', async () => {
+test('rate limits: rate.ts lists exactly the limits the database enforces (latest check_rate, 20261102100000)', async () => {
   const { LIMITS } = await import('../_shared/rate.ts');
-  const sql = readFileSync(new URL('../../migrations/20261027200000_body_check_rate.sql', import.meta.url), 'utf8');
+  const sql = readFileSync(new URL('../../migrations/20261102100000_ai_daily_caps.sql', import.meta.url), 'utf8');
   const rows = [...sql.matchAll(/\('([a-z_]+)', (\d+), interval '([^']+)'\)/g)].map((m) => `${m[1]} ${m[2]} ${m[3]}`).sort();
   assert.deepEqual(rows, Object.values(LIMITS).map((l) => `${l.bucket} ${l.limit} ${l.window}`).sort());
 });
@@ -896,6 +896,18 @@ test('rate limit: over the limit answers 429 before any model call or write', as
   assert.equal(res.status, 429);
   assert.equal(calls.length, 0);
   assert.equal(ops.filter((o) => o.op !== 'select' && o.op !== 'rpc').length, 0);
+});
+
+test('rate limit store down or app-wide cap reached: 503 before any model call or write, no internals in the reply', async () => {
+  for (const error of [{ code: '08006', message: 'connection refused' }, { code: 'P0001', message: 'ai_daily_cap' }]) {
+    useDb(tables({ 'rpc:check_rate': { data: null, error } }));
+    fakeLlm('ok');
+    const res = await post({ message: 'How many sets today?', threadId: THREAD });
+    assert.equal(res.status, 503);
+    assert.doesNotMatch(await res.text(), /08006|P0001|ai_daily_cap|connection/);
+    assert.equal(calls.length, 0);
+    assert.equal(ops.filter((o) => o.op !== 'select' && o.op !== 'rpc').length, 0);
+  }
 });
 
 test('rate limit: under the limit both hourly and daily buckets are checked, then the reply is sent', async () => {

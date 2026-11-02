@@ -11,10 +11,11 @@ export function fakeClient(tables, ops = []) {
   return {
     ops,
     // Database functions: tables['rpc:<name>'] is { data, error } or (args) => { data, error }. Unconfigured functions
-    // answer like PostgREST does for a function that does not exist (PGRST202), as before a migration is applied.
+    // answer like PostgREST does for a function that does not exist (PGRST202), as before a migration is applied;
+    // check_rate, applied everywhere, answers "under the limit" unless a test configures it.
     rpc(name, args) {
       ops.push({ table: `rpc:${name}`, op: 'rpc', args, filters: [] });
-      const cfg = tables[`rpc:${name}`];
+      const cfg = tables[`rpc:${name}`] ?? (name === 'check_rate' ? { data: true, error: null } : undefined);
       const out = typeof cfg === 'function' ? cfg(args) : cfg ?? { data: null, error: { code: 'PGRST202', message: `Could not find the function public.${name}` } };
       return Promise.resolve(out);
     },

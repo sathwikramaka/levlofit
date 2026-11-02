@@ -1,12 +1,13 @@
-// Per-user rate limits through the check_rate() database function (migration 20261013100000).
-// Before that migration is applied the function does not exist: then the limit is skipped and logged, so deploying
-// the functions first never locks users out. Any other database error also lets the request through and is logged:
-// a rate limit is abuse protection, not an access control. Exception: a limit marked failClosed (body check, a paid
-// vision call with a 3-a-day cap) refuses the request on any error, so a missing migration cannot lift its cap.
+// Per-user rate limits through the check_rate() database function (migrations 20261013100000, 20261027200000,
+// 20261102100000). Failure policy (remediation 2026-11-02): every limit fails closed. If the database cannot answer
+// (outage, missing function, unknown bucket) the request is refused as 'unavailable' (callers answer 503) and logged,
+// so an outage of the rate-limit store can never lift the cap on paid model calls. check_rate also enforces an
+// optional app-wide daily cap per bucket (table ai_daily_caps), the spend ceiling across all users: once reached it
+// raises 'ai_daily_cap', which lands here as 'unavailable' and is logged as ai_daily_cap_reached.
 
 type Rpc = { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { code?: string; message?: string } | null }> };
 
-export type Limit = { bucket: string; limit: number; window: string; failClosed?: boolean };
+export type Limit = { bucket: string; limit: number; window: string };
 
 /** Chat: 30 messages an hour and 150 a day per user. Plan rebuilds: 20 a day (feedback: 5 a day, in the database).
  * Kept by the owner on 2026-10-18 as provisional values until real usage data supports revisiting them.
@@ -16,19 +17,34 @@ export const LIMITS = {
   chatHour: { bucket: 'coach_chat_hour', limit: 30, window: '1 hour' },
   chatDay: { bucket: 'coach_chat_day', limit: 150, window: '1 day' },
   planDay: { bucket: 'generate_plan_day', limit: 20, window: '1 day' },
-  bodyCheckDay: { bucket: 'body_check_day', limit: 3, window: '1 day', failClosed: true },
+  bodyCheckDay: { bucket: 'body_check_day', limit: 3, window: '1 day' },
 } satisfies Record<string, Limit>;
 
-/** 'ok' to continue, 'limited' when the caller is over a limit. Checks the limits in order and stops at the first hit. */
-export async function checkLimits(db: Rpc, limits: Limit[], log: (line: string) => void = console.error): Promise<'ok' | 'limited'> {
+/** 'ok' to continue, 'limited' when the caller (or the whole app) is over a limit, 'unavailable' when the database
+ * could not say. Checks the limits in order and stops at the first that is not 'ok'. */
+export async function checkLimits(db: Rpc, limits: Limit[], log: (line: string) => void = console.error): Promise<'ok' | 'limited' | 'unavailable'> {
   for (const l of limits) {
-    const { data, error } = await db.rpc('check_rate', { p_bucket: l.bucket, p_limit: l.limit, p_window: l.window });
-    if (error) {
-      log(JSON.stringify({ event: error.code === 'PGRST202' ? 'rate_limit_unavailable' : 'rate_limit_error', bucket: l.bucket, code: error.code ?? null, failClosed: !!l.failClosed }));
-      if (l.failClosed) return 'limited';
-      continue;
+    let reply: Awaited<ReturnType<Rpc['rpc']>>;
+    try {
+      reply = await db.rpc('check_rate', { p_bucket: l.bucket, p_limit: l.limit, p_window: l.window });
+    } catch {
+      reply = { data: null, error: { code: 'fetch_failed' } };
     }
-    if (data === false) return 'limited';
+    const { data, error } = reply;
+    if (error || typeof data !== 'boolean') {
+      const event = error?.message?.includes('ai_daily_cap') ? 'ai_daily_cap_reached' : error?.code === 'PGRST202' ? 'rate_limit_unavailable' : 'rate_limit_error';
+      log(JSON.stringify({ event, bucket: l.bucket, code: error?.code ?? null }));
+      return 'unavailable';
+    }
+    if (!data) return 'limited';
   }
   return 'ok';
+}
+
+/** The refusal for a check that was not 'ok': 429 with [limitedMessage] when over a limit, 503 when the limits could
+ * not be checked or the app-wide daily cap is reached. Never carries database or provider details. */
+export function rateRefusal(result: 'limited' | 'unavailable', limitedMessage: string): Response {
+  return result === 'limited'
+    ? Response.json({ error: limitedMessage }, { status: 429 })
+    : Response.json({ error: 'This is not available right now. Try again later.' }, { status: 503 });
 }

@@ -71,6 +71,8 @@ Cloud history was written by `apply_migration` with apply-time versions; local f
 | 20261029500000_kitchen_equipment_mess | none | Applied outside the history table; verified 2026-10-29 (read-only): schema fingerprint = all local migrations, reference data identical |
 | 20261029600000_mixed_regions | 2026-10-29 apply_migration mixed_regions | Applied 2026-10-29 after the daily backup run 40777558939 passed; fingerprint after = local stack with all migrations (11/11 kinds) |
 | 20261029700000_packaged_foods | 2026-10-29 apply_migration packaged_foods | Applied 2026-10-29, same backup and fingerprint check |
+| 20261030100000_signup_guard | 2026-10-30 apply_migration signup_guard | Applied 2026-10-30 (docs/RELEASE_RECORD.md, release 1.0.2); row added 2026-11-02 from that record, not re-inspected. The hook is active only once selected under Authentication > Auth Hooks |
+| 20261102100000_ai_daily_caps | none | Pending (not applied) |
 
 Schema fingerprint: grants, columns, constraints, indexes, policies, functions, triggers, storage buckets/policies,
 auth trigger and extensions are identical between cloud and a local `supabase db reset`, except the
@@ -192,7 +194,13 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (0), updated 2026-10-29 (both items below applied the same day)
+## Pending production items (1), updated 2026-11-02
+
+- 20261102100000_ai_daily_caps: new service-only table ai_daily_caps (no rows, so no app-wide cap until the owner adds
+  one) and check_rate replaced by the 20261027200000 version plus the cap block; new index rate_events_bucket_at.
+  Not applied. Preflight: none (no data rewrite). Verify and roll back: docs/RELEASE_CHECKLIST.md 3.7u.
+
+Applied 2026-10-29 (kept for the record):
 
 - 20261029600000_mixed_regions: widens dietary_profiles.cuisine_region's check to allow several regions
   ("north,south"). Preflight: `select cuisine_region, count(*) from public.dietary_profiles group by 1` (all values
