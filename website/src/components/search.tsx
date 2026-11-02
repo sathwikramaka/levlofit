@@ -110,14 +110,19 @@ export function Search({ extra = [] }: { extra?: Entry[] }) {
             }}
             placeholder="Search Levlofit"
             aria-label="Search Levlofit"
+            role="combobox"
+            aria-expanded={open}
+            aria-controls="search-results"
+            aria-autocomplete="list"
+            aria-activedescendant={results[active] ? `search-option-${active}` : undefined}
             className="h-14 flex-1 bg-transparent text-[16px] outline-none placeholder:text-muted"
           />
           <kbd className="rounded-md border border-line px-1.5 py-0.5 font-mono text-[11px] text-muted">Esc</kbd>
         </div>
-        <ul className="max-h-[50vh] overflow-y-auto p-2" role="listbox">
-          {results.length === 0 && <li className="px-3 py-6 text-center text-[15px] text-muted">Nothing found for &ldquo;{q}&rdquo;.</li>}
+        <ul className="max-h-[50vh] overflow-y-auto p-2" role="listbox" id="search-results" aria-label="Results">
+          {results.length === 0 && <li className="px-3 py-6 text-center text-[15px] text-muted" role="status">Nothing found for &ldquo;{q}&rdquo;.</li>}
           {results.map((r, i) => (
-            <li key={r.href + r.title} role="option" aria-selected={i === active}>
+            <li key={r.href + r.title} id={`search-option-${i}`} role="option" aria-selected={i === active}>
               <button
                 type="button"
                 tabIndex={open ? 0 : -1}
