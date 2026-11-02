@@ -446,3 +446,24 @@ test('own exclusion words name whole food groups: "milk" leaves out all dairy; p
   assert.ok(plan(['prawns']).nutrition.excludedFoodTags.includes('shellfish'));
   assert.deepEqual(plan(['sesame']).nutrition.excludedFoodTags, plan([]).nutrition.excludedFoodTags, 'unknown words only match food names');
 });
+
+test('body-type goal change: only the self-described slim_soft build with a beginner bulk moves to recomposition, never from BMI alone, and always with a visible finding', () => {
+  // Remediation 2026-11-02 (finding 6). No body-fat estimate exists in the input, so nothing is inferred from BMI or
+  // appearance; the change is shown on the review step. Rule and wording are pending professional review.
+  const normal = { ...base, heightCm: 175, weightKg: 70 }; // BMI 22.9
+  const beginner = [g('strength', 'beginner')];
+  for (const bodyType of ['lean', 'average', 'muscular', 'extra_fat', undefined] as const) {
+    assert.equal(generatePlan({ ...normal, bodyType, weightGoal: 'bulk', goals: beginner }).weightGoal, 'bulk', `${bodyType}`);
+  }
+  const soft = generatePlan({ ...normal, bodyType: 'slim_soft', weightGoal: 'bulk', goals: beginner });
+  assert.equal(soft.weightGoal, 'recomp');
+  const f = soft.review.find((r) => r.id === 'bulk_slim_soft')!;
+  assert.equal(f.level, 'change');
+  assert.doesNotMatch(f.why, /skinny/i, 'no label used as a diagnosis');
+  assert.equal(generatePlan({ ...normal, bodyType: 'slim_soft', weightGoal: 'bulk', goals: [g('strength', 'intermediate')] }).weightGoal, 'bulk', 'trained lifters keep their bulk');
+  for (const weightGoal of ['cut', 'recomp', 'maintain', 'general'] as const) {
+    assert.equal(generatePlan({ ...normal, bodyType: 'slim_soft', weightGoal, goals: beginner }).weightGoal, weightGoal, weightGoal);
+  }
+  // Recomposition is maintenance energy: no hidden deficit.
+  assert.equal(soft.nutrition.energyKcal, generatePlan({ ...normal, bodyType: 'slim_soft', weightGoal: 'maintain', goals: beginner }).nutrition.energyKcal);
+});
