@@ -2,6 +2,17 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-03: generate-plan deploy (owner-approved: this deploy only)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | d648818 (plan saved with save_generated_plan in one transaction; age from year of birth = youngest possible age); not pushed | git, clean tree apart from a local tool lock file |
+| Checks before deploy | node tests 283/0, offline AI eval 85/0 strict, strict tsc, Deno check/lint/smoke 30/0 (on the same source, Stage 2-5 runs) | Local runs |
+| Edge Function | generate-plan v29 ACTIVE, verify_jwt true, deployed with `supabase functions deploy --use-api`; needs save_generated_plan (applied earlier today) | Function list |
+| Probe | signed-out POST answers 401 | curl |
+| Logs | no generate-plan errors since the deploy; the only call is the probe, refused at the gateway, so the new code has not yet run for a signed-in user | query_logs, read-only |
+| Not verified | a real onboarding or plan rebuild on the new version (one plan row, dashboard opens) | - |
+
 ## 2026-11-03: migration save_generated_plan (owner-approved: this migration only)
 
 | What | Value | How checked |

@@ -211,7 +211,7 @@ tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 Applied 2026-11-03 (kept for the record):
 
 - 20261103200000_save_generated_plan: applied 2026-11-03 with apply_migration (docs/RELEASE_RECORD.md); verified
-  service_role-only execute. Deploy generate-plan from a446a72 or later to use it.
+  service_role-only execute. generate-plan v29 (d648818) uses it since 2026-11-03.
 - 20261103100000_foods_fdc_breakfast: foods.source_note column; six USDA FoodData Central breakfast foods (rolled oats,
   corn flakes, muesli, daliya, rava, besan); earlier usda_fdc rows with the same FDC id take the same values. Applied
   2026-11-03 (release 1.0.7). Preflight: count usda_fdc rows sharing a source_ref with a new code. Verify and roll back:
