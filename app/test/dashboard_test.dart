@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:levlo/main.dart' show prefs;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:levlo/coach_chat.dart';
 import 'package:levlo/dashboard.dart';
@@ -257,5 +259,32 @@ Eat **150 g** protein.
     await tester.pumpWidget(MaterialApp(home: tabForTest('reminders', _plan)));
     await tester.pump(const Duration(seconds: 2));
     expect(find.textContaining('Exact timing'), findsNothing);
+  });
+
+  testWidgets('plan fit: three short weeks show the fewer-days offer; Keep hides it; a fresh plan shows none', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } catch (_) {} // already set by an earlier test in this file
+    tester.view.physicalSize = const Size(390, 2400) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final monday = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+    final day = DateTime(monday.year, monday.month, monday.day);
+    final logged = {for (final w in [1, 2, 3]) day.subtract(Duration(days: 7 * w))}; // 1 of 4 in each of 3 weeks
+    final old = day.subtract(const Duration(days: 60));
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: dashboardBentoForTest(_plan, logged: logged, planSince: old))));
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('Try 1 training day a week?'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Keep 4'), 300, scrollable: find.byType(Scrollable).first);
+    expect(find.text('Switch to 1'), findsOneWidget);
+    await tester.tap(find.text('Keep 4'));
+    await tester.pump();
+    expect(find.text('Switch to 1'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: dashboardBentoForTest(_plan, logged: logged, planSince: day.subtract(const Duration(days: 10))))));
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('Switch to 1'), findsNothing);
   });
 }

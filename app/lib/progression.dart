@@ -132,3 +132,27 @@ List<LiftProgress> liftProgress(List<Map<String, dynamic>> rows) {
 
 /// "40 kg x 8" or "12 reps" for a set without load.
 String setLabel(SetLog s) => s.kg == null || s.kg == 0 ? '${s.reps} reps' : '${s.kg!.toStringAsFixed(s.kg! % 1 == 0 ? 0 : 1)} kg x ${s.reps}';
+
+// ---------------------------------------------------------------- schedule fit
+
+/// Rule "fewer days" v1 (2026-11-03, roadmap brief 7.1 and 7.3). Offers a smaller plan when the planned number of
+/// training days has not fitted the person's weeks; it never cuts days by itself and never adds any.
+/// - Data: the last [fewerDaysWeeks] full weeks (Monday to Sunday) before this week, all inside the current plan
+///   (a week that started before [planSince] does not count, so a plan change resets the count).
+/// - Threshold: every one of those weeks below the plan, with at least one session in total. No sessions at all is
+///   a break (holiday, illness), not evidence that the schedule is too big, so it gets no offer.
+/// - Offer: the average sessions a week, rounded up, at least 1 and at most one below the plan.
+/// Returns null when there is no offer. Like the rules above, a Levlofit coaching rule, not a sourced threshold.
+const fewerDaysWeeks = 3;
+
+({int suggested, List<int> perWeek})? fewerDaysOffer({required int planned, required Set<DateTime> logged, required DateTime planSince, required DateTime today}) {
+  if (planned < 2) return null;
+  final thisMonday = _monday(today);
+  final weeks = [for (var i = fewerDaysWeeks; i >= 1; i--) thisMonday.subtract(Duration(days: 7 * i))];
+  if (weeks.first.isBefore(_date(planSince))) return null;
+  final days = {for (final d in logged) _date(d)};
+  final perWeek = [for (final m in weeks) days.where((d) => !d.isBefore(m) && d.isBefore(m.add(const Duration(days: 7)))).length];
+  final total = perWeek.fold(0, (s, n) => s + n);
+  if (total == 0 || perWeek.any((n) => n >= planned)) return null;
+  return (suggested: (total / fewerDaysWeeks).ceil().clamp(1, planned - 1), perWeek: perWeek);
+}

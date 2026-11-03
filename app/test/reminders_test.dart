@@ -6,18 +6,18 @@ import 'package:levlo/reminders.dart';
 void main() {
   test('reminder slots follow the settings', () {
     const sessions = {1: 'Strength', 3: 'Strength', 5: 'Running'};
-    final all = slotsFor((enabled: true, workout: const TimeOfDay(hour: 18, minute: 30), waterEveryH: 3, weighInWeekday: 7), sessions);
+    final all = slotsFor((enabled: true, workout: const TimeOfDay(hour: 18, minute: 30), waterEveryH: 3, weighInWeekday: 7, waterWindow: null), sessions);
     // 3 training days, water at 9, 12, 15, 18, 21, one weigh-in.
     expect(all.where((s) => s.id >= 100 && s.id < 200).map((s) => s.weekday), [1, 3, 5]);
     expect(all.where((s) => s.id >= 200 && s.id < 300).map((s) => s.hour), [9, 12, 15, 18, 21]);
     expect(all.singleWhere((s) => s.id == 300).weekday, 7);
     expect(all.firstWhere((s) => s.weekday == 5).body, contains('Running'));
     expect(all.map((s) => s.id).toSet().length, all.length); // ids never collide
-    expect(slotsFor((enabled: false, workout: const TimeOfDay(hour: 7, minute: 0), waterEveryH: 1, weighInWeekday: 1), sessions), isEmpty);
-    expect(slotsFor((enabled: true, workout: null, waterEveryH: null, weighInWeekday: null), sessions), isEmpty);
+    expect(slotsFor((enabled: false, workout: const TimeOfDay(hour: 7, minute: 0), waterEveryH: 1, weighInWeekday: 1, waterWindow: null), sessions), isEmpty);
+    expect(slotsFor((enabled: true, workout: null, waterEveryH: null, weighInWeekday: null, waterWindow: null), sessions), isEmpty);
   });
 
-  const on = (enabled: true, workout: TimeOfDay(hour: 18, minute: 0), waterEveryH: 2, weighInWeekday: 1);
+  const on = (enabled: true, workout: TimeOfDay(hour: 18, minute: 0), waterEveryH: 2, weighInWeekday: 1, waterWindow: null);
   CustomReminder own(String name, Set<int> days, {bool enabled = true}) => (id: name, name: name, at: const TimeOfDay(hour: 7, minute: 30), weekdays: days, enabled: enabled);
 
   test('custom reminders: one slot per chosen day, or one daily slot', () {
@@ -38,7 +38,7 @@ void main() {
   });
 
   test('the master switch silences custom reminders too', () {
-    expect(slotsFor((enabled: false, workout: null, waterEveryH: null, weighInWeekday: null), const {}, custom: [own('x', {})]), isEmpty);
+    expect(slotsFor((enabled: false, workout: null, waterEveryH: null, weighInWeekday: null, waterWindow: null), const {}, custom: [own('x', {})]), isEmpty);
   });
 
   test('day labels and the database row round-trip', () {
@@ -137,7 +137,7 @@ void main() {
 
   test('switching reminders off cancels only Levlofit reminder ids', () {
     final pending = {...pendingFor(daily, ReminderTiming.exact), 1: null};
-    final plan = planReminderChanges(slotsFor((enabled: false, workout: null, waterEveryH: null, weighInWeekday: null), const {}), pending, ReminderTiming.exact, zone);
+    final plan = planReminderChanges(slotsFor((enabled: false, workout: null, waterEveryH: null, weighInWeekday: null, waterWindow: null), const {}), pending, ReminderTiming.exact, zone);
     expect(plan.cancel, [for (final s in daily) s.id]..sort());
     expect(plan.cancel, isNot(contains(1)));
     expect(plan.schedule, isEmpty);
@@ -163,7 +163,7 @@ void main() {
     // Without the flag the same input would cancel them all (the bug this guards against).
     expect(planReminderChanges(builtInOnly, pending, ReminderTiming.exact, zone).cancel.where(isCustomReminderId), isNotEmpty);
     // A removed built-in reminder is still cancelled with keepCustom.
-    final noWater = slotsFor((enabled: true, workout: defaultPrefs.workout, waterEveryH: null, weighInWeekday: 1), const {1: 'Strength'});
+    final noWater = slotsFor((enabled: true, workout: defaultPrefs.workout, waterEveryH: null, weighInWeekday: 1, waterWindow: null), const {1: 'Strength'});
     final p2 = planReminderChanges(noWater, pending, ReminderTiming.exact, zone, keepCustom: true);
     expect(p2.cancel, isNotEmpty);
     expect(p2.cancel.every((id) => !isCustomReminderId(id)), isTrue);
@@ -198,5 +198,12 @@ void main() {
     final ist = DateTime.parse('2026-10-15T13:47:23+05:30');
     expect(utcNow(ist), '2026-10-15T08:17:23.000Z');
     expect(utcNow(), endsWith('Z'));
+  });
+
+  test('water window: reminders only inside the chosen hours; default 9 to 21', () {
+    List<int> hours(({int from, int to})? w) =>
+        [for (final s in slotsFor((enabled: true, workout: null, waterEveryH: 2, weighInWeekday: null, waterWindow: w), const {})) s.hour];
+    expect(hours(null), [9, 11, 13, 15, 17, 19, 21]);
+    expect(hours((from: 7, to: 16)), [7, 9, 11, 13, 15]);
   });
 }
