@@ -13,7 +13,7 @@ APK=app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
 
 [ -f "$APK" ] || { echo "Missing $APK: build the APK first." >&2; exit 1; }
 SHA=$(sha256sum "$APK" | cut -d' ' -f1)
-SIZE=$(awk -v b="$(stat -c %s "$APK")" 'BEGIN { printf "%.1f MB", b / 1048576 }')
+SIZE=$(awk -v b="$(stat -c %s "$APK")" 'BEGIN { printf "%.1f MB", b / 1000000 }')   # decimal MB, as Android and browsers show it
 
 (cd app && MSYS_NO_PATHCONV=1 flutter build web --release --base-href /app/ --dart-define=LEVLOFIT_BACKEND=production)
 
