@@ -2,6 +2,21 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-03: release 1.0.7, simpler diet section (owner-approved: migration, generate-plan, APK, website, MIN_APP_BUILD secret)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 4481226 (diet plate view and 3-step Build my plate 2a8da3e, restyled to the app theme 35ede93; APK size in decimal MB a963854) plus version bump; clean worktree, uncommitted send-feedback work not shipped | git worktree at HEAD |
+| Checks before release | flutter analyze clean, 576 tests; website lint/build/tsc; 263 node tests, offline AI eval 85/85 strict; Deno check, lint, smoke 30/30; Python register and builder tests, generated migrations in sync; pgTAP 230/230 on a throwaway local stack (deleted after) | Local runs on 4481226 |
+| Backup before changes | db-backup run 41587435151, encrypted dump levlofit-db-20261103T060258Z | GitHub Actions log |
+| Migration | foods_fdc_breakfast (file 20261103100000) applied with apply_migration: foods.source_note, six USDA FDC breakfast foods (rolled oats, corn flakes, muesli, daliya, rava, besan), older usda_fdc duplicates aligned | apply_migration result; not re-queried live |
+| Edge Function | generate-plan deployed from 4481226 (oats counted under gluten; flagged for professional review); signed-out POST answers 401 | Deploy result, probe |
+| Android APK | com.levlofit.app 1.0.7, versionCode 2009, 13,614,691 bytes (13.6 MB), release certificate 7c510c35...4c431384 | aapt2, apksigner |
+| APK SHA-256 | 7faae96a0978f464cd4d3990bfa4622c54670e77f8a4995dc4de018a736dff32, equal on the live download, the site and /version.json | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 84438668; "Version 1.0.7 · 13.6 MB"; /version.json = 1.0.7 build 9, min_build 9; Open on iPhone and the Google verification tag present | curl |
+| Secret | MIN_APP_BUILD = 9 | supabase secrets list (digest) |
+| Not verified | The restyled diet screens and the in-app install on a real phone (first in-app update: 1.0.6 to 1.0.7) | - |
+
 ## 2026-11-03: release 1.0.6, in-app update (owner-approved: APK, website, MIN_APP_BUILD secret)
 
 | What | Value | How checked |
