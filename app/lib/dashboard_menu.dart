@@ -570,11 +570,11 @@ class _DietScreenState extends State<_DietScreen> {
   int _day = DateTime.now().weekday - 1;
   int _tier = 2;
   String? _region; // cuisine_region: staples preferred in the rotation (diet_plan.dart regionStaples)
-  String _budget = 'Medium';
   _Json _choices = const {}; // dietary_profiles: diet_type, budget_tier, cuisine_region, diet_pace
   String? _error;
   String? _buildingKey; // the week being built in the background, so it is started only once
   String? _failedKey; // a week that could not be built; not retried on every rebuild
+  Map<String, String> _rowCodes = const {}; // planner code -> the food table row it was planned from (Ate it)
 
   /// Builds all seven days for [request] off the UI thread, then rebuilds with the cached result.
   void _buildWeek(String key, WeekRequest request) {
@@ -640,12 +640,10 @@ class _DietScreenState extends State<_DietScreen> {
       if (plate.fromPhone && diet != null) unawaited(_movePlateToAccount(plate));
       setState(() {
         _foods = plannerFoods((rows as List).cast<Map<String, dynamic>>());
+        _rowCodes = plannerRowCodes(rows.cast<Map<String, dynamic>>());
         _tier = budgetTier(tier, hi);
         _region = diet?['cuisine_region'] as String?;
         _choices = {...?diet, 'health_conditions': plate.conditions, 'whey_scoops': plate.scoops};
-        _budget = tier == 'custom' && hi != null
-            ? rupeesAMonth(monthlyFromDaily(hi))
-            : budgetOptions.where((o) => o.$1 == tier).firstOrNull?.$2 ?? budgetOptions[1].$2;
       });
     } catch (_) {
       if (mounted) setState(() => _error = 'Could not load your meal plan. Check your connection.');
@@ -661,13 +659,13 @@ class _DietScreenState extends State<_DietScreen> {
     final protein = (food['proteinG'] as num).toDouble();
     final foods = _foods;
     if (foods == null) {
-      return _Page(eyebrow: 'DIET', title: 'Your meal plan', children: [
+      return _Page(eyebrow: 'DIET', title: 'Your plate', children: [
         if (_error != null) ErrorLine(_error!) else const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: LevloMark(size: 48, animate: true))),
       ]);
     }
     if (foods.isEmpty) {
       // No food source is licensed for this build yet (food_sources): no meal plan rather than one built from nothing.
-      return _Page(eyebrow: 'DIET', title: 'Your meal plan', children: [
+      return _Page(eyebrow: 'DIET', title: 'Your plate', children: [
         Text('${kcal.round()} kcal and ${protein.round()} g protein a day', style: t.titleMedium),
         const SizedBox(height: 8),
         Text(foodDataPendingText, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
@@ -675,7 +673,8 @@ class _DietScreenState extends State<_DietScreen> {
     }
     final supps = ((food['supplements'] as List?) ?? const []).cast<_Json>();
     final excluded = {...(food['excludedFoodTags'] as List).cast<String>()};
-    // Whey step of Build my plate (scoops kept on this device): the food is planned around the shakes.
+    final custom = ((food['customExclusions'] as List?) ?? const []).cast<String>();
+    // Whey step of Build my plate: the food is planned around the shakes.
     final scoops = _choices['whey_scoops'] as int? ?? 0;
     // Kitchen and mess: meals made at home use only what the equipment and time allow; mess meals are not limited.
     final have = equipmentOf(_choices['kitchen'] as String?, _choices['kitchen_equipment'] as List?, _choices['kitchen_other'] as String?);
@@ -688,7 +687,7 @@ class _DietScreenState extends State<_DietScreen> {
       kcal: kcal - scoopKcal * scoops,
       protein: protein - scoopProtein * scoops,
       excluded: excluded,
-      custom: ((food['customExclusions'] as List?) ?? const []).cast<String>(),
+      custom: custom,
       tier: _tier,
       soyaCapG: ((food['maxSoyaChunksDryG'] as num?) ?? 50).toDouble(),
       proteinPowder: supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')),
@@ -702,48 +701,58 @@ class _DietScreenState extends State<_DietScreen> {
     final week = _weekCache.get(key);
     if (week == null) {
       _buildWeek(key, request);
-      return _Page(eyebrow: 'DIET', title: 'Your meal plan', children: [
+      return _Page(eyebrow: 'DIET', title: 'Your plate', children: [
         if (_failedKey == key)
           const ErrorLine('Could not build your meal plan. Reopen the Diet tab to try again.')
         else
           const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: LevloMark(size: 48, animate: true))),
       ]);
     }
-    final plan = addShake(week[_day], scoops, kcal: kcal, protein: protein, plant: excluded.contains('dairy'));
+    final days = [for (final d in week) addShake(d, scoops, kcal: kcal, protein: protein, plant: excluded.contains('dairy'))];
+    final plan = days[_day];
+    final swaps = _swapsFor(key, _day);
+    // A swapped meal is the same meal from another day of this week: same templates, diet, budget and kitchen rules.
+    final meals = [for (final (mi, m) in plan.meals.indexed) days[swaps[mi] ?? _day].meals.elementAtOrNull(mi) ?? m];
+    double sum(double Function(PlanItem) f) => meals.expand((m) => m.items).fold(0.0, (s, i) => s + f(i));
+    final DayPlan shown = (meals: meals, kcal: sum((i) => i.kcal), protein: sum((i) => i.protein), carb: sum((i) => i.carb), fat: sum((i) => i.fat), fiber: sum((i) => i.fiber), check: plan.check);
+    final within = swaps.isEmpty ? plan.check.feasible : ((shown.kcal - kcal) / kcal).abs() <= kcalTolerance && shown.protein / protein >= minProteinShare;
     // A training day (the week view's days, 1 = Monday): mark the pre- and post-workout meals; no food is added.
     final training = weekPlan(widget.data.plan).days.containsKey(_day + 1)
-        ? workoutDay(plan.meals, (widget.data.plan['schedule'] as _Json?)?['trainingTime'] as String?)
+        ? workoutDay(meals, (widget.data.plan['schedule'] as _Json?)?['trainingTime'] as String?)
         : null;
-    final short = protein - plan.protein;
-    Widget macro(String label, double v, double? target, String unit) => Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.6), fontSize: 10)),
-            Text('${v.round()}$unit', style: monoNumber(context, size: 18).copyWith(color: cloud)),
-            if (target != null) Text('of ${target.round()}$unit', style: t.bodySmall?.copyWith(color: cloud.withValues(alpha: 0.55), fontSize: 11)),
-          ]),
-        );
+    final today = _day == DateTime.now().weekday - 1;
+    final logged = _loggedToday();
+    final short = protein - shown.protein;
+    // Everything that is not a meal sits in one place under the meals; a missed target is also said at the top.
+    final notes = [
+      if (!within && swaps.isEmpty) ...[...plan.check.issues, ...plan.check.options],
+      if (!within && swaps.isNotEmpty)
+        'With your swaps this day comes to ${shown.kcal.round()} kcal and ${shown.protein.round()} g protein. Swap a meal back to land on your targets.',
+      ...plan.check.guidance,
+      if (within && short > protein * 0.05)
+        'Food in this plan gives ${shown.protein.round()} g of your ${protein.round()} g protein. '
+            '${supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')) ? 'The protein powder in your plan can cover the last ${short.round()} g.' : 'A slightly bigger portion of the protein foods would add about ${short.round()} g, but it may take the day over your calorie target.'}',
+      if (training != null) training.note,
+      if (dayOilGrams(shown) > 0) dayOilLabel(shown),
+      ?kitchenNote(have, cookTime, messMeals),
+      if (conditions.isNotEmpty)
+        'You told Build my plate about ${conditions.map((k) => _conditionNames[k] ?? k).join(', ').toLowerCase()}. '
+            'This plan is not adjusted for ${conditions.length == 1 ? 'it' : 'them'}: show it to your doctor or a registered dietitian before you follow it.',
+    ];
     return _Page(
       eyebrow: 'DIET  ·  YOUR PLATE',
-      title: 'Your 7-day plate',
-      subtitle: 'Indian meals in household servings, built for your targets, diet, allergies and budget ($_budget).',
+      title: 'Your plate',
+      subtitle: 'Four meals in household servings. Swap any meal you do not fancy; tap one for grams.',
       children: [
-        _PlateChoices(choices: _choices, onTap: _openBuilder),
-        const SizedBox(height: 12),
-        if (kitchenNote(have, cookTime, messMeals) case final note?) ...[
-          Text(note, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-          const SizedBox(height: 12),
-        ],
-        if (conditions.isNotEmpty) ...[
-          _Tile(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Text(
-              'You told Build my plate about ${conditions.map((k) => _conditionNames[k] ?? k).join(', ').toLowerCase()}. '
-              'This plan is not adjusted for ${conditions.length == 1 ? 'it' : 'them'}: show it to your doctor or a registered dietitian before you follow it.',
-              style: t.bodyMedium,
-            ),
+        Text('${shown.kcal.round()} kcal  ·  ${shown.protein.round()} g protein', style: monoNumber(context, size: 22)),
+        const SizedBox(height: 2),
+        Text('Your target: ${kcal.round()} kcal and ${protein.round()} g protein a day', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        if (!within)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text('This day misses your targets. See the notes below the meals.', style: t.bodyMedium?.copyWith(color: c.tertiary)),
           ),
-          const SizedBox(height: 12),
-        ],
+        const SizedBox(height: 14),
         // Day picker: each day rotates the foods so the week does not repeat.
         SizedBox(
           height: 44,
@@ -763,89 +772,46 @@ class _DietScreenState extends State<_DietScreen> {
           ]),
         ),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(28), border: Border.all(color: c.outline)),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? c.surface : graphite, borderRadius: BorderRadius.circular(23)),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('THIS DAY ADDS UP TO', style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.65))),
-              const SizedBox(height: 6),
-              Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text('${plan.kcal.round()}', style: monoNumber(context, size: 40).copyWith(color: cloud)),
-                const SizedBox(width: 8),
-                Padding(padding: const EdgeInsets.only(bottom: 8), child: Text('of ${kcal.round()} kcal', style: t.bodySmall?.copyWith(color: cloud.withValues(alpha: 0.7)))),
-              ]),
-              const SizedBox(height: 14),
-              Row(children: [
-                macro('PROTEIN', plan.protein, protein, ' g'),
-                macro('CARBS', plan.carb, null, ' g'),
-                macro('FAT', plan.fat, null, ' g'),
-                macro('FIBRE', plan.fiber, null, ' g'),
-              ]),
-              const SizedBox(height: 10),
-              // Share of energy from fat; never shown when a planned food's fat value is missing.
-              Text(
-                plan.check.fatEnergyShare == null
-                    ? 'FAT SHARE OF ENERGY NOT SHOWN'
-                    : 'FAT  ·  ${fatShareText(plan.check.fatEnergyShare!).toUpperCase()} OF ENERGY',
-                style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.65), fontSize: 10),
-              ),
-            ]),
+        for (final (mi, m) in (training?.meals ?? meals).indexed) ...[
+          PlateMealCard(
+            meal: m,
+            tag: switch ([
+              if (training != null && mi == training.pre) 'PRE-WORKOUT',
+              if (training != null && mi == training.post) 'POST-WORKOUT',
+              if (messMeals.contains(_messKeyOf(m.name))) 'FROM THE MESS',
+            ]) {
+              [] => null,
+              final tags => tags.join('  ·  '),
+            },
+            notes: [
+              if (messMeals.contains(_messKeyOf(m.name)))
+                'Take the closest items at the mess. Short on protein? Add an extra serving of ${messProteinHint(excluded, custom)} if served.'
+              else
+                ?prepNote(m, have),
+              if (training != null && mi == training.pre) 'Eat this before you train. It is part of your day\'s food, not extra.',
+              if (training != null && mi == training.post) 'Eat this after you train: it brings your protein. It is part of your day\'s food, not extra.',
+            ],
+            onSwap: () => _swap(key, days, mi),
+            onAte: today ? () => _ate(m) : null,
+            logged: today && logged.contains(m.name),
           ),
-        ),
-        // Guidance (for example fat above 30% of energy) informs only: it never changes the plan or its pass flag.
-        if (plan.check.guidance.isNotEmpty) ...[
           const SizedBox(height: 10),
-          _Tile(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              for (final line in plan.check.guidance) Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(line, style: t.bodyMedium)),
-            ]),
-          ),
         ],
-        // The planner reports when it cannot build a day that meets both targets from its food list, templates and
-        // portion limits for this person; say so plainly and offer only changes that respect their settings.
-        if (!plan.check.feasible) ...[
-          const SizedBox(height: 10),
-          _Tile(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('THIS DAY MISSES YOUR TARGETS', style: monoLabel(context)),
-              const SizedBox(height: 6),
-              for (final line in [...plan.check.issues, ...plan.check.options])
-                Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(line, style: t.bodyMedium)),
-            ]),
-          ),
-        ] else if (short > protein * 0.05) ...[
-          const SizedBox(height: 10),
-          _Tile(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Text(
-              'Food in this plan gives ${plan.protein.round()} g of your ${protein.round()} g protein. '
-              '${supps.any((x) => (x['name'] as String).toLowerCase().contains('protein')) ? 'The protein powder in your plan can cover the last ${short.round()} g.' : 'A slightly bigger portion of the protein foods above would add about ${short.round()} g, but it may take the day over your calorie target.'}',
-              style: t.bodyMedium,
+        const PlateKey(),
+        const SizedBox(height: 14),
+        _PlateChoices(choices: _choices, onTap: _openBuilder),
+        if (notes.isNotEmpty)
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+              initiallyExpanded: !within,
+              title: Text('NOTES FOR THIS DAY  ·  ${notes.length}', style: monoLabel(context)),
+              childrenPadding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+              expandedCrossAxisAlignment: CrossAxisAlignment.start,
+              children: [for (final n in notes) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(n, style: t.bodyMedium))],
             ),
           ),
-        ],
-        const SizedBox(height: 16),
-        if (training != null) ...[
-          Text(training.note, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-          const SizedBox(height: 12),
-        ],
-        for (final (mi, m) in (training?.meals ?? plan.meals).indexed) ...[
-          _MealCard(
-            meal: m,
-            tag: training == null ? null : mi == training.pre ? 'PRE-WORKOUT' : mi == training.post ? 'POST-WORKOUT' : null,
-            fromMess: messMeals.contains(_messKeyOf(m.name)),
-            messExtra: messProteinHint(excluded, ((food['customExclusions'] as List?) ?? const []).cast<String>()),
-            prep: messMeals.contains(_messKeyOf(m.name)) ? null : prepNote(m, have),
-          ),
-          const SizedBox(height: 10),
-        ],
-        if (dayOilGrams(plan) > 0) Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Text(dayOilLabel(plan), style: t.bodyMedium)),
-        const SizedBox(height: 8),
         Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
@@ -857,7 +823,7 @@ class _DietScreenState extends State<_DietScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        FilledButton.icon(
+        OutlinedButton.icon(
           onPressed: () => openCoach(context, prompt: 'Help me cook today\'s Levlofit meal plan. Suggest simple Indian recipes using these foods and amounts.'),
           icon: const Icon(LvIcons.sparkle, size: 18),
           label: const Text('Recipes for today with Levlofit AI'),
@@ -865,10 +831,68 @@ class _DietScreenState extends State<_DietScreen> {
         const SizedBox(height: 12),
         FoodCredit(
             trail: 'Cooking oil: ICMR-NIN Dietary Guidelines for Indians 2024 (27 g at 2000 kcal), scaled to your energy by Levlofit. '
-                'Swap like for like (one dal for another, one roti flour for another) and the totals stay close.',
+                'Packaged cereals vary by brand: your pack\'s label is exact. Swap like for like and the totals stay close.',
             style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ],
     );
+  }
+
+  // Swaps and Ate it marks live on this phone (conveniences, not part of the plan): swaps per weekday for the
+  // current week's inputs, so a rebuilt plan starts clean; Ate it marks per date (the diary holds the food itself).
+  String get _swapsKey => 'diet_swaps:${supabase.auth.currentUser?.id}';
+  String get _loggedKey => 'diet_logged:${supabase.auth.currentUser?.id}';
+
+  /// Meal index -> the weekday it is taken from, for [day] of the week built as [week].
+  Map<int, int> _swapsFor(String week, int day) {
+    final saved = prefs.getStringList(_swapsKey) ?? const [];
+    if (saved.isEmpty || saved.first != week) return {};
+    return {
+      for (final s in saved.skip(1))
+        if (s.split(':') case [final d, final mi, final src] when int.tryParse(d) == day) int.parse(mi): int.parse(src),
+    };
+  }
+
+  /// The next weekday whose version of meal [mi] differs from the one shown; the day's own meal again after a turn.
+  void _swap(String week, List<DayPlan> days, int mi) {
+    final swaps = _swapsFor(week, _day);
+    String title(int d) => days[d].meals.length > mi ? mealTitle(days[d].meals[mi]) : '';
+    final shown = title(swaps[mi] ?? _day);
+    var src = swaps[mi] ?? _day;
+    for (var k = 0; k < 7; k++) {
+      src = (src + 1) % 7;
+      if (title(src).isNotEmpty && title(src) != shown) break;
+    }
+    src == _day ? swaps.remove(mi) : swaps[mi] = src;
+    final saved = prefs.getStringList(_swapsKey) ?? const [];
+    final others = saved.isNotEmpty && saved.first == week ? saved.skip(1).where((s) => !s.startsWith('$_day:')) : const <String>[];
+    setState(() {});
+    unawaited(prefs.setStringList(_swapsKey, [week, ...others, for (final e in swaps.entries) '$_day:${e.key}:${e.value}']));
+  }
+
+  /// Meal names logged with Ate it today.
+  Set<String> _loggedToday() {
+    final prefix = '${isoDay(DateTime.now())}|';
+    return {for (final s in prefs.getStringList(_loggedKey) ?? const <String>[]) if (s.startsWith(prefix)) s.substring(prefix.length)};
+  }
+
+  /// Ate it: the meal's foods go into today's diary in one insert (all or none), as the diary's own rows.
+  Future<void> _ate(PlanMeal m) async {
+    final meal = _messKeyOf(m.name);
+    final rows = diaryItems(m, (c) => _rowCodes[c] ?? c);
+    if (meal == null || rows.isEmpty) return;
+    try {
+      final day = isoDay(DateTime.now());
+      await supabase.from('food_log').insert([for (final (code, grams) in rows) {'day': day, 'meal': meal, 'food_code': code, 'grams': grams}]);
+      HapticFeedback.lightImpact();
+      final kept = (prefs.getStringList(_loggedKey) ?? const <String>[]).where((s) => s.startsWith('$day|'));
+      await prefs.setStringList(_loggedKey, [...kept, '$day|${m.name}']);
+      if (!mounted) return;
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${m.name} is in your food diary.${m.items.any((i) => i.unit == 'scoop') ? ' Log the shake from its label.' : ''}')));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not log that meal. Nothing was added.')));
+    }
   }
 }
 
@@ -956,8 +980,8 @@ const _paceOptions = [
   ('hard', 'Hard', 'A bigger gap or surplus. Faster, harder to sustain; for short phases.'),
 ];
 
-/// Build my plate: five short steps (your numbers, region, diet, budget, pace), then the plan is rebuilt. Pops true
-/// when the choices were saved.
+/// Build my plate: three short steps (budget; diet and region; health, protein powder and pace), then the plan is
+/// rebuilt. Pops true when the choices were saved.
 class _BuildMyPlate extends StatefulWidget {
   const _BuildMyPlate({required this.data, required this.choices});
   final _Data data;
@@ -991,11 +1015,11 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
     super.dispose();
   }
 
-  static const _titles = ['Your numbers', 'Your regional food', 'How you eat', 'Your food budget', 'Health conditions', 'Protein powder', 'Your pace'];
+  static const _titles = ['Your food budget', 'How you eat', 'Anything else?'];
 
   bool get _ready => switch (_step) {
-        2 => _d['diet_type'] != null,
-        3 => _d['budget_tier'] != null && (_d['budget_tier'] != 'custom' || (_ownMonthly ?? 0) >= 900),
+        0 => _d['budget_tier'] != null && (_d['budget_tier'] != 'custom' || (_ownMonthly ?? 0) >= 900),
+        1 => _d['diet_type'] != null,
         _ => true,
       };
 
@@ -1047,39 +1071,13 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final c = Theme.of(context).colorScheme;
-    final p = widget.data.profile;
     final food = widget.data.plan['nutrition'] as _Json;
-    final age = p['birth_year'] == null ? null : DateTime.now().year - (p['birth_year'] as int);
     final last = _step == _titles.length - 1;
     final body = switch (_step) {
       0 => [
-          Text('Your daily targets come from your profile: Mifflin-St Jeor energy for your age, sex, height and weight, '
-              'your activity, and your goal.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+          Text('Your plan is ${(food['energyKcal'] as num).round()} kcal and ${(food['proteinG'] as num).round()} g protein a day, '
+              'from your profile. Pick what you spend on food.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
           const SizedBox(height: 14),
-          for (final (k, v) in [
-            ('Sex', p['sex'] == 'female' ? 'Female' : 'Male'),
-            if (age != null) ('Age', '$age years'),
-            ('Height', '${p['height_cm'] ?? '-'} cm'),
-            ('Weight', '${p['weight_kg'] ?? '-'} kg'),
-            if (food['energy'] case {'maintenanceKcal': final num m}) ('Maintenance (TDEE)', '${m.round()} kcal'),
-            ('Target a day', '${(food['energyKcal'] as num).round()} kcal'),
-            ('Protein a day', '${(food['proteinG'] as num).round()} g'),
-          ])
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(children: [Expanded(child: Text(k, style: t.bodyLarge)), Text(v, style: monoNumber(context, size: 16))]),
-            ),
-          const SizedBox(height: 10),
-          Text('Change these in Protocol or your profile.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-        ],
-      1 => _tiles('cuisine_region', regionOptions),
-      2 => _tiles('diet_type', [for (final MapEntry(:key, :value) in _dietNames.entries) (key, value, switch (key) {
-            'vegetarian' => 'Dairy, no egg, meat or fish',
-            'eggitarian' => 'Vegetarian plus eggs',
-            'vegan' => 'No animal products',
-            _ => 'Chicken, fish and eggs',
-          })]),
-      3 => [
           ..._tiles('budget_tier', [...budgetOptions, ('custom', 'My own amount', 'Enter what you spend on food in a month')]),
           if (_d['budget_tier'] == 'custom')
             TextField(
@@ -1090,43 +1088,73 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
               decoration: const InputDecoration(labelText: 'Food budget for a month', prefixText: 'Rs ', suffixText: 'a month', helperText: 'At least Rs 900'),
             ),
         ],
-      4 => [
-          Text('Optional. Pick any that apply.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
-          const SizedBox(height: 12),
-          for (final (k, title, sub) in _foodConditions) ...[
-            ChoiceTile(
-              title: title,
-              subtitle: sub,
-              selected: _restrictions.contains(k),
-              onTap: () => setState(() => _restrictions.contains(k) ? _restrictions.remove(k) : _restrictions.add(k)),
-            ),
-            const SizedBox(height: 10),
-          ],
-          for (final MapEntry(key: k, value: title) in _conditionNames.entries) ...[
-            ChoiceTile(
-              title: title,
-              subtitle: 'Your plan will ask you to check it with your doctor',
-              selected: _conditions.contains(k),
-              onTap: () => setState(() => _conditions.contains(k) ? _conditions.remove(k) : _conditions.add(k)),
-            ),
-            const SizedBox(height: 10),
-          ],
+      1 => [
+          ..._tiles('diet_type', [for (final MapEntry(:key, :value) in _dietNames.entries) (key, value, switch (key) {
+            'vegetarian' => 'Dairy, no egg, meat or fish',
+            'eggitarian' => 'Vegetarian plus eggs',
+            'vegan' => 'No animal products',
+            _ => 'Chicken, fish and eggs',
+          })]),
+          const SizedBox(height: 8),
+          Text('Food from', style: t.titleMedium),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final (k, title, _) in regionOptions)
+              ChoiceChip(
+                label: Text(title),
+                selected: regionSelected(_d['cuisine_region'] as String?, k),
+                onSelected: (_) => setState(() => _d['cuisine_region'] = toggleRegion(_d['cuisine_region'] as String?, k)),
+              ),
+          ]),
+          const SizedBox(height: 6),
+          Text('Pick more than one to mix them.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
         ],
-      5 => [
-          Text('A shake is added to your evening snack and your meals are planned around it. Counted as a typical '
-              '30 g scoop: 120 kcal and 24 g protein; check your tub\'s label.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
-          const SizedBox(height: 12),
-          for (final (n, title, sub) in const [
-            (0, 'No protein powder', 'Protein from food only'),
-            (1, '1 scoop a day', 'About 24 g protein, 120 kcal'),
-            (2, '2 scoops a day', 'About 48 g protein, 240 kcal'),
-            (3, '3 scoops a day', 'About 72 g protein, 360 kcal'),
-          ]) ...[
-            ChoiceTile(title: title, subtitle: sub, selected: _scoops == n, onTap: () => setState(() => _scoops = n)),
-            const SizedBox(height: 10),
-          ],
+      _ => [
+          Text('All optional.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 14),
+          Text('Health', style: t.titleMedium),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final (k, title, _) in _foodConditions)
+              FilterChip(
+                label: Text(title),
+                selected: _restrictions.contains(k),
+                onSelected: (on) => setState(() => on ? _restrictions.add(k) : _restrictions.remove(k)),
+              ),
+            for (final MapEntry(key: k, value: title) in _conditionNames.entries)
+              FilterChip(
+                label: Text(title),
+                selected: _conditions.contains(k),
+                onSelected: (on) => setState(() => on ? _conditions.add(k) : _conditions.remove(k)),
+              ),
+          ]),
+          const SizedBox(height: 6),
+          Text('Milk and gluten change your food. The others add a note to check the plan with your doctor.',
+              style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 20),
+          Text('Protein powder a day', style: t.titleMedium),
+          const SizedBox(height: 8),
+          SegmentedButton<int>(
+            showSelectedIcon: false,
+            segments: const [ButtonSegment(value: 0, label: Text('None')), ButtonSegment(value: 1, label: Text('1 scoop')), ButtonSegment(value: 2, label: Text('2')), ButtonSegment(value: 3, label: Text('3'))],
+            selected: {_scoops},
+            onSelectionChanged: (s) => setState(() => _scoops = s.first),
+          ),
+          const SizedBox(height: 6),
+          Text('Added to your evening snack, meals planned around it. A typical 30 g scoop: 120 kcal and 24 g protein; '
+              'check your tub\'s label.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 20),
+          Text('Pace', style: t.titleMedium),
+          const SizedBox(height: 8),
+          SegmentedButton<String>(
+            showSelectedIcon: false,
+            segments: [for (final (k, title, _) in _paceOptions) ButtonSegment(value: k, label: Text(title))],
+            selected: {_d['diet_pace'] as String},
+            onSelectionChanged: (s) => setState(() => _d['diet_pace'] = s.first),
+          ),
+          const SizedBox(height: 6),
+          Text(_paceOptions.firstWhere((o) => o.$1 == _d['diet_pace'], orElse: () => _paceOptions[1]).$3, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
         ],
-      _ => _tiles('diet_pace', _paceOptions),
     };
     return Scaffold(
       appBar: AppBar(title: const Text('Build my plate')),
@@ -1161,90 +1189,6 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
 
 /// The mess_meals key of a planner meal name.
 String? _messKeyOf(String meal) => switch (meal) { 'Breakfast' => 'breakfast', 'Lunch' => 'lunch', 'Evening snack' => 'snack', 'Dinner' => 'dinner', _ => null };
-
-class _MealCard extends StatelessWidget {
-  const _MealCard({required this.meal, this.tag, this.fromMess = false, this.prep, this.messExtra = 'dal'});
-  final String messExtra; // mess foods to ask for when protein is short, already filtered by diet and allergies
-  final String? tag; // PRE-WORKOUT or POST-WORKOUT on a training day
-  final bool fromMess; // eaten from the hostel or PG mess: pick the closest items there
-  final String? prep; // how to make it with a kettle, microwave or blender
-  final PlanMeal meal;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Theme.of(context).colorScheme;
-    final t = Theme.of(context).textTheme;
-    final kcal = meal.items.fold(0.0, (s, i) => s + i.kcal), protein = meal.items.fold(0.0, (s, i) => s + i.protein);
-    return _Tile(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text([meal.time.toUpperCase(), ?tag, if (fromMess) 'FROM THE MESS'].join('  ·  '), style: monoLabel(context).copyWith(color: c.tertiary)),
-              Text(meal.name, style: t.titleLarge),
-            ]),
-          ),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('${kcal.round()} kcal', style: monoNumber(context, size: 16)),
-            Text('${protein.round()} g protein', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-          ]),
-        ]),
-        const SizedBox(height: 8),
-        // The plate named as dishes; each part below in household servings, exact grams and nutrients behind Details.
-        Text(mealTitle(meal), style: t.titleMedium),
-        if (fromMess)
-          Text('From your mess: take the closest items to these amounts. Short on protein? Add an extra serving of $messExtra if served.',
-              style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-        if (prep != null) Text(prep!, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-        if (tag != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              tag == 'PRE-WORKOUT'
-                  ? 'Eat this before you train. It is part of your day\'s food, not extra.'
-                  : 'Eat this after you train: it brings your protein. It is part of your day\'s food, not extra.',
-              style: t.bodyMedium?.copyWith(color: c.primary, fontWeight: FontWeight.w600),
-            ),
-          ),
-        const SizedBox(height: 8),
-        for (final i in meal.items.where((i) => i.unit != 'oil')) // oil is shown once for the whole day
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(border: Border(top: BorderSide(color: c.outline))),
-            child: Row(children: [
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(itemRole(i), style: monoLabel(context).copyWith(fontSize: 10, color: c.tertiary)),
-                  Text(servingLabel(i), style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-                ]),
-              ),
-              const SizedBox(width: 10),
-              Text(exactLabel(i), style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-            ]),
-          ),
-        Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            childrenPadding: const EdgeInsets.only(bottom: 8),
-            title: Text('Details', style: t.labelLarge),
-            children: [
-              for (final i in meal.items)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
-                  child: Row(children: [
-                    Expanded(child: Text(i.name, style: t.bodySmall)),
-                    Text('${i.kcal.round()} kcal  ·  P ${i.protein.toStringAsFixed(1)}  ·  C ${i.carb.toStringAsFixed(1)}  ·  F ${i.fat.toStringAsFixed(1)} g',
-                        style: t.bodySmall?.copyWith(color: c.onSurfaceVariant, fontSize: 12)),
-                  ]),
-                ),
-            ],
-          ),
-        ),
-      ]),
-    );
-  }
-}
 
 // ---------------------------------------------------------------- calendar
 

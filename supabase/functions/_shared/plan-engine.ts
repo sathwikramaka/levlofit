@@ -220,7 +220,7 @@ const OTHER_WORD_TAGS: Record<string, string[]> = {
   peanut: ['peanut'], peanuts: ['peanut'], groundnut: ['peanut'], groundnuts: ['peanut'],
   nut: ['tree_nut'], nuts: ['tree_nut'], 'tree nut': ['tree_nut'], 'tree nuts': ['tree_nut'],
   soy: ['soy'], soya: ['soy'], tofu: ['soy'],
-  gluten: ['wheat', 'barley', 'rye'], wheat: ['wheat'],
+  gluten: ['wheat', 'barley', 'rye', 'oats'], wheat: ['wheat'], oats: ['oats'], oat: ['oats'],
   fish: ['fish'], prawn: ['shellfish'], prawns: ['shellfish'], shrimp: ['shellfish'], shellfish: ['shellfish'], crab: ['shellfish'],
   chicken: ['poultry'], mutton: ['meat'], meat: ['meat'],
 };
@@ -248,7 +248,8 @@ const DIET_EXCLUDES: Record<Diet, string[]> = {
 
 const RESTRICTION_EXCLUDES: Record<Restriction, string[]> = {
   lactose: ['dairy'],
-  gluten: ['wheat', 'barley', 'rye'],
+  // Oats too (2026-11-03): most oats sold in India are not certified free of wheat; flagged for professional review.
+  gluten: ['wheat', 'barley', 'rye', 'oats'],
   peanut: ['peanut'],
   tree_nut: ['tree_nut'],
   soy: ['soy'],

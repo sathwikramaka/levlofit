@@ -1,0 +1,7 @@
+planner_code,levlofit_name,tags,fdc_description,match,disclosure
+oats,Rolled oats,oats,"Cereals, oats, regular and quick, not fortified, dry",exact,
+cornflakes,Corn flakes,barley,"Cereals ready-to-eat, RALSTON Corn Flakes",close,"USDA values for one US brand of plain corn flakes (corn with malt flavouring); Indian brands differ a little, so your pack's label is exact."
+muesli,Muesli,oats;wheat;tree_nut;dairy,"Cereals ready-to-eat, FAMILIA",close,"USDA values for one Swiss-style muesli (oats, wheat, nuts, dried fruit, milk solids); brands differ, so your pack's label is exact."
+A021,Daliya (broken wheat),gluten;wheat,"Bulgur, dry",close,"USDA bulgur is parboiled cracked wheat; daliya is cracked wheat that is often not parboiled."
+A022,Rava (semolina),gluten;wheat,"Semolina, unenriched",exact,
+B001,Besan (gram flour),,"Chickpea flour (besan)",close,"USDA besan is milled chickpeas; Indian besan is milled chana dal, the split desi chickpea."

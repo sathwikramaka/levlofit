@@ -84,6 +84,15 @@ class Build(unittest.TestCase):
         for r in rows:
             self.assertIn(f"'{r['planner_code']}': (", planner, f"{r['planner_code']} is a planner food")
 
+    def test_the_breakfast_map_is_well_formed_and_new(self):
+        rows = b.read_map(b.BREAKFAST[0])
+        first = {r["fdc_description"] for r in b.read_map()}
+        planner = (Path(__file__).resolve().parents[2] / "app/lib/diet_plan.dart").read_text(encoding="utf-8")
+        for r in rows:
+            self.assertNotEqual(r["match"], "none", r["planner_code"])
+            self.assertNotIn(r["fdc_description"], first, "a food is built by one migration only")
+            self.assertIn(f"'{r['planner_code']}': 'FDC", planner, f"{r['planner_code']} is mapped in plannerFdcCodes")
+
 
 if __name__ == "__main__":
     unittest.main()

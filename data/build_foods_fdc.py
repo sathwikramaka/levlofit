@@ -3,6 +3,9 @@
 Run (after the owner-approved download of an FDC CSV release, unzipped OUTSIDE the repository):
     python -I data/build_foods_fdc.py <unzipped FDC csv folder> [<more folders>]
 Writes supabase/migrations/20261025200000_foods_usda_fdc.sql. Nothing is downloaded here.
+    python -I data/build_foods_fdc.py --breakfast <folders>
+builds data/fdc/breakfast_map.csv (breakfast cereals and dish ingredients, 2026-11-03) into its own migration,
+20261103100000_foods_fdc_breakfast.sql, so the applied 2026-10-25 migration is never rewritten.
 
 Rules:
 - Only rows of data/fdc/planner_map.csv with match "exact" or "close" are built; "none" rows are reported, never
@@ -26,6 +29,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MAP = ROOT / "data/fdc/planner_map.csv"
 OUT = ROOT / "supabase/migrations/20261025200000_foods_usda_fdc.sql"
+BREAKFAST = (ROOT / "data/fdc/breakfast_map.csv", ROOT / "supabase/migrations/20261103100000_foods_fdc_breakfast.sql")
 
 MACROS = {"protein_g": 1003, "fat_g": 1004, "carb_g": 1005, "fiber_g": 1079}
 MICROS = {"calcium_mg": 1087, "iron_mg": 1089, "zinc_mg": 1095, "sodium_mg": 1093, "potassium_mg": 1092,
@@ -136,9 +140,10 @@ def to_sql(rows, missing):
 def main(argv):
     if len(argv) < 2:
         raise SystemExit(__doc__)
-    rows, missing = build(read_map(), *read_release(argv[1:]))
-    OUT.write_text(to_sql(rows, missing), encoding="utf-8")
-    print(f"{len(rows)} foods written to {OUT.name}; not covered: {', '.join(missing)}")
+    (path, out), folders = (BREAKFAST, argv[2:]) if argv[1] == "--breakfast" else ((MAP, OUT), argv[1:])
+    rows, missing = build(read_map(path), *read_release(folders))
+    out.write_text(to_sql(rows, missing), encoding="utf-8")
+    print(f"{len(rows)} foods written to {out.name}; not covered: {', '.join(missing) or 'none'}")
 
 
 if __name__ == "__main__":
