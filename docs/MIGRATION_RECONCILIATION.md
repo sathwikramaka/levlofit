@@ -75,6 +75,8 @@ Cloud history was written by `apply_migration` with apply-time versions; local f
 | 20261102100000_ai_daily_caps | 2026-11-03 apply_migration ai_daily_caps | Applied 2026-11-03 (docs/RELEASE_RECORD.md, release 1.0.3); row updated 2026-11-03 from that record, not re-inspected |
 | 20261103100000_foods_fdc_breakfast | 2026-11-03 apply_migration foods_fdc_breakfast | Applied 2026-11-03 (docs/RELEASE_RECORD.md, release 1.0.7); not re-inspected |
 | 20261103200000_save_generated_plan | 2026-11-03 apply_migration save_generated_plan | Applied 2026-11-03 (docs/RELEASE_RECORD.md); function and execute privileges verified read-only |
+| 20261103300000_daily_checkins | 2026-11-03 apply_migration daily_checkins | Applied 2026-11-03 (docs/RELEASE_RECORD.md); RLS, policy and grants verified read-only |
+| 20261103400000_reminder_water_window | 2026-11-03 apply_migration reminder_water_window | Applied 2026-11-03 (docs/RELEASE_RECORD.md); columns, grants and check verified read-only |
 
 Schema fingerprint: grants, columns, constraints, indexes, policies, functions, triggers, storage buckets/policies,
 auth trigger and extensions are identical between cloud and a local `supabase db reset`, except the
@@ -196,20 +198,14 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (2), updated 2026-11-03
+## Pending production items (0), updated 2026-11-03
 
-- 20261103400000_reminder_water_window: reminder_prefs.water_from / water_to (nullable hours, both or neither) and
-  their column grants. Additive; older builds ignore them and the new build only sends them once a window is chosen.
-  Verify and roll back: docs/RELEASE_CHECKLIST.md 3.7y.
-
-- 20261103300000_daily_checkins: new own-row table daily_checkins (optional daily check-in), RLS "own check-ins",
-  column grants, no anon access. Additive. Apply before releasing the app build with the check-in card (older builds
-  never read it; a new build without it shows "Could not load" on the card only). Verify and roll back:
-  docs/RELEASE_CHECKLIST.md 3.7x.
-
+None.
 
 Applied 2026-11-03 (kept for the record):
 
+- 20261103300000_daily_checkins and 20261103400000_reminder_water_window: applied 2026-11-03 with apply_migration
+  (docs/RELEASE_RECORD.md); RLS, policy, grants and the window check verified read-only.
 - 20261103200000_save_generated_plan: applied 2026-11-03 with apply_migration (docs/RELEASE_RECORD.md); verified
   service_role-only execute. generate-plan v29 (d648818) uses it since 2026-11-03.
 - 20261103100000_foods_fdc_breakfast: foods.source_note column; six USDA FoodData Central breakfast foods (rolled oats,

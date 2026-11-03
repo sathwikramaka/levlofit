@@ -2,6 +2,18 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-03: migrations daily_checkins and reminder_water_window (owner-approved: these two)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 7e4f134 (files 20261103300000_daily_checkins.sql, 20261103400000_reminder_water_window.sql) | git |
+| Preflight | daily_checkins absent; reminder_prefs without water_from/water_to, 0 rows | execute_sql, read-only |
+| Backup before changes | none: both only add (a new empty table; two nullable columns and a check on an empty table). Rollback in RELEASE_CHECKLIST 3.7x, 3.7y | - |
+| Migrations | daily_checkins, then reminder_water_window, applied with apply_migration | apply_migration results |
+| Verify | daily_checkins: RLS on, 1 policy, anon no select, authenticated select yes, insert of user_id no, update of energy yes. reminder_prefs: water_from, water_to present, authenticated may update them, reminder_prefs_water_window check present | pg_class, pg_policies, has_*_privilege, read-only |
+| Security advisor | nothing on the new objects; unchanged older notes: ai_daily_caps and rate_events have RLS with no policy (service-only by design), check_rate callable by authenticated (the functions call it as the user), leaked password protection off (Pro plan; sign-in is email code or Google) | get_advisors |
+| Not verified | the check-in card and water hours on a phone (needs the next app release) | - |
+
 ## 2026-11-03: generate-plan deploy (owner-approved: this deploy only)
 
 | What | Value | How checked |
