@@ -63,6 +63,10 @@ const _catalogue = <String, (String, int, String)>{
   'D076': ('Tomato', 1, 'raw'),
   'T012': ('Sunflower oil', 1, 'oil'),
   'T006': ('Mustard oil', 1, 'oil'),
+  // Breakfast cereals (owner request 2026-11-03), USDA values (data/fdc/breakfast_map.csv), weighed dry.
+  'oats': ('Rolled oats', 1, 'dry'),
+  'cornflakes': ('Corn flakes', 2, 'raw'), // eaten as bought
+  'muesli': ('Muesli', 2, 'raw'),
   // Dishes (dishRecipes): budget tier, weighed as the dry mix.
   'dish:idli': ('Idli (steamed rice cakes)', 1, 'dry'),
   'dish:dosa': ('Dosa (rice and lentil crepe)', 1, 'dry'),
@@ -74,6 +78,7 @@ const _catalogue = <String, (String, int, String)>{
   'dish:moong-chilla': ('Moong dal chilla (lentil pancake)', 1, 'dry'),
   'dish:thepla': ('Thepla (spiced flatbread)', 1, 'dry'),
   'dish:sprouts': ('Sprouted mung salad', 1, 'dry'),
+  'dish:daliya': ('Daliya (broken wheat porridge)', 1, 'dry'),
 };
 
 /// Breakfast and snack dishes (owner request 2026-10-28: plans people actually eat; nobody wants roti and sabzi at
@@ -91,10 +96,11 @@ const dishRecipes = <String, (String, List<(String, double)>)>{
   'dish:moong-chilla': ('Moong dal chilla (lentil pancake)', [('B010', 1.0)]),
   'dish:thepla': ('Thepla (spiced flatbread)', [('A019', 0.85), ('B001', 0.15)]),
   'dish:sprouts': ('Sprouted mung salad', [('B011', 1.0)]),
+  'dish:daliya': ('Daliya (broken wheat porridge)', [('A021', 1.0)]),
 };
 
 /// Ingredients only dishes use, read with the planner's foods.
-const _dishOnlyCodes = ['A022', 'A023', 'B001', 'B003', 'B011'];
+const _dishOnlyCodes = ['A021', 'A022', 'A023', 'B001', 'B003', 'B011'];
 
 /// [foods] plus every dish whose ingredients are all present: values per 100 g of the dry mix, tags the union of
 /// the ingredients' tags (so diet and allergy filters see every ingredient).
@@ -117,7 +123,7 @@ Map<String, Food> withDishes(Map<String, Food> foods) => {
 
 /// Most a single portion of a food should reach in one meal, so the solver never asks for a bowl of peanuts; dals,
 /// rajma and chana stop at 2 katoris a meal.
-const _maxPortion = {'H012': 40.0, 'B002': 70.0, 'B021': 60.0, 'B010': 60.0, 'B013': 60.0, 'B020': 70.0, 'L003': 100.0, 'M004': 150.0, 'N003': 220.0, 'S006': 220.0};
+const _maxPortion = {'oats': 80.0, 'cornflakes': 60.0, 'muesli': 80.0, 'H012': 40.0, 'B002': 70.0, 'B021': 60.0, 'B010': 60.0, 'B013': 60.0, 'B020': 70.0, 'L003': 100.0, 'M004': 150.0, 'N003': 220.0, 'S006': 220.0};
 
 /// Planner food -> its USDA FoodData Central row (CC0; data/fdc/planner_map.csv, built by data/build_foods_fdc.py into
 /// 20261025200000_foods_usda_fdc.sql; a test keeps the two in step). The planner uses these first. A food without a
@@ -129,6 +135,11 @@ const plannerFdcCodes = {
   'M004': 'FDC173424', 'N003': 'FDC171077', 'E012': 'FDC173944', 'E049': 'FDC169926', 'E028': 'FDC173044', 'E001': 'FDC171688',
   'E047': 'FDC169097', 'D036': 'FDC169986', 'D056': 'FDC169260', 'C015': 'FDC169975', 'C033': 'FDC168462', 'F002': 'FDC170393',
   'D043': 'FDC168409', 'D076': 'FDC170457', 'T012': 'FDC171025', 'T006': 'FDC172337',
+  // 20261103100000_foods_fdc_breakfast.sql (data/fdc/breakfast_map.csv): cereals, and dish ingredients that had only
+  // IFCT rows, so upma, besan chilla, thepla, daliya and sprouts reach a release. Whole moong (B011, for sprouts) is
+  // the same USDA record as B010.
+  'oats': 'FDC173904', 'cornflakes': 'FDC174648', 'muesli': 'FDC169076', 'A021': 'FDC170688', 'A022': 'FDC168933',
+  'B001': 'FDC174288', 'B011': 'FDC174256',
 };
 
 /// Every food the planner may use (planner codes and their USDA rows), for one database read.
@@ -261,6 +272,8 @@ const _makeWith = <String, List<Set<String>>>{
   'L002': _noCook, 'H012': _noCook, 'L003': _noCook, 'D043': _noCook, // milk, peanuts, paneer, cucumber salad
   'E012': _noCook, 'E049': _noCook, 'E028': _noCook, 'E001': _noCook, 'E047': _noCook, // fruit
   'dish:sprouts': _noCook, // sprouted at home over a day; nothing is cooked
+  'cornflakes': _noCook, 'muesli': _noCook, // a bowl with milk
+  'oats': [{'stove'}, {'induction'}, {'microwave'}, {'kettle'}, {'multi_kettle'}], // oats soften in just-boiled water or milk
   'B021': _pressure, 'B020': _pressure, 'B002': _pressure, // toor dal, kidney beans, black chickpeas
   'A015': [{'stove'}, {'induction'}, {'microwave'}, {'multi_kettle'}], // rice
   'B010': [{'stove'}, {'induction'}, {'multi_kettle'}], 'B013': [{'stove'}, {'induction'}, {'multi_kettle'}], // moong, masoor dal
@@ -349,6 +362,8 @@ String? prepNote(PlanMeal m, Set<String> have) {
   final tips = [
     if (have.contains('kettle') || have.contains('multi_kettle'))
       if (codes.contains('dish:poha')) 'Poha: cover with just-boiled water from the kettle for 3 to 4 minutes, drain, add lemon, salt and peanuts.',
+    if (have.contains('kettle') || have.contains('multi_kettle') || have.contains('microwave'))
+      if (codes.contains('oats')) 'Oats: stir into just-boiled water or hot milk, cover for 3 to 4 minutes.',
     if (have.contains('kettle') || have.contains('multi_kettle') || have.contains('microwave'))
       if (codes.contains('X001')) 'Soya chunks: soak in boiling water for 10 minutes, squeeze out the water, then season.',
     if (have.contains('multi_kettle') && codes.intersection({'A015', 'B010', 'B013', 'M004'}).isNotEmpty)
@@ -455,8 +470,9 @@ _Slot _s(List<String> codes, double base, double min, double max, _Scale scale, 
 final _meals = <(String, String, List<_Slot>, double)>[
   ('Breakfast', '8 am', [
     // A breakfast dish, rotated through the week (never roti and sabzi at 8 am).
-    _s(['dish:poha', 'dish:idli', 'dish:besan-chilla', 'dish:upma', 'dish:dosa', 'dish:moong-chilla', 'dish:thepla', 'dish:ragi-dosa',
-        'dish:vermicelli', ..._breakfastFallback], 60, 30, 150, _Scale.energy, floor: 20),
+    // Packaged cereals (oats, corn flakes, muesli) and daliya sit among the cooked dishes (owner request 2026-11-03).
+    _s(['dish:poha', 'oats', 'dish:idli', 'dish:besan-chilla', 'cornflakes', 'dish:upma', 'dish:dosa', 'muesli', 'dish:moong-chilla',
+        'dish:daliya', 'dish:thepla', 'dish:ragi-dosa', 'dish:vermicelli', ..._breakfastFallback], 60, 30, 150, _Scale.energy, floor: 20),
     // Eggs or paneer bhurji only when the day needs the protein; the breakfast dish and milk come first.
     _s(['M004', 'L003'], 0, 0, 150, _Scale.protein, floor: 0, dense: true),
     _s(['L002'], 200, 200, 200, _Scale.fixed, step: 200, floor: 200),
@@ -605,14 +621,14 @@ typedef _Pick = (int, _Slot, Food); // meal index, slot, food
 double _stepFor(String code, _Slot s) => code == 'M004' ? 50 : (_wholePieces.contains(code) ? _servings[code]!.$1 : (_stepOf[code] ?? s.step));
 
 /// Kitchen steps for foods measured by the cup or katori: half a cup of rice, half a katori of dal.
-const _stepOf = {'A015': 25.0, 'B021': 15.0, 'B010': 15.0, 'B013': 15.0, 'B020': 17.5, 'B002': 17.5, 'dish:poha': 30.0, 'dish:upma': 25.0, 'dish:vermicelli': 25.0, 'dish:sprouts': 20.0};
+const _stepOf = {'oats': 10.0, 'cornflakes': 10.0, 'muesli': 10.0, 'dish:daliya': 20.0, 'A015': 25.0, 'B021': 15.0, 'B010': 15.0, 'B013': 15.0, 'B020': 17.5, 'B002': 17.5, 'dish:poha': 30.0, 'dish:upma': 25.0, 'dish:vermicelli': 25.0, 'dish:sprouts': 20.0};
 
 /// The smallest portion a plate shows of a food (owner request 2026-10-28: nobody eats 20 g of rice): one cup of
 /// rice, two rotis or bhakris, one katori of dal, a plate of poha, two idlis, 50 g paneer, 75 g chicken or fish. Slots that start empty
 /// (floor 0) may still leave the food out altogether.
 const _minServing = {
   'A015': 50.0, 'A019': 60.0, 'A005': 80.0, 'A003': 80.0, 'B021': 30.0, 'B010': 30.0, 'B013': 30.0, 'B020': 35.0, 'B002': 35.0, 'H012': 20.0,
-  'dish:poha': 60.0, 'dish:upma': 50.0, 'dish:vermicelli': 50.0, 'dish:idli': 30.0, 'dish:sprouts': 40.0,
+  'oats': 30.0, 'cornflakes': 30.0, 'muesli': 40.0, 'dish:daliya': 40.0, 'dish:poha': 60.0, 'dish:upma': 50.0, 'dish:vermicelli': 50.0, 'dish:idli': 30.0, 'dish:sprouts': 40.0,
   'L003': 50.0, 'N003': 75.0, 'S006': 75.0,
 };
 
@@ -651,6 +667,7 @@ bool _allowed(Map<String, Food> foods, String code, {required int tier, required
   if (f == null || entry == null) return false;
   if (entry.$2 > tier) return false;
   if (code == 'X001' && soyaCapG <= 0) return false;
+  if (code == 'cornflakes' && excluded.contains('dairy')) return false; // eaten with milk; muesli is dairy-tagged itself
   if (f.tags.any(excluded.contains)) return false;
   final text = '${f.name} ${entry.$1}'.toLowerCase();
   return !custom.any((c) => c.trim().isNotEmpty && text.contains(c.trim().toLowerCase()));
@@ -1208,6 +1225,10 @@ const _servings = <String, _Serving>{
   'dish:moong-chilla': (30, 'moong dal chilla (lentil pancake)', 'moong dal chillas (lentil pancakes)'),
   'dish:thepla': (30, 'thepla (spiced flatbread)', 'theplas (spiced flatbreads)'),
   'dish:sprouts': (40, 'serving sprouted mung salad (40 g dry)', 'servings sprouted mung salad (40 g dry each)'),
+  'dish:daliya': (40, 'bowl daliya, broken wheat porridge (40 g dry)', 'bowls daliya, broken wheat porridge (40 g dry each)'),
+  'oats': (40, 'bowl oats porridge (40 g dry)', 'bowls oats porridge (40 g dry each)'),
+  'cornflakes': (30, 'bowl corn flakes (30 g)', 'bowls corn flakes (30 g each)'),
+  'muesli': (45, 'bowl muesli (45 g)', 'bowls muesli (45 g each)'),
   'T012': (5, 'tsp cooking oil', 'tsp cooking oil'),
   'T006': (5, 'tsp mustard oil', 'tsp mustard oil'),
 };
@@ -1250,7 +1271,7 @@ String servingLabel(PlanItem i) {
 String exactLabel(PlanItem i) => i.unit == 'scoop'
     ? '${i.grams.round()} g powder'
     : i.code.startsWith('dish:')
-    ? '${i.grams.round()} g dry ${i.code == 'dish:sprouts' ? 'moong' : 'mix'}'
+    ? '${i.grams.round()} g dry ${switch (i.code) { 'dish:sprouts' => 'moong', 'dish:daliya' => 'broken wheat', _ => 'mix' }}'
     : switch (i.unit) {
       'ml' => '${i.grams.round()} ml',
       'egg' => '${i.grams.round()} g',
@@ -1264,6 +1285,7 @@ String itemRole(PlanItem i) => switch (i.code) {
       _ when i.unit == 'scoop' => 'SHAKE',
       _ when i.code.startsWith('dish:') => i.code == 'dish:sprouts' ? 'PROTEIN' : 'BREAKFAST DISH',
       'A015' || 'A019' || 'A005' || 'A003' || 'A010' || 'A011' => 'GRAIN',
+      'oats' || 'cornflakes' || 'muesli' => 'BREAKFAST CEREAL',
       'B021' || 'B010' || 'B013' || 'B020' || 'B002' => 'DAL',
       'X001' || 'L003' || 'N003' || 'S006' || 'M004' => 'PROTEIN',
       'D043' || 'D076' => 'SALAD',
@@ -1282,12 +1304,47 @@ String mealTitle(PlanMeal m) {
     if (i.unit == 'scoop') return 'Protein shake';
     final one = _servings[i.code]?.$2 ?? i.name.toLowerCase();
     final bare = one
-        .replaceFirst(RegExp(r'^(bowl \(150 ml\)|cup \(240 ml\) cooked|glass \(200 ml\)|serving cooked|serving|boiled) '), '')
+        .replaceFirst(RegExp(r'^(bowl \(150 ml\)|bowl|cup \(240 ml\) cooked|glass \(200 ml\)|serving cooked|serving|boiled) '), '')
         .replaceFirst(RegExp(r' \((\d+ g|\d+ g dry|50 g dry flattened rice|60 g dry)\)$'), '');
     return bare[0].toUpperCase() + bare.substring(1);
   }
 
   return m.items.where((i) => i.unit != 'oil').map(name).toSet().join(' + ');
+}
+
+/// The plate picture's four parts (grain, protein, veg, fruit and milk) as shares of the meal's energy, oil left out.
+/// Zero parts stay in the map so the picture keeps its order.
+Map<String, double> plateShares(PlanMeal m) {
+  final kcal = {'grain': 0.0, 'protein': 0.0, 'veg': 0.0, 'fruit': 0.0};
+  for (final i in m.items.where((i) => i.unit != 'oil')) {
+    final part = switch (itemRole(i)) {
+      'GRAIN' || 'BREAKFAST DISH' || 'BREAKFAST CEREAL' => 'grain',
+      'VEGETABLE' || 'SALAD' => 'veg',
+      'FRUIT' || 'DAIRY' => 'fruit',
+      _ => 'protein', // dal, protein foods, peanuts, sprouts, shakes
+    };
+    kcal[part] = kcal[part]! + i.kcal;
+  }
+  final total = kcal.values.fold(0.0, (s, v) => s + v);
+  return {for (final e in kcal.entries) e.key: total <= 0 ? 0.0 : e.value / total};
+}
+
+/// Diary rows (food table code, grams) for a planned meal the person ate: dishes as their recipe ingredients, each
+/// planner code as the database row it was planned from ([rowCode], from the fetched rows). Shakes are left out:
+/// powder is not in the food table, so it is logged from its own label.
+List<(String, double)> diaryItems(PlanMeal m, String Function(String plannerCode) rowCode) => [
+      for (final i in m.items)
+        if (i.unit != 'scoop')
+          if (dishRecipes[i.code] case (_, final recipe))
+            for (final (code, share) in recipe) (rowCode(code), double.parse((i.grams * share).toStringAsFixed(1)))
+          else
+            (rowCode(i.code), double.parse(i.grams.toStringAsFixed(1))),
+    ];
+
+/// The database row each planner code was planned from: its USDA row when the rows hold it, else its own code.
+Map<String, String> plannerRowCodes(Iterable<Map<String, dynamic>> rows) {
+  final have = {for (final r in rows) r['code'] as String};
+  return {for (final k in [..._catalogue.keys, ..._dishOnlyCodes]) k: have.contains(plannerFdcCodes[k]) ? plannerFdcCodes[k]! : k};
 }
 
 /// One line for the whole meal, oil left out: "2 rotis (whole-wheat flatbreads) + 1 bowl (150 ml) moong dal + ...".

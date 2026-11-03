@@ -91,7 +91,7 @@ test('beef and pork are excluded for every diet', () => {
 
 test('vegan excludes all animal products, restrictions add their tags', () => {
   const tags = generatePlan({ ...base, diet: 'vegan', restrictions: ['gluten'] }).nutrition.excludedFoodTags;
-  for (const t of ['meat', 'poultry', 'fish', 'shellfish', 'egg', 'dairy', 'honey', 'wheat', 'barley', 'rye']) {
+  for (const t of ['meat', 'poultry', 'fish', 'shellfish', 'egg', 'dairy', 'honey', 'wheat', 'barley', 'rye', 'oats']) {
     assert.ok(tags.includes(t), t);
   }
   assert.ok(generatePlan({ ...base, diet: 'eggitarian' }).nutrition.excludedFoodTags.includes('egg') === false);
@@ -310,7 +310,7 @@ test('properties: across 600 random valid inputs, energy never falls below BMR, 
     vegan: ['meat', 'poultry', 'fish', 'shellfish', 'egg', 'dairy', 'honey'], non_vegetarian: [],
   };
   const restrictionEx: Record<string, string[]> = {
-    lactose: ['dairy'], gluten: ['wheat', 'barley', 'rye'], peanut: ['peanut'], tree_nut: ['tree_nut'], soy: ['soy'], egg: ['egg'], fish: ['fish'], shellfish: ['shellfish'],
+    lactose: ['dairy'], gluten: ['wheat', 'barley', 'rye', 'oats'], peanut: ['peanut'], tree_nut: ['tree_nut'], soy: ['soy'], egg: ['egg'], fish: ['fish'], shellfish: ['shellfish'],
   };
   const restrictions = ['lactose', 'gluten', 'peanut', 'tree_nut', 'soy', 'egg', 'fish', 'shellfish'] as const;
   const flags = ['heart_condition', 'chest_pain', 'dizziness', 'pregnancy', 'other_medical'] as const;
