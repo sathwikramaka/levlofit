@@ -80,7 +80,8 @@ void main() {
       ]),
     ));
     await tester.pump(const Duration(seconds: 2));
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
+    // Scroll to it rather than a fixed distance: cards above it (weekly report, 2026-11-03) change the offset.
+    await tester.scrollUntilVisible(find.text('99.0 cm'), 300, scrollable: find.byType(Scrollable).first);
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('99.0 cm'), findsOneWidget);
     expect(find.textContaining('Waist to height'), findsNothing);

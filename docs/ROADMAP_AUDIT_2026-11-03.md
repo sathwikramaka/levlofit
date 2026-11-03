@@ -54,7 +54,7 @@ wrong) · **N/A** · **Blocked** (needs an owner, clinical, legal or licensing d
 | Item | Status | Evidence | Action |
 |---|---|---|---|
 | 6.1 Progress dashboard | Done | `dashboard_menu.dart` Progress: 12-week bars, weight trend (least squares over 6 weeks), measurements, photos | none |
-| 6.2 Weekly report | **Missing** | No planned-vs-done weekly summary screen | Stage 4: deterministic weekly report from existing tables, no new table |
+| 6.2 Weekly report | **Done in Stage 4 (local)** | `app/lib/weekly_report.dart`: last full week on Progress, sessions vs plan, food-log days, check-ins, weight average difference (2+ weigh-ins each week), one observation and one next step by fixed rules; unknown data shown as unknown | Food adherence against calorie targets and strength change not in the weekly card (strength card already on Progress) |
 
 ### Phase 3: personalisation
 
@@ -76,7 +76,7 @@ wrong) · **N/A** · **Blocked** (needs an owner, clinical, legal or licensing d
 |---|---|---|---|
 | Flexible streaks | Done | weeks-on-plan streak, rest days not penalised | none |
 | Milestones/challenges | Partial | `rewards.dart`, `level_up.dart` | defer per brief |
-| Analytics (section 10) | Partial | `ops_health.sql` funnel counts; no D1/D7/D30 | Stage 4: SQL-only cohort metrics from existing tables (no client tracking, no new SDK) |
+| Analytics (section 10) | Done in Stage 4 (local) | `tools/retention_metrics.sql`: activation, D1/D7/D30 by signup week, weekly active (meaningful action), food-logging and check-in share, workout adherence; read-only, aggregate, no client tracking | Run on production needs owner approval and the daily_checkins migration. AI success/error rate stays in Edge Function logs (`llm_error` events) |
 
 ## 3. Defects confirmed from current code
 

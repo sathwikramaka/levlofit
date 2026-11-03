@@ -1654,6 +1654,7 @@ class _ProgressScreenState extends State<_ProgressScreen> {
   List<_Json>? _logs;
   List<_Json> _body = [];
   List<_Json> _sets = [];
+  Set<DateTime>? _foodDays, _checkinDays; // last 14 days, for the weekly report; null when the read failed
   List<_Photo> _photos = [];
   String? _error;
   bool _uploading = false;
@@ -1668,6 +1669,10 @@ class _ProgressScreenState extends State<_ProgressScreen> {
 
   Future<void> _fetch() async {
     try {
+      final since = _iso(DateTime.now().subtract(const Duration(days: 15)));
+      // Report-only reads: a failure (or daily_checkins not yet migrated) shows as unknown in the report, not a broken page.
+      final foodRead = supabase.from('food_log').select('day').gte('day', since).limit(500).then<List<_Json>?>((r) => r, onError: (_) => null);
+      final checkinRead = supabase.from('daily_checkins').select('day').gte('day', since).limit(20).then<List<_Json>?>((r) => r, onError: (_) => null);
       final [logs, body, photos, sets] = await Future.wait([
         supabase.from('workout_logs').select('performed_on, duration_min').eq('user_id', _uid).order('performed_on', ascending: true).limit(2000),
         supabase.from('body_metrics').select().eq('user_id', _uid).order('measured_on', ascending: true).limit(730),
@@ -1676,6 +1681,7 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         supabase.from('set_logs').select('exercise_id, performed_on, reps, kg').eq('user_id', _uid)
             .gte('performed_on', _iso(DateTime.now().subtract(const Duration(days: 84)))).limit(2000),
       ]);
+      final [food, checkins] = [await foodRead, await checkinRead];
       // Private bucket: each photo gets a short-lived signed link.
       final urls = <String, String>{
         if (photos.isNotEmpty)
@@ -1687,6 +1693,8 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         _logs = logs;
         _body = body;
         _sets = sets;
+        _foodDays = food == null ? null : {for (final r in food) DateTime.parse(r['day'] as String)};
+        _checkinDays = checkins == null ? null : {for (final r in checkins) DateTime.parse(r['day'] as String)};
         _photos = [
           for (final p in photos) (id: p['id'] as String, path: p['path'] as String, day: DateTime.parse(p['taken_on'] as String), url: urls[p['path']]),
         ];
@@ -1889,6 +1897,8 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         logs: logs,
         body: _body,
         sets: _sets,
+        foodDays: _foodDays,
+        checkinDays: _checkinDays,
         photos: _photos,
         uploading: _uploading,
         onLogWeight: () => _logBody(tape: false),
@@ -1917,6 +1927,8 @@ List<Widget> _progressBody(
   required List<_Json> logs,
   required List<_Json> body,
   List<_Json> sets = const [],
+  Set<DateTime>? foodDays = const {},
+  Set<DateTime>? checkinDays = const {},
   required List<_Photo> photos,
   required bool uploading,
   required VoidCallback onLogWeight,
@@ -1974,6 +1986,17 @@ List<Widget> _progressBody(
           const SizedBox(height: 6),
           Text(v.detail, style: t.bodyMedium?.copyWith(color: c.onSecondary.withValues(alpha: 0.75))),
         ]),
+      ),
+    ),
+    const SizedBox(height: 12),
+    WeeklyReportCard(
+      report: weeklyReport(
+        monday: monday.subtract(const Duration(days: 7)),
+        plannedPerWeek: perWeek,
+        trained: days,
+        foodDays: foodDays,
+        checkinDays: checkinDays,
+        weights: weights,
       ),
     ),
     const SizedBox(height: 12),
