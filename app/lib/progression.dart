@@ -156,3 +156,19 @@ const fewerDaysWeeks = 3;
   if (total == 0 || perWeek.any((n) => n >= planned)) return null;
   return (suggested: (total / fewerDaysWeeks).ceil().clamp(1, planned - 1), perWeek: perWeek);
 }
+
+// ---------------------------------------------------------------- welcome back
+
+/// Days since the last logged session before [today], when that gap is at least [longBreakDays] (the same break that
+/// makes the session notes say "start lighter"). Null when there is no long break, or when the plan is younger than the
+/// break (a new person has nothing to come back to). `days: null` means no session at all in [logged], which only
+/// covers the dashboard's read window, so the gap is unknown rather than guessed.
+({int? days})? welcomeBack({required Set<DateTime> logged, required DateTime? planSince, required DateTime today}) {
+  final day = _date(today);
+  if (planSince == null || day.difference(_date(planSince)).inDays < longBreakDays) return null;
+  final past = [for (final d in logged) if (_date(d).isBefore(day)) _date(d)]..sort();
+  if (logged.any((d) => _date(d) == day)) return null; // trained today: already back
+  if (past.isEmpty) return (days: null);
+  final gap = day.difference(past.last).inDays;
+  return gap >= longBreakDays ? (days: gap) : null;
+}

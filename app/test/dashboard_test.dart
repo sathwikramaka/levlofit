@@ -287,4 +287,26 @@ Eat **150 g** protein.
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('Switch to 1'), findsNothing);
   });
+
+  testWidgets('welcome back: after a long break one quiet card; Got it hides it; the plan-fit card waits', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } catch (_) {} // already set by an earlier test in this file
+    tester.view.physicalSize = const Size(390, 2400) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final last = today.subtract(const Duration(days: 20));
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: dashboardBentoForTest(_plan, logged: {last}, planSince: today.subtract(const Duration(days: 90))))));
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('Good to see you. Your last session was 20 days ago.'), findsOneWidget);
+    expect(find.text('PLAN FIT'), findsNothing);
+    await tester.scrollUntilVisible(find.text('Got it'), 300, scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('Got it'));
+    await tester.pump();
+    expect(find.text('WELCOME BACK'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }

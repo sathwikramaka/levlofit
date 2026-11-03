@@ -20,7 +20,7 @@ import 'coach_chat.dart';
 import 'diet_plan.dart';
 import 'diet_view.dart';
 import 'exercises.dart';
-import 'food_diary.dart' show EmptyFoodsText, FoodCredit, FoodDiaryScreen, foodDataPendingText, isoDay, matchesFoodQuery;
+import 'food_diary.dart' show EmptyFoodsText, FoodCredit, FoodDiaryScreen, diaryTotals, entryFromRow, foodDataPendingText, isoDay, matchesFoodQuery, supabaseDiary;
 import 'handbook.dart';
 import 'icons.dart';
 import 'main.dart';
@@ -28,7 +28,7 @@ import 'mark.dart';
 import 'move_animation.dart' show DemoFigure, demoFigure;
 import 'offline_cache.dart';
 import 'onboarding.dart';
-import 'progression.dart' show Pain, fewerDaysOffer, liftProgress, painFromNotes, painNote, setLabel;
+import 'progression.dart' show Pain, fewerDaysOffer, liftProgress, painFromNotes, painNote, setLabel, welcomeBack;
 import 'dashboard_layout.dart';
 import 'reminders.dart';
 import 'level_up.dart';
@@ -795,7 +795,9 @@ class _Bento extends StatelessWidget {
                   _LevelPrompt(goalName: (goals.first['name'] ?? goals.first['goal']) as String, onTap: onCheckLevel),
                 ],
                 if (important.isNotEmpty) ...[const SizedBox(height: 12), _ReviewRow(review: review, important: important)],
-                if (planSince case final since?)
+                if (welcomeBack(logged: logged, planSince: planSince, today: now) case final back?) ...[
+                  if (!_WelcomeBackCard.dismissed(logged)) ...[const SizedBox(height: 12), _WelcomeBackCard(days: back.days, logged: logged)],
+                ] else if (planSince case final since?)
                   if (fewerDaysOffer(planned: perWeek, logged: logged, planSince: since, today: now) case final offer?)
                     if (!_FewerDaysCard.dismissed(since)) ...[
                       const SizedBox(height: 12),
@@ -1024,6 +1026,57 @@ class _TodayCard extends StatelessWidget {
                     ),
                   ),
                 ]),
+        ),
+      ]),
+    );
+  }
+}
+
+/// After a long break (progression.dart welcomeBack): one quiet card, no streak talk. "Got it" hides it until the next
+/// break, keyed by the last session before it, on this phone.
+class _WelcomeBackCard extends StatefulWidget {
+  const _WelcomeBackCard({required this.days, required this.logged});
+  final int? days; // null: no session in the dashboard's window
+  final Set<DateTime> logged;
+
+  static String _key(Set<DateTime> logged) {
+    final last = logged.isEmpty ? null : logged.reduce((a, b) => a.isAfter(b) ? a : b);
+    return 'welcome_back_seen:${last == null ? 'none' : _iso(last)}';
+  }
+
+  static bool dismissed(Set<DateTime> logged) => prefs.getBool(_key(logged)) ?? false;
+
+  @override
+  State<_WelcomeBackCard> createState() => _WelcomeBackCardState();
+}
+
+class _WelcomeBackCardState extends State<_WelcomeBackCard> {
+  bool _hidden = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_hidden) return const SizedBox.shrink();
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final d = widget.days;
+    return _Tile(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('WELCOME BACK', style: monoLabel(context)),
+        const SizedBox(height: 4),
+        Text(d == null ? 'Good to see you.' : 'Good to see you. Your last session was $d days ago.', style: t.titleMedium),
+        const SizedBox(height: 4),
+        Text('Start lighter than last time and build back up over the next few sessions; your session notes will say the same. '
+            'Any short session today counts.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {
+              prefs.setBool(_WelcomeBackCard._key(widget.logged), true);
+              setState(() => _hidden = true);
+            },
+            child: const Text('Got it'),
+          ),
         ),
       ]),
     );
