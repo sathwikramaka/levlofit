@@ -39,6 +39,7 @@ import 'swaps.dart';
 import 'theme.dart';
 import 'tools.dart';
 import 'update_check.dart';
+import 'weekly_report.dart';
 import 'week_schedule.dart' show addOnLine, reminderSessions, trainingTimeLabel, trainingTimeOptions, weekPlan;
 
 part 'dashboard_menu.dart';
