@@ -51,7 +51,10 @@ class CheckInCard extends StatefulWidget {
 
 class _CheckInCardState extends State<CheckInCard> {
   late final CheckInStore _store = widget.store ?? supabaseCheckIns;
-  late final String _day = _isoDay((widget.now ?? DateTime.now)());
+  // Today is read again on every load and tap: the dashboard can stay open past midnight, and a check-in made at
+  // 00:10 belongs to the new day.
+  String get _today => _isoDay((widget.now ?? DateTime.now)());
+  late String _day = _today;
   CheckIn? _answers;
   bool _loading = true;
   bool _failed = false;
@@ -63,6 +66,7 @@ class _CheckInCardState extends State<CheckInCard> {
   }
 
   Future<void> _load() async {
+    _day = _today;
     setState(() {
       _loading = true;
       _failed = false;
@@ -78,10 +82,13 @@ class _CheckInCardState extends State<CheckInCard> {
   }
 
   Future<void> _open() async {
+    if (_today != _day) await _load(); // a new day: start from that day's answers (usually none)
+    if (!mounted || _failed) return;
+    final day = _day;
     final saved = await showModalBottomSheet<CheckIn>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => CheckInSheet(initial: _answers, onSave: (a) => _store.save(_day, a)),
+      builder: (_) => CheckInSheet(initial: _answers, onSave: (a) => _store.save(day, a)),
     );
     if (saved != null && mounted) setState(() => _answers = saved);
   }
