@@ -74,6 +74,7 @@ Cloud history was written by `apply_migration` with apply-time versions; local f
 | 20261030100000_signup_guard | 2026-10-30 apply_migration signup_guard | Applied 2026-10-30 (docs/RELEASE_RECORD.md, release 1.0.2); row added 2026-11-02 from that record, not re-inspected. The hook is active only once selected under Authentication > Auth Hooks |
 | 20261102100000_ai_daily_caps | 2026-11-03 apply_migration ai_daily_caps | Applied 2026-11-03 (docs/RELEASE_RECORD.md, release 1.0.3); row updated 2026-11-03 from that record, not re-inspected |
 | 20261103100000_foods_fdc_breakfast | 2026-11-03 apply_migration foods_fdc_breakfast | Applied 2026-11-03 (docs/RELEASE_RECORD.md, release 1.0.7); not re-inspected |
+| 20261103200000_save_generated_plan | 2026-11-03 apply_migration save_generated_plan | Applied 2026-11-03 (docs/RELEASE_RECORD.md); function and execute privileges verified read-only |
 
 Schema fingerprint: grants, columns, constraints, indexes, policies, functions, triggers, storage buckets/policies,
 auth trigger and extensions are identical between cloud and a local `supabase db reset`, except the
@@ -195,7 +196,7 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (3), updated 2026-11-03
+## Pending production items (2), updated 2026-11-03
 
 - 20261103400000_reminder_water_window: reminder_prefs.water_from / water_to (nullable hours, both or neither) and
   their column grants. Additive; older builds ignore them and the new build only sends them once a window is chosen.
@@ -206,13 +207,11 @@ tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
   never read it; a new build without it shows "Could not load" on the card only). Verify and roll back:
   docs/RELEASE_CHECKLIST.md 3.7x.
 
-- 20261103200000_save_generated_plan: new service-role-only function save_generated_plan (plan insert and
-  onboarding gate in one transaction, two-minute idempotent retry). Additive, no data change. Apply BEFORE deploying
-  the generate-plan that calls it (the old function keeps working without it). Verify and roll back:
-  docs/RELEASE_CHECKLIST.md 3.7w.
 
 Applied 2026-11-03 (kept for the record):
 
+- 20261103200000_save_generated_plan: applied 2026-11-03 with apply_migration (docs/RELEASE_RECORD.md); verified
+  service_role-only execute. Deploy generate-plan from a446a72 or later to use it.
 - 20261103100000_foods_fdc_breakfast: foods.source_note column; six USDA FoodData Central breakfast foods (rolled oats,
   corn flakes, muesli, daliya, rava, besan); earlier usda_fdc rows with the same FDC id take the same values. Applied
   2026-11-03 (release 1.0.7). Preflight: count usda_fdc rows sharing a source_ref with a new code. Verify and roll back:
