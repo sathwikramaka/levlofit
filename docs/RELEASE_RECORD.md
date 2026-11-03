@@ -2,6 +2,17 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-03: migration save_generated_plan (owner-approved: this migration only)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 6e6955b (file 20261103200000_save_generated_plan.sql from a446a72); not pushed | git |
+| Preflight | function absent; profiles.onboarding_complete and the five generated_plans columns it uses present; daily_checkins absent | execute_sql, read-only |
+| Backup before changes | none taken: the migration only adds a function (no table or data change). Rollback in RELEASE_CHECKLIST 3.7w | - |
+| Migration | save_generated_plan applied with apply_migration | apply_migration result |
+| Verify | function exists; execute: service_role yes, authenticated no, anon no | has_function_privilege, read-only |
+| Not done | generate-plan still the deployed version that does two writes (deploy is the next, separately approved step); no live onboarding run | - |
+
 ## 2026-11-03: release 1.0.7, simpler diet section (owner-approved: migration, generate-plan, APK, website, MIN_APP_BUILD secret)
 
 | What | Value | How checked |
