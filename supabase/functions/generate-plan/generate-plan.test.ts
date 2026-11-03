@@ -25,7 +25,7 @@ function useDb(over: Record<string, unknown> = {}) {
     dietary_profiles: { data: { diet_type: 'vegetarian', restrictions: [], other_restrictions: [], supplements: null } },
     goal_levels: { data: [] },
     curriculum_levels: { data: [] },
-    generated_plans: { data: null, nextId: 100 },
+    'rpc:save_generated_plan': { data: [{ id: 'plan-1', reused: false }], error: null },
     ...over,
   };
   const client = fakeClient(tables, ops);
@@ -34,14 +34,15 @@ function useDb(over: Record<string, unknown> = {}) {
 
 const fn = (await import('./index.ts')).default.fetch as (req: Request) => Promise<Response>;
 const post = () => fn(new Request('http://local/generate-plan', { method: 'POST' }));
-const savedInput = () => ops.find((o) => o.table === 'generated_plans' && o.op === 'insert')?.args.input;
+const saveCall = () => ops.find((o) => o.table === 'rpc:save_generated_plan');
+const savedInput = () => saveCall()?.args.p_input;
 
 test('control: a complete profile builds and stores a plan, then opens the dashboard gate', async () => {
   useDb();
   const res = await post();
   assert.equal(res.status, 201);
   assert.ok(savedInput(), 'plan snapshot stored');
-  assert.ok(ops.some((o) => o.table === 'profiles' && o.op === 'update'));
+  assert.equal(saveCall().args.p_user, UID, 'plan and dashboard gate saved in one call');
 });
 
 test('level lock: a stored level above 3 is trained as 3 (4 and 5 need a tested pass)', async () => {
@@ -62,14 +63,14 @@ test('rate limit: over the daily limit answers 429 and stores nothing', async ()
   useDb({ 'rpc:check_rate': { data: false, error: null } });
   const res = await post();
   assert.equal(res.status, 429);
-  assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update').length, 0);
+  assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update' || o.table === 'rpc:save_generated_plan').length, 0);
 });
 
 test('rate limit store missing or failing: 503 (fail closed) and nothing stored', async () => {
   for (const code of ['PGRST202', '08006']) {
     useDb({ 'rpc:check_rate': { data: null, error: { code } } });
     assert.equal((await post()).status, 503, code);
-    assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update').length, 0, code);
+    assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update' || o.table === 'rpc:save_generated_plan').length, 0, code);
   }
 });
 
@@ -82,19 +83,19 @@ test('rate limit: under the limit plans build', async () => {
 test('onboarding not finished answers 409 and stores nothing', async () => {
   useDb({ dietary_profiles: { data: null } });
   assert.equal((await post()).status, 409);
-  assert.equal(ops.filter((o) => o.op === 'insert').length, 0);
+  assert.equal(ops.filter((o) => o.op === 'insert' || o.table === 'rpc:save_generated_plan').length, 0);
 });
 
 test('curriculum read fails: answers 500 and stores nothing (no plan saved without its level checks)', async () => {
   useDb({ curriculum_levels: { data: null, error: { message: 'read failed' } } });
   assert.equal((await post()).status, 500);
-  assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update').length, 0);
+  assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update' || o.table === 'rpc:save_generated_plan').length, 0);
 });
 
 test('levels read fails: answers 500 and stores nothing (never plans from the self-rating instead)', async () => {
   useDb({ goal_levels: { data: null, error: { message: 'read failed' } } });
   assert.equal((await post()).status, 500);
-  assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update').length, 0);
+  assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update' || o.table === 'rpc:save_generated_plan').length, 0);
 });
 
 test('goal without its catalogue row: answers 409 and stores nothing', async () => {
@@ -102,7 +103,7 @@ test('goal without its catalogue row: answers 409 and stores nothing', async () 
   const res = await post();
   assert.equal(res.status, 409);
   assert.match((await res.json()).error, /no longer available/);
-  assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update').length, 0);
+  assert.equal(ops.filter((o) => o.op === 'insert' || o.op === 'update' || o.table === 'rpc:save_generated_plan').length, 0);
 });
 
 test('medical hold: a health flag with an assessed Level 3 trains at Level 1 at maintenance', async () => {
@@ -154,8 +155,20 @@ test('training weekdays and time from the profile reach the plan', async () => {
 test('3.5: the stored plan carries the energy working behind the target', async () => {
   useDb();
   assert.equal((await post()).status, 201);
-  const stored = ops.find((o) => o.table === 'generated_plans' && o.op === 'insert')?.args.plan;
+  const stored = saveCall()?.args.p_plan;
   assert.equal(stored.engineVersion, '3.5.0');
   assert.equal(typeof stored.nutrition.energy.maintenanceKcal, 'number');
   assert.equal(stored.nutrition.energy.activity.from, 'training_days');
+});
+
+test('save fails (transaction rolled back): answers 500, never 201 with a half-saved plan', async () => {
+  useDb({ 'rpc:save_generated_plan': { data: null, error: { code: '40001' } } });
+  assert.equal((await post()).status, 500);
+});
+
+test('save answers the stored plan id (a retry reuses it)', async () => {
+  useDb({ 'rpc:save_generated_plan': { data: [{ id: 'plan-1', reused: true }], error: null } });
+  const res = await post();
+  assert.equal(res.status, 201);
+  assert.equal((await res.json()).id, 'plan-1');
 });

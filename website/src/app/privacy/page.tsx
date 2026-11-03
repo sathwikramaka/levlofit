@@ -41,7 +41,7 @@ const sections: LegalSection[] = [
         <p>
           <strong>What you log in the app:</strong> your workouts and the sets you record (reps and weight lifted), your body weight and body measurements, the
           water and habits you track, your level in each goal, your reminder settings (including the names you give your own reminders), the foods and weights you log in the food diary and the recipes you save, and, if you answer after a session, how hard it felt and whether pain
-          stopped you.
+          stopped you, and your optional daily check-in (training, food plan, energy, sleep, soreness and a note; it is never sent to the AI provider).
         </p>
         <p>
           <strong>Photos:</strong> progress photos you add, and your profile picture if you upload your own instead of choosing a built-in one. They are kept in
@@ -55,7 +55,7 @@ const sections: LegalSection[] = [
           diary when you tap Log it.
         </p>
         <p>
-          <strong>Feedback:</strong> anything you send with Send feedback in the app.
+          <strong>Feedback:</strong> anything you send with Send feedback in the app. Each feedback is emailed to the Levlofit team through Brevo, with your account email so we can reply.
         </p>
         <p>
           <strong>Error reports:</strong> when the app hits an unexpected error while you are signed in, it sends the error message and where in the app&rsquo;s
@@ -132,6 +132,10 @@ const sections: LegalSection[] = [
           </li>
           <li>
             <strong>ExerciseDB</strong> (AscendAPI) supplies the exercise animations. When the app loads them, its servers may receive your IP address.
+          </li>
+          <li>
+            <strong>Brevo</strong> sends our sign-up and password emails, and emails each feedback you send in the app to the Levlofit team, with your account
+            email so we can reply.
           </li>
           <li>
             <strong>Cloudflare</strong> (Pages) hosts this website, the Android download and the iPhone web app. The website&rsquo;s fonts are served with the site itself, not loaded from Google. The app asks this

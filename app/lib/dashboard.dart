@@ -15,6 +15,7 @@ import 'account.dart';
 import 'app_version.dart' show appBuild, appVersion;
 import 'avatar.dart';
 import 'body_check.dart';
+import 'checkin.dart';
 import 'coach_chat.dart';
 import 'diet_plan.dart';
 import 'diet_view.dart';
@@ -27,7 +28,7 @@ import 'mark.dart';
 import 'move_animation.dart' show DemoFigure, demoFigure;
 import 'offline_cache.dart';
 import 'onboarding.dart';
-import 'progression.dart' show liftProgress, setLabel;
+import 'progression.dart' show Pain, liftProgress, painFromNotes, painNote, setLabel;
 import 'dashboard_layout.dart';
 import 'reminders.dart';
 import 'level_up.dart';
@@ -757,6 +758,7 @@ class _Bento extends StatelessWidget {
               week: [for (var i = 6; i >= 0; i--) habits.where((h) => h.$5(today.subtract(Duration(days: i)))).length],
               onOpen: () => onOpen(_Tab.habits),
             ),
+          'checkin' => const CheckInCard(),
           'fuel' => _FuelTile(plan: plan, proteins: data.proteins),
           'body' => _BodyTile(plan: plan),
           _ => const SizedBox.shrink(),
