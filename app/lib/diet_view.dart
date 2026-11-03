@@ -7,18 +7,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'diet_plan.dart';
+import 'icons.dart';
 import 'theme.dart';
 
 /// The plate parts in drawing order, with their names for the key under the meals.
 const plateParts = [('grain', 'Grain'), ('protein', 'Protein'), ('veg', 'Veg'), ('fruit', 'Fruit and milk')];
 
-/// Fill per plate part: the brand orange for grain, ink for protein, a muted leaf for veg, the outline tone for fruit.
+/// Fill per plate part, from the theme only: accent for grain, ink for protein, the muted text tone for veg, the
+/// raised surface for fruit and milk. The same four in light and dark.
 Color plateColor(BuildContext context, String part) {
   final c = Theme.of(context).colorScheme;
   return switch (part) {
-    'grain' => accent,
-    'protein' => c.onSurface,
-    'veg' => const Color(0xFF6F8A4E),
+    'grain' => c.primary,
+    'protein' => c.secondary,
+    'veg' => c.onSurfaceVariant,
     _ => c.surfaceContainerHighest,
   };
 }
@@ -31,12 +33,14 @@ class PlatePicture extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        label: 'Plate: ${[for (final (k, name) in plateParts) if ((shares[k] ?? 0) >= 0.05) '$name ${((shares[k]!) * 100).round()}%'].join(', ')}',
-        child: CustomPaint(
-          size: Size.square(size),
-          painter: _PlatePainter([for (final (k, _) in plateParts) (shares[k] ?? 0, plateColor(context, k))], Theme.of(context).colorScheme.outline),
-        ),
-      );
+    label:
+        'Plate: ${[for (final (k, name) in plateParts)
+          if ((shares[k] ?? 0) >= 0.05) '$name ${((shares[k]!) * 100).round()}%'].join(', ')}',
+    child: CustomPaint(
+      size: Size.square(size),
+      painter: _PlatePainter([for (final (k, _) in plateParts) (shares[k] ?? 0, plateColor(context, k))], Theme.of(context).colorScheme.outline),
+    ),
+  );
 }
 
 class _PlatePainter extends CustomPainter {
@@ -54,10 +58,14 @@ class _PlatePainter extends CustomPainter {
       canvas.drawArc(r, start, sweep, true, Paint()..color = color);
       start += sweep;
     }
-    canvas.drawCircle(size.center(Offset.zero), size.width / 2 - 1.5, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = rim);
+    canvas.drawCircle(
+      size.center(Offset.zero),
+      size.width / 2 - 1.5,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = rim,
+    );
   }
 
   @override
@@ -72,15 +80,30 @@ class PlateKey extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final c = Theme.of(context).colorScheme;
-    return Wrap(spacing: 14, runSpacing: 6, children: [
-      for (final (k, name) in plateParts)
-        Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 10, height: 10, decoration: BoxDecoration(color: plateColor(context, k), borderRadius: BorderRadius.circular(3), border: Border.all(color: c.outline))),
-          const SizedBox(width: 6),
-          Text(name, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-        ]),
-      Text('Plate shows where the energy comes from.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-    ]);
+    return Wrap(
+      spacing: 14,
+      runSpacing: 6,
+      children: [
+        for (final (k, name) in plateParts)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: plateColor(context, k),
+                  borderRadius: BorderRadius.circular(3),
+                  border: Border.all(color: c.outline),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(name, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            ],
+          ),
+        Text('Plate shows where the energy comes from.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+      ],
+    );
   }
 }
 
@@ -109,83 +132,115 @@ class _PlateMealCardState extends State<PlateMealCard> {
     final m = widget.meal;
     final food = m.items.where((i) => i.unit != 'oil').toList(); // oil is shown once for the whole day
     final kcal = m.items.fold(0.0, (s, i) => s + i.kcal), protein = m.items.fold(0.0, (s, i) => s + i.protein);
-    return Material(
-      color: c.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: BorderSide(color: c.outline)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          setState(() => _open = !_open);
-        },
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              PlatePicture(shares: plateShares(m)),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(m.name, style: t.titleLarge),
-                  Text([m.time.toUpperCase(), ?widget.tag].join('  ·  '), style: monoLabel(context).copyWith(color: c.tertiary)),
-                ]),
-              ),
-              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text('${kcal.round()} kcal', style: monoNumber(context, size: 16)),
-                Text('${protein.round()} g protein', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-              ]),
-            ]),
-            const SizedBox(height: 10),
-            for (final i in food)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: _open
-                    ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Expanded(child: Text(servingLabel(i), style: t.bodyLarge)),
-                        const SizedBox(width: 10),
-                        Text('${exactLabel(i)}\n${i.kcal.round()} kcal · P ${i.protein.toStringAsFixed(1)} g',
-                            textAlign: TextAlign.right, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-                      ])
-                    : Text(servingLabel(i), style: t.bodyLarge),
-              ),
-            for (final n in widget.notes) Padding(padding: const EdgeInsets.only(top: 6), child: Text(n, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))),
-            const SizedBox(height: 4),
-            Row(children: [
-              if (widget.onSwap != null)
-                TextButton.icon(
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    widget.onSwap!();
-                  },
-                  icon: const Icon(Icons.swap_horiz, size: 18),
-                  label: const Text('Swap'),
+    // The dashboard tile (dashboard.dart _Tile): surface, outline, 22 radius, pressable.
+    return Pressable(
+      child: Material(
+        color: c.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: BorderSide(color: c.outline),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _open = !_open);
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    PlatePicture(shares: plateShares(m)),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(m.name, style: t.titleLarge),
+                          Text([m.time.toUpperCase(), ?widget.tag].join('  ·  '), style: monoLabel(context).copyWith(color: c.tertiary)),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('${kcal.round()} kcal', style: monoNumber(context, size: 16)),
+                        Text('${protein.round()} g protein', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                      ],
+                    ),
+                  ],
                 ),
-              const Spacer(),
-              if (widget.logged)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.check, size: 16, color: c.tertiary),
-                    const SizedBox(width: 4),
-                    Text('In your diary', style: t.labelLarge?.copyWith(color: c.tertiary)),
-                  ]),
-                )
-              else if (widget.onAte != null)
-                FilledButton.tonal(
-                  onPressed: _busy
-                      ? null
-                      : () async {
-                          setState(() => _busy = true);
-                          try {
-                            await widget.onAte!();
-                          } finally {
-                            if (mounted) setState(() => _busy = false);
-                          }
+                const SizedBox(height: 10),
+                for (final i in food)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: _open
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: Text(servingLabel(i), style: t.bodyLarge)),
+                              const SizedBox(width: 10),
+                              Text(
+                                '${exactLabel(i)}\n${i.kcal.round()} kcal · P ${i.protein.toStringAsFixed(1)} g',
+                                textAlign: TextAlign.right,
+                                style: t.bodySmall?.copyWith(color: c.onSurfaceVariant),
+                              ),
+                            ],
+                          )
+                        : Text(servingLabel(i), style: t.bodyLarge),
+                  ),
+                for (final n in widget.notes)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(n, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                  ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    if (widget.onSwap != null)
+                      TextButton.icon(
+                        onPressed: () {
+                          HapticFeedback.selectionClick();
+                          widget.onSwap!();
                         },
-                  child: Text(_busy ? 'Logging...' : 'Ate it'),
+                        icon: const Icon(LvIcons.arrowsClockwise, size: 16),
+                        label: const Text('Swap'),
+                      ),
+                    const Spacer(),
+                    if (widget.logged)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LvIcons.checkCircle, size: 18, color: c.primary),
+                            const SizedBox(width: 6),
+                            Text('IN YOUR DIARY', style: monoLabel(context)),
+                          ],
+                        ),
+                      )
+                    else if (widget.onAte != null)
+                      FilledButton(
+                        onPressed: _busy
+                            ? null
+                            : () async {
+                                setState(() => _busy = true);
+                                try {
+                                  await widget.onAte!();
+                                } finally {
+                                  if (mounted) setState(() => _busy = false);
+                                }
+                              },
+                        child: Text(_busy ? 'Logging...' : 'Ate it'),
+                      ),
+                  ],
                 ),
-            ]),
-          ]),
+              ],
+            ),
+          ),
         ),
       ),
     );
