@@ -6,7 +6,7 @@ void main() {
   final mon = DateTime(2026, 10, 26); // a Monday
   DateTime day(int i) => mon.add(Duration(days: i));
   WeekReport report({int planned = 3, Set<DateTime>? trained, Set<DateTime>? food, Set<DateTime>? checkins, List<Weigh> weights = const []}) =>
-      weeklyReport(monday: mon, plannedPerWeek: planned, trained: trained ?? {}, foodDays: food ?? {}, checkinDays: checkins ?? {}, weights: weights);
+      weeklyReport(monday: mon, plannedPerWeek: planned, trained: trained ?? {}, food: {for (final d in food ?? <DateTime>{}) d: (kcal: 0.0, protein: 0.0, unknown: 0)}, checkinDays: checkins ?? {}, weights: weights);
 
   test('counts only days inside the week, once each', () {
     final r = report(trained: {day(0), day(0).add(const Duration(hours: 9)), day(2), day(7), day(-1)}, food: {day(1)}, checkins: {day(6)});
@@ -16,7 +16,7 @@ void main() {
   });
 
   test('a failed read is reported as unknown, never as zero', () {
-    final r = weeklyReport(monday: mon, plannedPerWeek: 3, trained: {}, foodDays: null, checkinDays: null, weights: const []);
+    final r = weeklyReport(monday: mon, plannedPerWeek: 3, trained: {}, food: null, checkinDays: null, weights: const []);
     expect(r.foodDays, isNull);
     expect(r.missing, containsAll(['Your food log could not be loaded.', 'Check-ins could not be loaded.']));
   });
@@ -60,5 +60,47 @@ void main() {
     expect(find.text('LAST WEEK  ·  26 OCT TO 1 NOV'), findsOneWidget);
     expect(find.text('+0.5 kg'), findsOneWidget);
     expect(find.textContaining('6-week trend'), findsOneWidget);
+  });
+
+  test('food vs targets: averages only over logged days, only from 3 days, unknown items counted', () {
+    WeekReport withFood(Map<int, double> kcalByDay, {int unknown = 0}) => weeklyReport(
+        monday: mon, plannedPerWeek: 3, trained: {}, checkinDays: {}, weights: const [], kcalTarget: 2200, proteinTarget: 120,
+        food: {for (final e in kcalByDay.entries) day(e.key): (kcal: e.value, protein: e.value / 20, unknown: unknown)});
+    final two = withFood({0: 2000, 1: 2400});
+    expect(two.intake, isNull);
+    expect(two.missing, contains('Food is compared with your targets from 3 logged days; this week had 2.'));
+    final r = withFood({0: 2000, 1: 2400, 3: 1600, 9: 5000}, unknown: 1); // day 9 is next week: ignored
+    expect(r.intake, (days: 3, kcal: 2000, protein: 100, kcalTarget: 2200, proteinTarget: 120, unknown: 3));
+  });
+
+  test('strength: best set this week vs the previous session of the same lift; new lifts not counted', () {
+    String iso(DateTime d) => d.toIso8601String().substring(0, 10);
+    Map<String, dynamic> set(String id, int dayOffset, int reps, double? kg) => {'exercise_id': id, 'performed_on': iso(day(dayOffset)), 'reps': reps, 'kg': kg};
+    final sets = [
+      set('squat', -10, 5, 80), set('squat', -3, 5, 82.5), set('squat', 2, 5, 85), // up vs last (82.5)
+      set('row', -4, 10, 40), set('row', 1, 8, 40), set('row', 1, 10, 40), // same: best of the day 10 x 40
+      set('press', -2, 8, 30), set('press', 3, 6, 30), // down: fewer reps at the same weight
+      set('pushup', -5, 12, null), set('pushup', 4, 15, null), // bodyweight: more reps is up
+      set('curl', 2, 10, 12), // new this week
+      set('deadlift', -6, 5, 100), set('deadlift', 8, 5, 110), // next week only: not this week
+    ];
+    expect(strengthTrend(sets, mon), (up: 2, same: 1, down: 1));
+    expect(strengthTrend([set('curl', 2, 10, 12)], mon), isNull);
+  });
+
+  testWidgets('card shows intake against targets, the logging caveat and the lift line', (tester) async {
+    final r = weeklyReport(
+      monday: mon, plannedPerWeek: 3, trained: {day(0)}, checkinDays: {}, weights: const [], kcalTarget: 2200, proteinTarget: 120,
+      food: {for (final i in [0, 1, 2]) day(i): (kcal: 1900.0, protein: 95.0, unknown: 0)},
+      sets: [
+        {'exercise_id': 'squat', 'performed_on': '2026-10-20', 'reps': 5, 'kg': 80},
+        {'exercise_id': 'squat', 'performed_on': '2026-10-27', 'reps': 5, 'kg': 85},
+      ],
+    );
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(child: WeeklyReportCard(report: r)))));
+    expect(find.text('1900 / 2200 kcal'), findsOneWidget);
+    expect(find.text('95 / 120 g'), findsOneWidget);
+    expect(find.textContaining('Meals you did not log are not counted'), findsOneWidget);
+    expect(find.text('1 up · 0 same · 0 down'), findsOneWidget);
   });
 }

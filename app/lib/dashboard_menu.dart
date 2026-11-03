@@ -1308,16 +1308,20 @@ class _CalendarScreenState extends State<_CalendarScreen> {
   /// Effort (1-10) and pain for a logged day, prefilled with what was saved. Same fields the post-session sheet writes.
   Future<void> _editHowItWent(DateTime day) async {
     try {
-      final row = await supabase.from('workout_logs').select('rpe, notes').eq('user_id', _uid).eq('performed_on', _iso(day)).limit(1).maybeSingle();
+      final row = await supabase.from('workout_logs').select('rpe, notes, duration_min').eq('user_id', _uid).eq('performed_on', _iso(day)).limit(1).maybeSingle();
       if (!mounted) return;
-      final answer = await showModalBottomSheet<({int? rpe, Pain? pain})>(
+      final answer = await showModalBottomSheet<({int? rpe, Pain? pain, int? minutes})>(
         context: context,
-        builder: (_) => HowItWentSheet(rpe: row?['rpe'] as int?, pain: painFromNotes(row?['notes'] as String?)),
+        isScrollControlled: true,
+        builder: (sheet) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheet).bottom),
+          child: HowItWentSheet(rpe: row?['rpe'] as int?, pain: painFromNotes(row?['notes'] as String?), minutes: row?['duration_min'] as int?, askMinutes: true),
+        ),
       );
       if (answer == null) return;
       await supabase
           .from('workout_logs')
-          .update({'rpe': answer.rpe, 'notes': answer.pain == null ? null : painNote(answer.pain!)})
+          .update({'rpe': answer.rpe, 'notes': answer.pain == null ? null : painNote(answer.pain!), 'duration_min': answer.minutes})
           .eq('user_id', _uid)
           .eq('performed_on', _iso(day));
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved.')));
@@ -1382,7 +1386,7 @@ class _CalendarScreenState extends State<_CalendarScreen> {
                       child: Text(trained ? 'Remove' : 'Log it'),
                     ),
                 ]),
-                if (trained) Align(alignment: Alignment.centerLeft, child: TextButton.icon(onPressed: () => _editHowItWent(day), icon: const Icon(LvIcons.pencilSimple, size: 16), label: const Text('Edit effort and pain'))),
+                if (trained) Align(alignment: Alignment.centerLeft, child: TextButton.icon(onPressed: () => _editHowItWent(day), icon: const Icon(LvIcons.pencilSimple, size: 16), label: const Text('Edit length, effort and pain'))),
                 if (measures.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text('BODY', style: monoLabel(context)),
@@ -1654,7 +1658,8 @@ class _ProgressScreenState extends State<_ProgressScreen> {
   List<_Json>? _logs;
   List<_Json> _body = [];
   List<_Json> _sets = [];
-  Set<DateTime>? _foodDays, _checkinDays; // last 14 days, for the weekly report; null when the read failed
+  Map<DateTime, DayFood>? _food; // logged food per day, last 14 days, for the weekly report; null when the read failed
+  Set<DateTime>? _checkinDays; // same window; null when the read failed
   List<_Photo> _photos = [];
   String? _error;
   bool _uploading = false;
@@ -1671,7 +1676,19 @@ class _ProgressScreenState extends State<_ProgressScreen> {
     try {
       final since = _iso(DateTime.now().subtract(const Duration(days: 15)));
       // Report-only reads: a failure (or daily_checkins not yet migrated) shows as unknown in the report, not a broken page.
-      final foodRead = supabase.from('food_log').select('day').gte('day', since).limit(500).then<List<_Json>?>((r) => r, onError: (_) => null);
+      // Same entries and food values as the food diary, summed per day (diaryTotals), so the report and diary agree.
+      final foodRead = () async {
+        final rows = await supabase.from('food_log').select('id, day, meal, food_code, packaged_food_id, grams').gte('day', since).limit(500);
+        final entries = [for (final r in rows) (day: DateTime.parse(r['day'] as String), entry: entryFromRow(r))];
+        final foods = await supabaseDiary.foods({for (final e in entries) e.entry.foodCode});
+        return <DateTime, DayFood>{
+          for (final day in {for (final e in entries) e.day})
+            day: () {
+              final t = diaryTotals([for (final e in entries) if (e.day == day) e.entry], foods);
+              return (kcal: t.kcal, protein: t.protein, unknown: t.unknownFoods);
+            }(),
+        };
+      }().then<Map<DateTime, DayFood>?>((r) => r, onError: (_) => null);
       final checkinRead = supabase.from('daily_checkins').select('day').gte('day', since).limit(20).then<List<_Json>?>((r) => r, onError: (_) => null);
       final [logs, body, photos, sets] = await Future.wait([
         supabase.from('workout_logs').select('performed_on, duration_min').eq('user_id', _uid).order('performed_on', ascending: true).limit(2000),
@@ -1681,7 +1698,8 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         supabase.from('set_logs').select('exercise_id, performed_on, reps, kg').eq('user_id', _uid)
             .gte('performed_on', _iso(DateTime.now().subtract(const Duration(days: 84)))).limit(2000),
       ]);
-      final [food, checkins] = [await foodRead, await checkinRead];
+      final food = await foodRead;
+      final checkins = await checkinRead;
       // Private bucket: each photo gets a short-lived signed link.
       final urls = <String, String>{
         if (photos.isNotEmpty)
@@ -1693,7 +1711,7 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         _logs = logs;
         _body = body;
         _sets = sets;
-        _foodDays = food == null ? null : {for (final r in food) DateTime.parse(r['day'] as String)};
+        _food = food;
         _checkinDays = checkins == null ? null : {for (final r in checkins) DateTime.parse(r['day'] as String)};
         _photos = [
           for (final p in photos) (id: p['id'] as String, path: p['path'] as String, day: DateTime.parse(p['taken_on'] as String), url: urls[p['path']]),
@@ -1897,7 +1915,7 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         logs: logs,
         body: _body,
         sets: _sets,
-        foodDays: _foodDays,
+        food: _food,
         checkinDays: _checkinDays,
         photos: _photos,
         uploading: _uploading,
@@ -1927,7 +1945,7 @@ List<Widget> _progressBody(
   required List<_Json> logs,
   required List<_Json> body,
   List<_Json> sets = const [],
-  Set<DateTime>? foodDays = const {},
+  Map<DateTime, DayFood>? food = const {},
   Set<DateTime>? checkinDays = const {},
   required List<_Photo> photos,
   required bool uploading,
@@ -1994,9 +2012,12 @@ List<Widget> _progressBody(
         monday: monday.subtract(const Duration(days: 7)),
         plannedPerWeek: perWeek,
         trained: days,
-        foodDays: foodDays,
+        food: food,
         checkinDays: checkinDays,
         weights: weights,
+        kcalTarget: (plan['nutrition'] as _Json?)?['energyKcal'] as num?,
+        proteinTarget: (plan['nutrition'] as _Json?)?['proteinG'] as num?,
+        sets: sets,
       ),
     ),
     const SizedBox(height: 12),

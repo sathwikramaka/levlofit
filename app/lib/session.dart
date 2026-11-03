@@ -904,7 +904,7 @@ class _SessionScreenState extends State<SessionScreen> {
   /// After a logged session: how hard was it (1 to 10) and was there pain. Optional; saved on today's workout_logs
   /// row (rpe, and notes as "pain: ..."), and used for the next sessions' coaching notes.
   Future<void> _askHowItWent() async {
-    final answer = await showModalBottomSheet<({int? rpe, Pain? pain})>(context: context, builder: (_) => const HowItWentSheet());
+    final answer = await showModalBottomSheet<({int? rpe, Pain? pain, int? minutes})>(context: context, builder: (_) => const HowItWentSheet());
     if (answer == null || (answer.rpe == null && answer.pain == null)) return;
     try {
       await supabase
@@ -1170,9 +1170,11 @@ class _CoachNotes extends StatelessWidget {
 
 /// Effort (1 to 10) and pain after a session. Both optional; "Skip" saves nothing.
 class HowItWentSheet extends StatefulWidget {
-  const HowItWentSheet({super.key, this.rpe, this.pain});
+  const HowItWentSheet({super.key, this.rpe, this.pain, this.minutes, this.askMinutes = false});
   final int? rpe; // earlier answers when editing a logged session
   final Pain? pain;
+  final int? minutes;
+  final bool askMinutes; // editing a logged day: the session length can be corrected too (workout_logs.duration_min)
 
   @override
   State<HowItWentSheet> createState() => HowItWentSheetState();
@@ -1181,6 +1183,17 @@ class HowItWentSheet extends StatefulWidget {
 class HowItWentSheetState extends State<HowItWentSheet> {
   late int? _rpe = widget.rpe;
   late Pain? _pain = widget.pain;
+  late final _minutes = TextEditingController(text: widget.minutes?.toString() ?? '');
+
+  @override
+  void dispose() {
+    _minutes.dispose();
+    super.dispose();
+  }
+
+  /// 1 to 600 minutes (the workout_logs check), or null when empty; anything else is not a valid answer.
+  int? get _mins => int.tryParse(_minutes.text.trim());
+  bool get _minutesValid => _minutes.text.trim().isEmpty || ((_mins ?? 0) >= 1 && (_mins ?? 0) <= 600);
 
   @override
   Widget build(BuildContext context) {
@@ -1207,12 +1220,24 @@ class HowItWentSheetState extends State<HowItWentSheet> {
             for (final (p, label) in const [(Pain.none, 'None'), (Pain.mild, 'Some soreness'), (Pain.stopped, 'Pain made me stop')])
               ChoiceChip(label: Text(label), selected: _pain == p, onSelected: (on) => setState(() => _pain = on ? p : null)),
           ]),
+          if (widget.askMinutes) ...[
+            const SizedBox(height: 16),
+            Text('How long was it?', style: t.bodyMedium),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _minutes,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(3)],
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(suffixText: 'min', hintText: 'e.g. 45', errorText: _minutesValid ? null : '1 to 600 minutes'),
+            ),
+          ],
           const SizedBox(height: 20),
           Row(children: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Skip')),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(widget.askMinutes ? 'Cancel' : 'Skip')),
             const Spacer(),
             FilledButton(
-              onPressed: _rpe == null && _pain == null ? null : () => Navigator.pop(context, (rpe: _rpe, pain: _pain)),
+              onPressed: !_minutesValid || (_rpe == null && _pain == null && _mins == null) ? null : () => Navigator.pop(context, (rpe: _rpe, pain: _pain, minutes: _mins)),
               child: const Text('Save'),
             ),
           ]),

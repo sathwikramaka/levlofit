@@ -45,7 +45,7 @@ wrong) · **N/A** · **Blocked** (needs an owner, clinical, legal or licensing d
 |---|---|---|---|
 | 5.1 Dashboard | Done | `dashboard.dart` greeting, rings, today's workout, fuel, body, hydration, habits tiles; offline cache `offline_cache.dart` | none |
 | 5.2 Daily check-in | **Done in Stage 3 (local)** | `daily_checkins` (migration 20261103300000), `app/lib/checkin.dart` card + sheet | Not used by plan rules or the AI yet (by design) |
-| 5.3 Workout logging | Done (Stage 3 local) | `workout_logs` (duration, rpe, notes), `set_logs` reps/kg, `session_changes` skip/swap, rest timer; Calendar day sheet now edits effort and pain of a logged day | Duration edit not added |
+| 5.3 Workout logging | Done (Stage 3 local) | `workout_logs` (duration, rpe, notes), `set_logs` reps/kg, `session_changes` skip/swap, rest timer; Calendar day sheet edits length (1-600 min), effort and pain of a logged day | none |
 | 5.4 Meal logging | Done | `food_log` = actual intake, separate from plan; edit meal and grams (`food_diary.dart` update, grant in the food diary migration); add a whole meal at once; packaged foods | Correction 2026-11-03: the first version of this audit said grams could not be edited; wrong, the grant and UI exist |
 | 5.5 Reminders | Done (quiet hours Stage 5 local) | `reminders.dart`, `reminder_prefs`, `custom_reminders`, opt-in, master switch; water reminder hours now chosen by the person (migration 20261103400000) | Workout, weigh-in and custom reminders keep the times the person picked |
 
@@ -54,7 +54,7 @@ wrong) · **N/A** · **Blocked** (needs an owner, clinical, legal or licensing d
 | Item | Status | Evidence | Action |
 |---|---|---|---|
 | 6.1 Progress dashboard | Done | `dashboard_menu.dart` Progress: 12-week bars, weight trend (least squares over 6 weeks), measurements, photos | none |
-| 6.2 Weekly report | **Done in Stage 4 (local)** | `app/lib/weekly_report.dart`: last full week on Progress, sessions vs plan, food-log days, check-ins, weight average difference (2+ weigh-ins each week), one observation and one next step by fixed rules; unknown data shown as unknown | Food adherence against calorie targets and strength change not in the weekly card (strength card already on Progress) |
+| 6.2 Weekly report | **Done in Stage 4 (local)** | `app/lib/weekly_report.dart`: last full week on Progress, sessions vs plan, food-log days, check-ins, weight average difference (2+ weigh-ins each week), one observation and one next step by fixed rules; unknown data shown as unknown Stabilisation stage 1: average logged kcal and protein vs plan targets from 3 logged days (diaryTotals, same values as the diary), lifts vs their previous session (up/same/down) | Logged intake only; unlogged meals read low (stated on the card) |
 
 ### Phase 3: personalisation
 

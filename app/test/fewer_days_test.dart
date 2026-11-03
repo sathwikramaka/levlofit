@@ -34,4 +34,21 @@ void main() {
   test('this week and sessions before the window do not count', () {
     expect(fewerDaysOffer(planned: 3, logged: on([1, 2, 3, 5, 13]).union({DateTime(2026, 11, 2), DateTime(2026, 11, 3)}), planSince: since, today: today)!.perWeek, [1, 0, 0]);
   });
+
+  group('welcome back', () {
+    final today = DateTime(2026, 11, 20);
+    final oldPlan = DateTime(2026, 9, 1);
+    test('a break of 14 days or more, counted from the last session', () {
+      expect(welcomeBack(logged: {DateTime(2026, 11, 6)}, planSince: oldPlan, today: today), (days: 14));
+      expect(welcomeBack(logged: {DateTime(2026, 11, 7)}, planSince: oldPlan, today: today), isNull);
+    });
+    test('trained today, a new plan, or no plan date: no card', () {
+      expect(welcomeBack(logged: {DateTime(2026, 10, 1), DateTime(2026, 11, 20, 7)}, planSince: oldPlan, today: today), isNull);
+      expect(welcomeBack(logged: {}, planSince: DateTime(2026, 11, 10), today: today), isNull);
+      expect(welcomeBack(logged: {DateTime(2026, 10, 1)}, planSince: null, today: today), isNull);
+    });
+    test('no session in the window: unknown gap, not a made-up number', () {
+      expect(welcomeBack(logged: {}, planSince: oldPlan, today: today), (days: null));
+    });
+  });
 }
