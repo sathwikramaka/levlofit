@@ -13,7 +13,7 @@ cleanup); the applied result is the current tools/ files.
 | Data | Backed up by | Recovery point (worst case) | Restore tested |
 |---|---|---|---|
 | Database (public, auth, storage metadata) | db-backup.yml daily, AES-256 artifact, 30 days | about 24 h | Weekly restore-drill.yml (database only), local rehearsals |
-| progress-photos bucket (progress photos, profile pictures) | tools/backup_prod.sh only, run by the owner before a release | since the last manual run: **unbounded**; no production Storage copy has been made yet | Local and synthetic objects only (section 8); never with production files |
+| progress-photos bucket (progress photos, profile pictures) | storage-backup.yml daily (2026-11-03; **inactive until the owner adds STORAGE_S3_KEY_ID / STORAGE_S3_SECRET**), AES-256 artifact, 30 days; tools/backup_prod.sh by hand | about 24 h once active; **unbounded until then** | tools/storage_restore_drill.sh on a throwaway stack with synthetic photos (PASS 2026-11-03); never with production files |
 | Body-check photos | not stored anywhere (request only) | n/a | n/a |
 | App offline copy, reminders | phone only, encrypted secure store, never backed up (allowBackup false) | n/a, rebuilt from the server | n/a |
 
@@ -22,6 +22,44 @@ bucket keeps its `public = false` setting from migration 20261003200000_threads_
 copied back with the service key, so private photos stay private; the restore drill checks every storage.objects row
 has its file. Gaps for the owner: run tools/backup_prod.sh against production once (needs credentials), then decide
 whether photos need a scheduled copy (it would need a Storage access secret in GitHub Actions).
+
+## Storage backup and restore (2026-11-03)
+
+**Job:** `.github/workflows/storage-backup.yml`, daily at 02:15 IST.
+- `tools/storage_backup.py backup` downloads every object in `progress-photos` through Storage's S3 protocol and writes
+  MANIFEST.tsv (bucket, key, size, sha256).
+- The job then checks the object count against `storage.objects`, encrypts (gpg AES-256, BACKUP_PASSPHRASE), decrypts once
+  to prove it, and keeps the artifact 30 days.
+- Logs show counts only (the repository is public; object names start with user ids).
+
+**Alerting:** a failed run fails the workflow, and GitHub emails the repository owner (the same alert as ops-health.yml).
+keep-alive.yml stops GitHub pausing scheduled workflows on an inactive repository.
+
+**To activate (owner):**
+1. Supabase > Project Settings > Storage > S3 access keys: create a key.
+2. GitHub > Settings > Secrets and variables > Actions: add `STORAGE_S3_KEY_ID` and `STORAGE_S3_SECRET`.
+3. Actions > "Daily Storage backup" > Run workflow once, and check it is green.
+
+The key can read and write every bucket (S3 access bypasses row security), so it lives only in GitHub secrets.
+
+**Storage restore:**
+1. Download the artifact; check `sha256sum -c *.sha256`.
+2. `gpg -d levlofit-storage-<stamp>.tar.gz.gpg | tar -xz`
+3. Set S3_ENDPOINT / S3_KEY_ID / S3_SECRET for the target project.
+4. `python tools/storage_backup.py restore levlofit-storage-<stamp>`. This uploads under the same keys and re-downloads
+   each object to compare sha256.
+
+Ownership is the first path segment (`<user id>/...`, Storage policy "own progress photos"), and `progress_photos.path`
+holds the same key, so keeping the key keeps the owner and the reference. Restore into an empty or test project first;
+it overwrites objects with the same key.
+
+**Drill:** `bash tools/storage_restore_drill.sh`, on a throwaway stack with synthetic PNGs. Result on 2026-11-03: PASS.
+- 5 objects backed up (394 bytes), encrypted (862 bytes), all deleted, decrypted, restored, 5 of 5 sha256 match.
+- Owner A sees 3 and owner B sees 2 through the policy, and 0 photo rows are left without a file.
+- Negative control: one file removed after the restore makes verify fail.
+- Stack and volumes removed afterwards.
+
+**RTO:** minutes for a few hundred photos (one upload per object). **RPO:** about 24 h once active.
 
 ## 1. Tools
 

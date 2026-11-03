@@ -1,0 +1,69 @@
+# Daily encrypted backup of Supabase Storage (progress photos and profile pictures in the progress-photos bucket).
+# The database dump (db-backup.yml) does not contain files; this does. tools/storage_backup.py downloads every object
+# through Storage's S3 protocol and writes a checksum manifest; the job then checks the object count against
+# storage.objects, encrypts (gpg AES-256), proves the archive decrypts, and keeps it 30 days as a workflow artifact.
+#
+# The repository is public: logs print counts only, and the artifact is readable only with BACKUP_PASSPHRASE.
+# A failed run is the alert: GitHub emails the repository owner when a scheduled workflow fails.
+#
+# Repository secrets (Settings > Secrets and variables > Actions):
+#   STORAGE_S3_KEY_ID, STORAGE_S3_SECRET  Supabase > Project Settings > Storage > S3 access keys (Storage only)
+#   SUPABASE_DB_URL                       same as db-backup.yml (count check against storage.objects)
+#   BACKUP_PASSPHRASE                     same as db-backup.yml
+# Restore: docs/BACKUP_RECOVERY_PLAN.md, section "Storage restore".
+name: Daily Storage backup
+
+on:
+  schedule:
+    - cron: "45 20 * * *" # 02:15 IST, after the database backup
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storage-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Download, check, encrypt
+        env:
+          S3_ENDPOINT: https://ndeozgxowggkljluaccz.supabase.co/storage/v1/s3
+          S3_REGION: ap-south-1
+          S3_KEY_ID: ${{ secrets.STORAGE_S3_KEY_ID }}
+          S3_SECRET: ${{ secrets.STORAGE_S3_SECRET }}
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          for v in S3_KEY_ID S3_SECRET DB_URL PASSPHRASE; do [ -n "${!v}" ] || { echo "Missing secret for $v"; exit 1; }; done
+          pip install --quiet boto3==1.35.99
+          umask 077
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          dir="levlofit-storage-$stamp"
+          mkdir "$dir"
+          python tools/storage_backup.py backup "$dir"
+          got=$(wc -l < "$dir/MANIFEST.tsv")
+          want=$(psql "$DB_URL" -v ON_ERROR_STOP=1 -At -c "select count(*) from storage.objects where bucket_id = 'progress-photos'")
+          [ "$got" = "$want" ] || { echo "FAIL: backed up $got objects, storage.objects has $want"; exit 1; }
+          echo "OK   count matches storage.objects ($want)"
+          tar -czf "$dir.tar.gz" "$dir"
+          rm -rf "$dir"
+          printf '%s' "$PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 -o "$dir.tar.gz.gpg" "$dir.tar.gz"
+          rm -f "$dir.tar.gz"
+          printf '%s' "$PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 -d "$dir.tar.gz.gpg" | tar -tz > /dev/null
+          sha256sum "$dir.tar.gz.gpg" | tee "$dir.tar.gz.gpg.sha256"
+          echo "NAME=$dir" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NAME }}
+          path: ${{ env.NAME }}.tar.gz.gpg*
+          retention-days: 30
+          if-no-files-found: error
