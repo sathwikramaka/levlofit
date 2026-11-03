@@ -28,7 +28,7 @@ void main() {
     Reminders.alarmClockCancelOverride = null;
   });
 
-  const prefsOn = (enabled: true, workout: TimeOfDay(hour: 18, minute: 0), waterEveryH: 2, weighInWeekday: 1);
+  const prefsOn = (enabled: true, workout: TimeOfDay(hour: 18, minute: 0), waterEveryH: 2, weighInWeekday: 1, waterWindow: null);
   final custom = <CustomReminder>[(id: 'a', name: 'Creatine', at: const TimeOfDay(hour: 8, minute: 0), weekdays: <int>{}, enabled: true)];
 
   test('the test alarm is one-off and outside the reminder range', () {

@@ -186,7 +186,7 @@ void main() {
 
   group('exact and inexact scheduling plans', () {
     const zone = 'Asia/Kolkata';
-    final slots = slotsFor((enabled: true, workout: const TimeOfDay(hour: 18, minute: 0), waterEveryH: 3, weighInWeekday: 1), const {1: 'S', 3: 'S'});
+    final slots = slotsFor((enabled: true, workout: const TimeOfDay(hour: 18, minute: 0), waterEveryH: 3, weighInWeekday: 1, waterWindow: null), const {1: 'S', 3: 'S'});
 
     test('every slot id is unique, so one reminder never posts twice', () {
       expect(slots.map((s) => s.id).toSet().length, slots.length);

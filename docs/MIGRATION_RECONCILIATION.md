@@ -195,7 +195,11 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (2), updated 2026-11-03
+## Pending production items (3), updated 2026-11-03
+
+- 20261103400000_reminder_water_window: reminder_prefs.water_from / water_to (nullable hours, both or neither) and
+  their column grants. Additive; older builds ignore them and the new build only sends them once a window is chosen.
+  Verify and roll back: docs/RELEASE_CHECKLIST.md 3.7y.
 
 - 20261103300000_daily_checkins: new own-row table daily_checkins (optional daily check-in), RLS "own check-ins",
   column grants, no anon access. Additive. Apply before releasing the app build with the check-in card (older builds

@@ -47,7 +47,7 @@ wrong) · **N/A** · **Blocked** (needs an owner, clinical, legal or licensing d
 | 5.2 Daily check-in | **Done in Stage 3 (local)** | `daily_checkins` (migration 20261103300000), `app/lib/checkin.dart` card + sheet | Not used by plan rules or the AI yet (by design) |
 | 5.3 Workout logging | Done (Stage 3 local) | `workout_logs` (duration, rpe, notes), `set_logs` reps/kg, `session_changes` skip/swap, rest timer; Calendar day sheet now edits effort and pain of a logged day | Duration edit not added |
 | 5.4 Meal logging | Done | `food_log` = actual intake, separate from plan; edit meal and grams (`food_diary.dart` update, grant in the food diary migration); add a whole meal at once; packaged foods | Correction 2026-11-03: the first version of this audit said grams could not be edited; wrong, the grant and UI exist |
-| 5.5 Reminders | Done | `reminders.dart`, `reminder_prefs`, `custom_reminders`, opt-in | quiet hours not configurable (fixed 09:00-21:00 for water) |
+| 5.5 Reminders | Done (quiet hours Stage 5 local) | `reminders.dart`, `reminder_prefs`, `custom_reminders`, opt-in, master switch; water reminder hours now chosen by the person (migration 20261103400000) | Workout, weigh-in and custom reminders keep the times the person picked |
 
 ### Phase 2: progress
 
@@ -60,7 +60,7 @@ wrong) · **N/A** · **Blocked** (needs an owner, clinical, legal or licensing d
 
 | Item | Status | Evidence | Action |
 |---|---|---|---|
-| 7.1 Adaptive workouts | Partial | `progression.dart` double progression, deloads, pain stop (batch C); `session_changes` | Missed-schedule -> fewer-days offer exists via `plan_changes` days_per_week |
+| 7.1 Adaptive workouts | Done (Stage 5 local) | `progression.dart` double progression, deloads, pain stop; new rule fewerDaysOffer v1: 3 full weeks inside the current plan all below plan, at least one session -> dashboard offers the rounded-up average (person taps Switch; Keep hides it 4 weeks; old plan stays in generated_plans) | The reason is shown to the person but not stored server-side (plan_changes is server-written only) |
 | 7.2 Adaptive nutrition | Done | `swaps.dart`, regions, budget, kitchen, cooking time, diet type, allergies | none |
 | 7.3 Governance | Done | `plan_changes` proposed/confirmed with from_value; plan snapshots kept in `generated_plans` | none |
 

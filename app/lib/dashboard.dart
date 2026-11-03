@@ -28,7 +28,7 @@ import 'mark.dart';
 import 'move_animation.dart' show DemoFigure, demoFigure;
 import 'offline_cache.dart';
 import 'onboarding.dart';
-import 'progression.dart' show Pain, liftProgress, painFromNotes, painNote, setLabel;
+import 'progression.dart' show Pain, fewerDaysOffer, liftProgress, painFromNotes, painNote, setLabel;
 import 'dashboard_layout.dart';
 import 'reminders.dart';
 import 'level_up.dart';
@@ -127,6 +127,7 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   late Future<_Data> _data = _load();
   Set<DateTime> _logged = {}; // days with a logged session, last 8 weeks
+  DateTime? _planSince; // when the current plan was built; the fewer-days rule only counts weeks inside it
   Map<DateTime, int> _minutes = {}; // minutes trained on those days, when known
   bool _saving = false;
   _Data? _loaded; // for the menu, which can open before or after the first load
@@ -204,7 +205,7 @@ class _DashboardState extends State<Dashboard> {
     try {
       [profile, latest] = await Future.wait([
       supabase.from('profiles').select('display_name, sex, birth_year, height_cm, weight_kg, equipment, equipment_items, injuries, health_flags, days_per_week, session_minutes, water_target_ml, avatar').eq('id', _uid).single(),
-      supabase.from('generated_plans').select('plan, input').eq('user_id', _uid).order('created_at', ascending: false).limit(1).single(),
+      supabase.from('generated_plans').select('plan, input, created_at').eq('user_id', _uid).order('created_at', ascending: false).limit(1).single(),
     ]).timeout(const Duration(seconds: 8)); // a dead network can hang far longer; then the saved copy opens instead
     final goals = ((latest['plan'] as _Json)['goals'] as List).cast<_Json>();
     results = await Future.wait<Object?>([
@@ -252,6 +253,7 @@ class _DashboardState extends State<Dashboard> {
     final rows = (results[0] as List).cast<_Json>();
     final logs = (results[2] as List).cast<_Json>();
     _logged = {for (final r in logs) DateTime.parse(r['performed_on'] as String)};
+    _planSince = DateTime.tryParse((latest['created_at'] as String?) ?? '')?.toLocal(); // older offline copies lack it: no offer
     _minutes = {for (final r in logs) if (r['duration_min'] != null) DateTime.parse(r['performed_on'] as String): r['duration_min'] as int};
     _loaded = (
       name: profile['display_name'] as String?,
@@ -508,6 +510,8 @@ class _DashboardState extends State<Dashboard> {
               onCustomise: _customise,
               onChooseTasks: _chooseTasks,
               onCelebrated: _onCelebrated,
+              planSince: _offlineAt == null ? _planSince : null, // no plan changes from a read-only offline copy
+              onPlanChanged: () => setState(() { _data = _load(); }),
             );
             final at = _offlineAt;
             if (at == null) return bento;
@@ -613,7 +617,7 @@ class _DashboardState extends State<Dashboard> {
 
 /// Renders the dashboard body from a plan without Supabase, so layout can be tested at phone size.
 @visibleForTesting
-Widget dashboardBentoForTest(Map<String, dynamic> plan, {Set<DateTime> logged = const {}, List<CardPref>? layout, Set<String>? dailyTasks, ValueChanged<int>? onCelebrated}) => _Bento(
+Widget dashboardBentoForTest(Map<String, dynamic> plan, {Set<DateTime> logged = const {}, List<CardPref>? layout, Set<String>? dailyTasks, ValueChanged<int>? onCelebrated, DateTime? planSince}) => _Bento(
       data: (name: 'Asha Rao', profile: const {}, plan: plan, input: const {'sessionMinutes': 45}, levels: const {}, proteins: const [], tier: Tier.home, assessed: const {}, water: const {}, habits: const {}, swaps: const {}, lighter: false, moves: const []),
       logged: logged,
       minutes: {for (final d in logged) d: 45},
@@ -628,6 +632,8 @@ Widget dashboardBentoForTest(Map<String, dynamic> plan, {Set<DateTime> logged = 
       onCustomise: () {},
       onChooseTasks: () {},
       onCelebrated: onCelebrated ?? (_) {},
+      planSince: planSince,
+      onPlanChanged: () {},
     );
 
 
@@ -647,7 +653,11 @@ class _Bento extends StatelessWidget {
     required this.onCustomise,
     required this.onChooseTasks,
     required this.onCelebrated,
+    this.planSince,
+    this.onPlanChanged,
   });
+  final DateTime? planSince;
+  final VoidCallback? onPlanChanged;
   final List<CardPref> layout;
   final Set<String> dailyTasks;
   final String? lastCelebrated; // day the daily-goal celebration last played on this device
@@ -785,6 +795,12 @@ class _Bento extends StatelessWidget {
                   _LevelPrompt(goalName: (goals.first['name'] ?? goals.first['goal']) as String, onTap: onCheckLevel),
                 ],
                 if (important.isNotEmpty) ...[const SizedBox(height: 12), _ReviewRow(review: review, important: important)],
+                if (planSince case final since?)
+                  if (fewerDaysOffer(planned: perWeek, logged: logged, planSince: since, today: now) case final offer?)
+                    if (!_FewerDaysCard.dismissed(since)) ...[
+                      const SizedBox(height: 12),
+                      _FewerDaysCard(planned: perWeek, planSince: since, offer: offer, onChanged: onPlanChanged ?? () {}),
+                    ],
               ],
               const SizedBox(height: 12),
             ],
@@ -1009,6 +1025,79 @@ class _TodayCard extends StatelessWidget {
                   ),
                 ]),
         ),
+      ]),
+    );
+  }
+}
+
+/// The fewer-days offer (progression.dart fewerDaysOffer): the person decides; nothing changes until they tap Switch.
+/// "Keep" hides it for four weeks on this phone for this plan (keyed by the plan's build time, so a new plan asks afresh).
+class _FewerDaysCard extends StatefulWidget {
+  const _FewerDaysCard({required this.planned, required this.planSince, required this.offer, required this.onChanged});
+  final int planned;
+  final DateTime planSince;
+  final ({int suggested, List<int> perWeek}) offer;
+  final VoidCallback onChanged;
+
+  static String _key(DateTime planSince) => 'fewer_days_kept:${planSince.toUtc().toIso8601String()}';
+  static bool dismissed(DateTime planSince) {
+    final at = DateTime.tryParse(prefs.getString(_key(planSince)) ?? '');
+    return at != null && DateTime.now().difference(at).inDays < 28;
+  }
+
+  @override
+  State<_FewerDaysCard> createState() => _FewerDaysCardState();
+}
+
+class _FewerDaysCardState extends State<_FewerDaysCard> {
+  bool _busy = false;
+  bool _hidden = false;
+
+  Future<void> _switch() async {
+    setState(() => _busy = true);
+    try {
+      // Same path as Protocol: the profile setting, then a rebuilt plan (the old plan stays in history).
+      await supabase.from('profiles').update({'days_per_week': widget.offer.suggested}).eq('id', supabase.auth.currentUser!.id);
+      await supabase.functions.invoke('generate-plan');
+      widget.onChanged();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not change your plan. Check your connection and try again.')));
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_hidden) return const SizedBox.shrink();
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final o = widget.offer;
+    final weeks = o.perWeek.join(', ');
+    return _Tile(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('PLAN FIT', style: monoLabel(context)),
+        const SizedBox(height: 4),
+        Text('Try ${o.suggested} training ${o.suggested == 1 ? 'day' : 'days'} a week?', style: t.titleMedium),
+        const SizedBox(height: 4),
+        Text('The last three weeks you trained $weeks days, and your plan has ${widget.planned}. A plan that fits your week is '
+            'easier to keep, and you can add days again in Protocol at any time.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        const SizedBox(height: 6),
+        Row(children: [
+          TextButton(
+            onPressed: _busy
+                ? null
+                : () {
+                    prefs.setString(_FewerDaysCard._key(widget.planSince), DateTime.now().toIso8601String());
+                    setState(() => _hidden = true);
+                  },
+            child: Text('Keep ${widget.planned}'),
+          ),
+          const Spacer(),
+          FilledButton(onPressed: _busy ? null : _switch, child: Text(_busy ? 'Updating…' : 'Switch to ${o.suggested}')),
+        ]),
       ]),
     );
   }

@@ -14,12 +14,15 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'main.dart';
 
-typedef ReminderPrefs = ({bool enabled, TimeOfDay? workout, int? waterEveryH, int? weighInWeekday});
+/// [waterWindow]: the hours water reminders run (quiet outside them); null means the default 09:00 to 21:00.
+typedef ReminderPrefs = ({bool enabled, TimeOfDay? workout, int? waterEveryH, int? weighInWeekday, ({int from, int to})? waterWindow});
 
-const defaultPrefs = (enabled: true, workout: TimeOfDay(hour: 18, minute: 0), waterEveryH: 2, weighInWeekday: 1);
+const defaultWaterWindow = (from: 9, to: 21);
+
+const defaultPrefs = (enabled: true, workout: TimeOfDay(hour: 18, minute: 0), waterEveryH: 2, weighInWeekday: 1, waterWindow: null);
 
 /// Everything off: applying it cancels every Levlofit reminder on this phone and nothing else.
-const remindersOff = (enabled: false, workout: null, waterEveryH: null, weighInWeekday: null);
+const remindersOff = (enabled: false, workout: null, waterEveryH: null, weighInWeekday: null, waterWindow: null);
 
 /// One reminder at a time of day: weekday 1 to 7, or null for every day.
 typedef Slot = ({int id, int? weekday, int hour, int minute, String title, String body});
@@ -51,9 +54,9 @@ List<Slot> slotsFor(ReminderPrefs p, Map<int, String> sessions, {List<CustomRemi
     if (w != null)
       for (final e in sessions.entries)
         (id: 100 + e.key, weekday: e.key, hour: w.hour, minute: w.minute, title: 'Time to train', body: '${e.value} is on today. Your moves are ready in Levlofit.'),
-    // Water through the waking day, 09:00 to 21:00.
+    // Water through the person's waking hours (default 09:00 to 21:00); nothing outside them.
     if (p.waterEveryH case final every?)
-      for (var h = 9; h <= 21; h += every) (id: 200 + h, weekday: null, hour: h, minute: 0, title: 'Water check', body: 'A glass now keeps you on track for today.'),
+      for (var h = (p.waterWindow ?? defaultWaterWindow).from; h <= (p.waterWindow ?? defaultWaterWindow).to; h += every) (id: 200 + h, weekday: null, hour: h, minute: 0, title: 'Water check', body: 'A glass now keeps you on track for today.'),
     if (p.weighInWeekday case final day?) (id: 300, weekday: day, hour: 8, minute: 0, title: 'Weekly weigh-in', body: 'Before breakfast, after the toilet. Log it in Progress.'),
     for (final (i, r) in own.indexed)
       if (r.enabled)
@@ -406,7 +409,8 @@ Future<ReminderPrefs> loadReminderPrefs() async {
     return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
-  return (enabled: row['enabled'] as bool, workout: time(row['workout_at']), waterEveryH: row['water_every_h'] as int?, weighInWeekday: row['weigh_in_weekday'] as int?);
+  return (enabled: row['enabled'] as bool, workout: time(row['workout_at']), waterEveryH: row['water_every_h'] as int?, weighInWeekday: row['weigh_in_weekday'] as int?,
+      waterWindow: row['water_from'] is int && row['water_to'] is int ? (from: row['water_from'] as int, to: row['water_to'] as int) : null);
 }
 
 Future<void> saveReminderPrefs(ReminderPrefs p) => supabase.from('reminder_prefs').upsert({
@@ -414,6 +418,8 @@ Future<void> saveReminderPrefs(ReminderPrefs p) => supabase.from('reminder_prefs
       'workout_at': p.workout == null ? null : '${p.workout!.hour.toString().padLeft(2, '0')}:${p.workout!.minute.toString().padLeft(2, '0')}',
       'water_every_h': p.waterEveryH,
       'weigh_in_weekday': p.weighInWeekday,
+      // Sent only when set, so saving from this build works before the water-window migration is applied.
+      if (p.waterWindow case final w?) ...{'water_from': w.from, 'water_to': w.to},
       'updated_at': utcNow(),
     });
 

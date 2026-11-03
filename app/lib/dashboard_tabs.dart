@@ -779,11 +779,12 @@ class _SettingsScreenState extends State<_SettingsScreen> {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     final prefs = _prefs;
-    ReminderPrefs with_({bool? enabled, Object? workout = _keep, Object? water = _keep, Object? weighIn = _keep}) => (
+    ReminderPrefs with_({bool? enabled, Object? workout = _keep, Object? water = _keep, Object? weighIn = _keep, Object? window = _keep}) => (
           enabled: enabled ?? prefs!.enabled,
           workout: identical(workout, _keep) ? prefs!.workout : workout as TimeOfDay?,
           waterEveryH: identical(water, _keep) ? prefs!.waterEveryH : water as int?,
           weighInWeekday: identical(weighIn, _keep) ? prefs!.weighInWeekday : weighIn as int?,
+          waterWindow: identical(window, _keep) ? prefs!.waterWindow : window as ({int from, int to})?,
         );
     return _Page(
       eyebrow: 'REMINDERS',
@@ -842,12 +843,31 @@ class _SettingsScreenState extends State<_SettingsScreen> {
                           ),
                         ]),
                         const SizedBox(height: 14),
-                        Text('Water, 9 am to 9 pm', style: t.titleMedium),
+                        Text('Water', style: t.titleMedium),
                         const SizedBox(height: 6),
                         Wrap(spacing: 8, children: [
                           for (final h in const [null, 1, 2, 3])
                             ChoiceChip(label: Text(h == null ? 'Off' : 'Every $h h'), selected: prefs.waterEveryH == h, onSelected: (_) => _save(with_(water: h))),
                         ]),
+                        if (prefs.waterEveryH != null) ...[
+                          const SizedBox(height: 8),
+                          // Quiet hours: no water reminders outside this window.
+                          Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 8, children: [
+                            Text('From', style: t.bodyMedium),
+                            DropdownButton<int>(
+                              value: (prefs.waterWindow ?? defaultWaterWindow).from,
+                              items: [for (var h = 5; h <= 12; h++) DropdownMenuItem(value: h, child: Text(_hourLabel(h)))],
+                              onChanged: (h) => h == null ? null : _save(with_(window: (from: h, to: (prefs.waterWindow ?? defaultWaterWindow).to))),
+                            ),
+                            Text('to', style: t.bodyMedium),
+                            DropdownButton<int>(
+                              value: (prefs.waterWindow ?? defaultWaterWindow).to,
+                              items: [for (var h = 15; h <= 23; h++) DropdownMenuItem(value: h, child: Text(_hourLabel(h)))],
+                              onChanged: (h) => h == null ? null : _save(with_(window: (from: (prefs.waterWindow ?? defaultWaterWindow).from, to: h))),
+                            ),
+                          ]),
+                          Text('No water reminders outside these hours.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                        ],
                         const SizedBox(height: 14),
                         Text('Weekly weigh-in, 8 am', style: t.titleMedium),
                         const SizedBox(height: 6),
@@ -2198,3 +2218,6 @@ const levelCheckGuide = [
   'Stop at once for chest pain, dizziness, unusual breathlessness or sharp pain, and answer Not yet.',
   'Not sure how a move should look? Open it in Exercise library first.',
 ];
+
+/// 7 → "7 am", 12 → "12 pm", 21 → "9 pm".
+String _hourLabel(int h) => h == 12 ? '12 pm' : h < 12 ? '$h am' : '${h - 12} pm';
