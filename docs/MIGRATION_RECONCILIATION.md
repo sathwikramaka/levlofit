@@ -73,7 +73,7 @@ Cloud history was written by `apply_migration` with apply-time versions; local f
 | 20261029700000_packaged_foods | 2026-10-29 apply_migration packaged_foods | Applied 2026-10-29, same backup and fingerprint check |
 | 20261030100000_signup_guard | 2026-10-30 apply_migration signup_guard | Applied 2026-10-30 (docs/RELEASE_RECORD.md, release 1.0.2); row added 2026-11-02 from that record, not re-inspected. The hook is active only once selected under Authentication > Auth Hooks |
 | 20261102100000_ai_daily_caps | 2026-11-03 apply_migration ai_daily_caps | Applied 2026-11-03 (docs/RELEASE_RECORD.md, release 1.0.3); row updated 2026-11-03 from that record, not re-inspected |
-| 20261103100000_foods_fdc_breakfast | none | Pending (not applied) |
+| 20261103100000_foods_fdc_breakfast | 2026-11-03 apply_migration foods_fdc_breakfast | Applied 2026-11-03 (docs/RELEASE_RECORD.md, release 1.0.7); not re-inspected |
 
 Schema fingerprint: grants, columns, constraints, indexes, policies, functions, triggers, storage buckets/policies,
 auth trigger and extensions are identical between cloud and a local `supabase db reset`, except the
@@ -195,15 +195,16 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (1), updated 2026-11-03
+## Pending production items (0), updated 2026-11-03
 
-- 20261103100000_foods_fdc_breakfast: foods.source_note column; six USDA FoodData Central breakfast foods (rolled oats,
-  corn flakes, muesli, daliya, rava, besan); earlier usda_fdc rows with the same FDC id take the same values. Not
-  applied. Preflight: count usda_fdc rows sharing a source_ref with a new code. Verify and roll back:
-  docs/RELEASE_CHECKLIST.md 3.7v.
+None.
 
 Applied 2026-11-03 (kept for the record):
 
+- 20261103100000_foods_fdc_breakfast: foods.source_note column; six USDA FoodData Central breakfast foods (rolled oats,
+  corn flakes, muesli, daliya, rava, besan); earlier usda_fdc rows with the same FDC id take the same values. Applied
+  2026-11-03 (release 1.0.7). Preflight: count usda_fdc rows sharing a source_ref with a new code. Verify and roll back:
+  docs/RELEASE_CHECKLIST.md 3.7v.
 - 20261102100000_ai_daily_caps: new service-only table ai_daily_caps and check_rate with the cap block; new index
   rate_events_bucket_at (docs/RELEASE_RECORD.md, release 1.0.3).
 
