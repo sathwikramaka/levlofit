@@ -2,6 +2,19 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-03: release 1.0.8, roadmap stages 2-5 (owner-approved: send-feedback deploy, APK, website, MIN_APP_BUILD secret)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 8123372 (stages a446a72, 4f8670e, 6e6955b) plus the version bump; clean tree apart from a local tool lock file | git |
+| Checks before release | flutter analyze clean, 601 tests pass + 1 skip; node 283/0, offline AI eval 85/0 strict, tsc, Deno 30/0; website lint/build/tsc; pgTAP 254/254 on a throwaway stack; release_helpers_test in the script | Local runs on the stage commits |
+| Edge Function | send-feedback v1 ACTIVE, verify_jwt true, deployed first so the new feedback sheet works; no BREVO_API_KEY / FEEDBACK_FROM yet, so it saves feedback and answers emailed false (app says "saved, not emailed yet"); signed-out POST 401 | Function list, curl |
+| Android APK | com.levlofit.app 1.0.8, versionCode 2010, 13,633,127 bytes (13.6 MB), release certificate 7c510c35...4c431384 (CN=Levlofit) | aapt2, apksigner on the live file |
+| APK SHA-256 | 869a69aab4957f7c94efe4fb68526186bbc41af955dcc50e23a13d893af48015, equal on the live download, the site and /version.json | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 6bd8a8a0; home links levlofit-1.0.8.apk; /version.json = 1.0.8 build 10, min_build 10; privacy page names the check-in and the feedback email flow | curl |
+| Secret | MIN_APP_BUILD = 10 (digest equals sha256 of "10") | supabase secrets list |
+| Not verified | on a real phone: the in-app update from 1.0.7, check-in card, weekly report, plan-fit card, water hours, Terms link, feedback save; a plan rebuild on generate-plan v29 | - |
+
 ## 2026-11-03: migrations daily_checkins and reminder_water_window (owner-approved: these two)
 
 | What | Value | How checked |
