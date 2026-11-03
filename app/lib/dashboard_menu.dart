@@ -823,7 +823,7 @@ class _DietScreenState extends State<_DietScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        OutlinedButton.icon(
+        FilledButton.icon(
           onPressed: () => openCoach(context, prompt: 'Help me cook today\'s Levlofit meal plan. Suggest simple Indian recipes using these foods and amounts.'),
           icon: const Icon(LvIcons.sparkle, size: 18),
           label: const Text('Recipes for today with Levlofit AI'),
@@ -1096,7 +1096,7 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
             _ => 'Chicken, fish and eggs',
           })]),
           const SizedBox(height: 8),
-          Text('Food from', style: t.titleMedium),
+          Text('FOOD FROM', style: monoLabel(context)),
           const SizedBox(height: 8),
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final (k, title, _) in regionOptions)
@@ -1112,7 +1112,7 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
       _ => [
           Text('All optional.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
           const SizedBox(height: 14),
-          Text('Health', style: t.titleMedium),
+          Text('HEALTH', style: monoLabel(context)),
           const SizedBox(height: 8),
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final (k, title, _) in _foodConditions)
@@ -1132,7 +1132,7 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
           Text('Milk and gluten change your food. The others add a note to check the plan with your doctor.',
               style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
           const SizedBox(height: 20),
-          Text('Protein powder a day', style: t.titleMedium),
+          Text('PROTEIN POWDER A DAY', style: monoLabel(context)),
           const SizedBox(height: 8),
           SegmentedButton<int>(
             showSelectedIcon: false,
@@ -1144,7 +1144,7 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
           Text('Added to your evening snack, meals planned around it. A typical 30 g scoop: 120 kcal and 24 g protein; '
               'check your tub\'s label.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
           const SizedBox(height: 20),
-          Text('Pace', style: t.titleMedium),
+          Text('PACE', style: monoLabel(context)),
           const SizedBox(height: 8),
           SegmentedButton<String>(
             showSelectedIcon: false,

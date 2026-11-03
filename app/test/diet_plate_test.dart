@@ -74,7 +74,7 @@ void main() {
     ));
     expect(tester.takeException(), isNull);
     expect(find.text('1 bowl oats porridge (40 g dry)'), findsOneWidget);
-    expect(find.text('In your diary'), findsOneWidget);
+    expect(find.text('IN YOUR DIARY'), findsOneWidget);
     expect(find.text('Ate it'), findsOneWidget, reason: 'only the card with onAte offers it');
     expect(find.textContaining('40 g dry rolled oats'), findsNothing);
     await tester.tap(find.text('Swap'));
@@ -85,5 +85,20 @@ void main() {
     await tester.pump();
     expect(find.textContaining('40 g dry rolled oats'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('plate colours come from the theme, light and dark, and stay distinct', (tester) async {
+    for (final theme in [lightTheme, darkTheme]) {
+      late BuildContext ctx;
+      await tester.pumpWidget(MaterialApp(theme: theme, home: Builder(builder: (c) {
+        ctx = c;
+        return const Scaffold(body: PlateKey());
+      })));
+      final scheme = Theme.of(ctx).colorScheme;
+      final colours = [for (final (k, _) in plateParts) plateColor(ctx, k)];
+      expect(colours, [scheme.primary, scheme.secondary, scheme.onSurfaceVariant, scheme.surfaceContainerHighest]);
+      expect(colours.toSet(), hasLength(4));
+      expect(tester.takeException(), isNull);
+    }
   });
 }
