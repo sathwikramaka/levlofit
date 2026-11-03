@@ -195,9 +195,17 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (0), updated 2026-11-03
+## Pending production items (2), updated 2026-11-03
 
-None.
+- 20261103300000_daily_checkins: new own-row table daily_checkins (optional daily check-in), RLS "own check-ins",
+  column grants, no anon access. Additive. Apply before releasing the app build with the check-in card (older builds
+  never read it; a new build without it shows "Could not load" on the card only). Verify and roll back:
+  docs/RELEASE_CHECKLIST.md 3.7x.
+
+- 20261103200000_save_generated_plan: new service-role-only function save_generated_plan (plan insert and
+  onboarding gate in one transaction, two-minute idempotent retry). Additive, no data change. Apply BEFORE deploying
+  the generate-plan that calls it (the old function keeps working without it). Verify and roll back:
+  docs/RELEASE_CHECKLIST.md 3.7w.
 
 Applied 2026-11-03 (kept for the record):
 

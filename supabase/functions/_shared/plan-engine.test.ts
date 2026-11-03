@@ -2,7 +2,7 @@
 // Guards every cited bound. A failure here means a plan would ship outside the science.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { bmiCategory, CUT_FLOOR_KCAL, MEDICAL_MAX_LEVEL, buildRoadmap, DIETS, EXPERIENCE, type Experience, generatePlan, type GoalInput, validateInput, WEIGHT_GOALS, type PlanInput } from './plan-engine.ts';
+import { ageFromBirthYear, bmiCategory, CUT_FLOOR_KCAL, MEDICAL_MAX_LEVEL, buildRoadmap, DIETS, EXPERIENCE, type Experience, generatePlan, type GoalInput, validateInput, WEIGHT_GOALS, type PlanInput } from './plan-engine.ts';
 
 // Fixture mirroring goal_catalog rows: every session kind, plus coach-led combat.
 const CATALOG: Omit<GoalInput, 'experience'>[] = [
@@ -466,4 +466,12 @@ test('body-type goal change: only the self-described slim_soft build with a begi
   }
   // Recomposition is maintenance energy: no hidden deficit.
   assert.equal(soft.nutrition.energyKcal, generatePlan({ ...normal, bodyType: 'slim_soft', weightGoal: 'maintain', goals: beginner }).nutrition.energyKcal);
+});
+
+test('age from year of birth is the youngest possible age, so a 17-year-old never passes the 18+ gate', () => {
+  const nov2026 = new Date(Date.UTC(2026, 10, 3));
+  assert.equal(ageFromBirthYear(2008, nov2026), 17); // born Dec 2008: still 17 in Nov 2026
+  assert.throws(() => validateInput({ ...base, ageYears: ageFromBirthYear(2008, nov2026) }));
+  assert.equal(ageFromBirthYear(2007, nov2026), 18);
+  assert.equal(ageFromBirthYear(2007, new Date(Date.UTC(2026, 0, 1))), 18); // turns 19 during 2026: at least 18 on 1 Jan
 });

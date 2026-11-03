@@ -1305,6 +1305,27 @@ class _CalendarScreenState extends State<_CalendarScreen> {
     }
   }
 
+  /// Effort (1-10) and pain for a logged day, prefilled with what was saved. Same fields the post-session sheet writes.
+  Future<void> _editHowItWent(DateTime day) async {
+    try {
+      final row = await supabase.from('workout_logs').select('rpe, notes').eq('user_id', _uid).eq('performed_on', _iso(day)).limit(1).maybeSingle();
+      if (!mounted) return;
+      final answer = await showModalBottomSheet<({int? rpe, Pain? pain})>(
+        context: context,
+        builder: (_) => HowItWentSheet(rpe: row?['rpe'] as int?, pain: painFromNotes(row?['notes'] as String?)),
+      );
+      if (answer == null) return;
+      await supabase
+          .from('workout_logs')
+          .update({'rpe': answer.rpe, 'notes': answer.pain == null ? null : painNote(answer.pain!)})
+          .eq('user_id', _uid)
+          .eq('performed_on', _iso(day));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved.')));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save. Check your connection and try again.')));
+    }
+  }
+
   Set<_Mark> _marks(DateTime d) {
     final r = _records[d];
     if (r == null) return const {};
@@ -1361,6 +1382,7 @@ class _CalendarScreenState extends State<_CalendarScreen> {
                       child: Text(trained ? 'Remove' : 'Log it'),
                     ),
                 ]),
+                if (trained) Align(alignment: Alignment.centerLeft, child: TextButton.icon(onPressed: () => _editHowItWent(day), icon: const Icon(LvIcons.pencilSimple, size: 16), label: const Text('Edit effort and pain'))),
                 if (measures.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text('BODY', style: monoLabel(context)),

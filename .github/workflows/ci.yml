@@ -120,6 +120,7 @@ jobs:
             supabase/functions/_shared/rate.test.ts \
             supabase/functions/coach-chat/coach-chat.test.ts \
             supabase/functions/delete-account/delete-account.test.ts \
+            supabase/functions/send-feedback/send-feedback.test.ts \
             supabase/functions/generate-plan/generate-plan.test.ts \
             supabase/functions/_eval/eval.test.ts \
             tools/release_docs.test.mjs
@@ -148,9 +149,9 @@ jobs:
         with:
           deno-version: v2.x
       - name: Typecheck entry points
-        run: deno check --lock=_test/deno.lock --frozen coach-chat/index.ts generate-plan/index.ts delete-account/index.ts body-check/index.ts
+        run: deno check --lock=_test/deno.lock --frozen coach-chat/index.ts generate-plan/index.ts delete-account/index.ts body-check/index.ts send-feedback/index.ts
       - name: Lint entry points and shared modules
-        run: deno lint coach-chat/index.ts generate-plan/index.ts delete-account/index.ts body-check/index.ts _shared/body-check.ts _shared/coach-context.ts _shared/llm.ts _shared/handbook.ts _shared/rate.ts _shared/plan-engine.ts _shared/swap.ts _shared/meal.ts _test/deno-smoke.ts
+        run: deno lint coach-chat/index.ts generate-plan/index.ts delete-account/index.ts body-check/index.ts send-feedback/index.ts _shared/body-check.ts _shared/coach-context.ts _shared/llm.ts _shared/handbook.ts _shared/rate.ts _shared/plan-engine.ts _shared/swap.ts _shared/meal.ts _test/deno-smoke.ts
       - name: Runtime smoke test (dummy values, network limited to 127.0.0.1)
         run: deno run --lock=_test/deno.lock --frozen --allow-env --allow-read --allow-net=127.0.0.1 _test/deno-smoke.ts
 

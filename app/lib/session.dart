@@ -1170,15 +1170,17 @@ class _CoachNotes extends StatelessWidget {
 
 /// Effort (1 to 10) and pain after a session. Both optional; "Skip" saves nothing.
 class HowItWentSheet extends StatefulWidget {
-  const HowItWentSheet({super.key});
+  const HowItWentSheet({super.key, this.rpe, this.pain});
+  final int? rpe; // earlier answers when editing a logged session
+  final Pain? pain;
 
   @override
   State<HowItWentSheet> createState() => HowItWentSheetState();
 }
 
 class HowItWentSheetState extends State<HowItWentSheet> {
-  int? _rpe;
-  Pain? _pain;
+  late int? _rpe = widget.rpe;
+  late Pain? _pain = widget.pain;
 
   @override
   Widget build(BuildContext context) {

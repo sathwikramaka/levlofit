@@ -3,7 +3,7 @@
 // engine, adds the coach's level-by-level roadmap built from the curriculum checks (rules, no language model),
 // stores an immutable plan snapshot and opens the dashboard gate. Every number comes from the engine.
 import { withSupabase } from 'npm:@supabase/server@1.9.1';
-import { buildRoadmap, generatePlan, type LevelRow, validateInput } from '../_shared/plan-engine.ts';
+import { ageFromBirthYear, buildRoadmap, generatePlan, type LevelRow, validateInput } from '../_shared/plan-engine.ts';
 import { checkLimits, LIMITS, outdatedApp, rateRefusal } from '../_shared/rate.ts';
 
 // Levels 4 and 5 need a tested pass, which has no server path yet; a client-written level is never trusted above 3.
@@ -42,7 +42,7 @@ export default {
     let input;
     try {
       input = validateInput({
-        ageYears: new Date().getUTCFullYear() - p.birth_year,
+        ageYears: ageFromBirthYear(p.birth_year),
         sex: p.sex,
         heightCm: Number(p.height_cm),
         weightKg: Number(p.weight_kg),
@@ -94,16 +94,15 @@ export default {
     if (checks.error) return Response.json({ error: 'Could not build your plan' }, { status: 500 });
     const stored = { ...plan, roadmap: buildRoadmap(plan, (checks.data ?? []) as LevelRow[], new Set(assessed.keys())) };
 
-    const saved = await ctx.supabaseAdmin
-      .from('generated_plans')
-      .insert({ user_id: userId, engine_version: plan.engineVersion, input, plan: stored })
-      .select('id')
-      .single();
-    if (saved.error) return Response.json({ error: 'Could not save plan' }, { status: 500 });
+    // One transaction: the plan and the dashboard gate are saved together; a retry with the same answers within two
+    // minutes gets the plan already stored instead of a duplicate (migration 20261103200000_save_generated_plan).
+    const saved = await ctx.supabaseAdmin.rpc('save_generated_plan', { p_user: userId, p_engine: plan.engineVersion, p_input: input, p_plan: stored });
+    const row = (saved.data as { id: string }[] | null)?.[0];
+    if (saved.error || !row) {
+      console.error(JSON.stringify({ event: 'plan_save_failed', code: saved.error?.code ?? 'no_row' }));
+      return Response.json({ error: 'Could not save plan' }, { status: 500 });
+    }
 
-    const gate = await ctx.supabaseAdmin.from('profiles').update({ onboarding_complete: true }).eq('id', userId);
-    if (gate.error) return Response.json({ error: 'Could not save plan' }, { status: 500 });
-
-    return Response.json({ id: saved.data.id, plan: stored }, { status: 201 });
+    return Response.json({ id: row.id, plan: stored }, { status: 201 });
   }),
 };

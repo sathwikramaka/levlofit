@@ -272,6 +272,12 @@ const SRC = {
   acsmRt: 'ACSM Position Stand: Resistance Training Prescription (2026), PMID 41843416',
 };
 
+/** Age from the year of birth alone (no full date of birth is stored, by design): the youngest age the person can be
+ * today, so the 18+ gate never admits someone whose birthday has not come yet. Over-80 sides by one year at most. */
+export function ageFromBirthYear(birthYear: number, today: Date = new Date()): number {
+  return today.getUTCFullYear() - birthYear - 1;
+}
+
 export function validateInput(raw: unknown): PlanInput {
   const x = raw as Record<string, unknown>;
   if (!x || typeof x !== 'object') throw new Error('Body must be a JSON object');

@@ -1797,11 +1797,28 @@ Future<void> _contactSupport() async {
   if (!await launchUrl(mail)) await launchUrl(gmail, mode: LaunchMode.externalApplication);
 }
 
-/// In-app feedback box: the message is saved to app_feedback, which only the Levlofit team can read.
+/// Sends feedback through the send-feedback function, which saves it to app_feedback and emails it to the team.
+/// Returns (true, the note to show once the sheet closes) or (false, the error to show in the sheet).
+/// [send] replaces the function call in tests.
+Future<(bool, String)> submitFeedback(String message, {Future<Object?> Function(Map<String, Object> body)? send}) async {
+  final body = {'message': message};
+  try {
+    final data = await (send?.call(body) ?? supabase.functions.invoke('send-feedback', body: body).then((r) => r.data));
+    if (data is Map && data['emailed'] == true) return (true, 'Thanks! Your feedback reached the Levlofit team.');
+    return (true, 'Your feedback is saved, but we could not email it to the team yet. For anything urgent, use Contact support.');
+  } on FunctionException catch (e) {
+    final d = e.details;
+    return (false, d is Map && d['error'] is String ? d['error'] as String : 'Could not send your feedback. Try again.');
+  } catch (_) {
+    return (false, 'Could not send. Check your connection.');
+  }
+}
+
+/// In-app feedback box (see [submitFeedback]).
 Future<void> _sendFeedback(BuildContext context) async {
   final messenger = ScaffoldMessenger.of(context);
   final text = TextEditingController();
-  final sent = await showModalBottomSheet<bool>(
+  final sent = await showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
     builder: (sheet) {
@@ -1838,11 +1855,11 @@ Future<void> _sendFeedback(BuildContext context) async {
                             final msg = text.text.trim();
                             if (msg.length < 3) return setSheet(() => error = 'Write a little more.');
                             setSheet(() => (sending, error) = (true, null));
-                            try {
-                              await supabase.from('app_feedback').insert({'message': msg});
-                              if (sheet.mounted) Navigator.pop(sheet, true);
-                            } catch (_) {
-                              setSheet(() => (sending, error) = (false, 'Could not send. Check your connection.'));
+                            final (ok, note) = await submitFeedback(msg);
+                            if (ok) {
+                              if (sheet.mounted) Navigator.pop(sheet, note);
+                            } else {
+                              setSheet(() => (sending, error) = (false, note));
                             }
                           },
                     child: Text(sending ? 'Sending...' : 'Send'),
@@ -1856,7 +1873,7 @@ Future<void> _sendFeedback(BuildContext context) async {
     },
   );
   text.dispose();
-  if (sent == true) messenger.showSnackBar(const SnackBar(content: Text('Thanks! Your feedback reached the Levlofit team.')));
+  if (sent != null) messenger.showSnackBar(SnackBar(content: Text(sent)));
 }
 
 /// "How we use your data", in plain words.
@@ -1867,7 +1884,7 @@ const _dataUse = [
   ('Why we keep it', 'Only to run the app for you: to build your plan, show your progress, send the reminders you switch on, and let '
       'Levlofit AI answer about you, not in general.'),
   ('Who can see it', 'No other user: your data is locked to your account by the database itself. The Levlofit team reads the feedback '
-      'you send, and our AI provider receives what is listed under "What Levlofit AI sends". We never sell it and never use it for ads.'),
+      'you send (each feedback is emailed to the team through Brevo, our email provider, with your account email so we can reply), and our AI provider receives what is listed under "What Levlofit AI sends". We never sell it and never use it for ads.'),
   ('Levlofit AI', 'When you send a message, your question and a summary of your plan and recent training go to our AI provider to write '
       'the reply. Your chats are saved in your account. Levlofit AI can suggest facts to remember (your schedule, equipment, likes, goals or an injury); '
       'it keeps one only if you confirm it, and you can edit or delete each one in Memory. Confirmed facts go to our AI provider with your messages; '
@@ -1921,7 +1938,7 @@ const _privacyPolicy = [
   ('What we collect', 'Your email to sign in and the name you give (Google fills it in if you sign in with Google). What you tell us at '
       'sign-up and in Protocol, including your weight goal, food budget and exclusions, equipment, water target and the health check. '
       'What you log: workouts and sets (reps and weight), body weight and measurements, water, habits, your level in each goal and your '
-      'reminder settings (including the names you give your own reminders), the foods and weights you log in the food diary and the recipes you save, and how hard each session felt and whether pain stopped you, if you answer after a session. Progress photos, and your profile picture if you upload your own. Your chats with Levlofit AI, the facts you confirm in its Memory, '
+      'reminder settings (including the names you give your own reminders), the foods and weights you log in the food diary and the recipes you save, how hard each session felt and whether pain stopped you, if you answer after a session, and your optional daily check-in (training, food plan, energy, sleep, soreness and a note; never sent to the AI provider). Progress photos, and your profile picture if you upload your own. Your chats with Levlofit AI, the facts you confirm in its Memory, '
       'and its suggestions waiting for your OK. Feedback you send. Error reports when the app hits an unexpected error while you are signed in (the error message, where in the app code it happened, app version and phone type; email addresses masked; kept up to 90 days). For abuse protection: when you send chat messages or rebuild your plan (times only, no content), and a random ID on each chat message so a resent one is not saved twice; feedback is limited by counting the feedback you have sent. On this phone only: your sign-in session, light or dark choice, dashboard layout and daily goals, which permission prompts you have seen, downloaded fonts, the reminders scheduled on the phone, and a copy of your latest plan, profile answers and recent logs so the app opens without a connection. We do not collect your location, contacts or '
       'data from other apps.'),
   ('How we use it', 'To build your plan, track your progress, send reminders you choose and answer your questions. Nothing else.'),
@@ -1961,7 +1978,8 @@ const _privacyPolicy = [
       "passages from Levlofit's Handbook that match your question, which are our text, not yours. Your calorie and protein targets are "
       'worked out from your weight, height, age and sex, so your approximate weight can be calculated from them. Anything you type in a '
       'message is sent as written, so leave out details you do not want shared.'),
-  ('Who else handles it', 'Supabase stores your data, and Google handles sign-in if you use Google. Google Fonts supplies the app\'s fonts; '
+  ('Who else handles it', 'Supabase stores your data, and Google handles sign-in if you use Google. Brevo, our email provider, sends our sign-up '
+      'and password emails; each feedback you send is also emailed to the Levlofit team through Brevo, with your account email so we can reply. Google Fonts supplies the app\'s fonts; '
       'Google\'s servers may receive your IP address when the app loads them. ExerciseDB (AscendAPI) supplies the exercise animations; its '
       'servers may receive your IP address when the app loads them. Once per start the app asks the Levlofit website whether a newer version exists, so its host may receive your IP address too. Open Food Facts receives a barcode number, and your IP address, only when you look up a packaged food. Each is used only for its job. We never sell your data.'),
   ('Body check (optional)', 'Only if you use it and agree each time: the photo you choose is sent once to Groq, which may process it outside India, '

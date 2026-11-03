@@ -340,7 +340,7 @@ class _OnboardingState extends State<Onboarding> {
           'goals': [for (final g in _goals) {'id': g, 'name': _nameOf(g), 'experience': _level[g]}],
           'body': {
             'sex': _sex,
-            if (birth != null) 'age': _thisYear - birth,
+            if (birth != null) 'age': _thisYear - birth - 1, // youngest possible age, as generate-plan uses
             'heightCm': double.tryParse(_height.text),
             'weightKg': double.tryParse(_weight.text),
             'bodyType': _bodyType,
@@ -965,8 +965,9 @@ class _OnboardingState extends State<Onboarding> {
                   controller: _birthYear,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
-                  decoration: InputDecoration(hintText: '${_thisYear - 25}', helperText: 'Levlofit plans are for adults, 18 to 80'),
-                  validator: (v) => range(v, _thisYear - 80, _thisYear - 18, 'a year'),
+                  decoration: InputDecoration(hintText: '${_thisYear - 25}', helperText: 'For adults 18 to 80. We only ask the year, so we count the youngest age you could be.'),
+                  // Only the year is stored, so 18 is certain only for those born 19 years ago or earlier (generate-plan checks the same).
+                  validator: (v) => range(v, _thisYear - 81, _thisYear - 19, 'a year'),
                 ),
                 const SizedBox(height: 20),
                 Row(

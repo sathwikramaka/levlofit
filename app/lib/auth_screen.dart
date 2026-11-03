@@ -8,6 +8,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import 'dashboard.dart' show showPrivacyPolicy;
 import 'icons.dart';
 import 'main.dart';
@@ -346,10 +348,11 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Text(_signUp ? 'I already have an account' : 'New to Levlofit? Create an account'),
             ),
             // DPDP Act notice before consent: the policy is readable before an account exists.
-            TextButton(
-              onPressed: () => showPrivacyPolicy(context),
-              child: Text(_signUp ? 'By creating an account you agree to the privacy policy' : 'Privacy policy', textAlign: TextAlign.center),
-            ),
+            if (_signUp) Text('By creating an account you agree to the terms and the privacy policy', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+            Wrap(alignment: WrapAlignment.center, children: [
+              TextButton(onPressed: () => launchUrl(Uri.parse('https://levlofit.pages.dev/terms'), mode: LaunchMode.externalApplication), child: const Text('Terms of service')),
+              TextButton(onPressed: () => showPrivacyPolicy(context), child: const Text('Privacy policy')),
+            ]),
           ]),
         ),
       ),
