@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Estimate } from "@/components/estimate";
 import { chapters } from "@/lib/handbook";
-import { DownloadButton, DownloadSection, webAppUrl } from "@/components/download";
+import { DownloadButton, DownloadSection, IPhoneButton, webAppUrl } from "@/components/download";
 import { Vial } from "@/components/vial";
 import { Wordmark } from "@/components/wordmark";
 
@@ -156,6 +156,7 @@ export default function Home() {
             </p>
             <div data-reveal style={{ "--i": 4 } as React.CSSProperties} className="mt-9 flex flex-wrap gap-3">
               <DownloadButton compact />
+              <IPhoneButton />
               <a
                 href="#how"
                 className="inline-flex h-12 items-center rounded-xl border border-ink px-5 text-[16px] font-semibold transition-colors duration-300 ease-spring hover:bg-ink hover:text-on-ink"
@@ -256,7 +257,7 @@ export default function Home() {
               {[
                 ["Allergies first", "Asked before your diet, and removed from every suggestion."],
                 ["Soya, honestly", "Studies find no hormone effects in men. We still cap chunks at 50 g dry a day, for variety."],
-                ["No beef, no pork", "Never suggested, whatever you choose."],
+                ["Veg, egg or non-veg", "Vegetarian, eggitarian, vegan or non-vegetarian: your choice shapes every meal."],
               ].map(([t, b], i) => (
                 <div key={t} data-reveal style={{ "--i": i + 1 } as React.CSSProperties} className="rounded-2xl border border-line bg-surface p-5">
                   <p className="text-[16px] font-bold">{t}</p>

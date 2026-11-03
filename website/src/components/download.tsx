@@ -37,6 +37,19 @@ export function DownloadButton({ compact = false }: { compact?: boolean }) {
   );
 }
 
+/** The hero's iPhone way in (the web app), so iPhone visitors need not scroll to the download section. */
+export function IPhoneButton() {
+  if (!webAppUrl) return null;
+  return (
+    <a
+      href={webAppUrl}
+      className="inline-flex h-12 items-center rounded-xl border border-ink px-5 text-[16px] font-semibold transition-colors duration-300 ease-spring hover:bg-ink hover:text-on-ink"
+    >
+      Open on iPhone
+    </a>
+  );
+}
+
 export function DownloadSection() {
   return (
     <section id="download" className="border-y border-line bg-surface/50">
