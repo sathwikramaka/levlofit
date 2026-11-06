@@ -77,6 +77,8 @@ Cloud history was written by `apply_migration` with apply-time versions; local f
 | 20261103200000_save_generated_plan | 2026-11-03 apply_migration save_generated_plan | Applied 2026-11-03 (docs/RELEASE_RECORD.md); function and execute privileges verified read-only |
 | 20261103300000_daily_checkins | 2026-11-03 apply_migration daily_checkins | Applied 2026-11-03 (docs/RELEASE_RECORD.md); RLS, policy and grants verified read-only |
 | 20261103400000_reminder_water_window | 2026-11-03 apply_migration reminder_water_window | Applied 2026-11-03 (docs/RELEASE_RECORD.md); columns, grants and check verified read-only |
+| 20261107100000_foods_raw_dry_names | 2026-11-07 apply_migration foods_raw_dry_names | Applied 2026-11-07 (docs/RELEASE_RECORD.md, release 1.0.9); names and values verified read-only |
+| 20261107200000_other_supplements | 2026-11-07 apply_migration other_supplements | Applied 2026-11-07 (docs/RELEASE_RECORD.md, release 1.0.9); column and privileges verified read-only |
 
 Schema fingerprint: grants, columns, constraints, indexes, policies, functions, triggers, storage buckets/policies,
 auth trigger and extensions are identical between cloud and a local `supabase db reset`, except the
@@ -198,10 +200,14 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (2), updated 2026-11-07
+## Pending production items (0), updated 2026-11-07
 
-- 20261107200000_other_supplements: dietary_profiles.other_supplements (own supplements, listed on the plate only; at most 10). Additive. **Apply before releasing the app**: the new Diet tab reads this column and shows an error without it. Verify and roll back: docs/RELEASE_CHECKLIST.md 3.7aa.
-- 20261107100000_foods_raw_dry_names: renames 12 raw or dry foods so the diary says what the values describe (Rice -> Rice (raw, uncooked)). Names only; no values, codes or diary rows change. Verify and roll back: docs/RELEASE_CHECKLIST.md 3.7z.
+None.
+
+Applied 2026-11-07 (kept for the record):
+
+- 20261107100000_foods_raw_dry_names and 20261107200000_other_supplements: applied with apply_migration before release
+  1.0.9 (docs/RELEASE_RECORD.md); names, values and column checked read-only.
 
 Applied 2026-11-03 (kept for the record):
 

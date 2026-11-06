@@ -2,6 +2,23 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-07: release 1.0.9, diet accuracy, supplements, workout meals (owner-approved: backup, push, 2 migrations, generate-plan and coach-chat deploys, APK, website, MIN_APP_BUILD secret)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 6b791ca (stabilisation 43270ea, 5ded4c7, 3601f29; diet 816084a, 6b791ca) plus the version bump | git |
+| Checks before release | flutter analyze clean, 632 pass + 1 skip; node 283/0, offline AI eval 85/0 strict, tsc, Deno 30/0; website lint/build/tsc; Handbook and food data tests; pgTAP 259/259 on a throwaway stack | Local runs on the same source |
+| CI | Run 42281607472 on 6b791ca: all 6 jobs green, including pgTAP | gh run view |
+| Backup before changes | db-backup run 42281151814, encrypted dump levlofit-db-20261106T193649Z, 311,364 bytes | GitHub Actions |
+| Migrations | foods_raw_dry_names (20261107100000): 12 names; kcal total 90532 and 577 foods before and after, rice still 365 kcal. other_supplements (20261107200000): column present, default empty, authenticated may update, anon may not read; 11 profiles, none changed | apply_migration results, read-only checks before and after |
+| Edge Functions | generate-plan v36 and coach-chat v36 ACTIVE, verify_jwt true, signed-out POST 401; no signed-in call verified on these versions | Function list, curl |
+| Android APK | com.levlofit.app 1.0.9, versionCode 2011, 13,656,203 bytes (13.7 MB), release certificate 7c510c35...4c431384 (CN=Levlofit) | aapt2, apksigner on the live file |
+| APK SHA-256 | 796cd82d29c37fb521cf1c1f1262d61e844519a010075b648d68d03fc3ee0a54, equal on the live download, the site and /version.json | Hash of the live file |
+| Website | Cloudflare Pages deployment 915ec92b; home links levlofit-1.0.9.apk; /version.json = 1.0.9 build 11, min_build 11; privacy page names supplements you add | Live fetch |
+| Secret | MIN_APP_BUILD = 11 (digest equals sha256 of "11") | supabase secrets list |
+| Not verified | Nothing in this release has run on a real phone: the update from 1.0.8, the Supplements and Training day cards, custom supplements, rice labels, weekly report additions, welcome back, a signed-in plan rebuild or coach reply on the new functions | - |
+| Known | storage-backup.yml is on GitHub without its two S3 secrets, so it fails nightly and photos are not backed up automatically until the owner adds them | docs/BACKUP_RECOVERY_PLAN.md |
+
 ## 2026-11-03: release 1.0.8, roadmap stages 2-5 (owner-approved: send-feedback deploy, APK, website, MIN_APP_BUILD secret)
 
 | What | Value | How checked |
