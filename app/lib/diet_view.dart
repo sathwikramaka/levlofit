@@ -10,6 +10,32 @@ import 'diet_plan.dart';
 import 'icons.dart';
 import 'theme.dart';
 
+/// A quiet card above or below the meals: a label and short lines. Training day and supplements use it.
+class PlateInfoCard extends StatelessWidget {
+  const PlateInfoCard({super.key, required this.title, required this.lines});
+  final String title;
+  final List<({String? name, String text})> lines;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(22), border: Border.all(color: c.outline)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: monoLabel(context).copyWith(color: c.tertiary)),
+        for (final l in lines) ...[
+          const SizedBox(height: 6),
+          if (l.name != null) Text(l.name!, style: t.titleSmall),
+          Text(l.text, style: l.name == null ? t.bodyMedium : t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        ],
+      ]),
+    );
+  }
+}
+
 /// The plate parts in drawing order, with their names for the key under the meals.
 const plateParts = [('grain', 'Grain'), ('protein', 'Protein'), ('veg', 'Veg'), ('fruit', 'Fruit and milk')];
 

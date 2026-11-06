@@ -402,11 +402,9 @@ typedef WorkoutDay = ({List<PlanMeal> meals, int? pre, int? post, String note});
 /// (Kerksick 2017) is the basis: when daily calories and protein are met, exact timing matters little.
 WorkoutDay workoutDay(List<PlanMeal> meals, String? trainingTime) {
   const why = 'They are part of your planned food, not extra. When your daily calories and protein are met, exact timing matters little.';
-  final start = _trainingHour[trainingTime];
-  if (start == null) {
-    return (meals: meals, pre: null, post: null,
-        note: 'On training days, eat one of your meals a few hours before training and one with protein after it. $why');
-  }
+  // No fixed time ("It varies", or an older plan): mark the meals for the most common session, and say so.
+  final known = _trainingHour.containsKey(trainingTime);
+  final start = _trainingHour[trainingTime] ?? _trainingHour['evening']!;
   final list = [...meals];
   int? pre = list.lastIndexWhere((m) => _hourOf(m.time) >= start - 3 && _hourOf(m.time) <= start - 1);
   if (pre < 0) {
@@ -428,8 +426,17 @@ WorkoutDay workoutDay(List<PlanMeal> meals, String? trainingTime) {
   var post = list.indexWhere((m) => _hourOf(m.time) >= start + 1 && _hourOf(m.time) <= start + 4);
   final late = post < 0;
   if (late) post = list.length - 1; // a late session: the last meal of the day, eaten after training
+  // A protein shake belongs after the session: for an evening session the snack it is planned into comes before it.
+  if (pre != null && pre != post) {
+    final shakes = list[pre].items.where((it) => it.unit == 'scoop').toList();
+    if (shakes.isNotEmpty) {
+      list[pre] = (name: list[pre].name, time: list[pre].time, items: list[pre].items.where((it) => it.unit != 'scoop').toList());
+      list[post] = (name: list[post].name, time: list[post].time, items: [...shakes, ...list[post].items]);
+    }
+  }
   final when = _clock(start);
-  final note = 'Training around $when: ${pre == null ? '' : '${list[pre].name} is your pre-workout meal and '}'
+  final note = '${known ? 'Training around $when' : 'Your training time varies, so this assumes about $when (set a time in Protocol for a better fit)'}: '
+      '${pre == null ? '' : '${list[pre].name} is your pre-workout meal and '}'
       '${list[post].name} your post-workout meal${late ? ' (eat it after training)' : ''}. $why';
   return (meals: list, pre: pre, post: post, note: note);
 }
@@ -1477,6 +1484,51 @@ String weekKey(WeekRequest r) {
 const scoopGrams = 30.0;
 const scoopKcal = 120.0, scoopProtein = 24.0, scoopCarb = 3.0, scoopFat = 1.5;
 
+/// Shakes a day to plan. Choosing protein powder means one a day unless Build my plate says otherwise (it clears the
+/// choice when set to none); never by default with kidney disease or in pregnancy, where a doctor should decide.
+int effectiveScoops({required int saved, required List<String> supplements, required List<String> conditions}) =>
+    saved > 0 ? saved : (supplements.contains('protein_powder') && !conditions.contains('kidney') && !conditions.contains('pregnancy') ? 1 : 0);
+
+typedef SupplementLine = ({String name, String how});
+
+/// What the Diet tab lists under Supplements: the plan's own advice, what was chosen but not advised and why, and the
+/// person's own additions, which Levlofit does not check or count.
+List<SupplementLine> supplementLines({
+  required List<Map<String, dynamic>> advice,
+  required List<String> chosen,
+  required List<String> own,
+  required int scoops,
+  required bool plant,
+}) {
+  String named(String part) => (advice.where((a) => (a['name'] as String).contains(part)).firstOrNull?['how'] as String?) ?? '';
+  final creatine = named('Creatine');
+  final doctor = named('Ask your doctor');
+  return [
+    if (scoops > 0)
+      (
+        name: plant ? 'Plant protein powder' : 'Whey protein',
+        how: '$scoops ${scoops == 1 ? 'scoop' : 'scoops'} a day, about ${(scoopGrams * scoops).round()} g, in water. It is already in your meals below, '
+            'after training on training days. Check your tub\'s label. Change it in Build my plate.',
+      )
+    else if (chosen.contains('protein_powder'))
+      (name: 'Protein powder', how: 'Not planned because of the health condition you told Build my plate. Ask your doctor first.'),
+    if (creatine.isNotEmpty)
+      (name: 'Creatine monohydrate', how: creatine)
+    else if (chosen.contains('creatine'))
+      (name: 'Creatine', how: 'No dose in your plan: Levlofit suggests it for strength and hybrid goals, and not with a health condition flagged.'),
+    if (doctor.isNotEmpty) (name: 'Ask your doctor first', how: doctor),
+    for (final o in own)
+      (name: o, how: 'Your own choice. Levlofit has not checked it or its dose and does not count it in your targets. Ask your doctor or pharmacist if you have a health condition or take medicines.'),
+  ];
+}
+
+/// The line above the meals: whether the day is a training day, and which meals go around the session.
+({String title, List<String> lines}) trainingSummary(WorkoutDay? w) {
+  if (w == null) return (title: 'REST DAY', lines: const ['No pre- or post-workout meal today. Eat your meals as usual.']);
+  String of(int? i) => i == null ? 'none needed' : '${w.meals[i].name}, ${w.meals[i].time}';
+  return (title: 'TRAINING DAY', lines: ['Pre-workout: ${of(w.pre)}', 'Post-workout: ${of(w.post)}']);
+}
+
 /// [d], planned for the targets minus [scoops] shakes, with the shake added to the evening snack (after training for
 /// most people) and the day's totals and checks recomputed against the full [kcal] and [protein] targets.
 /// [plant]: dairy is excluded, so the shake is a plant protein.
@@ -1493,8 +1545,11 @@ DayPlan addShake(DayPlan d, int scoops, {required double kcal, required double p
     fat: scoopFat * scoops,
     fiber: 0.0,
   );
+  // A day whose snack came out empty still gets the shake it counts: the totals below include it.
+  final hasSnack = d.meals.any((m) => m.name == 'Evening snack');
   final meals = [
     for (final m in d.meals) m.name == 'Evening snack' ? (name: m.name, time: m.time, items: [shake, ...m.items]) : m,
+    if (!hasSnack) (name: 'Evening snack', time: '5 pm', items: [shake]),
   ];
   final k = d.kcal + shake.kcal, p = d.protein + shake.protein, fat = d.fat + shake.fat;
   final dev = kcal > 0 ? (k - kcal) / kcal : 0.0;

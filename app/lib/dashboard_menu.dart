@@ -631,7 +631,7 @@ class _DietScreenState extends State<_DietScreen> {
     try {
       final [rows, diet] = await Future.wait<dynamic>([
         supabase.from('foods').select('code, name, tags, kcal, protein_g, carb_g, fat_g, fiber_g').inFilter('code', plannerCodes),
-        supabase.from('dietary_profiles').select('diet_type, diet_pace, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, restrictions, supplements, health_conditions, whey_scoops, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
+        supabase.from('dietary_profiles').select('diet_type, diet_pace, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, restrictions, supplements, other_supplements, health_conditions, whey_scoops, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
       ]);
       final tier = diet?['budget_tier'] as String?;
       final hi = diet?['budget_max_inr'] as int?;
@@ -674,13 +674,14 @@ class _DietScreenState extends State<_DietScreen> {
     final supps = ((food['supplements'] as List?) ?? const []).cast<_Json>();
     final excluded = {...(food['excludedFoodTags'] as List).cast<String>()};
     final custom = ((food['customExclusions'] as List?) ?? const []).cast<String>();
-    // Whey step of Build my plate: the food is planned around the shakes.
-    final scoops = _choices['whey_scoops'] as int? ?? 0;
+    // Protein powder: the food is planned around the shakes (Build my plate, or chosen at sign-up).
+    final chosenSupps = ((_choices['supplements'] as List?) ?? const []).cast<String>();
+    final conditions = ((_choices['health_conditions'] as List?) ?? const []).cast<String>();
+    final scoops = effectiveScoops(saved: _choices['whey_scoops'] as int? ?? 0, supplements: chosenSupps, conditions: conditions);
     // Kitchen and mess: meals made at home use only what the equipment and time allow; mess meals are not limited.
     final have = equipmentOf(_choices['kitchen'] as String?, _choices['kitchen_equipment'] as List?, _choices['kitchen_other'] as String?);
     final messMeals = ((_choices['mess_meals'] as List?) ?? const []).cast<String>();
     final cookTime = _choices['cook_time'] as String?;
-    final conditions = ((_choices['health_conditions'] as List?) ?? const []).cast<String>();
     final powderAdvised = supps.any((x) => x['name'] == 'Protein powder');
     final WeekRequest request = (
       foods: foods,
@@ -722,6 +723,14 @@ class _DietScreenState extends State<_DietScreen> {
         : null;
     final today = _day == DateTime.now().weekday - 1;
     final logged = _loggedToday();
+    final dayKind = trainingSummary(training);
+    final suppLines = supplementLines(
+      advice: supps,
+      chosen: chosenSupps,
+      own: ((_choices['other_supplements'] as List?) ?? const []).cast<String>(),
+      scoops: scoops,
+      plant: excluded.contains('dairy'),
+    );
     final short = protein - shown.protein;
     // Everything that is not a meal sits in one place under the meals; a missed target is also said at the top.
     final notes = [
@@ -742,7 +751,7 @@ class _DietScreenState extends State<_DietScreen> {
     return _Page(
       eyebrow: 'DIET  ·  YOUR PLATE',
       title: 'Your plate',
-      subtitle: 'Four meals in household servings. Swap any meal you do not fancy; tap one for grams.',
+      subtitle: 'Your meals in household servings. Swap any meal you do not fancy; tap one for grams.',
       children: [
         Text('${shown.kcal.round()} kcal  ·  ${shown.protein.round()} g protein', style: monoNumber(context, size: 22)),
         const SizedBox(height: 2),
@@ -772,6 +781,8 @@ class _DietScreenState extends State<_DietScreen> {
           ]),
         ),
         const SizedBox(height: 12),
+        PlateInfoCard(title: dayKind.title, lines: [for (final l in dayKind.lines) (name: null, text: l)]),
+        const SizedBox(height: 10),
         for (final (mi, m) in (training?.meals ?? meals).indexed) ...[
           PlateMealCard(
             meal: m,
@@ -791,10 +802,15 @@ class _DietScreenState extends State<_DietScreen> {
               if (training != null && mi == training.pre) 'Eat this before you train. It is part of your day\'s food, not extra.',
               if (training != null && mi == training.post) 'Eat this after you train: it brings your protein. It is part of your day\'s food, not extra.',
             ],
-            onSwap: () => _swap(key, days, mi),
+            // The list can hold an added "Before training" fruit, so the plan's own meal is found by name; that fruit has no swap.
+            onSwap: meals.any((x) => x.name == m.name) ? () => _swap(key, days, meals.indexWhere((x) => x.name == m.name)) : null,
             onAte: today ? () => _ate(m) : null,
             logged: today && logged.contains(m.name),
           ),
+          const SizedBox(height: 10),
+        ],
+        if (suppLines.isNotEmpty) ...[
+          PlateInfoCard(title: 'SUPPLEMENTS', lines: [for (final l in suppLines) (name: l.name, text: l.how)]),
           const SizedBox(height: 10),
         ],
         const PlateKey(),
@@ -1000,7 +1016,14 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
   };
   late final Set<String> _restrictions = {...((widget.choices['restrictions'] as List?) ?? const []).cast<String>()};
   late final Set<String> _conditions = {...((widget.choices['health_conditions'] as List?) ?? const []).cast<String>()};
-  late int _scoops = widget.choices['whey_scoops'] as int? ?? 0;
+  late final _chosenSupps = {...((widget.choices['supplements'] as List?) ?? const []).cast<String>()};
+  late final _own = [...((widget.choices['other_supplements'] as List?) ?? const []).cast<String>()];
+  final _ownInput = TextEditingController();
+  // Starts where the Diet tab is: protein powder chosen at sign-up shows as its scoop, so saving here cannot lose it.
+  late int _scoops = effectiveScoops(
+      saved: widget.choices['whey_scoops'] as int? ?? 0,
+      supplements: _chosenSupps.toList(),
+      conditions: ((widget.choices['health_conditions'] as List?) ?? const []).cast<String>());
   late final _monthly = TextEditingController(
       text: widget.choices['budget_max_inr'] == null ? '' : '${monthlyFromDaily(widget.choices['budget_max_inr'] as int)}');
   int _step = 0;
@@ -1012,7 +1035,17 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
   @override
   void dispose() {
     _monthly.dispose();
+    _ownInput.dispose();
     super.dispose();
+  }
+
+  void _addOwn() {
+    final v = _ownInput.text.trim();
+    if (v.length < 2 || _own.length >= 10) return;
+    setState(() {
+      if (!_own.any((o) => o.toLowerCase() == v.toLowerCase())) _own.add(v);
+      _ownInput.clear();
+    });
   }
 
   static const _titles = ['Your food budget', 'How you eat', 'Anything else?'];
@@ -1030,7 +1063,7 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
     });
     var saved = false;
     try {
-      final supps = {...((widget.choices['supplements'] as List?) ?? const []).cast<String>()};
+      final supps = {..._chosenSupps};
       _scoops > 0 ? supps.add('protein_powder') : supps.remove('protein_powder');
       await supabase.from('dietary_profiles').update({
         ..._d,
@@ -1038,6 +1071,7 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
         'budget_max_inr': _d['budget_tier'] == 'custom' ? dailyFromMonthly(_ownMonthly!) : null,
         'restrictions': _restrictions.toList(),
         'supplements': supps.toList(),
+        'other_supplements': _own,
         'health_conditions': _conditions.toList(),
         'whey_scoops': _scoops,
       }).eq('user_id', supabase.auth.currentUser!.id);
@@ -1141,8 +1175,38 @@ class _BuildMyPlateState extends State<_BuildMyPlate> {
             onSelectionChanged: (s) => setState(() => _scoops = s.first),
           ),
           const SizedBox(height: 6),
-          Text('Added to your evening snack, meals planned around it. A typical 30 g scoop: 120 kcal and 24 g protein; '
-              'check your tub\'s label.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          Text('Added after training on training days, otherwise to your evening snack, with meals planned around it. '
+              'A typical 30 g scoop: 120 kcal and 24 g protein; check your tub\'s label.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          const SizedBox(height: 20),
+          Text('OTHER SUPPLEMENTS', style: monoLabel(context)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            FilterChip(
+              label: const Text('Creatine'),
+              selected: _chosenSupps.contains('creatine'),
+              onSelected: (on) => setState(() => on ? _chosenSupps.add('creatine') : _chosenSupps.remove('creatine')),
+            ),
+            for (final o in _own)
+              InputChip(label: Text(o), onDeleted: () => setState(() => _own.remove(o)), deleteButtonTooltipMessage: 'Remove $o'),
+          ]),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(
+              child: TextField(
+                controller: _ownInput,
+                maxLength: 40,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.done,
+                enabled: _own.length < 10,
+                onSubmitted: (_) => _addOwn(),
+                decoration: const InputDecoration(hintText: 'Add your own, e.g. vitamin D, fish oil', counterText: ''),
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(height: 48, child: OutlinedButton(onPressed: _addOwn, child: const Text('Add'))),
+          ]),
+          const SizedBox(height: 6),
+          Text('Your own are listed on your plate. Levlofit does not check them or count them in your targets.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
           const SizedBox(height: 20),
           Text('PACE', style: monoLabel(context)),
           const SizedBox(height: 8),
@@ -1299,7 +1363,7 @@ class _CalendarScreenState extends State<_CalendarScreen> {
         final existing = await supabase.from('workout_logs').select('id').eq('user_id', _uid).eq('performed_on', _iso(day)).limit(1);
         if (existing.isEmpty) await supabase.from('workout_logs').insert({'user_id': _uid, 'performed_on': _iso(day), 'goal': goal['goal']});
       }
-      setState(() => _records.putIfAbsent(day, _DayRecord.new).trained = !done);
+      if (mounted) setState(() => _records.putIfAbsent(day, _DayRecord.new).trained = !done);
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save. Check your connection and try again.')));
     }
@@ -1833,7 +1897,7 @@ class _ProgressScreenState extends State<_ProgressScreen> {
 
   Future<void> _addPhoto() async {
     final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, imageQuality: 85);
-    if (file == null) return;
+    if (file == null || !mounted) return;
     setState(() => _uploading = true);
     try {
       final png = file.name.toLowerCase().endsWith('.png');

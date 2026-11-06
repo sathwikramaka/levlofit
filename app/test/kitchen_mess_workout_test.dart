@@ -131,7 +131,9 @@ void main() {
       expect(w.meals[w.post!].name, 'Dinner');
       expect(w.note, contains('eat it after training'));
       final v = workoutDay(day(), 'varies');
-      expect([v.pre, v.post], [null, null]);
+      expect(v.meals[v.pre!].name, 'Evening snack', reason: 'no fixed time: marked for an evening session');
+      expect(v.meals[v.post!].name, 'Dinner');
+      expect(v.note, contains('time varies'));
     });
   });
 

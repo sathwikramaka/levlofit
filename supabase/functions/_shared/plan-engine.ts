@@ -621,7 +621,7 @@ function supplementAdvice(input: PlanInput, proteinG: number, excluded: Set<stri
     const type = excluded.has('dairy') ? (excluded.has('soy') ? 'a pea protein' : 'a pea or soy protein') : 'a whey protein';
     out.push({
       name: 'Protein powder',
-      how: `Only on days food falls short of ${proteinG} g protein; ${type} fits your diet.`,
+      how: `One scoop a day is planned into your meals, towards your ${proteinG} g protein, unless you change it in Build my plate; ${type} fits your diet.`,
       why: 'Food first. A scoop is a convenient top-up, not a requirement.',
       source: SRC.issnProtein,
     });
