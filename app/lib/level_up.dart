@@ -116,7 +116,7 @@ class _LevelUpCardState extends State<LevelUpCard> {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(value: v / 100, minHeight: 6, backgroundColor: c.surfaceContainerHighest),
+                child: LinearProgressIndicator(value: v / 100, minHeight: 6, color: progressColor(context), backgroundColor: c.surfaceContainerHighest),
               ),
             ),
             SizedBox(width: 40, child: Text('$v', textAlign: TextAlign.end, style: monoNumber(context, size: 13))),

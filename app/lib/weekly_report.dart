@@ -175,7 +175,7 @@ class WeeklyReportCard extends StatelessWidget {
         );
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(22), border: Border.all(color: c.outline)),
+      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius), border: Border.all(color: c.outline)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('LAST WEEK  ·  ${r.monday.day} ${_months[r.monday.month - 1].toUpperCase()} TO ${sun.day} ${_months[sun.month - 1].toUpperCase()}', style: monoLabel(context)),
         const SizedBox(height: 8),

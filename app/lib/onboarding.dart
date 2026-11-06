@@ -1330,7 +1330,7 @@ class ChoiceTile extends StatelessWidget {
           child: Material(
             color: selected ? c.secondary : c.surface,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(20),
               side: BorderSide(color: selected ? c.secondary : c.outline),
             ),
             clipBehavior: Clip.antiAlias,

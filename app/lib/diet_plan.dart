@@ -1507,7 +1507,7 @@ List<SupplementLine> supplementLines({
     if (scoops > 0)
       (
         name: plant ? 'Plant protein powder' : 'Whey protein',
-        how: '$scoops ${scoops == 1 ? 'scoop' : 'scoops'} a day, about ${(scoopGrams * scoops).round()} g, in water. It is already in your meals below, '
+        how: '$scoops ${scoops == 1 ? 'scoop' : 'scoops'} a day, about ${(scoopGrams * scoops).round()} g, in water. It is already in your meals above, '
             'after training on training days. Check your tub\'s label. Change it in Build my plate.',
       )
     else if (chosen.contains('protein_powder'))

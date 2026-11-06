@@ -50,7 +50,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Done today'), findsOneWidget); // today is logged, so the workout card shows the done state
-      expect(find.text('TRAIN'), findsOneWidget);
+      expect(find.text('Training'), findsOneWidget);
       // The list builds lazily: scroll each section in and check nothing throws on the way.
       for (final label in ['THIS WEEK', 'FUEL', 'BODY  ·  BMI']) {
         await tester.scrollUntilVisible(find.text(label), 200, scrollable: find.byType(Scrollable).first);
@@ -309,4 +309,27 @@ Eat **150 g** protein.
     expect(find.text('WELCOME BACK'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  for (final (w, scale) in [(390.0, 1.0), (320.0, 1.0), (360.0, 1.5)]) {
+    testWidgets('bottom bar fits and works at ${w.toInt()} dp, text x$scale', (tester) async {
+      tester.view.physicalSize = Size(w, 700) * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final tapped = <String>[];
+      await tester.pumpWidget(MaterialApp(
+        theme: lightTheme,
+        builder: (context, child) => MediaQuery(data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)), child: child!),
+        home: Scaffold(bottomNavigationBar: bottomBarForTest(onTap: tapped.add)),
+      ));
+      expect(tester.takeException(), isNull);
+      expect(find.text('Home'), findsOneWidget);
+      for (final label in ['Workout', 'Diet', 'Progress', 'More']) {
+        final target = find.byTooltip(label);
+        expect(target, findsOneWidget);
+        expect(tester.getSize(target).height, greaterThanOrEqualTo(48));
+        await tester.tap(target);
+      }
+      expect(tapped, ['workout', 'diet', 'progress', 'more']);
+    });
+  }
 }

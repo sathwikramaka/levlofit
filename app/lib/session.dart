@@ -1320,7 +1320,7 @@ class _MoveCard extends StatelessWidget {
       duration: motion(context, 260),
       decoration: BoxDecoration(
         color: c.surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(cardRadius),
         border: Border.all(color: complete ? c.primary : c.outline, width: complete ? 1.5 : 1),
       ),
       padding: const EdgeInsets.all(12),
