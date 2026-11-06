@@ -2,6 +2,19 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one.
 
+## 2026-11-07: release 1.0.10, soft card look (owner-approved: APK, website, MIN_APP_BUILD secret)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 0bcc2a2 (look 518841f, 8e1e4a2; website FAQ and search without the beef and pork entries 0bcc2a2) plus the version bump, built from a clean git worktree; the uncommitted update-notification work in the main folder is not shipped | git worktree; pubspec has no workmanager; marker string absent from the live APK's libapp.so |
+| Checks before release | flutter analyze clean, 635 pass + 1 skip; node 283/0, offline AI eval 85/0 strict, tsc, Deno 30/0; website lint/build/tsc; Handbook and food data tests. Layout only, no database or function change | tools/verify.sh in the release worktree |
+| CI | Not run on these commits: they were not pushed before the release | - |
+| Android APK | com.levlofit.app 1.0.10, versionCode 2012, 13,661,523 bytes (13.7 MB), release certificate 7c510c35...4c431384 (CN=Levlofit) | aapt2, apksigner on the live file |
+| APK SHA-256 | 9dbf1b35d2f5df3eb41b79f32235998115c615c80745c52108c97bd2386062ac, equal on the live download and /version.json | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 9cfb0d8b; home links levlofit-1.0.10.apk; /version.json = 1.0.10 build 12, min_build 12; home page HTML has no beef or pork text | curl |
+| Secret | MIN_APP_BUILD = 12 (digest equals sha256 of "12") | supabase secrets list |
+| Not verified | Nothing on a real phone: the new look, bottom bar, status bar and keyboard behaviour, the in-app update from 1.0.9. Not looked at in the new style: later onboarding steps, Build my plate, side menu, food diary, Handbook, exercise library, Calendar | - |
+
 ## 2026-11-07: release 1.0.9, diet accuracy, supplements, workout meals (owner-approved: backup, push, 2 migrations, generate-plan and coach-chat deploys, APK, website, MIN_APP_BUILD secret)
 
 | What | Value | How checked |
