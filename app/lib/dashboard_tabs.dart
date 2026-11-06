@@ -263,7 +263,7 @@ class _WaterGlassState extends State<_WaterGlass> with SingleTickerProviderState
       decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(30), border: Border.all(color: c.outline)),
       child: Container(
         height: 220,
-        decoration: BoxDecoration(color: dark ? c.surface : graphite, borderRadius: BorderRadius.circular(25)),
+        decoration: BoxDecoration(color: dark ? c.surface : charcoal, borderRadius: BorderRadius.circular(25)),
         clipBehavior: Clip.antiAlias,
         child: TweenAnimationBuilder<double>(
           tween: Tween(end: fill),
@@ -402,7 +402,7 @@ class _HabitsScreenState extends State<_HabitsScreen> {
           decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(28), border: Border.all(color: c.outline)),
           child: Container(
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? c.surface : graphite, borderRadius: BorderRadius.circular(23)),
+            decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? c.surface : charcoal, borderRadius: BorderRadius.circular(23)),
             child: Row(children: [
               SizedBox(
                 width: 88,
@@ -989,7 +989,7 @@ class _ReminderBannerState extends State<_ReminderBanner> with SingleTickerProvi
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 460),
                 child: Material(
-                  color: graphite,
+                  color: charcoal,
                   elevation: 12,
                   borderRadius: BorderRadius.circular(20),
                   child: InkWell(
@@ -1002,7 +1002,7 @@ class _ReminderBannerState extends State<_ReminderBanner> with SingleTickerProvi
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(color: c.primary, borderRadius: BorderRadius.circular(11)),
-                          child: const Icon(LvIcons.timer, size: 19, color: graphite),
+                          child: const Icon(LvIcons.timer, size: 19, color: charcoal),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -1644,8 +1644,8 @@ Widget _row(BuildContext context, IconData icon, String label, VoidCallback onTa
       child: Row(children: [
         Icon(icon, size: 20, color: color ?? c.onSurface),
         const SizedBox(width: 14),
-        Expanded(child: Text(label, style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: color))),
-        if (trailing != null) Flexible(child: Text(trailing, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))),
+        Expanded(flex: 3, child: Text(label, style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: color))),
+        if (trailing != null) Expanded(flex: 2, child: Text(trailing, textAlign: TextAlign.end, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))),
         const SizedBox(width: 6),
         Icon(LvIcons.caretRight, size: 16, color: c.onSurfaceVariant),
       ]),

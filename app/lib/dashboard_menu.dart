@@ -512,7 +512,7 @@ class _Roadmap extends StatelessWidget {
       decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(28), border: Border.all(color: c.outline)),
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? c.surface : graphite, borderRadius: BorderRadius.circular(23)),
+        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? c.surface : charcoal, borderRadius: BorderRadius.circular(23)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Icon(LvIcons.trendUp, size: 16, color: c.primary),
@@ -2060,13 +2060,13 @@ List<Widget> _progressBody(
       decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(28), border: Border.all(color: c.outline)),
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: c.secondary, borderRadius: BorderRadius.circular(23)),
+        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? c.surface : charcoal, borderRadius: BorderRadius.circular(23)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('WEIGHT TREND  ·  LAST 6 WEEKS', style: monoLabel(context).copyWith(color: c.onSecondary.withValues(alpha: 0.65))),
+          Text('WEIGHT TREND  ·  LAST 6 WEEKS', style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.65))),
           const SizedBox(height: 8),
-          Text(v.title, style: t.headlineMedium?.copyWith(color: c.onSecondary)),
+          Text(v.title, style: t.headlineMedium?.copyWith(color: cloud)),
           const SizedBox(height: 6),
-          Text(v.detail, style: t.bodyMedium?.copyWith(color: c.onSecondary.withValues(alpha: 0.75))),
+          Text(v.detail, style: t.bodyMedium?.copyWith(color: cloud.withValues(alpha: 0.75))),
         ]),
       ),
     ),
@@ -2260,7 +2260,7 @@ class _Stat extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           CountUp(value, style: monoNumber(context, size: 28).copyWith(color: accent ? Theme.of(context).colorScheme.tertiary : null)),
           const SizedBox(height: 4),
-          Text(label, maxLines: 2, overflow: TextOverflow.ellipsis, style: monoLabel(context).copyWith(fontSize: 10)), // two lines at phone width
+          FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(label, maxLines: 1, style: monoLabel(context).copyWith(fontSize: 10))),
         ]),
       );
 }
