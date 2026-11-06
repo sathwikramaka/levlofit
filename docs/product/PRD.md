@@ -1,0 +1,94 @@
+# Levlofit: Product Requirements Document
+
+Last updated: 2026-11-07, for release 1.0.10. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+
+## 1. Summary
+
+Levlofit is an India-first fitness app. It tells a person what to train and eat today, in household terms, and shows
+whether it is working. Plans come from fixed, sourced rules; AI explains them and never sets the numbers.
+
+Brand idea: **find your level**. Levels 0 to 5 in each goal are earned with level checks, never given.
+
+## 2. Goals
+
+| Goal | Measure (`tools/retention_metrics.sql`) |
+|---|---|
+| Help people start and keep a realistic routine | Activation; D1, D7, D30 return |
+| Be useful every day without feeling like a chore | Weekly active users (a real action, not an app open) |
+| Be trustworthy | Named sources; missing data shown as missing; no fake numbers |
+| Cost nothing to run at launch | Free tiers and open-source tools only |
+
+Target hypotheses, not benchmarks: onboarding 70%+, D7 25%+, D30 15%+. Accounts are still too few to read as rates.
+
+## 3. Users
+
+Adults 18 to 80 in India, beginners to experienced. Vegetarian, eggitarian, vegan or non-vegetarian. Android first; iPhone
+through the web app. People with medical conditions are told to involve a doctor; the app does not treat anyone.
+
+## 4. Requirements: live in 1.0.10
+
+### Plan and training
+- Onboarding builds a plan from goals, body, schedule, health check, equipment, food settings and a level check.
+- One main goal plus up to five extras, from 12 catalogue goals. Levels L0 to L5 with curriculum checks.
+- Weekly schedule with weekdays and time; session moves with exercise animations, set and rep logging, rest timers.
+- Double progression hints, lighter-week and pain-aware notes, start-lighter note after 14 days away.
+- Fewer-days offer after three short weeks: the person chooses, nothing changes by itself.
+- Medical hold: a health flag limits training until a doctor clears it.
+
+### Food
+- Seven-day plate in household servings, within calorie and protein targets, for budget, region, kitchen, cooking time,
+  mess meals, allergies and exclusions. Beef and pork are never suggested.
+- Rice in grams, cooked and raw. Solids by weight; ml only for liquids and by-the-bowl dal or curry.
+- Every food shown at a real serving or not at all.
+- Pre- and post-workout meals named on training days; a training-day or rest-day card above the plate.
+- Supplements card: protein powder (planned into meals), creatine (dose only for strength and hybrid goals, without a
+  health flag), the person's own additions (listed, not checked, not counted).
+- Food diary with search, packaged foods by barcode, recipes, whole-meal logging, raw-weight warnings.
+
+### Daily use and progress
+- Dashboard: activity arcs, today's session, optional daily check-in, daily goal, rank and rating, week strip, water,
+  habits, food targets, BMI. Customisable.
+- Weekly report: sessions against plan, logged food against targets from 3 logged days, lift trend, weight change only
+  with enough weigh-ins, one observation, one next step.
+- Weight trend, measurements, optional private progress photos, optional body check.
+- Reminders: workout, water with chosen hours, weigh-in, the person's own; opt-in, master switch.
+- Welcome-back card after 14 days away. No guilt wording anywhere.
+
+### Levlofit AI
+- Coach chat with history, memory the person confirms, swaps and plan changes they must accept. Answers explain the stored
+  plan and Handbook; it does not set calories or macros, or diagnose.
+- Works without AI: every core feature runs when the provider is down.
+
+### Learning and account
+- Handbook of 43 chapters with named sources; exercise library; glossary; BMI and body-fat tools.
+- Google or email sign-in, Terms and Privacy at sign-up, delete account, send feedback (saved and emailed), in-app update.
+
+### Website
+- Marketing pages, Handbook pages, privacy, terms, delete-account, APK download, web app at `/app/`.
+
+## 5. Rules that do not bend
+
+- Deterministic numbers: no LLM sets a calorie, macro, dose or nutrition value.
+- Never invent evidence, reviews, counts or professional approval. The app says "not medical advice, not clinician-reviewed".
+- Banned: purple gradients, fake metrics, stock or AI photos, emoji icons, em dashes, shame wording, beef or pork suggestions.
+- Do not say "free" on the website or in the app (ads or subscriptions may come later).
+- Privacy: data minimised, own-row access, deletion on request. Check-ins and own supplements never go to the AI provider.
+
+## 6. Out of scope for now
+
+Social feeds, public leaderboards, wearables beyond Health Connect steps, generated workout videos, marketplace,
+subscriptions. iOS native (no Mac); Ironman or triathlon content (no sourced swim or bike material).
+
+## 7. Known limits
+
+- **Not on a real phone yet:** the new look (1.0.10) and most 1.0.9 features. See `IMPLEMENTATION_PLAN.md`.
+- Diary has raw and dry values only; cooked rice and dal need a verified import.
+- Protein uses actual body weight; adjusted weight for higher BMI needs a dietitian (`docs/legal/OUTSTANDING_REVIEWS.md`).
+- High-calorie plans can show large counts (7 rotis, 10 idlis at a meal).
+- Offline is read-only: the last plan opens; logging needs a connection.
+- Age is from birth year only: someone turning 18 this year starts on 1 January.
+
+## 8. Before any revenue
+
+IFCT 2017 written permission or replacement, and a paid ExerciseDB plan or replacement media
+(`docs/legal/LICENSING_REQUIREMENTS.md`).

@@ -1,7 +1,7 @@
 """Builds the Handbook migration from the chapter content below.
 
 Every number here is checked against the source named next to it (web-verified 2026-09-29).
-The curriculum PDF in Refrence/ is used as a reference for structure only, never as a source.
+The curriculum PDF in reference/ is used as a reference for structure only, never as a source.
 
 Content is a list of visual blocks, rendered natively by app/lib/handbook.dart. Rule: at least
 60% of blocks in every chapter are true visuals (see VISUAL), so the Handbook teaches

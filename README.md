@@ -11,15 +11,11 @@ This README is the map of the whole project from first setup to today. A person 
 every part is, where it lives, how data flows, how to run and test it, and what is live. Deeper detail lives in
 `docs/` (section 22).
 
-### Status (2026-10-28)
+### Status
 
-| Area | State |
-|---|---|
-| Production backend | Live. All 45 migrations applied (last: the 43-chapter Handbook) and 4 Edge Functions deployed |
-| Edge Functions | `generate-plan` v19, `coach-chat` v21 (level check, honest coach, research search), `delete-account` v13, `body-check` v1 |
-| Android app | 1.0.0+1, release APK signed with the owner's key, installed on the owner's phone (OnePlus CPH2649, Android 16). Not yet on Google Play |
-| Website | Next.js site in `website/`; the updated privacy text is not deployed yet |
-| Open | A23 phone smoke test, Google Play listing and Health Connect declaration, website redeploy (section 15) |
+Current state, what is next and what is blocked: [docs/product/IMPLEMENTATION_PLAN.md](docs/product/IMPLEMENTATION_PLAN.md).
+All documents: [docs/README.md](docs/README.md). Sections below can trail the code; the six documents in `docs/product/`
+are kept current with every change.
 
 ---
 
@@ -96,7 +92,7 @@ tools/               verify.sh, production apply/backup scripts, converters
 docs/                plans, checklists, audits, decisions (see section 22)
 brand/               logo SVGs
 media/               exercise media provenance
-Refrence/            the original curriculum PDF (reference only)
+reference/            the original curriculum PDF (reference only)
 DESIGN.md            design system
 CLAUDE.md            project rules for AI assistants (production safety)
 ```
@@ -193,8 +189,8 @@ Windows 11 is the reference machine; macOS and Linux work the same way.
    `LLM_PROVIDER`, `LLM_MODEL`, `LLM_BASE_URL`, `LLM_TIMEOUT_MS`, `LLM_MAX_RETRIES`, `LLM_REQUEST_BUDGET_MS`,
    `LLM_FALLBACK_*`.
 5. **Release signing** (owner only): the upload key lives outside the repository
-   (`C:\Projects\levlofit-signing\levlofit-release.jks`, alias `levlofit`); `app/android/key.properties` points at it
-   and is git-ignored. Never commit or print its values. Steps: [docs/RELEASE_SETUP.md](docs/RELEASE_SETUP.md).
+   (`C:\Projects\Levlofit-private\levlofit-signing\levlofit-release.jks`, alias `levlofit`); `app/android/key.properties` points at it
+   and is git-ignored. Never commit or print its values. Steps: [docs/release/RELEASE_SETUP.md](docs/release/RELEASE_SETUP.md).
 
 ---
 
@@ -401,7 +397,7 @@ Supabase Postgres, 45 migrations in `supabase/migrations/`, RLS on every user ta
 Rate limits (`check_rate`) guard chat, plan rebuilds, feedback, body checks and the contact form. Database tests:
 `supabase/tests` (pgTAP), run with `supabase test db` on a local stack.
 
-Production uses **forward-only** application (Option B in [docs/MIGRATION_RECONCILIATION.md](docs/MIGRATION_RECONCILIATION.md)):
+Production uses **forward-only** application (Option B in [docs/release/MIGRATION_RECONCILIATION.md](docs/release/MIGRATION_RECONCILIATION.md)):
 the owner runs `tools/apply_prod.ps1`, which asks for the connection string at a hidden prompt, prints each file's
 SHA-256 and applies each file unchanged in one transaction.
 
@@ -445,7 +441,7 @@ One runner: `bash tools/verify.sh [suite ...]`. With no arguments it runs all su
 | `website` | lint, build, tsc | pass |
 
 Phone checks used a throwaway stack and `adb`. Checklists:
-[docs/ANDROID_TEST_PLAN.md](docs/ANDROID_TEST_PLAN.md) and [docs/STEP_COUNTER_DEVICE_CHECKLIST.md](docs/STEP_COUNTER_DEVICE_CHECKLIST.md).
+[docs/operations/ANDROID_TEST_PLAN.md](docs/operations/ANDROID_TEST_PLAN.md) and [docs/operations/STEP_COUNTER_DEVICE_CHECKLIST.md](docs/operations/STEP_COUNTER_DEVICE_CHECKLIST.md).
 
 ---
 
@@ -464,7 +460,7 @@ Phone checks used a throwaway stack and `adb`. Checklists:
 **Open**
 - A23 smoke test on the phone (sign-up, level check, plan, diet, coach with sources, reminders, steps, delete
   account).
-- Google Play: developer account, store listing, Data safety form ([draft](docs/PLAY_DATA_SAFETY_DRAFT.md)),
+- Google Play: developer account, store listing, Data safety form ([draft](docs/release/PLAY_DATA_SAFETY_DRAFT.md)),
   **Health Connect declaration** before publishing a build with step counting.
 - Website deploy with the updated privacy text.
 - Coach memory of Build my plate scoops and conditions is per phone; moving it to the account needs a migration.
@@ -473,7 +469,7 @@ Phone checks used a throwaway stack and `adb`. Checklists:
   privacy and terms is the owner's self-review.
 - iOS (needs a Mac).
 
-Full checklist with every approval gate: [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
+Full checklist with every approval gate: [docs/release/RELEASE_CHECKLIST.md](docs/release/RELEASE_CHECKLIST.md).
 
 ---
 
@@ -507,7 +503,7 @@ From [CLAUDE.md](CLAUDE.md), binding for people and AI assistants:
 - Even read-only inspection of production needs approval before its first use in a session.
 - Test on a local database; schema changes only through reviewed migration files.
 - Backups before risky production steps: `tools/backup_prod.ps1` (or `backup_prod.sh`), sealed with `tools/backup_seal.sh`;
-  restore steps in [docs/BACKUP_RECOVERY_PLAN.md](docs/BACKUP_RECOVERY_PLAN.md).
+  restore steps in [docs/operations/BACKUP_RECOVERY_PLAN.md](docs/operations/BACKUP_RECOVERY_PLAN.md).
 - Never type, print or commit passwords, keys or `key.properties` values. The owner enters credentials at hidden
   prompts; CLI tokens are deleted after each deploy.
 
@@ -525,8 +521,8 @@ From [CLAUDE.md](CLAUDE.md), binding for people and AI assistants:
 | Europe PMC, Wikipedia | live research for the coach | free APIs; Wikipedia text CC BY-SA, shown as short excerpts with links |
 | ICMR-NIN 2024, WHO, ACSM, ISSN and others | Handbook and plan rules | cited per chapter |
 
-Registers: [docs/SOURCE_LICENCE_REGISTER.md](docs/SOURCE_LICENCE_REGISTER.md),
-[docs/LICENSING_REQUIREMENTS.md](docs/LICENSING_REQUIREMENTS.md), `media/SOURCES.md`.
+Registers: [docs/legal/SOURCE_LICENCE_REGISTER.md](docs/legal/SOURCE_LICENCE_REGISTER.md),
+[docs/legal/LICENSING_REQUIREMENTS.md](docs/legal/LICENSING_REQUIREMENTS.md), `media/SOURCES.md`.
 
 ---
 
@@ -539,7 +535,7 @@ Registers: [docs/SOURCE_LICENCE_REGISTER.md](docs/SOURCE_LICENCE_REGISTER.md),
 - Steps never leave the phone unless the person turns on sharing.
 - Body check photos are sent once and never stored.
 - Account deletion removes everything (app or website).
-- Self-review: [docs/PRIVACY_SELF_REVIEW.md](docs/PRIVACY_SELF_REVIEW.md). The full text is in the app (Settings,
+- Self-review: [docs/legal/PRIVACY_SELF_REVIEW.md](docs/legal/PRIVACY_SELF_REVIEW.md). The full text is in the app (Settings,
   Privacy) and on the website.
 
 ---
@@ -553,7 +549,7 @@ Registers: [docs/SOURCE_LICENCE_REGISTER.md](docs/SOURCE_LICENCE_REGISTER.md),
 - ExerciseDB on in release builds with credit, until monetisation.
 - Groq is the AI provider; research search uses free sources (Europe PMC, Wikipedia), not paid web search.
 - Food budget per month, with the person's own amount.
-- More in [docs/OWNER_DECISIONS.md](docs/OWNER_DECISIONS.md).
+- More in [docs/product/OWNER_DECISIONS.md](docs/product/OWNER_DECISIONS.md).
 
 ---
 
@@ -578,17 +574,17 @@ Batch-by-batch log: [docs/PROGRESS.md](docs/PROGRESS.md).
 
 | Document | For |
 |---|---|
-| [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) | every release step and approval gate |
-| [docs/RELEASE_SETUP.md](docs/RELEASE_SETUP.md) | signing, builds, provider setup |
-| [docs/MIGRATION_RECONCILIATION.md](docs/MIGRATION_RECONCILIATION.md) | production migration history and order |
-| [docs/BACKUP_RECOVERY_PLAN.md](docs/BACKUP_RECOVERY_PLAN.md) | backups and restore |
+| [docs/release/RELEASE_CHECKLIST.md](docs/release/RELEASE_CHECKLIST.md) | every release step and approval gate |
+| [docs/release/RELEASE_SETUP.md](docs/release/RELEASE_SETUP.md) | signing, builds, provider setup |
+| [docs/release/MIGRATION_RECONCILIATION.md](docs/release/MIGRATION_RECONCILIATION.md) | production migration history and order |
+| [docs/operations/BACKUP_RECOVERY_PLAN.md](docs/operations/BACKUP_RECOVERY_PLAN.md) | backups and restore |
 | [docs/PROGRESS.md](docs/PROGRESS.md) | the full work log |
-| [docs/OWNER_DECISIONS.md](docs/OWNER_DECISIONS.md) | decisions and why |
-| [docs/HANDBOOK_BOOK_PLAN.md](docs/HANDBOOK_BOOK_PLAN.md) | Handbook v4 structure |
-| [docs/AI_PROVIDER_COMPARISON.md](docs/AI_PROVIDER_COMPARISON.md) | why Groq |
-| [docs/PLAY_DATA_SAFETY_DRAFT.md](docs/PLAY_DATA_SAFETY_DRAFT.md) | Play Console data safety |
-| [docs/STEP_COUNTER_PLAN.md](docs/STEP_COUNTER_PLAN.md) | Health Connect design |
+| [docs/product/OWNER_DECISIONS.md](docs/product/OWNER_DECISIONS.md) | decisions and why |
+| [docs/content/HANDBOOK_BOOK_PLAN.md](docs/content/HANDBOOK_BOOK_PLAN.md) | Handbook v4 structure |
+| [docs/operations/AI_PROVIDER_COMPARISON.md](docs/operations/AI_PROVIDER_COMPARISON.md) | why Groq |
+| [docs/release/PLAY_DATA_SAFETY_DRAFT.md](docs/release/PLAY_DATA_SAFETY_DRAFT.md) | Play Console data safety |
+| [docs/archive/STEP_COUNTER_PLAN.md](docs/archive/STEP_COUNTER_PLAN.md) | Health Connect design |
 | [DESIGN.md](DESIGN.md) | colours, type, components |
 
-Older planning notes (`docs/LEVLOFIT_HANDOFF.md`, `docs/PLAN.md`, the 15 and 19 area plans) describe earlier states;
+Older planning notes (`docs/archive/LEVLOFIT_HANDOFF.md`, `docs/archive/PLAN.md`, the 15 and 19 area plans) describe earlier states;
 where they disagree with this README, this README and the code are current.

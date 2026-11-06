@@ -3,7 +3,7 @@
 Status: released 2026-10-28 (owner request; no clinician review, owner decision 2026-10-27). Writes the draft file and
 supabase/migrations/20261028200000_handbook_v4_book.sql. The production candidate stays data/build_handbook.py
 and supabase/migrations/20261007400000_handbook_v3.sql, unchanged. This module imports the v3 content and applies the
-book edits listed in docs/HANDBOOK_BOOK_PLAN.md:
+book edits listed in docs/content/HANDBOOK_BOOK_PLAN.md:
   - an introduction (welcome), a part opener at the start of each of the five parts, and a closing chapter with a
     sample 12-week journey (putting-it-together);
   - new chapters: welcome, cardio-intensity, technique, under-eating, putting-it-together;
@@ -326,7 +326,7 @@ edit_text("soreness-pain-injury", "Soreness after a new workout is normal.", "So
 # adults, kept in How training works and Sets, reps and progress. Building muscle now says the same thing.
 edit_text("build-muscle", "Training each muscle twice a week", "Reaching your weekly sets, split across the week however suits you")
 
-# Decision 2 (PROVISIONAL, pending evidence review; docs/handbook_v4_review/DECISIONS.md): option C, cautious wording.
+# Decision 2 (PROVISIONAL, pending evidence review; docs/content/handbook_v4_review/DECISIONS.md): option C, cautious wording.
 # The cited source (Wilson 2012) has not been read; ACSM 2026 reports insufficient data on cardio and weights in the
 # same session. The claims stay flagged source_access / source_needed and content_decision.
 reword("one-step-at-a-time", "Lots of running would compete with your strength work",

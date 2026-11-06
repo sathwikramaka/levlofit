@@ -7,7 +7,7 @@
 #     SUPABASE_ACCESS_TOKEN in this process's environment;
 #   - clears PGPASSWORD, SUPABASE_ACCESS_TOKEN and the plain-text copies when it finishes, also on failure.
 # Usage (repo root, Docker Desktop running):  powershell -ExecutionPolicy Bypass -File tools\backup_prod.ps1
-# Output: C:\Projects\levlo-secure-backups\levlo-pre-migration-<UTC timestamp>\ (outside the repo; personal data; the
+# Output: C:\Projects\Levlofit-private\levlo-secure-backups\levlo-pre-migration-<UTC timestamp>\ (outside the repo; personal data; the
 #         folder is restricted to your Windows account and SYSTEM).
 [CmdletBinding()]
 param(
@@ -15,7 +15,7 @@ param(
   [SecureString]$AccessToken,                                       # for offline tests only; normally prompted
   [string]$BashPath   = 'C:\Program Files\Git\bin\bash.exe',
   [string]$ScriptPath,                                              # default: backup_prod.sh next to this file
-  [string]$BackupRoot = 'C:\Projects\levlo-secure-backups'
+  [string]$BackupRoot = 'C:\Projects\Levlofit-private\levlo-secure-backups'
 )
 $ErrorActionPreference = 'Stop'
 $ref = 'ndeozgxowggkljluaccz'

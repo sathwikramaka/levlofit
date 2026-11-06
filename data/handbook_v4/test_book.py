@@ -143,7 +143,7 @@ class Book(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stderr)
         pkg = load(HERE / "review_package.py", "pkg")
         open_ids = [r["claim_id"] for r in pkg.CLAIMS if pkg.is_open(r)]
-        with (ROOT / "docs" / "handbook_v4_review" / "review_items.csv").open(encoding="utf-8-sig") as fh:
+        with (ROOT / "docs" / "content" / "handbook_v4_review" / "review_items.csv").open(encoding="utf-8-sig") as fh:
             sheet = list(csv.DictReader(fh))
         self.assertEqual(sorted(x["claim_id"] for x in sheet), sorted(open_ids), "worksheet = open claims, once each")
         reg = {r["claim_id"]: r for r in pkg.CLAIMS}
@@ -153,7 +153,7 @@ class Book(unittest.TestCase):
             self.assertFalse(x["reviewer_decision"] or x["reviewer"], "no reviewer decision may be pre-filled")
         # Each section file holds exactly its items; flags are preserved per item.
         for key, fname, _ in pkg.SECTIONS:
-            text = (ROOT / "docs" / "handbook_v4_review" / fname).read_text(encoding="utf-8")
+            text = (ROOT / "docs" / "content" / "handbook_v4_review" / fname).read_text(encoding="utf-8")
             ids = [x["claim_id"] for x in sheet if x["primary"] == key]
             self.assertEqual(text.count("\n#### `"), len(ids), fname)
             for i in ids:
@@ -162,7 +162,7 @@ class Book(unittest.TestCase):
             in_register = sum(gate in pkg.flags(r) for r in pkg.CLAIMS if pkg.is_open(r))
             in_sheet = sum(gate in x["flags"].split("; ") for x in sheet)
             self.assertEqual(in_sheet, in_register, gate)
-        overview = (ROOT / "docs" / "HANDBOOK_V4_REVIEW.md").read_text(encoding="utf-8")
+        overview = (ROOT / "docs" / "content" / "HANDBOOK_V4_REVIEW.md").read_text(encoding="utf-8")
         self.assertIn(f"Open for review: {len(open_ids)}.", overview)
         self.assertNotIn("approved", overview.replace("clinically approved", "").replace("Nothing in this package is", ""))
 

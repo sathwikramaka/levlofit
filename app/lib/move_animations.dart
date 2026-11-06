@@ -1,6 +1,6 @@
 // Keyframes for Levlofit's own exercise animations (move_animation.dart). Each move has its own path, worked out from
 // its joint geometry and the cues in exercise_guide.dart; nothing is shared between unrelated moves. Frame checks:
-// test/move_animation_test.dart and docs/EXERCISE_ANIMATIONS.md.
+// test/move_animation_test.dart and docs/content/EXERCISE_ANIMATIONS.md.
 import 'dart:math' as math;
 
 import 'package:flutter/painting.dart';

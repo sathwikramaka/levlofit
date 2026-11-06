@@ -1,7 +1,7 @@
 // Exercise library. Two modes:
 // - ExerciseDB (default, every build while Levlofit is free with no ads): adds the ExerciseDB free V1 animations,
 //   names and steps by AscendAPI. Their terms allow non-commercial use only, with credit (checked 2026-10-16,
-//   docs/LICENSING_REQUIREMENTS.md), so every screen that shows them shows the credit.
+//   docs/legal/LICENSING_REQUIREMENTS.md), so every screen that shows them shows the credit.
 // - Licensed (--dart-define=LEVLOFIT_EXERCISEDB=false; required before subscriptions or ads without a paid plan):
 //   Levlofit's own move names and muscle notes (exercise_guide.dart) and its own demonstrations.
 import 'dart:async';

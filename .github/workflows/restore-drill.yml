@@ -2,7 +2,7 @@
 # container on the runner (no network, RAM only, removed after) and compares the copy with production
 # (tools/restore_drill.sh: 12 schema fingerprint kinds and every public table's row count). A failed run is the alert.
 # Plaintext dumps live only in the runner's temporary folder and are never uploaded. Database only: progress photos
-# are covered by tools/backup_prod.sh before each release (docs/BACKUP_RECOVERY_PLAN.md).
+# are covered by tools/backup_prod.sh before each release (docs/operations/BACKUP_RECOVERY_PLAN.md).
 # ponytail: row counts are read live, so a user logging during the run can fail it once; rerun before acting.
 # Secret: SUPABASE_DB_URL (same as the daily backup). The image tag matches production's Postgres (17.6.1.166 on
 # 2026-10-29, from the Supabase project details); update it when Supabase upgrades the project.

@@ -35,4 +35,4 @@ served=$(curl -fsS "$SITE/version.json?$(date +%s)" | python -I -c 'import json,
 [ "$served" = "$BUILD" ] || { echo "Deployed, but $SITE/version.json still says build $served." >&2; exit 1; }
 # Only now that the APK is live: older builds' coach, plan and body-check calls answer "update" (functions/_shared/rate.ts).
 supabase secrets set "MIN_APP_BUILD=${MIN_BUILD:-$BUILD}" --project-ref ndeozgxowggkljluaccz
-echo "Live: Levlofit $VERSION (build $BUILD). Commit the version bump and add a row to docs/RELEASE_RECORD.md."
+echo "Live: Levlofit $VERSION (build $BUILD). Commit the version bump and add a row to docs/release/RELEASE_RECORD.md."

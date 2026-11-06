@@ -10,7 +10,7 @@
 #   STORAGE_S3_KEY_ID, STORAGE_S3_SECRET  Supabase > Project Settings > Storage > S3 access keys (Storage only)
 #   SUPABASE_DB_URL                       same as db-backup.yml (count check against storage.objects)
 #   BACKUP_PASSPHRASE                     same as db-backup.yml
-# Restore: docs/BACKUP_RECOVERY_PLAN.md, section "Storage restore".
+# Restore: docs/operations/BACKUP_RECOVERY_PLAN.md, section "Storage restore".
 name: Daily Storage backup
 
 on:

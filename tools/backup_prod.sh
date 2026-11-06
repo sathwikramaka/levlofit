@@ -8,7 +8,7 @@
 # Storage files: copied with `supabase storage cp --project-ref` (never `supabase link`), authorised by a personal
 #        access token (SUPABASE_ACCESS_TOKEN from the PowerShell wrapper, or prompted here, input hidden). The token has
 #        full account scope; this script uses it only for the Storage download and passes it to no other command.
-# Output: C:/Projects/levlo-secure-backups/levlo-pre-migration-<UTC timestamp>/ (outside the repo; contains personal data).
+# Output: C:/Projects/Levlofit-private/levlo-secure-backups/levlo-pre-migration-<UTC timestamp>/ (outside the repo; contains personal data).
 #        Encrypt it afterwards with tools/backup_seal.sh.
 # Rehearsal: BACKUP_TARGET=local accepts only the local stack's connection string and copies local Storage.
 # Stops at the first failed or empty dump. Logs contain CLI messages only, with any connection string masked.
@@ -18,10 +18,10 @@ TOKEN=${SUPABASE_ACCESS_TOKEN:-}; unset SUPABASE_ACCESS_TOKEN   # kept unexporte
 REF=ndeozgxowggkljluaccz
 LOCAL_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 if [ "${BACKUP_TARGET:-}" = local ]; then
-  OUT="${BACKUP_ROOT:-/c/Projects/levlo-secure-backups}/levlo-LOCAL-rehearsal-$(date -u +%Y%m%dT%H%M%SZ)"
+  OUT="${BACKUP_ROOT:-/c/Projects/Levlofit-private/levlo-secure-backups}/levlo-LOCAL-rehearsal-$(date -u +%Y%m%dT%H%M%SZ)"
   STORAGE_TARGET=(--local --workdir "$(cd "$(dirname "$0")/.." && pwd)")   # local keys come from supabase/config.toml
 else
-  OUT="${BACKUP_ROOT:-/c/Projects/levlo-secure-backups}/levlo-pre-migration-$(date -u +%Y%m%dT%H%M%SZ)"
+  OUT="${BACKUP_ROOT:-/c/Projects/Levlofit-private/levlo-secure-backups}/levlo-pre-migration-$(date -u +%Y%m%dT%H%M%SZ)"
   STORAGE_TARGET=(--project-ref "$REF")
 fi
 
