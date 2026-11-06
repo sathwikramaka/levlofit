@@ -113,12 +113,17 @@ void main() {
     expect(servingLabel(item('A019', 'Wheat atta (roti)', 60, 'dry')), '2 rotis (whole-wheat flatbreads)');
     expect(servingLabel(item('A019', 'Wheat atta (roti)', 45, 'dry')), '1½ rotis (whole-wheat flatbreads)');
     expect(servingLabel(item('B010', 'Moong dal', 30, 'dry')), '1 bowl (150 ml) moong dal');
-    expect(servingLabel(item('A015', 'Rice', 100, 'raw')), '2 cups (240 ml each) cooked rice');
+    expect(servingLabel(item('A015', 'Rice', 100, 'raw')), '300 g cooked rice');
+    expect(exactLabel(item('A015', 'Rice', 100, 'raw')), '100 g raw rice');
+    expect(servingLabel(item('A015', 'Rice', 75, 'raw')), '225 g cooked rice');
+    expect(exactLabel(item('A019', 'Whole-wheat flour (for roti)', 60, 'dry')), '60 g whole-wheat flour');
+    expect(exactLabel(item('C033', 'Spinach', 150, 'raw')), '150 g raw');
+    expect(exactLabel(item('E012', 'Banana', 120, 'raw')), '120 g');
     expect(servingLabel(item('L002', 'Cow milk', 200, 'ml')), '1 glass (200 ml) milk');
     expect(servingLabel(item('M004', 'Eggs, boiled', 100, 'egg')), '2 boiled eggs');
     expect(servingLabel(item('T012', 'Sunflower oil', 10, 'oil')), '2 tsp cooking oil');
     expect(servingLabel(item('E012', 'Banana', 60, 'raw')), '½ banana');
-    expect(servingLabel(item('N003', 'Chicken breast', 150, 'raw')), 'Chicken curry (150 g boneless chicken)');
+    expect(servingLabel(item('N003', 'Chicken breast', 150, 'raw')), 'Chicken curry (150 g raw boneless chicken)');
     expect(exactLabel(item('A019', 'Wheat atta (roti)', 60, 'dry')), '60 g dry wheat atta');
     final meal = (name: 'Lunch', time: '1 pm', items: [item('A019', 'Wheat atta (roti)', 60, 'dry'), item('B010', 'Moong dal', 30, 'dry'), item('T012', 'Sunflower oil', 10, 'oil')]);
     expect(mealSummary(meal), '2 rotis (whole-wheat flatbreads) + 1 bowl (150 ml) moong dal');
@@ -181,6 +186,23 @@ void main() {
         for (final it in planDay(foods: foodsForTest, kcal: 2000, protein: 100, excluded: {'beef', 'pork'}, day: day, region: region).meals.expand((m) => m.items)) {
           if (it.code == 'A015') expect(it.grams, greaterThanOrEqualTo(50));
           if (it.code == 'A019') expect(it.grams, greaterThanOrEqualTo(60));
+        }
+      }
+    }
+  });
+
+  test('no plan shows less than a real serving of a food, across diets, targets and days', () {
+    const least = {'L003': 50.0, 'N003': 75.0, 'S006': 75.0, 'B021': 30.0, 'B010': 30.0, 'B013': 30.0, 'B020': 35.0, 'B002': 35.0, 'A015': 50.0, 'H012': 20.0};
+    const veg = {'meat', 'poultry', 'fish', 'shellfish', 'egg', 'beef', 'pork'};
+    for (final (excluded, kcal, protein) in [
+      (veg, 1400.0, 70.0), (veg, 2000.0, 100.0), (veg, 2500.0, 120.0), (veg, 3500.0, 150.0),
+      (const {'beef', 'pork'}, 1800.0, 130.0), (const {'beef', 'pork'}, 3000.0, 180.0),
+      (const {...veg, 'dairy'}, 2000.0, 90.0),
+    ]) {
+      for (var day = 0; day < 7; day++) {
+        final d = planDay(foods: foodsForTest, kcal: kcal, protein: protein, excluded: excluded, day: day, tier: 3);
+        for (final i in d.meals.expand((m) => m.items)) {
+          expect(i.grams, greaterThanOrEqualTo(least[i.code] ?? 0), reason: '${i.code} ${i.grams} g at $kcal kcal, day $day');
         }
       }
     }

@@ -10,7 +10,7 @@ select ok((select licence from public.food_sources where source = 'ifct2017') ~ 
 
 select is((select count(*) from public.foods where source = 'usda_fdc' and code like 'FDC%')::int, 34, 'the 34 USDA planner foods are loaded (28, then 6 breakfast foods on 2026-11-03)');
 select is((select string_agg(name, ', ' order by code) from public.foods where code in ('FDC173904', 'FDC174648', 'FDC169076', 'FDC170688', 'FDC168933', 'FDC174288')),
-  'Rava (semolina), Muesli, Daliya (broken wheat), Rolled oats, Besan (gram flour), Corn flakes', 'oats, corn flakes, muesli, daliya, rava and besan come from USDA');
+  'Rava (semolina, dry, uncooked), Muesli, Daliya (broken wheat, dry, uncooked), Rolled oats (dry, uncooked), Besan (gram flour), Corn flakes', 'oats, corn flakes, muesli, daliya, rava and besan come from USDA');
 select is((select count(*) from public.foods where code in ('FDC174648', 'FDC169076', 'FDC170688', 'FDC174288') and source_note is null)::int, 0, 'every close match carries its disclosure');
 select is((select carb_g from public.foods where code = 'X001'), 16.42::numeric, 'soya chunks corrected to available carbohydrate, as their FDC row');
 select is((select count(*) from public.foods where source = 'usda_fdc' and (kcal < 0 or protein_g < 0 or fat_g < 0 or carb_g < 0 or fiber_g < 0))::int, 0, 'no negative USDA values');

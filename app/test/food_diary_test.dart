@@ -255,4 +255,14 @@ void main() {
     expect(diarySaveError(const PostgrestException(message: 'food log limit reached for this day', code: 'P0001'), generic), generic);
     expect(diarySaveError(Exception('offline'), generic), generic);
   });
+
+  test('raw and dry foods warn to weigh before cooking; rice says how to enter cooked rice', () {
+    expect(rawWeightHint('FDC169756', 'Rice (raw, uncooked)'), contains('a third of its weight'));
+    expect(rawWeightHint('A015', 'Rice, raw, milled'), contains('a third of its weight'));
+    expect(rawWeightHint('FDC174284', 'Masoor dal (red lentils, dry, uncooked)'), contains('before cooking'));
+    expect(rawWeightHint('B010', 'Green gram, dal'), contains('before cooking'));
+    expect(rawWeightHint('FDC173944', 'Banana'), isNull);
+    expect(rawWeightHint('FDC173424', 'Eggs (boiled)'), isNull);
+    expect(rawWeightHint('pkg:1', 'Raw oats (Brand)'), isNull);
+  });
 }

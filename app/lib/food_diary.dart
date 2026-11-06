@@ -73,6 +73,18 @@ FoodRow foodFromPackaged(Map<String, dynamic> r) => (
       micros: const <String, double>{},
     );
 
+/// A warning for foods whose values are for the raw or dry food, since cooked weight is very different: 250 g of cooked
+/// rice logged as raw rice counts about 3 times its energy. IFCT codes A and B are cereals and pulses, all listed dry.
+String? rawWeightHint(String code, String name) {
+  final n = name.toLowerCase();
+  if (code.startsWith(packagedPrefix) || n.contains('cooked') && !n.contains('uncooked')) return null;
+  if (n.startsWith('rice') && (n.contains('raw') || n.contains('milled') || n.contains('parboiled'))) {
+    return 'These values are for raw rice. Weigh it before cooking. For cooked rice, enter about a third of its weight.';
+  }
+  final dry = n.contains('raw') || n.contains('uncooked') || n.contains('flour') || RegExp(r'^[AB]\d').hasMatch(code);
+  return dry ? 'These values are for the raw or dry food. Weigh it before cooking.' : null;
+}
+
 /// Sums entries by scaling each food's per-100 g values. An entry whose food is missing from [foods] is counted in
 /// [DiaryTotals.unknownFoods] and adds nothing, rather than being guessed.
 DiaryTotals diaryTotals(Iterable<DiaryEntry> entries, Map<String, FoodRow> foods) {
@@ -659,6 +671,10 @@ class _AddFoodSheetState extends State<_AddFoodSheet> {
         ] else ...[
           Text(picked.name, style: t.titleMedium),
           Text('${picked.kcal.round()} kcal · ${picked.protein.toStringAsFixed(1)} g protein per 100 g', style: t.bodySmall),
+          if (rawWeightHint(picked.code, picked.name) case final hint?) ...[
+            const SizedBox(height: 6),
+            Text(hint, style: t.bodySmall?.copyWith(color: Theme.of(context).colorScheme.tertiary)),
+          ],
           const SizedBox(height: 12),
           TextField(
             controller: _grams,

@@ -164,7 +164,7 @@ WeekPlan weekPlan(Json plan, {int? sessionMinutes, int? Function(Json session, i
 
   final planned = (plan['trainingDaysPerWeek'] as int?) ?? queue.length;
   if (planned != queue.length) {
-    notices.add('Your plan counts $planned training days but lists ${queue.length} sessions. The week below shows every listed session.');
+    notices.add('Your plan counts $planned training ${planned == 1 ? 'day' : 'days'} but lists ${queue.length} ${queue.length == 1 ? 'session' : 'sessions'}. The week below shows every listed session.');
   }
   if (queue.isEmpty) return (days: const {}, addOns: const [], notices: notices);
   if (queue.length > 7) {
@@ -174,7 +174,7 @@ WeekPlan weekPlan(Json plan, {int? sessionMinutes, int? Function(Json session, i
   final preferred = ((plan['schedule'] as Map?)?['preferredDays'] as List?)?.whereType<int>().toList() ?? const <int>[];
   final dayList = trainingDaysFor(queue.length, preferred);
   if (preferred.isNotEmpty && queue.length > preferred.toSet().length) {
-    notices.add('Your plan has ${queue.length} sessions but you chose ${preferred.toSet().length} weekdays, so some sessions are on other days. '
+    notices.add('Your plan has ${queue.length} sessions but you chose ${preferred.toSet().length} ${preferred.toSet().length == 1 ? 'weekday' : 'weekdays'}, so some sessions are on other days. '
         'Save your Protocol to rebuild the plan for your days.');
   }
   final placed = _arrange(dayList, queue.take(dayList.length).toList());
