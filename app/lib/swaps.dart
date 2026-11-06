@@ -195,7 +195,7 @@ const _planValueNames = {
   'cut': 'Cut (lose fat)', 'bulk': 'Bulk (gain muscle)', 'recomp': 'Recomposition', 'maintain': 'Maintain', 'general': 'General fitness',
   'easy': 'Easy', 'balanced': 'Balanced', 'hard': 'Hard',
 };
-String planValueName(String field, String? v) => v == null ? 'not set' : field == 'days_per_week' ? '$v days' : _planValueNames[v] ?? v;
+String planValueName(String field, String? v) => v == null ? 'not set' : field == 'days_per_week' ? '$v ${v == '1' ? 'day' : 'days'}' : _planValueNames[v] ?? v;
 
 /// Confirms on the server (which checks it again and writes the setting), then rebuilds the plan with generate-plan
 /// and refreshes the app. Null when done, else the reason to show.

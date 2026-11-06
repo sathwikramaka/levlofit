@@ -198,9 +198,9 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (0), updated 2026-11-03
+## Pending production items (1), updated 2026-11-07
 
-None.
+- 20261107100000_foods_raw_dry_names: renames 12 raw or dry foods so the diary says what the values describe (Rice -> Rice (raw, uncooked)). Names only; no values, codes or diary rows change. Verify and roll back: docs/RELEASE_CHECKLIST.md 3.7z.
 
 Applied 2026-11-03 (kept for the record):
 

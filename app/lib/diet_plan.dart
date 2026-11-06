@@ -620,10 +620,10 @@ typedef _Pick = (int, _Slot, Food); // meal index, slot, food
 /// One whole boiled egg is counted as 50 g (a Levlofit kitchen convention), so egg portions move in whole eggs.
 double _stepFor(String code, _Slot s) => code == 'M004' ? 50 : (_wholePieces.contains(code) ? _servings[code]!.$1 : (_stepOf[code] ?? s.step));
 
-/// Kitchen steps for foods measured by the cup or katori: half a cup of rice, half a katori of dal.
+/// Kitchen steps: 25 g raw rice (about 75 g cooked), half a bowl of dal.
 const _stepOf = {'oats': 10.0, 'cornflakes': 10.0, 'muesli': 10.0, 'dish:daliya': 20.0, 'A015': 25.0, 'B021': 15.0, 'B010': 15.0, 'B013': 15.0, 'B020': 17.5, 'B002': 17.5, 'dish:poha': 30.0, 'dish:upma': 25.0, 'dish:vermicelli': 25.0, 'dish:sprouts': 20.0};
 
-/// The smallest portion a plate shows of a food (owner request 2026-10-28: nobody eats 20 g of rice): one cup of
+/// The smallest portion a plate shows of a food (owner request 2026-10-28: nobody eats 20 g of rice): 50 g raw
 /// rice, two rotis or bhakris, one katori of dal, a plate of poha, two idlis, 50 g paneer, 75 g chicken or fish. Slots that start empty
 /// (floor 0) may still leave the food out altogether.
 const _minServing = {
@@ -700,7 +700,8 @@ List<_Layer> _layers(Map<String, Food> foods, bool Function(int meal, String cod
                   for (var g = slot.floor <= 0 ? 0.0 : (code == 'X001' ? 5.0 : _floorFor(code, slot));
                       g <= _capFor(code, slot) + 1e-9 && (code != 'X001' || g <= soyaCapG + 1e-9);
                       g += _stepFor(code, slot))
-                    (foods[code]!, g),
+                    // Either none of a food or at least its smallest real serving, never 5 g paneer.
+                    if (g <= 0 || g >= (_minServing[code] ?? 0) - 1e-9) (foods[code]!, g),
               ],
             ),
     ];
@@ -1020,6 +1021,12 @@ DayPlan planDay({
         }
       }
     }
+    // A slot that may start empty (floor 0) can settle below the food's smallest real serving: nobody cooks 5 g paneer
+    // or half a bowl of dal on the side. Under half a serving is left out, otherwise it becomes one serving.
+    for (final (i, p) in picks.indexed) {
+      final least = _minServing[p.$3.code];
+      if (least != null && grams[i] > 0 && grams[i] < least) grams[i] = grams[i] < least / 2 ? 0 : math.min(least, maxFor(i));
+    }
     return assemble(picks, grams, hitStepLimit: moves <= 0);
   }
 
@@ -1176,7 +1183,7 @@ DayPlan planDay({
 String amountLabel(PlanItem i) => switch (i.unit) {
       'ml' => '${i.grams.round()} ml',
       'egg' => '${(i.grams / 50).round()} ${(i.grams / 50).round() == 1 ? 'egg' : 'eggs'} (${i.grams.round()} g)',
-      'oil' => '${i.grams.round()} g (about ${(i.grams / 5).round()} tsp)',
+      'oil' => '${i.grams.round()} g (about ${_count(i.grams / 5)} tsp)',
       'dry' => '${i.grams.round()} g dry',
       _ => '${i.grams.round()} g',
     };
@@ -1185,8 +1192,8 @@ String amountLabel(PlanItem i) => switch (i.unit) {
 /// approximate conversions, shown next to the exact grams: 1 roti = 30 g atta, 1 jowar or bajra bhakri = 40 g flour,
 /// Household servings in plain units (owner request 2026-10-29: no katori or sabzi). Levlofit kitchen conventions, not
 /// lab yields: 1 roti = 30 g flour; a 150 ml bowl of cooked dal = 30 g dry dal (kidney beans, chickpeas 35 g; soya
-/// chunks 25 g); 1 cup (240 ml) cooked rice = 50 g raw; a 200 ml glass of milk; 1 egg = 50 g; 1 tsp oil = 5 g;
-/// vegetables and salads by their raw weight; fruit by the piece.
+/// chunks 25 g); rice by weight, cooked about 3 x raw (owner request 2026-11-07: rice in grams, not ml); a 200 ml glass
+/// of milk; 1 egg = 50 g; 1 tsp oil = 5 g; vegetables and salads by their raw weight; fruit by the piece.
 typedef _Serving = (double per, String one, String many);
 const _servings = <String, _Serving>{
   'A019': (30, 'roti (whole-wheat flatbread)', 'rotis (whole-wheat flatbreads)'),
@@ -1194,7 +1201,6 @@ const _servings = <String, _Serving>{
   'A003': (40, 'bajra (pearl millet) flatbread', 'bajra (pearl millet) flatbreads'),
   'A010': (30, 'ragi (finger millet) flatbread', 'ragi (finger millet) flatbreads'),
   'A011': (50, 'serving poha (50 g dry flattened rice)', 'servings poha (50 g dry flattened rice each)'),
-  'A015': (50, 'cup (240 ml) cooked rice', 'cups (240 ml each) cooked rice'),
   'B021': (30, 'bowl (150 ml) toor dal', 'bowls (150 ml each) toor dal'),
   'B010': (30, 'bowl (150 ml) moong dal', 'bowls (150 ml each) moong dal'),
   'B013': (30, 'bowl (150 ml) masoor dal', 'bowls (150 ml each) masoor dal'),
@@ -1208,11 +1214,11 @@ const _servings = <String, _Serving>{
   'E028': (100, 'guava', 'guavas'),
   'E001': (150, 'apple', 'apples'),
   'E047': (130, 'orange', 'oranges'),
-  'D036': (150, 'serving cooked cauliflower (150 g)', 'servings cooked cauliflower (150 g each)'),
-  'D056': (150, 'serving cooked okra (150 g)', 'servings cooked okra (150 g each)'),
-  'C015': (150, 'serving cooked cabbage (150 g)', 'servings cooked cabbage (150 g each)'),
-  'C033': (150, 'serving cooked spinach (150 g)', 'servings cooked spinach (150 g each)'),
-  'F002': (150, 'serving cooked carrots (150 g)', 'servings cooked carrots (150 g each)'),
+  'D036': (150, 'serving cooked cauliflower (150 g raw)', 'servings cooked cauliflower (150 g raw each)'),
+  'D056': (150, 'serving cooked okra (150 g raw)', 'servings cooked okra (150 g raw each)'),
+  'C015': (150, 'serving cooked cabbage (150 g raw)', 'servings cooked cabbage (150 g raw each)'),
+  'C033': (150, 'serving cooked spinach (150 g raw)', 'servings cooked spinach (150 g raw each)'),
+  'F002': (150, 'serving cooked carrots (150 g raw)', 'servings cooked carrots (150 g raw each)'),
   'D043': (100, 'serving cucumber salad (100 g)', 'servings cucumber salad (100 g each)'),
   'D076': (100, 'serving tomato salad (100 g)', 'servings tomato salad (100 g each)'),
   'dish:idli': (15, 'idli (steamed rice cake)', 'idlis (steamed rice cakes)'),
@@ -1243,10 +1249,14 @@ String _count(double x) {
 /// Foods weighed rather than counted, named as the dish that is cooked: "Paneer, scrambled or with vegetables (100 g paneer)".
 const _dishes = {
   'L003': ('Paneer, scrambled or cooked with vegetables', 'paneer'),
-  'N003': ('Chicken curry', 'boneless chicken'),
-  'S006': ('Fish curry', 'rohu'),
+  'N003': ('Chicken curry', 'raw boneless chicken'),
+  'S006': ('Fish curry', 'raw rohu'),
   'H012': ('Roasted peanuts', 'peanuts'),
 };
+
+/// Rice is planned by its raw weight and eaten cooked. Levlofit kitchen convention, not a lab yield: cooked is about 3 x raw.
+const riceCode = 'A015';
+int _cookedRiceGrams(double raw) => (raw * 3 / 5).round() * 5;
 
 /// What to put on the plate, e.g. "2 rotis (whole-wheat flatbreads)", "1 bowl (150 ml) moong dal",
 /// "Chicken curry (150 g boneless chicken)".
@@ -1255,6 +1265,7 @@ String servingLabel(PlanItem i) {
     final n = (i.grams / scoopGrams).round();
     return '$n ${n == 1 ? 'scoop' : 'scoops'} ${i.code == 'supp:whey' ? 'whey' : 'plant protein'} in water';
   }
+  if (i.code == riceCode) return '${_cookedRiceGrams(i.grams)} g cooked rice';
   final s = _servings[i.code];
   if (s == null) {
     final d = _dishes[i.code];
@@ -1272,11 +1283,18 @@ String exactLabel(PlanItem i) => i.unit == 'scoop'
     ? '${i.grams.round()} g powder'
     : i.code.startsWith('dish:')
     ? '${i.grams.round()} g dry ${switch (i.code) { 'dish:sprouts' => 'moong', 'dish:daliya' => 'broken wheat', _ => 'mix' }}'
+    : i.code == riceCode
+    ? '${i.grams.round()} g raw rice'
     : switch (i.unit) {
       'ml' => '${i.grams.round()} ml',
       'egg' => '${i.grams.round()} g',
       'oil' => '${i.grams.round()} g ${i.name.toLowerCase()}',
-      'dry' => '${i.grams.round()} g dry ${i.name.replaceAll(RegExp(r'\s*\(.*\)'), '').toLowerCase()}',
+      'dry' => () {
+        final name = i.name.replaceAll(RegExp(r'\s*\(.*\)'), '').toLowerCase();
+        return name.contains('flour') ? '${i.grams.round()} g $name' : '${i.grams.round()} g dry $name';
+      }(),
+      // Vegetables, chicken and fish are planned by raw weight, and cooking changes what they weigh.
+      _ when i.code == 'N003' || i.code == 'S006' || itemRole(i) == 'VEGETABLE' => '${i.grams.round()} g raw',
       _ => '${i.grams.round()} g',
     };
 
@@ -1304,8 +1322,8 @@ String mealTitle(PlanMeal m) {
     if (i.unit == 'scoop') return 'Protein shake';
     final one = _servings[i.code]?.$2 ?? i.name.toLowerCase();
     final bare = one
-        .replaceFirst(RegExp(r'^(bowl \(150 ml\)|bowl|cup \(240 ml\) cooked|glass \(200 ml\)|serving cooked|serving|boiled) '), '')
-        .replaceFirst(RegExp(r' \((\d+ g|\d+ g dry|50 g dry flattened rice|60 g dry)\)$'), '');
+        .replaceFirst(RegExp(r'^(bowl \(150 ml\)|bowl|glass \(200 ml\)|serving cooked|serving|boiled) '), '')
+        .replaceFirst(RegExp(r' \((\d+ g|\d+ g raw|\d+ g dry|50 g dry flattened rice|60 g dry)\)$'), '');
     return bare[0].toUpperCase() + bare.substring(1);
   }
 

@@ -94,7 +94,7 @@ WeekReport weeklyReport({
   final (String observation, String next) = switch (done) {
     0 => ('No training was logged this week.', 'Pick one day this week for a short session. Twenty minutes still counts.'),
     _ when done >= planned => (
-        done == planned ? 'You logged all of your $planned planned sessions.' : 'You logged $done sessions; $planned were planned.',
+        done == planned ? (planned == 1 ? 'You logged your planned session.' : 'You logged all of your $planned planned sessions.') : 'You logged $done sessions; $planned were planned.',
         (foodCount ?? 0) < minFoodDays
             ? 'Try logging food on three days this week to see how meals compare with your targets.'
             : 'Keep the same plan. Progress shows over several weeks, not one.',

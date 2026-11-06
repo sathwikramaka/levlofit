@@ -1814,6 +1814,7 @@ test('kitchen equipment, mess meals and own notes reach the coach for food talk;
   fakeLlm('ok');
   await post({ message: 'How many sets today?', threadId: THREAD });
   assert.match(calls[0].body.messages[0].content, /do not use katori or sabzi/);
+  assert.match(calls[0].body.messages[0].content, /Never give rice or another solid in ml or cups/);
 });
 
 test('allergy and dislike words reach the coach food check: lactose or "milk" rule out ghee, butter and whey too', async () => {

@@ -62,3 +62,10 @@ Promotions).
 ### Automated totals (this stage, on the working tree)
 functions node 283/0, offline eval 85/0 strict, strict tsc, Deno check / lint / smoke 30/0, Flutter analyze clean,
 Flutter 619 pass + 1 skip, website lint / build / tsc.
+
+## Retention metrics run (owner-approved, 2026-11-07)
+
+`tools/retention_metrics.sql` was run once on production: both SELECT statements unchanged, through the Supabase SQL tool
+with `set transaction read only` in place of the file's `begin ... rollback` wrapper (the CLI's `--project-ref` needs
+`supabase link`, which this project avoids). Output was aggregate counts and percentages only. The figures went to the
+owner in chat and are not recorded here because this repository is public.

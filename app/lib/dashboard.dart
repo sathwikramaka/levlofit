@@ -895,7 +895,7 @@ class _Rings extends StatelessWidget {
             const SizedBox(width: 20),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                stat(c.primary, 'TRAIN', '$days', 'of $daysTarget days'),
+                stat(c.primary, 'TRAIN', '$days', 'of $daysTarget ${daysTarget == 1 ? 'day' : 'days'}'),
                 stat(move, 'MOVE', '$minutes', 'of $minutesTarget min'),
                 stat(onInk.withValues(alpha: 0.5), 'STREAK', '$streak', streak == 1 ? 'week on plan' : 'weeks on plan'),
               ]),
