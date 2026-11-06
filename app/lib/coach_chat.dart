@@ -485,7 +485,7 @@ class _CoachScreenState extends State<CoachScreen> {
     final page = Theme.of(context).scaffoldBackgroundColor;
     final fade = Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2A2A2E) : charcoal;
     return DecoratedBox(
-      decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [fade, fade.withValues(alpha: 0.75), page], stops: const [0, 0.09, 0.26])),
+      decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [fade, Color.lerp(page, fade, 0.8)!, Color.lerp(page, fade, 0.35)!, Color.lerp(page, fade, 0.08)!, page], stops: const [0, 0.07, 0.15, 0.22, 0.3])),
       child: Scaffold(
       backgroundColor: Colors.transparent,
       drawer: _ChatList(

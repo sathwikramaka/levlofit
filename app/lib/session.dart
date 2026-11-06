@@ -1158,7 +1158,7 @@ class _CoachNotes extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), border: Border.all(color: c.outline)),
+      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius), border: Border.all(color: c.outline)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('FROM YOUR LAST SESSIONS', style: monoLabel(context).copyWith(color: c.tertiary)),
         const SizedBox(height: 6),
@@ -1260,7 +1260,7 @@ class _WarmUp extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), border: Border.all(color: c.outline)),
+      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius), border: Border.all(color: c.outline)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title, style: monoLabel(context)),
         const SizedBox(height: 4),

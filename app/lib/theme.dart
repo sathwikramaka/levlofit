@@ -21,7 +21,7 @@ const _light = ColorScheme(
   brightness: Brightness.light,
   primary: accent,
   onPrimary: graphite,
-  secondary: graphite,
+  secondary: charcoal,
   onSecondary: cloud,
   tertiary: Color(0xFFB8420B),
   onTertiary: cloud,
