@@ -189,7 +189,7 @@ class _DashboardState extends State<Dashboard> {
     final chosen = await showModalBottomSheet<Set<String>>(context: context, showDragHandle: true, builder: (_) => _DailyGoalSheet(habits: habits, chosen: _dailyTasks));
     if (chosen == null || chosen.isEmpty) return;
     prefs.setStringList('daily_goal:$_uid', chosen.toList());
-    setState(() => _dailyTasks = chosen);
+    if (mounted) setState(() => _dailyTasks = chosen);
   }
 
   void _onCelebrated(int streak) {
@@ -331,19 +331,23 @@ class _DashboardState extends State<Dashboard> {
     try {
       if (done) {
         await supabase.from('workout_logs').delete().eq('user_id', _uid).eq('performed_on', _iso(today));
-        setState(() {
-          _logged = {..._logged}..remove(today);
-          _minutes = {..._minutes}..remove(today);
-        });
+        if (mounted) {
+          setState(() {
+            _logged = {..._logged}..remove(today);
+            _minutes = {..._minutes}..remove(today);
+          });
+        }
       } else {
         final existing = await supabase.from('workout_logs').select('id').eq('user_id', _uid).eq('performed_on', _iso(today)).limit(1);
         if (existing.isEmpty) {
           await supabase.from('workout_logs').insert({'user_id': _uid, 'performed_on': _iso(today), 'goal': goal, 'duration_min': minutes});
         }
-        setState(() {
-          _logged = {..._logged, today};
-          if (minutes != null) _minutes = {..._minutes, today: minutes};
-        });
+        if (mounted) {
+          setState(() {
+            _logged = {..._logged, today};
+            if (minutes != null) _minutes = {..._minutes, today: minutes};
+          });
+        }
       }
       return true;
     } catch (_) {

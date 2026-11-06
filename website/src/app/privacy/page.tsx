@@ -28,7 +28,7 @@ const sections: LegalSection[] = [
         <p>
           <strong>Your answers:</strong> year of birth, sex, height, weight, optional waist, body type, fitness goals and experience, training days and time, daily
           activity, optional sleep hours, equipment (including items you add yourself), your weight goal, diet type, allergies and intolerances, other foods you exclude,
-          your food budget, your water target, and whether you are open to supplements.
+          your food budget, your water target, whether you are open to supplements, and any supplements you add.
         </p>
         <p>
           <strong>Health check:</strong> what you tell us about a heart condition, chest pain, fainting or dizziness, pregnancy or another condition that limits exercise, and any

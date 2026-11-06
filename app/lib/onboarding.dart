@@ -175,6 +175,8 @@ class _OnboardingState extends State<Onboarding> {
   final _items = <String>{}; // custom equipment
   final _itemInput = TextEditingController();
   final _supp = <String>{};
+  final _ownSupp = <String>[]; // the person's own supplements, saved to dietary_profiles.other_supplements
+  final _ownSuppInput = TextEditingController();
   bool _noSupp = false;
   Map<String, dynamic>? _plan; // returned by generate-plan, explained on the review step
   final _goals = <String>[]; // order = priority, first is primary
@@ -260,7 +262,7 @@ class _OnboardingState extends State<Onboarding> {
 
   @override
   void dispose() {
-    for (final c in [_customEquip, _name, _birthYear, _height, _weight, _otherInput, _search, _sleep, _injuries, _itemInput, _monthly, _assessInput]) {
+    for (final c in [_ownSuppInput, _customEquip, _name, _birthYear, _height, _weight, _otherInput, _search, _sleep, _injuries, _itemInput, _monthly, _assessInput]) {
       c.dispose();
     }
     super.dispose();
@@ -274,7 +276,7 @@ class _OnboardingState extends State<Onboarding> {
     _Step.extras => true, // optional
     _Step.experience => _goals.every(_level.containsKey),
     _Step.restrictions => _noRestrictions || _avoid.isNotEmpty || _other.isNotEmpty,
-    _Step.diet => _diet != null && _budget != null && (_budget != 'custom' || (int.tryParse(_monthly.text) ?? 0) >= 900) && (_noSupp || _supp.isNotEmpty),
+    _Step.diet => _diet != null && _budget != null && (_budget != 'custom' || (int.tryParse(_monthly.text) ?? 0) >= 900) && (_noSupp || _supp.isNotEmpty || _ownSupp.isNotEmpty),
     _Step.assess => !_assessBusy && (_assessLevels != null || _assessSkipped),
     _Step.body => _sex != null && _bodyType != null,
     _Step.phase => _weightGoal != null,
@@ -373,6 +375,16 @@ class _OnboardingState extends State<Onboarding> {
     } finally {
       if (mounted) setState(() => _assessBusy = false);
     }
+  }
+
+  void _addOwnSupp() {
+    final v = _ownSuppInput.text.trim();
+    if (v.length < 2 || _ownSupp.length >= 10) return;
+    setState(() {
+      if (!_ownSupp.any((o) => o.toLowerCase() == v.toLowerCase())) _ownSupp.add(v);
+      _noSupp = false;
+      _ownSuppInput.clear();
+    });
   }
 
   void _addOther() {
@@ -500,6 +512,7 @@ class _OnboardingState extends State<Onboarding> {
       'restrictions': _avoid.toList(),
       'other_restrictions': _other,
       'supplements': _supp.toList(),
+      'other_supplements': _ownSupp,
       ...extra.diet,
     });
   }
@@ -926,7 +939,10 @@ class _OnboardingState extends State<Onboarding> {
             selected: _noSupp,
             onTap: () => setState(() {
               _noSupp = !_noSupp;
-              if (_noSupp) _supp.clear();
+              if (_noSupp) {
+                _supp.clear();
+                _ownSupp.clear();
+              }
             }),
           ),
           gap,
@@ -942,8 +958,37 @@ class _OnboardingState extends State<Onboarding> {
             ),
             gap,
           ],
+          const FieldLabel('Taking something else?'),
+          Row(children: [
+            Expanded(
+              child: TextField(
+                controller: _ownSuppInput,
+                maxLength: 40,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.done,
+                enabled: _ownSupp.length < 10,
+                onSubmitted: (_) => _addOwnSupp(),
+                decoration: const InputDecoration(hintText: 'e.g. vitamin D, fish oil', counterText: ''),
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(height: 48, child: OutlinedButton(onPressed: _addOwnSupp, child: const Text('Add'))),
+          ]),
+          if (_ownSupp.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final o in _ownSupp)
+                InputChip(
+                  label: Text(o),
+                  onDeleted: () => setState(() => _ownSupp.remove(o)),
+                  deleteButtonTooltipMessage: 'Remove $o',
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+            ]),
+          ],
+          const SizedBox(height: 10),
           Text(
-            'I only suggest what the evidence supports for your goals, with the dose and the reason.',
+            'I only suggest what the evidence supports for your goals, with the dose and the reason. Your own are listed on your plate, not checked or counted.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ];

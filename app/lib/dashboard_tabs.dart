@@ -116,7 +116,9 @@ class _HydrationScreenState extends State<_HydrationScreen> {
     try {
       await supabase.from('water_intake').delete().eq('id', row['id'] as int);
       if (mounted) setState(() => _drinks = [...?_drinks]..remove(row));
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not remove it. Check your connection and try again.')));
+    }
   }
 
   Future<void> _custom() async {
@@ -718,7 +720,7 @@ class _SettingsScreenState extends State<_SettingsScreen> {
     try {
       if (result == 'delete') {
         await deleteCustomReminder(r!.id!);
-        setState(() => _custom = [for (final x in _custom!) if (x.id != r.id) x]);
+        if (mounted) setState(() => _custom = [for (final x in _custom!) if (x.id != r.id) x]);
       } else {
         await _store(result as CustomReminder);
       }
@@ -1956,7 +1958,7 @@ Future<void> showPrivacyPolicy(BuildContext context) => _policySheet(context, 'P
 const _privacyPolicy = [
   ('Who we are', 'Levlofit is a fitness app made in India. This explains what happens to your information when you use it.'),
   ('What we collect', 'Your email to sign in and the name you give (Google fills it in if you sign in with Google). What you tell us at '
-      'sign-up and in Protocol, including your weight goal, food budget and exclusions, equipment, water target and the health check. '
+      'sign-up and in Protocol, including your weight goal, food budget and exclusions, supplements you choose or add, equipment, water target and the health check. '
       'What you log: workouts and sets (reps and weight), body weight and measurements, water, habits, your level in each goal and your '
       'reminder settings (including the names you give your own reminders), the foods and weights you log in the food diary and the recipes you save, how hard each session felt and whether pain stopped you, if you answer after a session, and your optional daily check-in (training, food plan, energy, sleep, soreness and a note; never sent to the AI provider). Progress photos, and your profile picture if you upload your own. Your chats with Levlofit AI, the facts you confirm in its Memory, '
       'and its suggestions waiting for your OK. Feedback you send. Error reports when the app hits an unexpected error while you are signed in (the error message, where in the app code it happened, app version and phone type; email addresses masked; kept up to 90 days). For abuse protection: when you send chat messages or rebuild your plan (times only, no content), and a random ID on each chat message so a resent one is not saved twice; feedback is limited by counting the feedback you have sent. On this phone only: your sign-in session, light or dark choice, dashboard layout and daily goals, which permission prompts you have seen, downloaded fonts, the reminders scheduled on the phone, and a copy of your latest plan, profile answers and recent logs so the app opens without a connection. We do not collect your location, contacts or '
