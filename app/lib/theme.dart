@@ -8,6 +8,12 @@ import 'icons.dart';
 const accent = Color(0xFFFF6A1A); // Levlofit Orange: fills only
 const graphite = Color(0xFF0E0E10);
 const cloud = Color(0xFFF0EEE9);
+const softGrey = Color(0xFFECECEE); // light page background (soft card look, owner request 2026-11-07)
+const charcoal = Color(0xFF3A3A3E); // the floating bottom bar
+const cardRadius = 28.0;
+
+/// Progress and done fills: green, the one colour beside the orange. Pair it with a number or label.
+Color progressColor(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? const Color(0xFF8CC67A) : const Color(0xFF7DB86A);
 
 // Role mapping: primary = accent, secondary = ink, tertiary = accent-text,
 // surfaceContainerHighest = surface-2, onSurfaceVariant = muted, outline = border.
@@ -23,10 +29,10 @@ const _light = ColorScheme(
   onError: Colors.white,
   surface: Colors.white,
   onSurface: graphite,
-  surfaceContainerHighest: Color(0xFFE6E3DC),
-  onSurfaceVariant: Color(0xFF5B5953),
-  outline: Color(0xFFD9D5CC),
-  outlineVariant: Color(0xFFD9D5CC),
+  surfaceContainerHighest: Color(0xFFE1E1E4),
+  onSurfaceVariant: Color(0xFF5C5C63),
+  outline: Color(0xFFE6E6E9),
+  outlineVariant: Color(0xFFE6E6E9),
 );
 
 const _dark = ColorScheme(
@@ -47,15 +53,15 @@ const _dark = ColorScheme(
   outlineVariant: Color(0xFF2A2A2E),
 );
 
-final lightTheme = _build(_light, cloud);
+final lightTheme = _build(_light, softGrey);
 final darkTheme = _build(_dark, graphite);
 
-/// Geist Mono uppercase label: 11 px, 0.14 em tracking. Pass the text already uppercased.
+/// Small section label in Geist, 12 px with light tracking. Pass the text already uppercased.
 TextStyle monoLabel(BuildContext context) =>
-    GoogleFonts.geistMono(fontSize: 11, letterSpacing: 1.54, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurfaceVariant);
+    GoogleFonts.geist(fontSize: 12, letterSpacing: 0.8, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurfaceVariant);
 
-/// Geist Mono with tabular figures, for numbers that change.
-TextStyle monoNumber(BuildContext context, {double size = 28}) => GoogleFonts.geistMono(
+/// Geist with tabular figures, for numbers that change.
+TextStyle monoNumber(BuildContext context, {double size = 28}) => GoogleFonts.geist(
   fontSize: size,
   fontWeight: FontWeight.w500,
   color: Theme.of(context).colorScheme.onSurface,
@@ -204,7 +210,7 @@ class _RiseTransitions extends PageTransitionsBuilder {
 }
 
 ThemeData _build(ColorScheme c, Color bg) {
-  final r12 = BorderRadius.circular(12);
+  final r12 = BorderRadius.circular(18);
   OutlineInputBorder border(Color color, [double width = 1]) => OutlineInputBorder(
     borderRadius: r12,
     borderSide: BorderSide(color: color, width: width),
@@ -243,17 +249,17 @@ ThemeData _build(ColorScheme c, Color bg) {
         foregroundColor: c.onPrimary,
         disabledBackgroundColor: c.surfaceContainerHighest,
         disabledForegroundColor: c.onSurfaceVariant,
-        minimumSize: const Size(64, 48),
-        shape: RoundedRectangleBorder(borderRadius: r12),
+        minimumSize: const Size(64, 52),
+        shape: const StadiumBorder(),
         textStyle: GoogleFonts.geist(fontSize: 16, fontWeight: FontWeight.w700),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: c.onSurface,
-        side: BorderSide(color: c.onSurface),
-        minimumSize: const Size(64, 48),
-        shape: RoundedRectangleBorder(borderRadius: r12),
+        side: BorderSide(color: c.onSurface.withValues(alpha: 0.25)),
+        minimumSize: const Size(64, 52),
+        shape: const StadiumBorder(),
         textStyle: GoogleFonts.geist(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
@@ -261,7 +267,7 @@ ThemeData _build(ColorScheme c, Color bg) {
       style: TextButton.styleFrom(
         foregroundColor: c.onSurface,
         minimumSize: const Size(44, 44),
-        shape: RoundedRectangleBorder(borderRadius: r12),
+        shape: const StadiumBorder(),
         textStyle: GoogleFonts.geist(fontSize: 15, fontWeight: FontWeight.w600),
       ),
     ),
@@ -282,18 +288,29 @@ ThemeData _build(ColorScheme c, Color bg) {
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(cardRadius),
         side: BorderSide(color: c.outline),
       ),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: c.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
     ),
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: c.surface,
       showDragHandle: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(cardRadius))),
+    ),
+    chipTheme: ChipThemeData(
+      shape: const StadiumBorder(),
+      side: BorderSide(color: c.outline),
+      backgroundColor: c.surface,
+      selectedColor: c.secondary,
+      secondarySelectedColor: c.secondary,
+      checkmarkColor: c.onSecondary,
+      labelStyle: GoogleFonts.geist(fontSize: 14, fontWeight: FontWeight.w500, color: c.onSurface),
+      secondaryLabelStyle: GoogleFonts.geist(fontSize: 14, fontWeight: FontWeight.w600, color: c.onSecondary),
+      showCheckmark: false,
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(color: c.primary, linearTrackColor: c.surfaceContainerHighest),
     dividerTheme: DividerThemeData(color: c.outline, thickness: 1, space: 1),

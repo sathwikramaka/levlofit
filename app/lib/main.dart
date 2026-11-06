@@ -91,7 +91,7 @@ Future<void> main() async {
     authOptions: FlutterAuthClientOptions(localStorage: kIsWeb ? null : SecureSessionStorage(sessionKeyFor(supabaseUrl))),
   );
   installErrorReporting();
-  themeMode.value = ThemeMode.values.asNameMap()[prefs.getString('theme')] ?? ThemeMode.system;
+  themeMode.value = ThemeMode.values.asNameMap()[prefs.getString('theme')] ?? ThemeMode.light;
   demoFigure.value = DemoFigure.values.asNameMap()[prefs.getString(demoFigureKey)] ?? DemoFigure.man;
   runApp(const LevloApp());
 }
@@ -103,7 +103,7 @@ late final SharedPreferences prefs;
 const demoFigureKey = 'demo_figure';
 
 /// Light, dark or follow the phone. Changed from Profile, remembered on this device.
-final themeMode = ValueNotifier(ThemeMode.system);
+final themeMode = ValueNotifier(ThemeMode.light);
 
 void setThemeMode(ThemeMode mode) {
   themeMode.value = mode;

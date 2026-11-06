@@ -481,7 +481,13 @@ class _CoachScreenState extends State<CoachScreen> {
     final t = Theme.of(context).textTheme;
     final title = _threadId == null ? 'New chat' : _threads.where((x) => x.id == _threadId).map((x) => x.title).firstOrNull ?? 'Chat';
     final lastAssistant = _messages.lastIndexWhere((m) => !m.mine);
-    return Scaffold(
+    // One soft fade from charcoal behind the header into the page (owner request 2026-11-07).
+    final page = Theme.of(context).scaffoldBackgroundColor;
+    final fade = Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2A2A2E) : charcoal;
+    return DecoratedBox(
+      decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [fade, fade.withValues(alpha: 0.75), page], stops: const [0, 0.09, 0.26])),
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       drawer: _ChatList(
         threads: _threads,
         current: _threadId,
@@ -496,11 +502,13 @@ class _CoachScreenState extends State<CoachScreen> {
         },
       ),
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        foregroundColor: cloud,
         leading: Builder(builder: (context) => IconButton(tooltip: 'Your chats', icon: const Icon(LvIcons.list, size: 22), onPressed: () => Scaffold.of(context).openDrawer())),
         titleSpacing: 0,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('LEVLOFIT AI', style: monoLabel(context)),
-          Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.titleMedium),
+          Text('LEVLOFIT AI', style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.75))),
+          Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.titleMedium?.copyWith(color: cloud)),
         ]),
         actions: [
           IconButton(tooltip: 'New chat', icon: const Icon(LvIcons.notePencil, size: 22), onPressed: _busy ? null : () => _openThread(null)),
@@ -558,6 +566,7 @@ class _CoachScreenState extends State<CoachScreen> {
           onSend: _submit,
         ),
       ]),
+      ),
     );
   }
 
@@ -645,7 +654,7 @@ class _Empty extends StatelessWidget {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+      padding: const EdgeInsets.fromLTRB(24, 112, 24, 24),
       children: staggered([
         Align(
           alignment: Alignment.centerLeft,
@@ -715,11 +724,11 @@ class _UserBubble extends StatelessWidget {
               constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.8),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: c.surfaceContainerHighest,
+                color: c.secondary,
                 borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20), bottomLeft: Radius.circular(20), bottomRight: Radius.circular(6)),
                 border: Border.all(color: editing ? c.primary : Colors.transparent, width: 1.5),
               ),
-              child: SelectableText(msg.text, style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.45)),
+              child: SelectableText(msg.text, style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.45, color: c.onSecondary)),
             ),
           ),
           Row(mainAxisSize: MainAxisSize.min, children: [
@@ -756,7 +765,12 @@ class _Reply extends StatelessWidget {
           ),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              msg.fresh ? _Typewriter(text: msg.text, onDone: onTyped, onGrow: onGrow) : Markdown(msg.text),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: c.outline)),
+                child: msg.fresh ? _Typewriter(text: msg.text, onDone: onTyped, onGrow: onGrow) : Markdown(msg.text),
+              ),
               const SizedBox(height: 4),
               Row(children: [
                 _Action(icon: LvIcons.copy, label: 'Copy', onTap: () => _copy(context, msg.text)),

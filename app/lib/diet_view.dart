@@ -23,7 +23,7 @@ class PlateInfoCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(22), border: Border.all(color: c.outline)),
+      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius), border: Border.all(color: c.outline)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title, style: monoLabel(context).copyWith(color: c.tertiary)),
         for (final l in lines) ...[
@@ -163,7 +163,7 @@ class _PlateMealCardState extends State<PlateMealCard> {
       child: Material(
         color: c.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(cardRadius),
           side: BorderSide(color: c.outline),
         ),
         clipBehavior: Clip.antiAlias,

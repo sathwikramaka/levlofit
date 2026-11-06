@@ -104,18 +104,106 @@ class _ShellMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final back = context.dependOnInheritedWidgetOfExactType<_BackScope>()?.onBack;
-    return back != null ? BackButton(onPressed: back) : _MenuButton(onTap: () => _shellKey.currentState?.openDrawer());
+    final scope = context.dependOnInheritedWidgetOfExactType<_BackScope>();
+    final back = scope?.onBack;
+    if (back != null) {
+      return Center(child: BackButton(onPressed: back, style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surface)));
+    }
+    // The four main tabs are on the bottom bar, which also holds More: no second way to the menu at the top.
+    if (scope?.onBar ?? false) return const SizedBox.shrink();
+    return _MenuButton(onTap: () => _shellKey.currentState?.openDrawer());
   }
 }
 
 class _BackScope extends InheritedWidget {
-  const _BackScope({required this.onBack, required super.child});
+  const _BackScope({required this.onBack, this.onBar = false, required super.child});
   final VoidCallback? onBack;
+  final bool onBar;
 
   @override
-  bool updateShouldNotify(_BackScope old) => old.onBack != onBack;
+  bool updateShouldNotify(_BackScope old) => old.onBack != onBack || old.onBar != onBar;
 }
+
+/// The floating bar: the four places used every day, and More for the rest. The current tab is a white pill with its
+/// name; the others are icons with a tooltip and a screen-reader label.
+const _barTabs = [(_Tab.home, 'Home', LvIcons.house), (_Tab.workout, 'Workout', LvIcons.barbell), (_Tab.diet, 'Diet', LvIcons.forkKnife), (_Tab.progress, 'Progress', LvIcons.chartLineUp)];
+
+class _BottomBar extends StatelessWidget {
+  const _BottomBar({required this.current, required this.onSelect, required this.onMore});
+  final _Tab current;
+  final ValueChanged<_Tab> onSelect;
+  final VoidCallback onMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final bar = dark ? const Color(0xFF2A2A2E) : charcoal;
+    Widget round(String label, IconData icon, VoidCallback onTap) => Semantics(
+          button: true,
+          label: label,
+          excludeSemantics: true,
+          child: Tooltip(
+            message: label,
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.12),
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onTap();
+                },
+                child: SizedBox(width: 48, height: 48, child: Icon(icon, size: 21, color: cloud)),
+              ),
+            ),
+          ),
+        );
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: 10),
+      child: Center(
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(color: bar, borderRadius: BorderRadius.circular(40)),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              for (final (tab, label, icon) in _barTabs)
+                if (tab == current)
+                  Expanded(
+                    child: Semantics(
+                      button: true,
+                      selected: true,
+                      label: label,
+                      excludeSemantics: true,
+                      child: Container(
+                        height: 48,
+                        margin: const EdgeInsets.only(right: 4),
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+                        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Icon(icon, size: 20, color: accent),
+                          const SizedBox(width: 6),
+                          Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: graphite, fontSize: 14, fontWeight: FontWeight.w600))),
+                        ]),
+                      ),
+                    ),
+                  )
+                else
+                  Padding(padding: const EdgeInsets.only(right: 4), child: round(label, icon, () => onSelect(tab))),
+              if (!_barTabs.any((b) => b.$1 == current)) const Spacer(),
+              round('More', LvIcons.list, onMore),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+@visibleForTesting
+Widget bottomBarForTest({ValueChanged<String>? onTap}) => _BottomBar(current: _Tab.home, onSelect: (t) => onTap?.call(t.name), onMore: () => onTap?.call('more'));
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -392,6 +480,10 @@ class _DashboardState extends State<Dashboard> {
           drawer: _Menu(current: _tab, data: () => _loaded, onSelect: _go),
           drawerScrimColor: Colors.black.withValues(alpha: 0.45),
           floatingActionButton: _tab == _Tab.home || _tab == _Tab.workout || _tab == _Tab.diet ? const CoachLauncher() : null,
+          // Typing needs the room, so the bar steps aside while the keyboard is up.
+          bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
+              ? null
+              : _BottomBar(current: _tab, onSelect: _go, onMore: () => _shellKey.currentState?.openDrawer()),
           body: AnimatedSwitcher(
             duration: motion(context, 320),
             switchInCurve: spring,
@@ -399,7 +491,7 @@ class _DashboardState extends State<Dashboard> {
               opacity: a,
               child: SlideTransition(position: Tween(begin: const Offset(0, 0.015), end: Offset.zero).animate(a), child: child),
             ),
-            child: KeyedSubtree(key: ValueKey(_tab), child: _BackScope(onBack: _back.isEmpty ? null : _pop, child: _body(context))),
+            child: KeyedSubtree(key: ValueKey(_tab), child: _BackScope(onBack: _back.isEmpty ? null : _pop, onBar: _barTabs.any((b) => b.$1 == _tab), child: _body(context))),
           ),
         ),
       );
@@ -466,25 +558,8 @@ class _DashboardState extends State<Dashboard> {
       );
 
   Widget _home(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          leading: const _ShellMenu(),
-          leadingWidth: 64,
-          titleSpacing: 4,
-          title: const LevloWordmark(fontSize: 22),
-          actions: [
-            FutureBuilder(
-              future: _data,
-              builder: (context, snap) => IconButton(
-                tooltip: 'Profile',
-                onPressed: () => _go(_Tab.profile),
-                icon: snap.data == null
-                    ? const Icon(LvIcons.userCircle, size: 24)
-                    : UserAvatar(name: snap.data!.name ?? '', avatar: snap.data!.profile['avatar'] as String?, photoUrl: snap.data!.profile['avatar_url'] as String?, size: 30),
-              ),
-            ),
-            const SizedBox(width: 12),
-          ],
-        ),
+        // Only the status bar's height: the header with the avatar is part of the page (_Bento).
+        appBar: AppBar(toolbarHeight: 4, automaticallyImplyLeading: false),
         body: FutureBuilder(
           future: _data,
           builder: (context, snap) {
@@ -785,9 +860,35 @@ class _Bento extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 112), // room for the floating assistant
           children: staggered([
-            Text('${_days[now.weekday - 1]}  ·  ${now.day} ${_months[now.month - 1].toUpperCase()}', style: monoLabel(context)),
-            const SizedBox(height: 6),
-            Text(first.isEmpty ? hello : '$hello, $first', style: Theme.of(context).textTheme.headlineMedium),
+            Row(children: [
+              Tooltip(
+                message: 'Profile',
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => onOpen(_Tab.profile),
+                  child: UserAvatar(name: data.name ?? '', avatar: data.profile['avatar'] as String?, photoUrl: data.profile['avatar_url'] as String?, size: 56),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(first.isEmpty ? hello : '$hello, $first', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.secondary, borderRadius: BorderRadius.circular(20)),
+                    child: Text('${_days[now.weekday - 1]}, ${now.day} ${_months[now.month - 1]}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSecondary, fontWeight: FontWeight.w500)),
+                  ),
+                ]),
+              ),
+              IconButton(
+                tooltip: 'Reminders',
+                onPressed: () => onOpen(_Tab.reminders),
+                style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surface, minimumSize: const Size(48, 48)),
+                icon: const Icon(LvIcons.timer, size: 21),
+              ),
+            ]),
             const SizedBox(height: 20),
             const UpdateBanner(),
             for (final row in layoutRows(layout)) ...[
@@ -844,26 +945,22 @@ class _Rings extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
-    // Always a dark plate, like a watch face: graphite on the light page, a raised surface on the dark one.
-    final ink = Theme.of(context).brightness == Brightness.dark ? c.surface : graphite;
-    const onInk = cloud;
-    const move = Color(0xFFFFB27A); // a lighter tint of the brand orange, so the two rings read apart
     Widget stat(Color dot, String label, String value, String unit) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Container(width: 8, height: 8, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
               const SizedBox(width: 8),
-              Text(label, style: monoLabel(context).copyWith(color: onInk.withValues(alpha: 0.65))),
+              Flexible(child: Text(label, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))),
             ]),
             const SizedBox(height: 2),
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              CountUp(value, style: monoNumber(context, size: 24).copyWith(color: onInk)),
-              const SizedBox(width: 6),
+              CountUp(value, style: monoNumber(context, size: 22)),
+              const SizedBox(width: 4),
               Flexible(
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(unit, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: onInk.withValues(alpha: 0.6))),
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Text(unit, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
                 ),
               ),
             ]),
@@ -872,36 +969,34 @@ class _Rings extends StatelessWidget {
     return Semantics(
       label: '$days of $daysTarget training days and $minutes of $minutesTarget active minutes this week',
       child: Container(
-        padding: const EdgeInsets.all(5),
-        decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(30), border: Border.all(color: c.outline)),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(color: ink, borderRadius: BorderRadius.circular(25)),
-          child: Row(children: [
-            SizedBox(
-              width: 128,
-              height: 128,
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(cardRadius + 4)),
+        child: IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Expanded(
               child: TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: 1),
                 duration: motion(context, 1300),
                 curve: spring,
                 builder: (_, v, _) => CustomPaint(
-                  painter: _RingsPainter(
+                  painter: _ArcsPainter(
                     outer: (days / daysTarget).clamp(0.0, 1.0) * v,
                     inner: (minutes / minutesTarget).clamp(0.0, 1.0) * v,
                     outerColor: c.primary,
-                    innerColor: move,
-                    track: onInk.withValues(alpha: 0.12),
+                    innerColor: c.onSurface,
+                    track: c.surface,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                stat(c.primary, 'TRAIN', '$days', 'of $daysTarget ${daysTarget == 1 ? 'day' : 'days'}'),
-                stat(move, 'MOVE', '$minutes', 'of $minutesTarget min'),
-                stat(onInk.withValues(alpha: 0.5), 'STREAK', '$streak', streak == 1 ? 'week on plan' : 'weeks on plan'),
+            Container(
+              width: 168,
+              padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+              decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                stat(c.primary, 'Training', '$days', 'of $daysTarget ${daysTarget == 1 ? 'day' : 'days'}'),
+                stat(c.onSurface, 'Active', '$minutes', 'of $minutesTarget min'),
+                stat(progressColor(context), 'Streak', '$streak', streak == 1 ? 'week on plan' : 'weeks on plan'),
               ]),
             ),
           ]),
@@ -936,6 +1031,39 @@ class _RingsPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingsPainter old) => old.outer != outer || old.inner != inner || old.outerColor != outerColor;
+}
+
+/// Two progress arcs: training days outside, active minutes inside.
+class _ArcsPainter extends CustomPainter {
+  _ArcsPainter({required this.outer, required this.inner, required this.outerColor, required this.innerColor, required this.track});
+  final double outer, inner;
+  final Color outerColor, innerColor, track;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const w = 20.0;
+    // A quarter circle from the card's lower left, curving up behind the white stats panel.
+    final center = Offset(size.width + 10, size.height + 6);
+    final radius = math.min(size.width + 10 - w / 2 - 12, size.height - w / 2 - 8);
+    if (radius <= w * 2) return;
+    canvas.clipRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(cardRadius)));
+    void arc(double r, double v, Color color) {
+      Paint pen(Color col) => Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = w
+        ..strokeCap = StrokeCap.round
+        ..color = col;
+      final rect = Rect.fromCircle(center: center, radius: r);
+      canvas.drawArc(rect, math.pi, math.pi / 2, false, pen(track));
+      if (v > 0) canvas.drawArc(rect, math.pi, math.pi / 2 * v, false, pen(color));
+    }
+
+    arc(radius, outer, outerColor);
+    arc(radius - w - 8, inner, innerColor);
+  }
+
+  @override
+  bool shouldRepaint(_ArcsPainter old) => old.outer != outer || old.inner != inner || old.outerColor != outerColor || old.track != track;
 }
 
 /// Today's session with its moves animated, and one action to start it.
@@ -1215,7 +1343,7 @@ class _Tile extends StatelessWidget {
     final body = Padding(padding: padding, child: child);
     final tile = Material(
       color: c.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: BorderSide(color: c.outline)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius), side: BorderSide(color: c.outline)),
       clipBehavior: Clip.antiAlias,
       child: onTap == null ? body : InkWell(onTap: onTap, child: body),
     );
@@ -1379,7 +1507,7 @@ class _FuelTile extends StatelessWidget {
                   child: FractionallySizedBox(
                     heightFactor: v,
                     widthFactor: 1,
-                    child: DecoratedBox(decoration: BoxDecoration(color: c.primary, borderRadius: BorderRadius.circular(6))),
+                    child: DecoratedBox(decoration: BoxDecoration(color: progressColor(context), borderRadius: BorderRadius.circular(6))),
                   ),
                 ),
               ),

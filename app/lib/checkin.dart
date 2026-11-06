@@ -128,7 +128,7 @@ class _CheckInCardState extends State<CheckInCard> {
     return Pressable(
       child: Material(
         color: c.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: BorderSide(color: c.outline)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius), side: BorderSide(color: c.outline)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(onTap: _loading ? null : (_failed ? _load : _open), child: Semantics(button: true, label: 'Daily check-in', child: body)),
       ),
