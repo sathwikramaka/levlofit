@@ -1,12 +1,12 @@
 """Builds the Handbook v4 reviewer package from the v4 claims register (read-only on the register and the draft).
 
 Writes:
-  docs/HANDBOOK_V4_REVIEW.md                    overview, how to review, policy decisions with options, counts
-  docs/handbook_v4_review/1_clinical_safety.md  per-claim records, grouped by chapter
-  docs/handbook_v4_review/2_evidence_gaps.md
-  docs/handbook_v4_review/3_policy_decisions.md
-  docs/handbook_v4_review/4_editorial.md
-  docs/handbook_v4_review/review_items.csv      the same items as a worksheet with blank reviewer columns
+  docs/content/HANDBOOK_V4_REVIEW.md                    overview, how to review, policy decisions with options, counts
+  docs/content/handbook_v4_review/1_clinical_safety.md  per-claim records, grouped by chapter
+  docs/content/handbook_v4_review/2_evidence_gaps.md
+  docs/content/handbook_v4_review/3_policy_decisions.md
+  docs/content/handbook_v4_review/4_editorial.md
+  docs/content/handbook_v4_review/review_items.csv      the same items as a worksheet with blank reviewer columns
 
 Every open claim appears exactly once, in its primary section (policy decision > clinical safety > evidence gap >
 editorial); all its flags are listed with it. Nothing is approved or verified here.
@@ -19,7 +19,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-OUT = ROOT / "docs" / "handbook_v4_review"
+OUT = ROOT / "docs" / "content" / "handbook_v4_review"
 _s = importlib.util.spec_from_file_location("v4", HERE / "build_handbook_v4.py")
 v4 = importlib.util.module_from_spec(_s)
 _s.loader.exec_module(v4)
@@ -92,7 +92,7 @@ def question(r, sec):
         d = decision_of(r)
         if d == "Other recorded content decision":
             return "Content decision recorded in the evidence audit (see note): keep this wording, amend it, or remove it?"
-        return f"Governed by the decision '{d}' (options in docs/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording."
+        return f"Governed by the decision '{d}' (options in docs/content/HANDBOOK_V4_REVIEW.md): after choosing, approve, amend or remove this wording."
     if sec == "clinical":
         if s == "needs_clinical_review":
             return "Source passage is recorded. Is the claim clinically safe and appropriate for general adult users as worded? Approve, amend or remove."
@@ -138,7 +138,7 @@ SECTIONS = [("clinical", "1_clinical_safety.md", "Clinical safety"), ("evidence"
             ("policy", "3_policy_decisions.md", "Policy decisions"), ("editorial", "4_editorial.md", "Editorial review")]
 
 DECISIONS = [
-    ("BMI cut-offs for Indian adults", "body-measures, under-eating, calories/fat-loss rules; app: plan-engine.ts (underweight below 18.0, bands), tools.dart bmiBandIndia. PROVISIONAL choice recorded: option B, pending clinical review (docs/handbook_v4_review/DECISIONS.md); nothing applied yet",
+    ("BMI cut-offs for Indian adults", "body-measures, under-eating, calories/fat-loss rules; app: plan-engine.ts (underweight below 18.0, bands), tools.dart bmiBandIndia. PROVISIONAL choice recorded: option B, pending clinical review (docs/content/handbook_v4_review/DECISIONS.md); nothing applied yet",
      [("A. Keep Misra 2009 consensus: underweight <18, normal 18-22.9, overweight 23-24.9, obese >=25",
        "No code change. The cited paper has not been read (source_access), so the bands stay unverified. People with BMI 18.0-18.4 are treated as normal and can be offered a fat-loss phase."),
       ("B. Adopt ICMR Dietary Guidelines for Indians 2024: normal 18.5-23, overweight 23-27.5, obese >27.5 (passage recorded, PDF pp. 81-82)",
@@ -146,7 +146,7 @@ DECISIONS = [
       ("C. Show both with an explanation, and choose one for app decisions",
        "Most transparent; longer chapter; the app still needs one threshold, so A or B is still required for the engine.")],
      "Which cut-offs should the handbook and the app use, and is a clinician comfortable with the underweight threshold that blocks dieting?"),
-    ("Running versus strength (interference)", "one-step-at-a-time (why one goal first), hyrox, key points; the app's goal gating does not use this claim directly. PROVISIONAL choice recorded: option C, pending evidence review (docs/handbook_v4_review/DECISIONS.md); the draft now uses its cautious wording and an 'unverified' evidence grade",
+    ("Running versus strength (interference)", "one-step-at-a-time (why one goal first), hyrox, key points; the app's goal gating does not use this claim directly. PROVISIONAL choice recorded: option C, pending evidence review (docs/content/handbook_v4_review/DECISIONS.md); the draft now uses its cautious wording and an 'unverified' evidence grade",
      [("A. Keep: frequent, long endurance work costs some strength, size and especially power (cites Wilson 2012, not read)",
        "Current wording stays; unverified until Wilson 2012 is read."),
       ("B. Remove or substantially soften the interference claims. ACSM 2026 (read) reports insufficient data to determine whether aerobic and resistance training in the same session affects strength, muscle growth or power; it does not report 'no effect'",
@@ -209,7 +209,7 @@ def main():
     intros = {
         "clinical": "Safety-relevant wording: symptoms and warning signs, pain and return to training, pregnancy and after birth, eating too little, heat illness, mental health, medical referrals, and key points summarising those chapters. Needs a qualified clinician (and a dietitian for nutrition items). Items that also lack a source say so in their flags.",
         "evidence": "Claims whose source could not be read (source_access), have no source (source_needed), are only partly supported, or need an official-table spot check. Inaccessible and missing sources are unresolved; none is marked verified.",
-        "policy": "Claims governed by an open policy decision. Choose an option in docs/HANDBOOK_V4_REVIEW.md first, then review these items against it. Includes the muscle-training frequency rewording.",
+        "policy": "Claims governed by an open policy decision. Choose an option in docs/content/HANDBOOK_V4_REVIEW.md first, then review these items against it. Includes the muscle-training frequency rewording.",
         "editorial": "Key points (summaries of their chapter), new v4 text without safety or evidence flags, and reworded text. Needs an editor or subject expert, not a clinician.",
     }
     counts = {k: write_section(k, f, t, intros[k]) for k, f, t in SECTIONS}
@@ -268,7 +268,7 @@ Primary section order: policy decision, then clinical safety, then evidence gap,
 - Twice-weekly training stays in How training works and Sets, reps and progress as ACSM's general advice.
 - Question: approve the new wording, amend it, or restore the old one with a different source?
 """)
-    (ROOT / "docs" / "HANDBOOK_V4_REVIEW.md").write_text("\n".join(md), encoding="utf-8", newline="\n")
+    (ROOT / "docs" / "content" / "HANDBOOK_V4_REVIEW.md").write_text("\n".join(md), encoding="utf-8", newline="\n")
     print(f"open items {len(ITEMS)}: " + ", ".join(f"{k} {v}" for k, v in counts.items()) + f"; flags {dict(sorted(flag_counts.items()))}")
 
 

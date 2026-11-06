@@ -1,5 +1,5 @@
 # Daily encrypted backup of the production database (Supabase free plan has no daily backups).
-# Same dumps as tools/backup_prod.sh, so docs/BACKUP_RECOVERY_PLAN.md restores either. Storage files (progress photos)
+# Same dumps as tools/backup_prod.sh, so docs/operations/BACKUP_RECOVERY_PLAN.md restores either. Storage files (progress photos)
 # are not included; tools/backup_prod.sh still covers them before each release.
 #
 # Repository secrets (Settings > Secrets and variables > Actions):

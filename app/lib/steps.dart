@@ -4,7 +4,7 @@
 // builds made with -Plevlofit.healthConnect=true (android/healthconnect); every other build reports "unsupported" and
 // requests nothing. Checked on an Android 16 phone 2026-10-17 (grant, revoke and re-allow in Health Connect, totals
 // equal to Health Connect's own, account switch, disconnect, privacy links, denial, reboot, R8 release build); the
-// 30-minute stale label on a phone and Android 13 or older were not run (docs/STEP_COUNTER_DEVICE_CHECKLIST.md).
+// 30-minute stale label on a phone and Android 13 or older were not run (docs/operations/STEP_COUNTER_DEVICE_CHECKLIST.md).
 import 'dart:async';
 
 import 'package:flutter/material.dart';

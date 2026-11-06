@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Restore drill (docs/BACKUP_RECOVERY_PLAN.md sections 6-7, automated): loads a backup folder into a throwaway Postgres
+# Restore drill (docs/operations/BACKUP_RECOVERY_PLAN.md sections 6-7, automated): loads a backup folder into a throwaway Postgres
 # container with no network and RAM-only storage, then compares it with the source database.
 # Usage: bash tools/restore_drill.sh <dump folder> <source db url> [image]
 #   <dump folder> holds roles.sql, schema.sql, data.sql, platform_schema.sql, migration_history.sql (the daily backup).

@@ -1,7 +1,7 @@
 -- Read-only operations check for the Levlofit cloud project: counts only, no personal data, writes nothing.
 -- Run after the owner authorises cloud access (CLAUDE.md), for example weekly or before a release:
 --   supabase db query --project-ref <ref> -f tools/ops_health.sql
--- Expected: body-check bucket 'yes', orphan photos 0. Anything else is a finding for docs/RELEASE_CHECKLIST.md.
+-- Expected: body-check bucket 'yes', orphan photos 0. Anything else is a finding for docs/release/RELEASE_CHECKLIST.md.
 begin transaction read only;
 select check_name, value from (
   -- The body check fails closed without this bucket (_shared/rate.ts), so 'no' means every body check is refused.
