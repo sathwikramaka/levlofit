@@ -110,7 +110,6 @@ const faqs = [
     "Where do the numbers come from?",
     "From published sources, not from an AI. Protein, calories, activity minutes and food limits are calculated by fixed rules, and each rule names its source.",
   ],
-  ["Do you suggest beef or pork?", "Never. Levlofit is built for Indian users. Food choices are vegetarian, eggitarian, vegan or non-vegetarian without beef and pork."],
   [
     "What does Levlofit AI do?",
     "It explains your plan in plain words, answers questions about it and reads the progress you log. It never sets your numbers itself: when a different body goal, pace or number of training days makes sense, it proposes it, and the plan is rebuilt by its fixed rules only after you say yes. It is not a doctor. If your health check needs a doctor, it says so.",
