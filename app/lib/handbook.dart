@@ -1,8 +1,12 @@
 // The Handbook: chapter list with search, and a reader that draws each chapter from visual blocks.
 // Content lives in handbook_chapters.blocks (built by data/build_handbook.py). Every number there is cited.
+// Book chapters (data/handbook_book/build.py) are long reading: h2, h3, p, list, note and rows blocks.
+import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'handbook_book.dart';
@@ -14,6 +18,9 @@ typedef _Json = Map<String, dynamic>;
 
 // DESIGN.md success token; the theme has no slot for it.
 Color _success(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? const Color(0xFF5FB482) : const Color(0xFF2F7D4F);
+
+/// Book volumes are numbered in Roman numerals (Volume I); the short chapters use Part A to E.
+String partLabel(String part) => RegExp(r'^[IVX]+$').hasMatch(part) ? 'VOLUME $part' : 'PART $part';
 
 class HandbookScreen extends StatefulWidget {
   const HandbookScreen({super.key, this.leading});
@@ -116,7 +123,7 @@ class _HandbookScreenState extends State<HandbookScreen> {
                   part = r['part'] as String;
                   out.addAll([
                     if (out.isNotEmpty) const SizedBox(height: 16),
-                    Text('PART $part  ·  ${(r['part_title'] as String? ?? '').toUpperCase()}', style: monoLabel(context)),
+                    Text('${partLabel(part)}  ·  ${(r['part_title'] as String? ?? '').toUpperCase()}', style: monoLabel(context)),
                     const SizedBox(height: 10),
                   ]);
                 }
@@ -190,8 +197,8 @@ class ChapterScreen extends StatelessWidget {
     // One read serves the title bar and the body. Opened by slug, the chapter number comes from the row.
     final Future<Map<String, dynamic>> future = load?.call() ??
         (id != null
-            ? supabase.from('handbook_chapters').select('id, part, part_title, title, minutes, blocks').eq('id', id!).single()
-            : supabase.from('handbook_chapters').select('id, part, part_title, title, minutes, blocks').eq('slug', slug!).single());
+            ? supabase.from('handbook_chapters').select('id, part, part_title, title, summary, minutes, blocks').eq('id', id!).single()
+            : supabase.from('handbook_chapters').select('id, part, part_title, title, summary, minutes, blocks').eq('slug', slug!).single());
     return Scaffold(
       appBar: AppBar(
         title: id != null
@@ -209,6 +216,7 @@ class ChapterScreen extends StatelessWidget {
           final blocks = (data['blocks'] as List).cast<_Json>();
           // jsonb does not keep key order, so number sources by first appearance in the chapter.
           final keys = <String>{
+            for (final m in RegExp(r'\{([a-z0-9-]+)\}').allMatches(jsonEncode(blocks))) m[1]!, // book text cites inline
             for (final b in blocks) ...[
               if (b['source'] is String) b['source'] as String,
               for (final i in (b['items'] as List?) ?? const []) if (i is Map && i['source'] is String) i['source'] as String,
@@ -226,20 +234,29 @@ class ChapterScreen extends StatelessWidget {
           final next = blocks.where((b) => b['t'] == 'next').toList();
           final body = blocks.where((b) => b != lead && b['t'] != 'keypoints' && b['t'] != 'next').toList();
           final figureCount = figureNo.length;
+          final sections = [for (final b in blocks) if (b['t'] == 'h2') b['text'] as String];
+          final isBook = sections.isNotEmpty;
           return _ReadingProgress(
             child: (controller) => ListView(
               controller: controller,
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 48),
-              children: staggered([
+              // Long reading stays still: a lazy list would fade each paragraph in again on every scroll.
+              children: (isBook ? (List<Widget> w) => w : staggered)([
                 _ChapterOpener(
                   part: row['part'] as String?,
                   partTitle: row['part_title'] as String?,
                   number: chapter,
                   title: row['title'] as String,
-                  meta: '${row['minutes'] ?? 3} min  ·  $figureCount ${figureCount == 1 ? 'figure' : 'figures'}  ·  ${keys.length} sources',
+                  meta: isBook
+                      ? '${row['minutes'] ?? 3} min  ·  ${keys.length} ${keys.length == 1 ? 'source' : 'sources'}'
+                      : '${row['minutes'] ?? 3} min  ·  $figureCount ${figureCount == 1 ? 'figure' : 'figures'}  ·  ${keys.length} sources',
                 ),
                 const SizedBox(height: 22),
-                _InThisChapter(lead: lead?['text'] as String?, figures: [for (final e in figureNo.entries) (e.value, e.key['title'] as String? ?? '')]),
+                _InThisChapter(
+                  lead: lead?['text'] as String? ?? (isBook ? row['summary'] as String? : null),
+                  figures: [for (final e in figureNo.entries) (e.value, e.key['title'] as String? ?? '')],
+                  sections: sections,
+                ),
                 const SizedBox(height: 26),
                 for (final b in body) ...[
                   figureNo[b] != null ? _Figure(number: figureNo[b]!, child: handbookBlock(context, b, cite)) : handbookBlock(context, b, cite),
@@ -251,6 +268,7 @@ class ChapterScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text('REFERENCES', style: monoLabel(context)),
               const SizedBox(height: 10),
+              if (keys.isEmpty && isBook) Text('This chapter is guidance on using the Handbook, so it cites no studies.', style: t.bodySmall?.copyWith(color: muted)),
               for (final (i, k) in keys.indexed)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -270,6 +288,12 @@ class ChapterScreen extends StatelessWidget {
 
 /// One chapter block. Public so widget tests can draw blocks without the database.
 Widget handbookBlock(BuildContext context, Map<String, dynamic> b, String? Function(Object?) cite) => switch (b['t']) {
+        'h2' => _BookHeading(b['text'] as String),
+        'h3' => Text(b['text'] as String, style: Theme.of(context).textTheme.titleMedium),
+        'p' => _BookText(b['text'] as String, cite),
+        'list' => _BookList(b, cite),
+        'note' => _BookNote(b, cite),
+        'rows' => _BookRows(b, cite),
         'part' => _PartOpener(b),
         'keypoints' => _KeyPoints(b),
         'next' => _UpNext(b),
@@ -345,7 +369,7 @@ class _ChapterOpener extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final c = Theme.of(context).colorScheme;
-    final partLine = part == null ? null : (partTitle == null ? 'PART $part' : 'PART $part  ·  ${partTitle!.toUpperCase()}');
+    final partLine = part == null ? null : (partTitle == null ? partLabel(part!) : '${partLabel(part!)}  ·  ${partTitle!.toUpperCase()}');
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       if (partLine != null) Text(partLine, style: monoLabel(context).copyWith(color: c.tertiary)),
       const SizedBox(height: 10),
@@ -362,9 +386,10 @@ class _ChapterOpener extends StatelessWidget {
 
 /// "In this chapter": the opening idea and the list of figures, like a textbook's chapter preview.
 class _InThisChapter extends StatelessWidget {
-  const _InThisChapter({required this.lead, required this.figures});
+  const _InThisChapter({required this.lead, required this.figures, this.sections = const []});
   final String? lead;
   final List<(String, String)> figures;
+  final List<String> sections;
 
   @override
   Widget build(BuildContext context) {
@@ -383,6 +408,11 @@ class _InThisChapter extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(title.isEmpty ? 'Figure $no' : 'Figure $no  ·  $title', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             ),
+        ],
+        if (sections.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          for (final s in sections)
+            Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(s, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))),
         ],
       ]),
     );
@@ -500,6 +530,180 @@ class _UpNext extends StatelessWidget {
           ),
         ),
     ]);
+  }
+}
+
+// ---------------------------------------------------------------- book blocks: long reading
+
+/// Book text: **bold**, {source} markers and [[slug|Title]] chapter links.
+class _BookText extends StatefulWidget {
+  const _BookText(this.text, this.cite, {this.style});
+  final String text;
+  final String? Function(Object?) cite;
+  final TextStyle? style; // defaults to the serif reading text
+
+  @override
+  State<_BookText> createState() => _BookTextState();
+}
+
+class _BookTextState extends State<_BookText> {
+  static final _parts = RegExp(r'\*\*(.+?)\*\*|\{([a-z0-9-]+)\}|\[\[([a-z0-9-]+)\|([^\]]+)\]\]');
+  final _links = <TapGestureRecognizer>[];
+
+  void _clearLinks() {
+    for (final l in _links) {
+      l.dispose();
+    }
+    _links.clear();
+  }
+
+  @override
+  void dispose() {
+    _clearLinks();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _clearLinks();
+    final c = Theme.of(context).colorScheme;
+    final spans = <InlineSpan>[];
+    var at = 0;
+    for (final m in _parts.allMatches(widget.text)) {
+      if (m.start > at) spans.add(TextSpan(text: widget.text.substring(at, m.start)));
+      if (m[1] != null) {
+        spans.add(TextSpan(text: m[1], style: const TextStyle(fontWeight: FontWeight.w700)));
+      } else if (m[2] != null) {
+        final mark = widget.cite(m[2]);
+        if (mark != null) spans.add(TextSpan(text: mark, style: monoLabel(context).copyWith(color: c.tertiary)));
+      } else {
+        final slug = m[3]!;
+        final link = TapGestureRecognizer()..onTap = () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ChapterScreen(slug: slug)));
+        _links.add(link);
+        spans.add(TextSpan(text: m[4], recognizer: link, style: TextStyle(color: c.primary, decoration: TextDecoration.underline, decorationColor: c.primary)));
+      }
+      at = m.end;
+    }
+    if (at < widget.text.length) spans.add(TextSpan(text: widget.text.substring(at)));
+    return Text.rich(TextSpan(children: spans), style: widget.style ?? _bookStyle(context));
+  }
+}
+
+TextStyle _bookStyle(BuildContext context) => GoogleFonts.notoSerif(fontSize: 17, height: 1.7, color: Theme.of(context).colorScheme.onSurface);
+
+class _BookHeading extends StatelessWidget {
+  const _BookHeading(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          const Divider(),
+          const SizedBox(height: 18),
+          Semantics(header: true, child: Text(text, style: Theme.of(context).textTheme.headlineSmall)),
+        ]),
+      );
+}
+
+class _BookList extends StatelessWidget {
+  const _BookList(this.b, this.cite);
+  final _Json b;
+  final String? Function(Object?) cite;
+
+  @override
+  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        for (final i in (b['items'] as List).cast<String>())
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Padding(padding: const EdgeInsets.only(top: 12, right: 12), child: Container(width: 6, height: 6, color: Theme.of(context).colorScheme.primary)),
+              Expanded(child: _BookText(i, cite)),
+            ]),
+          ),
+      ]);
+}
+
+class _BookNote extends StatelessWidget {
+  const _BookNote(this.b, this.cite);
+  final _Json b;
+  final String? Function(Object?) cite;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final warn = b['kind'] == 'warn';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(color: c.surfaceContainerHigh, borderRadius: BorderRadius.circular(20), border: Border.all(color: warn ? c.primary : c.outline)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(b['title'] as String, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: warn ? c.primary : null)),
+        for (final p in (b['paras'] as List).cast<String>()) ...[
+          const SizedBox(height: 10),
+          _BookText(p, cite, style: _bookStyle(context).copyWith(fontSize: 16, height: 1.65)),
+        ],
+      ]),
+    );
+  }
+}
+
+/// Up to three columns fit a phone as a table. Wider tables stack: each row becomes a titled group of labelled lines.
+class _BookRows extends StatelessWidget {
+  const _BookRows(this.b, this.cite);
+  final _Json b;
+  final String? Function(Object?) cite;
+
+  @override
+  Widget build(BuildContext context) {
+    final head = (b['head'] as List).cast<String>();
+    final rows = (b['rows'] as List).map((r) => (r as List).cast<String>()).toList();
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final body = t.bodyMedium?.copyWith(height: 1.45);
+    final line = BorderSide(color: c.outline);
+    if (head.length > 3) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        for (final r in rows)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(border: Border(top: line)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              // A bare value such as week "1" needs its column name; a longer one is its own title.
+              Text(r[0].length <= 4 ? '${head[0]} ${r[0]}' : r[0], style: t.titleSmall),
+              for (var i = 1; i < r.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    SizedBox(width: 104, child: Text(head[i], style: body?.copyWith(color: c.onSurfaceVariant))),
+                    Expanded(child: _BookText(r[i], cite, style: body)),
+                  ]),
+                ),
+            ]),
+          ),
+      ]);
+    }
+    // Wider columns for longer text, so a short first column does not squeeze a sentence.
+    final flex = [
+      for (var i = 0; i < head.length; i++) math.sqrt(rows.fold<int>(head[i].length, (n, r) => n + r[i].length) / (rows.length + 1)).clamp(3.0, 9.0)
+    ];
+    return Table(
+      columnWidths: {for (var i = 0; i < head.length; i++) i: FlexColumnWidth(flex[i])},
+      border: TableBorder(horizontalInside: line),
+      children: [
+        TableRow(children: [
+          for (final h in head) Padding(padding: const EdgeInsets.only(right: 12, bottom: 8), child: Text(h, style: t.titleSmall)),
+        ]),
+        for (final r in rows)
+          TableRow(children: [
+            for (final (i, cell) in r.indexed)
+              Padding(
+                padding: const EdgeInsets.only(right: 12, top: 10, bottom: 10),
+                child: _BookText(cell, cite, style: i == 0 ? body?.copyWith(color: c.onSurfaceVariant) : body),
+              ),
+          ]),
+      ],
+    );
   }
 }
 
