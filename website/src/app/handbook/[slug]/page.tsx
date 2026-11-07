@@ -20,12 +20,12 @@ export default async function ChapterPage({ params }: { params: Promise<{ slug: 
   return (
     <main id="main" className="mx-auto max-w-3xl px-4 pt-36 pb-28 sm:px-6">
       <nav aria-label="Breadcrumb" className="font-mono text-[12px] text-muted">
-        <Link href="/handbook" className="underline underline-offset-4">The Handbook</Link> · Part {c.part}. {c.partTitle}
+        <Link href="/handbook" className="underline underline-offset-4">The Handbook</Link> · {c.volume ? `${c.volume} · Chapter ${c.number}` : `Part ${c.part}. ${c.partTitle}`}
       </nav>
       <h1 className="mt-4 text-[clamp(34px,5vw,56px)] leading-[1.02] font-bold tracking-[-0.035em]">{c.title}</h1>
       <p className="mt-4 text-[18px] leading-relaxed text-muted">{c.summary}</p>
       <p className="mt-3 font-mono text-[12px] text-muted">{c.minutes} min read</p>
-      <div className="mt-10 space-y-6">
+      <div className={`mt-10 ${c.volume ? "space-y-7" : "space-y-6"}`}>
         {c.blocks.map((b, n) => (
           <HandbookBlock key={n} b={b} sources={c.sources} />
         ))}

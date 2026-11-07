@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Unbounded } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Serif, Unbounded } from "next/font/google";
 import Link from "next/link";
 import { Contact } from "@/components/contact";
 import { Credits } from "@/components/credits";
@@ -11,6 +11,7 @@ import "./globals.css";
 
 const geist = Geist({ variable: "--font-geist", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const notoSerif = Noto_Serif({ variable: "--font-noto-serif", subsets: ["latin"] });
 const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin"], weight: ["700"] });
 
 export const metadata: Metadata = {
@@ -25,7 +26,7 @@ const init = `try{var t=localStorage.getItem('theme');if(t)document.documentElem
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-IN" className={`${geist.variable} ${geistMono.variable} ${unbounded.variable}`} suppressHydrationWarning>
+    <html lang="en-IN" className={`${geist.variable} ${geistMono.variable} ${unbounded.variable} ${notoSerif.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: init }} />
       </head>
