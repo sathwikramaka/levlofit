@@ -142,7 +142,7 @@ void main() {
     addTearDown(() => messenger.setMockMethodCallHandler(healthConnectChannel, null));
     await show(tester, healthConnectSteps);
     expect(asked, ['availability']);
-    expect(find.text('Step counting is not available in this version of the app.'), findsOneWidget);
+    expect(find.text('STEPS  ·  HEALTH CONNECT'), findsNothing);
     expect(find.text('Connect'), findsNothing);
   });
 

@@ -119,9 +119,9 @@ void main() {
 
     const empty = PostgrestException(message: 'no rows', code: 'PGRST116');
     await show('K5xgdvI', empty);
-    expect(find.text('The animation and steps for this move are not in the catalogue yet.'), findsOneWidget);
+    expect(find.text('More details for this move are not in the catalogue yet.'), findsOneWidget);
     await show('K5xgdvI', Exception('offline'));
-    expect(find.text('The animation and steps could not load. Check your connection.'), findsOneWidget);
+    expect(find.text('More details could not load. Check your connection.'), findsOneWidget);
     await show('zzzzzzz', empty);
     expect(find.text('This exercise is not in the catalogue yet.'), findsOneWidget);
     await show('zzzzzzz', Exception('offline'));

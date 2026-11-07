@@ -163,7 +163,6 @@ class _HydrationScreenState extends State<_HydrationScreen> {
       for (var i = 6; i >= 0; i--) drinks.where((r) => dayOf(r) == today.subtract(Duration(days: i))).fold<int>(0, (s, r) => s + (r['ml'] as int)),
     ];
     return _Page(
-      eyebrow: 'HYDRATION',
       title: 'Water today',
       children: [
         _WaterGlass(ml: total, target: _target),
@@ -180,9 +179,9 @@ class _HydrationScreenState extends State<_HydrationScreen> {
             const SizedBox(width: 8),
           ],
           Expanded(
-            child: FilledButton(
+            child: OutlinedButton(
               onPressed: _busy ? null : _custom,
-              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
+              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
               child: const FittedBox(child: Text('Other')),
             ),
           ),
@@ -256,14 +255,10 @@ class _WaterGlassState extends State<_WaterGlass> with SingleTickerProviderState
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
     final fill = (widget.ml / widget.target).clamp(0.0, 1.0);
     return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(30), border: Border.all(color: c.outline)),
-      child: Container(
         height: 220,
-        decoration: BoxDecoration(color: dark ? c.surface : charcoal, borderRadius: BorderRadius.circular(25)),
+        decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius)),
         clipBehavior: Clip.antiAlias,
         child: TweenAnimationBuilder<double>(
           tween: Tween(end: fill),
@@ -272,24 +267,23 @@ class _WaterGlassState extends State<_WaterGlass> with SingleTickerProviderState
           builder: (_, v, _) => AnimatedBuilder(
             animation: _wave,
             builder: (_, _) => CustomPaint(
-              painter: _WavePainter(level: v, phase: MediaQuery.disableAnimationsOf(context) ? 0 : _wave.value, color: c.primary),
+              painter: _WavePainter(level: v, phase: MediaQuery.disableAnimationsOf(context) ? 0 : _wave.value, color: c.primary.withValues(alpha: 0.3)),
               child: Padding(
                 padding: const EdgeInsets.all(22),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('TODAY', style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.65))),
+                  Text('TODAY', style: monoLabel(context)),
                   const Spacer(),
                   Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    CountUp('${widget.ml}', style: monoNumber(context, size: 48).copyWith(color: cloud)),
+                    CountUp('${widget.ml}', style: monoNumber(context, size: 48)),
                     const SizedBox(width: 8),
-                    Padding(padding: const EdgeInsets.only(bottom: 10), child: Text('of ${widget.target} ml', style: t.bodySmall?.copyWith(color: cloud.withValues(alpha: 0.75)))),
+                    Padding(padding: const EdgeInsets.only(bottom: 10), child: Text('of ${widget.target} ml', style: t.bodySmall)),
                   ]),
-                  Text(fill >= 1 ? 'Target reached. Keep sipping with meals.' : '${widget.target - widget.ml} ml to go', style: t.bodyMedium?.copyWith(color: cloud)),
+                  Text(fill >= 1 ? 'Target reached. Keep sipping with meals.' : '${widget.target - widget.ml} ml to go', style: t.bodyMedium),
                 ]),
               ),
             ),
           ),
         ),
-      ),
     );
   }
 }
@@ -393,16 +387,12 @@ class _HabitsScreenState extends State<_HabitsScreen> {
     final doneToday = habits.where((h) => h.$5(today)).length;
 
     return _Page(
-      eyebrow: 'HABITS',
       title: 'Small things, every day',
       subtitle: 'Habits take about two months to feel automatic, and one missed day does not undo them (Lally 2010).',
       children: [
         Container(
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(28), border: Border.all(color: c.outline)),
-          child: Container(
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? c.surface : charcoal, borderRadius: BorderRadius.circular(23)),
+            decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius)),
             child: Row(children: [
               SizedBox(
                 width: 88,
@@ -417,14 +407,13 @@ class _HabitsScreenState extends State<_HabitsScreen> {
               const SizedBox(width: 18),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('TODAY', style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.65))),
-                  Text('$doneToday of ${habits.length}', style: monoNumber(context, size: 32).copyWith(color: cloud)),
-                  Text(doneToday == habits.length ? 'A full day. Well done.' : 'Tick them off as you go.', style: t.bodySmall?.copyWith(color: cloud.withValues(alpha: 0.75))),
+                  Text('TODAY', style: monoLabel(context)),
+                  Text('$doneToday of ${habits.length}', style: monoNumber(context, size: 32)),
+                  Text(doneToday == habits.length ? 'A full day. Well done.' : 'Tick them off as you go.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
                 ]),
               ),
             ]),
           ),
-        ),
         const SizedBox(height: 14),
         if (_loading) const LinearProgressIndicator(minHeight: 2),
         for (final (id, icon, label, why, doneOn, manual) in habits) ...[
@@ -590,7 +579,6 @@ class _FoodsScreenState extends State<_FoodsScreen> {
     final unit = switch (_group) { 'Fibre' => 'fibre', 'Carbs' => 'carbs', 'Fats' => 'fat', _ => 'protein' };
     if (_group != null) rows?.sort((a, b) => ((b[key] as num?) ?? 0).compareTo((a[key] as num?) ?? 0));
     return _Page(
-      eyebrow: 'FOOD LIBRARY',
       title: 'Foods that matter',
       subtitle: 'Everyday foods for protein, fibre, good carbs and healthy fats, per 100 g.',
       children: [
@@ -789,7 +777,6 @@ class _SettingsScreenState extends State<_SettingsScreen> {
           waterWindow: identical(window, _keep) ? prefs!.waterWindow : window as ({int from, int to})?,
         );
     return _Page(
-      eyebrow: 'REMINDERS',
       title: 'Your reminders',
       subtitle: 'Choose when Levlofit nudges you.',
       children: [
@@ -1540,13 +1527,12 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
     final t = Theme.of(context).textTheme;
     final p = _p, d = _d;
     if (p == null || d == null) {
-      return _Page(eyebrow: 'PROTOCOL', title: 'Your protocol', children: [
+      return _Page(title: 'Your protocol', children: [
         if (_error != null) ErrorLine(_error!) else const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: LevloMark(size: 48, animate: true))),
       ]);
     }
     final goals = (widget.data.plan['goals'] as List).cast<_Json>();
     return _Page(
-      eyebrow: 'PROTOCOL',
       title: 'Your protocol',
       subtitle: 'The settings your plan is built from. Change any of them and the plan, sessions, meals, reminders and Levlofit AI all adapt.',
       children: [
@@ -1686,7 +1672,6 @@ class _ProfileScreen extends StatelessWidget {
     }
 
     return _Page(
-      eyebrow: 'PROFILE',
       title: name,
       subtitle: email.isEmpty ? null : email,
       children: [
@@ -1753,7 +1738,6 @@ class _AppSettingsScreen extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     void sheet(String title, List<(String, String)> points) => _policySheet(context, title, points);
     return _Page(
-      eyebrow: 'SETTINGS',
       title: 'Settings',
       children: [
         Padding(
@@ -2077,7 +2061,6 @@ class _GlossaryScreenState extends State<_GlossaryScreen> {
     final t = Theme.of(context).textTheme;
     final shown = [for (final e in _glossary) if ('${e.$1} ${e.$2}'.toLowerCase().contains(_q.toLowerCase())) e];
     return _Page(
-      eyebrow: 'GLOSSARY',
       title: 'Words your plan uses',
       children: [
         TextField(onChanged: (v) => setState(() => _q = v), decoration: const InputDecoration(hintText: 'Search a term', prefixIcon: Icon(LvIcons.magnifyingGlass, size: 20))),

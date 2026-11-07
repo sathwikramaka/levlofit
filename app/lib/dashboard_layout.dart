@@ -27,14 +27,18 @@ const requiredCards = {'today'};
 /// Half-width cards; two in a row share a line, a lone one takes the full width.
 const halfCards = {'hydration', 'habits', 'fuel', 'body'};
 
-List<CardPref> get defaultLayout => [for (final id in dashboardCards.keys) (id: id, visible: true)];
+/// Off by default, on from Customise: Today answers "what do I do now"; rank and rating live in Progress.
+const quietCards = {'rewards', 'levelup', 'habits', 'body'};
+
+List<CardPref> get defaultLayout => [for (final id in dashboardCards.keys) (id: id, visible: !quietCards.contains(id))];
 
 /// Saved order first (known ids, once each), then any card the saved layout does not know yet, shown, in the
 /// default order. Required cards are always visible.
 List<CardPref> mergeLayout(List<CardPref>? saved) {
+  if (saved == null) return defaultLayout;
   final seen = <String>{};
   return [
-    for (final c in saved ?? const <CardPref>[])
+    for (final c in saved)
       if (dashboardCards.containsKey(c.id) && seen.add(c.id)) (id: c.id, visible: c.visible || requiredCards.contains(c.id)),
     for (final id in dashboardCards.keys)
       if (!seen.contains(id)) (id: id, visible: true),

@@ -256,6 +256,7 @@ class _StepsCardState extends State<StepsCard> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    if (_state == _State.unsupported) return const SizedBox.shrink(); // nothing the person can act on
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     final muted = t.bodySmall?.copyWith(color: c.onSurfaceVariant);

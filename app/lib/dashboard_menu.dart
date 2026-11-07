@@ -5,227 +5,112 @@
 part of 'dashboard.dart';
 
 /// Three lines of unequal length; the short ones stretch under the finger.
-class _MenuButton extends StatefulWidget {
-  const _MenuButton({required this.onTap});
-  final VoidCallback onTap;
+/// Levlofit AI, from the top of the main pages. It never floats over content.
+class _CoachButton extends StatelessWidget {
+  const _CoachButton();
 
   @override
-  State<_MenuButton> createState() => _MenuButtonState();
+  Widget build(BuildContext context) => IconButton(
+        tooltip: 'Levlofit AI',
+        onPressed: () => openCoach(context),
+        style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surface, minimumSize: const Size(44, 44)),
+        icon: const Icon(LvIcons.sparkle, size: 20),
+      );
 }
 
-class _MenuButtonState extends State<_MenuButton> {
-  bool _hot = false;
+/// Everything that is not used every day, in plain groups. Tabs on the bottom bar are not repeated here.
+class _MoreScreen extends StatelessWidget {
+  const _MoreScreen({required this.onOpen});
+  final ValueChanged<_Tab> onOpen;
 
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
-    Widget line(double w) => AnimatedContainer(
-          duration: motion(context, 260),
-          curve: spring,
-          width: w,
-          height: 1.6,
-          decoration: BoxDecoration(color: c.onSurface, borderRadius: BorderRadius.circular(1)),
-        );
-    return Semantics(
-      button: true,
-      label: 'Open menu',
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hot = true),
-        onExit: (_) => setState(() => _hot = false),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque, // the whole slot is the target; the visible disc stays small
-          onTapDown: (_) => setState(() => _hot = true),
-          onTapCancel: () => setState(() => _hot = false),
-          onTap: () {
-            setState(() => _hot = false);
-            HapticFeedback.selectionClick();
-            widget.onTap();
-          },
-          child: Center(
-            child: Container(
-              width: 34,
-              height: 34,
-              padding: const EdgeInsets.only(left: 10),
-              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: c.outline), color: c.surface),
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                line(14),
-                const SizedBox(height: 3),
-                line(_hot ? 14 : 8),
-                const SizedBox(height: 3),
-                line(_hot ? 14 : 11),
-              ]),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Menu extends StatelessWidget {
-  const _Menu({required this.current, required this.data, required this.onSelect});
-  final _Tab current;
-  final _Data? Function() data;
-  final ValueChanged<_Tab> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Theme.of(context).colorScheme;
-    final t = Theme.of(context).textTheme;
-    final first = (data()?.name ?? '').split(' ').first;
-
-    void go(_Tab tab) {
-      Navigator.pop(context);
-      onSelect(tab);
-    }
-
-    Widget item(IconData icon, String label, _Tab tab) => _MenuItem(icon: icon, label: label, selected: current == tab, onTap: () => go(tab));
-
-    final items = <Widget>[
-      const _MenuSection('TRAIN'),
-      item(LvIcons.house, 'Dashboard', _Tab.home),
-      item(LvIcons.barbell, 'Workout', _Tab.workout),
-      item(LvIcons.notePencil, 'Protocol', _Tab.protocol),
-      item(LvIcons.calendarBlank, 'Calendar', _Tab.calendar),
-      item(LvIcons.chartLineUp, 'Progress', _Tab.progress),
-      const _MenuSection('FUEL'),
-      item(LvIcons.forkKnife, 'Diet', _Tab.diet),
-      item(LvIcons.drop, 'Hydration', _Tab.hydration),
-      item(LvIcons.forkKnife, 'Food diary', _Tab.foodDiary),
-      item(LvIcons.magnifyingGlass, 'Food library', _Tab.foods),
-      const _MenuSection('HABITS AND TOOLS'),
-      item(LvIcons.checkCircle, 'Habits', _Tab.habits),
-      item(LvIcons.scales, 'BMI calculator', _Tab.bmi),
-      const _MenuSection('LEARN'),
-      item(LvIcons.bookOpen, 'Handbook', _Tab.handbook),
-      item(LvIcons.personSimpleRun, 'Exercise library', _Tab.library),
-      item(LvIcons.lightbulb, 'Glossary', _Tab.glossary),
-      const SizedBox(height: 8),
-      _MenuItem(
-        icon: LvIcons.sparkle,
-        label: 'Levlofit AI',
-        accent: true,
-        onTap: () {
-          final page = Navigator.of(context).context;
-          Navigator.pop(context);
-          openCoach(page);
-        },
-      ),
-    ];
-
-    return Drawer(
-      width: math.min(320, MediaQuery.sizeOf(context).width * 0.86),
-      backgroundColor: c.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.horizontal(right: Radius.circular(28))),
-      child: SafeArea(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 12, 8),
-            child: Row(children: [
-              const LevloMark(size: 36, animate: true),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(first.isEmpty ? 'Levlofit' : first, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.titleLarge),
-                  Text('Find your level', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-                ]),
-              ),
-              IconButton(tooltip: 'Close menu', onPressed: () => Navigator.pop(context), icon: const Icon(LvIcons.x, size: 20)),
-            ]),
-          ),
-          Expanded(child: ListView(padding: const EdgeInsets.fromLTRB(12, 0, 12, 12), children: staggered(items))),
-          Divider(height: 1, color: c.outline),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: Column(children: [
-              item(LvIcons.timer, 'Reminders', _Tab.reminders),
-              item(LvIcons.userCircle, 'Profile', _Tab.profile),
-            ]),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
-class _MenuSection extends StatelessWidget {
-  const _MenuSection(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.fromLTRB(12, 20, 12, 8), child: Text(text, style: monoLabel(context)));
-}
-
-class _MenuItem extends StatelessWidget {
-  const _MenuItem({required this.icon, required this.label, required this.onTap, this.selected = false, this.accent = false});
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool selected, accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Theme.of(context).colorScheme;
-    final lit = accent || selected;
-    return Pressable(
-      child: Material(
-        color: selected ? c.surfaceContainerHighest : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+    Widget row(IconData icon, String label, VoidCallback onTap) => InkWell(
           onTap: () {
             HapticFeedback.selectionClick();
             onTap();
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(color: lit ? c.primary : c.surface, borderRadius: BorderRadius.circular(11), border: lit ? null : Border.all(color: c.outline)),
-                child: Icon(icon, size: 19, color: lit ? c.onPrimary : c.onSurface),
-              ),
+              Icon(icon, size: 22, color: c.onSurfaceVariant),
               const SizedBox(width: 14),
-              Expanded(child: Text(label, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16))),
-              if (!selected) Icon(LvIcons.caretRight, size: 16, color: c.onSurfaceVariant),
+              Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyLarge)),
+              Icon(LvIcons.caretRight, size: 16, color: c.onSurfaceVariant),
             ]),
           ),
-        ),
-      ),
-    );
+        );
+    Widget group(String title, List<Widget> rows) => Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Padding(padding: const EdgeInsets.fromLTRB(4, 0, 4, 8), child: Text(title, style: monoLabel(context))),
+            Material(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(cardRadius),
+              clipBehavior: Clip.antiAlias,
+              child: Column(children: [
+                for (final (i, r) in rows.indexed) ...[
+                  if (i > 0) Divider(height: 1, indent: 52, color: c.outline),
+                  r,
+                ],
+              ]),
+            ),
+          ]),
+        );
+    return _Page(title: 'More', children: [
+      group('COACH AND LEARN', [
+        row(LvIcons.sparkle, 'Levlofit AI', () => openCoach(context)),
+        row(LvIcons.bookOpen, 'Handbook', () => onOpen(_Tab.handbook)),
+        row(LvIcons.personSimpleRun, 'Exercise library', () => onOpen(_Tab.library)),
+        row(LvIcons.lightbulb, 'Glossary', () => onOpen(_Tab.glossary)),
+      ]),
+      group('TRAINING', [
+        row(LvIcons.notePencil, 'Protocol', () => onOpen(_Tab.protocol)),
+        row(LvIcons.calendarBlank, 'Calendar', () => onOpen(_Tab.calendar)),
+        row(LvIcons.checkCircle, 'Habits', () => onOpen(_Tab.habits)),
+      ]),
+      group('FOOD AND BODY', [
+        row(LvIcons.forkKnife, 'Food diary', () => onOpen(_Tab.foodDiary)),
+        row(LvIcons.magnifyingGlass, 'Food library', () => onOpen(_Tab.foods)),
+        row(LvIcons.drop, 'Water', () => onOpen(_Tab.hydration)),
+        row(LvIcons.scales, 'BMI calculator', () => onOpen(_Tab.bmi)),
+      ]),
+      group('ACCOUNT', [
+        row(LvIcons.timer, 'Reminders', () => onOpen(_Tab.reminders)),
+        row(LvIcons.userCircle, 'Profile', () => onOpen(_Tab.profile)),
+      ]),
+    ]);
   }
 }
 
 // ---------------------------------------------------------------- pages
 
-/// Shared page frame: eyebrow, big title, staggered content, readable width.
+/// Shared page frame: big title, content, readable width.
 class _Page extends StatelessWidget {
-  const _Page({required this.eyebrow, required this.title, required this.children, this.subtitle});
-  final String eyebrow, title;
+  const _Page({required this.title, required this.children, this.subtitle});
+  final String title;
   final String? subtitle;
   final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    final onBar = context.dependOnInheritedWidgetOfExactType<_BackScope>()?.onBar ?? false;
     return Scaffold(
-      appBar: AppBar(leading: const _ShellMenu()),
+      appBar: AppBar(leading: const _ShellMenu(), actions: [if (onBar && title != 'More') const Padding(padding: EdgeInsets.only(right: 16), child: _CoachButton())]),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 760),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 112),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: staggered([
-              Text(eyebrow, style: monoLabel(context)),
-              const SizedBox(height: 6),
               Text(title, style: t.headlineMedium),
               if (subtitle != null) ...[
                 const SizedBox(height: 6),
                 Text(subtitle!, style: t.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               ...children,
             ]),
           ),
@@ -274,14 +159,34 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
     final phase = plan['phase'] as _Json?;
     final roadmap = plan['roadmap'] as _Json?;
     return _Page(
-      eyebrow: 'WORKOUT',
-      title: phase == null ? 'Your training week' : phase['title'] as String,
-      subtitle: phase?['why'] as String?,
+      title: 'Workout',
       children: [
-        if (roadmap != null) ...[
-          _Roadmap(roadmap: roadmap),
-          const SizedBox(height: 24),
-        ],
+        for (var i = 0; i < 7; i++)
+          if (monday.add(Duration(days: i)) == today) ...[
+            Text('TODAY', style: monoLabel(context)),
+            const SizedBox(height: 8),
+            _dayTile(context, i, week, monday, today, minutes),
+            const SizedBox(height: 24),
+          ],
+        Text('THIS WEEK  ·  ${dayGoal.length} DAYS${minutes == null ? '' : '  ·  $minutes MIN'}${switch (trainingTimeLabel(plan)) { final l? => '  ·  ${l.toUpperCase()}', _ => '' }}',
+            style: monoLabel(context)),
+        const SizedBox(height: 8),
+        for (var i = 0; i < 7; i++)
+          if (monday.add(Duration(days: i)) != today) ...[
+            _dayTile(context, i, week, monday, today, minutes),
+            const SizedBox(height: 8),
+          ],
+        for (final a in week.addOns)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Text(addOnLine(a), style: t.bodyMedium),
+          ),
+        for (final n in week.notices)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Text(n, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          ),
+        const SizedBox(height: 16),
         Row(children: [
           Expanded(child: Text('YOUR GOALS', style: monoLabel(context))),
           TextButton.icon(onPressed: widget.onEditGoals, icon: const Icon(LvIcons.pencilSimple, size: 16), label: const Text('Edit goals')),
@@ -298,127 +203,122 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
           ),
           const SizedBox(height: 8),
         ],
-        const SizedBox(height: 20),
-        Text('THIS WEEK  ·  ${dayGoal.length} DAYS${minutes == null ? '' : '  ·  $minutes MIN'}${switch (trainingTimeLabel(plan)) { final l? => '  ·  ${l.toUpperCase()}', _ => '' }}',
-            style: monoLabel(context)),
-        const SizedBox(height: 8),
-        for (final a in week.addOns)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Text(addOnLine(a), style: t.bodyMedium),
-          ),
-        for (final n in week.notices)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            child: Text(n, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-          ),
-        if (week.addOns.isNotEmpty || week.notices.isNotEmpty) const SizedBox(height: 8),
-        for (var i = 0; i < 7; i++) ...[
-          Builder(builder: (context) {
-            final day = monday.add(Duration(days: i));
-            final done = _logged.contains(day);
-            final isToday = day == today;
-            // A session moved with Levlofit AI shows on its new day; the day it left says where it went (swaps.dart).
-            final src = sessionDayFor(i + 1, dayGoal.keys.toSet(), data.moves);
-            final movedTo = data.moves.where((m) => m.$1 == i + 1).map((m) => m.$2).firstOrNull;
-            // A rest day may carry an add-on as its own short session; a training day may carry blocks after it.
-            final own = src == null && movedTo == null && dayGoal[i + 1] == null ? week.addOns.where((a) => a.day == i + 1).firstOrNull : null;
-            final ownBlock = own == null ? null : blocksFor(week, i + 1, data.tier, kitOf(data.profile), const []).first;
-            final g = own == null ? dayGoal[src] : {...own.session, 'name': '${own.name} add-on', 'startLevel': ownBlock!.level};
-            if (g == null) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                child: Row(children: [
-                  SizedBox(width: 52, child: Text(_days[i], style: monoLabel(context).copyWith(color: isToday ? c.tertiary : null))),
-                  Expanded(
-                    child: Text(movedTo != null ? 'Session moved to ${_days[movedTo - 1]}' : dayGoal.containsKey(i + 1) ? 'Open session' : 'Rest and recover',
-                        style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
-                  ),
-                  if (done) Icon(LvIcons.checkCircle, size: 18, color: c.primary),
-                ]),
-              );
-            }
-            final name = (g['name'] ?? g['goal']) as String;
-            final level = g['startLevel'] as int;
-            final List<String> ids;
-            if (ownBlock != null) {
-              ids = ownBlock.ids;
-            } else {
-              // Which session of this goal it is (by its planned day), so A and B alternate as on the dashboard.
-              final nth = [for (var d = 1; d < src!; d++) if (dayGoal[d]?['goal'] == g['goal']) d].length;
-              ids = sessionIds(g['kind'] as String? ?? 'strength', data.tier, level, nth, goal: g['goal'] as String?, kit: kitOf(data.profile));
-            }
-            final blocks = own != null ? const <AddOnBlock>[] : blocksFor(week, i + 1, data.tier, kitOf(data.profile), ids);
-            final levelRow = data.levels[g['goal']];
-            return _Tile(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Text('${_days[i]}  ${day.day}${isToday ? '  ·  TODAY' : ''}', style: monoLabel(context).copyWith(color: isToday ? c.tertiary : null)),
-                  const Spacer(),
-                  if (done) Text('DONE', style: monoLabel(context).copyWith(color: c.tertiary)),
-                ]),
-                const SizedBox(height: 6),
-                Row(children: [
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(name, style: t.titleMedium),
-                      Text(
-                        [g['levelAssessed'] == false ? 'Level not assessed, lightest dose' : 'Level $level', if (levelRow != null) levelRow['title'] as String, if (minutes != null) '$minutes min'].join('  ·  '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: t.bodySmall?.copyWith(color: c.onSurfaceVariant),
-                      ),
-                    ]),
-                  ),
-                  IconButton.filledTonal(
-                    tooltip: 'Start $name',
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (_) => SessionScreen(
-                          title: name,
-                          ids: ids,
-                          level: level,
-                          blocks: blocks,
-                          done: done,
-                          injury: data.profile['injuries'] as String?,
-                          sessionMinutes: minutes,
-                          medicalHold: data.plan['medicalHold'] == true,
-                          kind: g['kind'] as String? ?? 'strength',
-                          gym: data.tier == Tier.gym,
-                          onFinish: isToday && !done
-                              ? () async {
-                                  // An add-on day logs its own length (the block and a warm-up), not the session setting.
-                                  final saved = await widget.onToggleToday(g['goal'] as String, ownBlock == null ? minutes : ownBlock.minutes + 5);
-                                  if (saved && mounted) setState(() => _logged = {..._logged, today});
-                                  return saved;
-                                }
-                              : null,
-                        ),
-                      ),
-                    ),
-                    icon: const Icon(LvIcons.play, size: 18),
-                  ),
-                ]),
-                const SizedBox(height: 12),
-                MoveStrip(ids: ids, level: level, tile: 104, injury: data.profile['injuries'] as String?, lighter: data.plan['medicalHold'] == true),
-                for (final b in blocks) ...[
-                  const SizedBox(height: 10),
-                  Text(blockSummary(b).toUpperCase(), style: monoLabel(context)),
-                  if (b.ids.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    MoveStrip(ids: b.ids, level: b.level, tile: 80, injury: data.profile['injuries'] as String?, lighter: data.plan['medicalHold'] == true),
-                  ],
-                ],
-              ]),
-            );
-          }),
-          const SizedBox(height: 8),
+        if (roadmap != null || phase != null) ...[
+          const SizedBox(height: 16),
+          _Roadmap(roadmap: roadmap, phase: phase),
         ],
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         _Sources(plan: plan),
       ],
+    );
+  }
+
+  /// Today gets the full card with its moves and Start; every other day is one line that opens the session.
+  Widget _dayTile(BuildContext context, int i, WeekPlan week, DateTime monday, DateTime today, int? minutes) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final data = widget.data;
+    final dayGoal = week.days;
+    final day = monday.add(Duration(days: i));
+    final done = _logged.contains(day);
+    final isToday = day == today;
+    // A session moved with Levlofit AI shows on its new day; the day it left says where it went (swaps.dart).
+    final src = sessionDayFor(i + 1, dayGoal.keys.toSet(), data.moves);
+    final movedTo = data.moves.where((m) => m.$1 == i + 1).map((m) => m.$2).firstOrNull;
+    // A rest day may carry an add-on as its own short session; a training day may carry blocks after it.
+    final own = src == null && movedTo == null && dayGoal[i + 1] == null ? week.addOns.where((a) => a.day == i + 1).firstOrNull : null;
+    final ownBlock = own == null ? null : blocksFor(week, i + 1, data.tier, kitOf(data.profile), const []).first;
+    final g = own == null ? dayGoal[src] : {...own.session, 'name': '${own.name} add-on', 'startLevel': ownBlock!.level};
+    final label = isToday ? '' : '${_days[i]} ${day.day}';
+    if (g == null) {
+      final line = movedTo != null ? 'Session moved to ${_days[movedTo - 1]}' : dayGoal.containsKey(i + 1) ? 'Open session' : 'Rest and recover';
+      return isToday
+          ? _Tile(child: Text(line, style: t.titleMedium))
+          : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(children: [
+                SizedBox(width: 60, child: Text(label, style: monoLabel(context))),
+                Expanded(child: Text(line, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant))),
+                if (done) Icon(LvIcons.checkCircle, size: 18, color: progressColor(context)),
+              ]),
+            );
+    }
+    final name = (g['name'] ?? g['goal']) as String;
+    final level = g['startLevel'] as int;
+    final List<String> ids;
+    if (ownBlock != null) {
+      ids = ownBlock.ids;
+    } else {
+      // Which session of this goal it is (by its planned day), so A and B alternate as on the dashboard.
+      final nth = [for (var d = 1; d < src!; d++) if (dayGoal[d]?['goal'] == g['goal']) d].length;
+      ids = sessionIds(g['kind'] as String? ?? 'strength', data.tier, level, nth, goal: g['goal'] as String?, kit: kitOf(data.profile));
+    }
+    final blocks = own != null ? const <AddOnBlock>[] : blocksFor(week, i + 1, data.tier, kitOf(data.profile), ids);
+    final levelRow = data.levels[g['goal']];
+    final meta = [g['levelAssessed'] == false ? 'Level not assessed, lightest dose' : 'Level $level', if (levelRow != null) levelRow['title'] as String, if (minutes != null) '$minutes min'].join('  ·  ');
+    void open() => Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (_) => SessionScreen(
+              title: name,
+              ids: ids,
+              level: level,
+              blocks: blocks,
+              done: done,
+              injury: data.profile['injuries'] as String?,
+              sessionMinutes: minutes,
+              medicalHold: data.plan['medicalHold'] == true,
+              kind: g['kind'] as String? ?? 'strength',
+              gym: data.tier == Tier.gym,
+              onFinish: isToday && !done
+                  ? () async {
+                      // An add-on day logs its own length (the block and a warm-up), not the session setting.
+                      final saved = await widget.onToggleToday(g['goal'] as String, ownBlock == null ? minutes : ownBlock.minutes + 5);
+                      if (saved && mounted) setState(() => _logged = {..._logged, today});
+                      return saved;
+                    }
+                  : null,
+            ),
+          ),
+        );
+    if (!isToday) {
+      return _Tile(
+        onTap: open,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(children: [
+          SizedBox(width: 60, child: Text(label, style: monoLabel(context))),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.titleSmall),
+              Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          if (done) Icon(LvIcons.checkCircle, size: 18, color: progressColor(context)) else Icon(LvIcons.caretRight, size: 16, color: c.onSurfaceVariant),
+        ]),
+      );
+    }
+    return _Tile(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Expanded(child: Text(name, style: t.titleLarge)),
+          if (done) Text('DONE', style: monoLabel(context).copyWith(color: c.tertiary)),
+        ]),
+        const SizedBox(height: 2),
+        Text(meta, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+        const SizedBox(height: 14),
+        MoveStrip(ids: ids, level: level, tile: 104, injury: data.profile['injuries'] as String?, lighter: data.plan['medicalHold'] == true),
+        for (final b in blocks) ...[
+          const SizedBox(height: 10),
+          Text(blockSummary(b).toUpperCase(), style: monoLabel(context)),
+          if (b.ids.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            MoveStrip(ids: b.ids, level: b.level, tile: 80, injury: data.profile['injuries'] as String?, lighter: data.plan['medicalHold'] == true),
+          ],
+        ],
+        const SizedBox(height: 14),
+        SizedBox(width: double.infinity, child: FilledButton(onPressed: open, child: Text(done ? 'Open session' : 'Start workout'))),
+      ]),
     );
   }
 }
@@ -499,29 +399,27 @@ class _GoalCard extends StatelessWidget {
 
 /// The personal step-by-step path, written by Levlofit AI from the plan and the curriculum level checks.
 class _Roadmap extends StatelessWidget {
-  const _Roadmap({required this.roadmap});
-  final _Json roadmap;
+  const _Roadmap({required this.roadmap, required this.phase});
+  final _Json? roadmap, phase;
 
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
-    final steps = ((roadmap['steps'] as List?) ?? const []).cast<_Json>();
-    return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(28), border: Border.all(color: c.outline)),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? c.surface : charcoal, borderRadius: BorderRadius.circular(23)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Icon(LvIcons.trendUp, size: 16, color: c.primary),
-            const SizedBox(width: 8),
-            Flexible(child: Text('YOUR PATH  ·  COACH PLAN', overflow: TextOverflow.ellipsis, style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.65)))),
-          ]),
-          const SizedBox(height: 10),
-          Text(roadmap['intro'] as String? ?? '', style: t.bodyMedium?.copyWith(color: cloud.withValues(alpha: 0.85))),
-          const SizedBox(height: 14),
+    final steps = ((roadmap?['steps'] as List?) ?? const []).cast<_Json>();
+    return Material(
+      color: c.surface,
+      borderRadius: BorderRadius.circular(cardRadius),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        shape: const Border(),
+        collapsedShape: const Border(),
+        title: Text('Your path', style: t.titleMedium),
+        subtitle: phase == null ? null : Text(phase!['title'] as String, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (phase?['why'] != null) ...[Text(phase!['why'] as String, style: t.bodyMedium), const SizedBox(height: 14)],
           for (final (i, s) in steps.indexed)
             Padding(
               padding: const EdgeInsets.only(bottom: 14),
@@ -530,23 +428,23 @@ class _Roadmap extends StatelessWidget {
                   width: 26,
                   height: 26,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(color: i == 0 ? c.primary : Colors.transparent, shape: BoxShape.circle, border: Border.all(color: i == 0 ? c.primary : cloud.withValues(alpha: 0.4))),
-                  child: Text('${i + 1}', style: monoNumber(context, size: 12).copyWith(color: i == 0 ? graphite : cloud)),
+                  decoration: BoxDecoration(color: i == 0 ? c.primary : Colors.transparent, shape: BoxShape.circle, border: i == 0 ? null : Border.all(color: c.onSurfaceVariant)),
+                  child: Text('${i + 1}', style: monoNumber(context, size: 12).copyWith(color: i == 0 ? c.onPrimary : c.onSurface)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(s['title'] as String, style: t.titleMedium?.copyWith(color: cloud)),
+                    Text(s['title'] as String, style: t.titleSmall),
                     const SizedBox(height: 2),
-                    Text(s['focus'] as String, style: t.bodySmall?.copyWith(color: cloud.withValues(alpha: 0.75))),
+                    Text(s['focus'] as String, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
                     const SizedBox(height: 4),
-                    Text('Move on when: ${s['moveOnWhen']}', style: t.bodySmall?.copyWith(color: c.primary)),
+                    Text('Move on when: ${s['moveOnWhen']}', style: t.bodySmall),
                   ]),
                 ),
               ]),
             ),
-          Text('Built by Levlofit coaching rules from the curriculum level checks. No AI writes your training.', style: t.bodySmall?.copyWith(color: cloud.withValues(alpha: 0.5), fontSize: 11)),
-        ]),
+          Text('Built by Levlofit coaching rules from the curriculum level checks. No AI writes your training.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        ],
       ),
     );
   }
@@ -659,13 +557,13 @@ class _DietScreenState extends State<_DietScreen> {
     final protein = (food['proteinG'] as num).toDouble();
     final foods = _foods;
     if (foods == null) {
-      return _Page(eyebrow: 'DIET', title: 'Your plate', children: [
+      return _Page(title: 'Diet', children: [
         if (_error != null) ErrorLine(_error!) else const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: LevloMark(size: 48, animate: true))),
       ]);
     }
     if (foods.isEmpty) {
       // No food source is licensed for this build yet (food_sources): no meal plan rather than one built from nothing.
-      return _Page(eyebrow: 'DIET', title: 'Your plate', children: [
+      return _Page(title: 'Diet', children: [
         Text('${kcal.round()} kcal and ${protein.round()} g protein a day', style: t.titleMedium),
         const SizedBox(height: 8),
         Text(foodDataPendingText, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
@@ -702,7 +600,7 @@ class _DietScreenState extends State<_DietScreen> {
     final week = _weekCache.get(key);
     if (week == null) {
       _buildWeek(key, request);
-      return _Page(eyebrow: 'DIET', title: 'Your plate', children: [
+      return _Page(title: 'Diet', children: [
         if (_failedKey == key)
           const ErrorLine('Could not build your meal plan. Reopen the Diet tab to try again.')
         else
@@ -749,19 +647,8 @@ class _DietScreenState extends State<_DietScreen> {
             'This plan is not adjusted for ${conditions.length == 1 ? 'it' : 'them'}: show it to your doctor or a registered dietitian before you follow it.',
     ];
     return _Page(
-      eyebrow: 'DIET  ·  YOUR PLATE',
-      title: 'Your plate',
-      subtitle: 'Your meals in household servings. Swap any meal you do not fancy; tap one for grams.',
+      title: 'Diet',
       children: [
-        Text('${shown.kcal.round()} kcal  ·  ${shown.protein.round()} g protein', style: monoNumber(context, size: 22)),
-        const SizedBox(height: 2),
-        Text('Your target: ${kcal.round()} kcal and ${protein.round()} g protein a day', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-        if (!within)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text('This day misses your targets. See the notes below the meals.', style: t.bodyMedium?.copyWith(color: c.tertiary)),
-          ),
-        const SizedBox(height: 14),
         // Day picker: each day rotates the foods so the week does not repeat.
         SizedBox(
           height: 44,
@@ -781,6 +668,21 @@ class _DietScreenState extends State<_DietScreen> {
           ]),
         ),
         const SizedBox(height: 12),
+        _Tile(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${shown.kcal.round()} kcal  ·  ${shown.protein.round()} g protein', style: monoNumber(context, size: 22)),
+            const SizedBox(height: 2),
+            Text('Your target: ${kcal.round()} kcal and ${protein.round()} g protein a day', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            if (!within)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('This day misses your targets. See the notes below the meals.', style: t.bodyMedium?.copyWith(color: c.tertiary)),
+              ),
+            const SizedBox(height: 6),
+            Text('Tap a meal for grams.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          ]),
+        ),
+        const SizedBox(height: 10),
         PlateInfoCard(title: dayKind.title, lines: [for (final l in dayKind.lines) (name: null, text: l)]),
         const SizedBox(height: 10),
         for (final (mi, m) in (training?.meals ?? meals).indexed) ...[
@@ -1485,8 +1387,7 @@ class _CalendarScreenState extends State<_CalendarScreen> {
     final training = _records.values.where((r) => r.trained).length;
     final label = _week ? '${from.day} ${_months[from.month - 1]} to ${last.day} ${_months[last.month - 1]}' : '${_monthNames[_anchor.month - 1]} ${_anchor.year}';
     return _Page(
-      eyebrow: 'CALENDAR',
-      title: 'Where you are',
+      title: 'Calendar',
       subtitle: 'Every day you trained, weighed in, measured or took a photo. Tap a day for details.',
       children: [
         SegmentedButton<bool>(
@@ -1532,6 +1433,8 @@ class _CalendarScreenState extends State<_CalendarScreen> {
             FilterChip(
               selected: _shown.contains(m),
               showCheckmark: false,
+              selectedColor: c.surface,
+              labelStyle: TextStyle(color: c.onSurface),
               avatar: Container(width: 10, height: 10, decoration: BoxDecoration(color: _markColor(c, m), shape: BoxShape.circle)),
               label: Text(text),
               onSelected: (on) => setState(() => on ? _shown.add(m) : _shown.remove(m)),
@@ -1710,7 +1613,8 @@ Future<bool> confirmPlanWeight(BuildContext context, {required num fromKg, requi
     false;
 
 class _ProgressScreen extends StatefulWidget {
-  const _ProgressScreen({required this.data, required this.onPlanChanged});
+  const _ProgressScreen({required this.data, this.level, required this.onPlanChanged});
+  final Widget? level; // rank, rating and the challenge
   final _Data data;
   final VoidCallback onPlanChanged; // the person confirmed a new plan weight and the plan was rebuilt
 
@@ -1964,15 +1868,13 @@ class _ProgressScreenState extends State<_ProgressScreen> {
   Widget build(BuildContext context) {
     final logs = _logs;
     if (logs == null) {
-      return _Page(eyebrow: 'PROGRESS', title: 'Is this working?', children: [
+      return _Page(title: 'Progress', children: [
         if (_error != null) ErrorLine(_error!) else const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: LevloMark(size: 48, animate: true))),
       ]);
     }
     return _Page(
-      eyebrow: 'PROGRESS',
-      title: 'Is this working?',
+      title: 'Progress',
       children: [
-        const StepsCard(),
         ..._progressBody(
         context,
         plan: widget.data.plan,
@@ -1988,6 +1890,10 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         onAddPhoto: _addPhoto,
         onViewPhoto: _viewPhoto,
       ),
+        const SizedBox(height: 12),
+        const StepsCard(),
+        const SizedBox(height: 12),
+        ?widget.level,
       ],
     );
   }
@@ -1997,7 +1903,6 @@ class _ProgressScreenState extends State<_ProgressScreen> {
 @visibleForTesting
 Widget progressBodyForTest(Map<String, dynamic> plan, List<Map<String, dynamic>> logs, List<Map<String, dynamic>> body) => Builder(
       builder: (context) => _Page(
-        eyebrow: 'PROGRESS',
         title: 'Is this working?',
         children: _progressBody(context, plan: plan, logs: logs, body: body, photos: const [], uploading: false, onLogWeight: () {}, onLogTape: () {}, onAddPhoto: () {}, onViewPhoto: (_) {}),
       ),
@@ -2055,20 +1960,14 @@ List<Widget> _progressBody(
 
   return [
     // The verdict leads, as the answer to the page's question.
-    Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(28), border: Border.all(color: c.outline)),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? c.surface : charcoal, borderRadius: BorderRadius.circular(23)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('WEIGHT TREND  ·  LAST 6 WEEKS', style: monoLabel(context).copyWith(color: cloud.withValues(alpha: 0.65))),
-          const SizedBox(height: 8),
-          Text(v.title, style: t.headlineMedium?.copyWith(color: cloud)),
-          const SizedBox(height: 6),
-          Text(v.detail, style: t.bodyMedium?.copyWith(color: cloud.withValues(alpha: 0.75))),
-        ]),
-      ),
+    _Tile(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('WEIGHT TREND  ·  LAST 6 WEEKS', style: monoLabel(context)),
+        const SizedBox(height: 8),
+        Text(v.title, style: t.titleLarge),
+        const SizedBox(height: 4),
+        Text(v.detail, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+      ]),
     ),
     const SizedBox(height: 12),
     WeeklyReportCard(

@@ -6,7 +6,7 @@ Visual reference: hi-fi prototype and Levlofit logo lab at https://claude.ai/art
 
 ## 1. Visual Theme & Atmosphere
 
-**App look, owner decision 2026-11-07:** soft cards on a soft grey page, light by default with dark available: white 28 px cards, pill buttons, a floating charcoal bottom bar, one soft fade behind the AI coach header, Levlofit Orange as the accent and green only for progress and done. Purple gradients, fake numbers, stock photos and emoji icons stay banned. Where this document says otherwise for the app (no gradients, squared buttons, mono labels and numbers, Cloud Dancer page), this paragraph wins; the website keeps the rest.
+**App look, owner request 2026-11-07 (after reviewing Apple Fitness, Google Fit and Google Health, and strength loggers):** white 20 px cards without borders on a soft grey page, light by default with dark available; pill buttons; a docked bottom bar with five named tabs in fixed positions; nothing floating over content except a session's own finish button; one soft fade behind the AI coach header; Levlofit Orange for the one main action on a screen and green only for progress and done. No dark feature cards on light pages. Purple gradients, fake numbers, stock photos and emoji icons stay banned. Where this document says otherwise for the app (no gradients, squared buttons, mono labels and numbers, Cloud Dancer page), this paragraph wins; the website keeps the rest.
 
 Dark-first, simple and classic: graphite, one orange, warm white. The orange is rare on purpose, so when it appears it means "act here" or "you levelled up". Calm, confident and evidence-first: every number on screen can point to a source.
 
@@ -23,7 +23,7 @@ One accent only. No gradients, no second accent colour.
 | `bg` | `#F0EEE9` Cloud Dancer | `#0E0E10` Graphite | Page background |
 | `bg` (app) | `#ECECEE` soft grey | `#0E0E10` Graphite | App page background |
 | `progress` (app) | `#7DB86A` | `#8CC67A` | Progress and done fills, with a number or label |
-| `bar` (app) | `#3A3A3E` charcoal | `#2A2A2E` | Floating bottom bar, coach header fade |
+| `bar` (app) | `#3A3A3E` charcoal | `#2A2A2E` | Coach header fade |
 | `surface` | `#FFFFFF` | `#18181B` | Cards, sheets, inputs |
 | `surface-2` | `#E6E3DC` | `#222226` | Tracks, placeholders, quiet panels |
 | `ink` | `#0E0E10` | `#F0EEE9` | Text, outline buttons, selected states |

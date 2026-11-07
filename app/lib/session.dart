@@ -1258,22 +1258,29 @@ class _WarmUp extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius), border: Border.all(color: c.outline)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: monoLabel(context)),
-        const SizedBox(height: 4),
-        Text(note, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-        for (final (i, s) in steps.indexed)
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${i + 1}. ${s.move}  ·  ${s.dose}', style: t.titleSmall),
-              Text(s.how, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-            ]),
-          ),
-      ]),
+    return Material(
+      color: c.surface,
+      borderRadius: BorderRadius.circular(cardRadius),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        shape: const Border(),
+        collapsedShape: const Border(),
+        maintainState: true,
+        title: Text(title, style: monoLabel(context)),
+        subtitle: Text(note, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (i, s) in steps.indexed)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${i + 1}. ${s.move}  ·  ${s.dose}', style: t.titleSmall),
+                Text(s.how, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              ]),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -1345,7 +1352,7 @@ class _MoveCard extends StatelessWidget {
             Text(doseFor(id, level, lighter: lighter), style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             if (hint != null) ...[
               const SizedBox(height: 6),
-              Text(hint!, style: t.bodySmall?.copyWith(color: c.tertiary, fontWeight: FontWeight.w600)),
+              Text(hint!, style: t.bodySmall),
             ],
             if (care != null) ...[
               const SizedBox(height: 6),

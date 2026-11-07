@@ -76,8 +76,8 @@ void main() {
     final main = tester.getTopLeft(find.text('MAIN SESSION')).dy;
     final cool = tester.getTopLeft(find.text('COOLDOWN  ·  ABOUT 5 MIN')).dy;
     expect(warm < main && main < cool, isTrue);
-    expect(find.textContaining('Easy cardio'), findsOneWidget);
-    expect(find.textContaining('Gentle stretches'), findsOneWidget);
+    expect(find.textContaining('Easy cardio', skipOffstage: false), findsOneWidget);
+    expect(find.textContaining('Gentle stretches', skipOffstage: false), findsOneWidget);
   });
 
   test('mess protein hint names only foods the person can eat (found on the phone: paneer shown with a milk allergy)', () {

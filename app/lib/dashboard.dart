@@ -40,7 +40,7 @@ import 'theme.dart';
 import 'tools.dart';
 import 'update_check.dart';
 import 'weekly_report.dart';
-import 'week_schedule.dart' show addOnLine, reminderSessions, trainingTimeLabel, trainingTimeOptions, weekPlan;
+import 'week_schedule.dart' show WeekPlan, addOnLine, reminderSessions, trainingTimeLabel, trainingTimeOptions, weekPlan;
 
 part 'dashboard_menu.dart';
 part 'dashboard_tabs.dart';
@@ -93,25 +93,16 @@ String greetingFor(DateTime now) {
   return options[dayOfYear % options.length];
 }
 
-enum _Tab { home, workout, protocol, diet, hydration, habits, calendar, progress, foods, foodDiary, bmi, handbook, library, glossary, reminders, settings, profile }
+enum _Tab { home, more, workout, protocol, diet, hydration, habits, calendar, progress, foods, foodDiary, bmi, handbook, library, glossary, reminders, settings, profile }
 
-final _shellKey = GlobalKey<ScaffoldState>();
-
-/// The three-line menu button every tab shows in place of a back arrow; a back arrow instead when the tab was
-/// opened from another page (Profile > Settings), so the way back is the way in.
+/// A back arrow on every page that is not on the bottom bar; the bar's own tabs need none.
 class _ShellMenu extends StatelessWidget {
   const _ShellMenu();
 
   @override
   Widget build(BuildContext context) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_BackScope>();
-    final back = scope?.onBack;
-    if (back != null) {
-      return Center(child: BackButton(onPressed: back, style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surface)));
-    }
-    // The four main tabs are on the bottom bar, which also holds More: no second way to the menu at the top.
-    if (scope?.onBar ?? false) return const SizedBox.shrink();
-    return _MenuButton(onTap: () => _shellKey.currentState?.openDrawer());
+    final back = context.dependOnInheritedWidgetOfExactType<_BackScope>()?.onBack;
+    return back == null ? const SizedBox.shrink() : Center(child: BackButton(onPressed: back));
   }
 }
 
@@ -124,76 +115,53 @@ class _BackScope extends InheritedWidget {
   bool updateShouldNotify(_BackScope old) => old.onBack != onBack || old.onBar != onBar;
 }
 
-/// The floating bar: the four places used every day, and More for the rest. The current tab is a white pill with its
-/// name; the others are icons with a tooltip and a screen-reader label.
-const _barTabs = [(_Tab.home, 'Home', LvIcons.house), (_Tab.workout, 'Workout', LvIcons.barbell), (_Tab.diet, 'Diet', LvIcons.forkKnife), (_Tab.progress, 'Progress', LvIcons.chartLineUp)];
+/// The bottom bar: five places, always in the same spot, always named. Pages above it never slide under it.
+const _barTabs = [(_Tab.home, 'Today', LvIcons.house), (_Tab.workout, 'Workout', LvIcons.barbell), (_Tab.diet, 'Diet', LvIcons.forkKnife), (_Tab.progress, 'Progress', LvIcons.chartLineUp), (_Tab.more, 'More', LvIcons.list)];
 
 class _BottomBar extends StatelessWidget {
-  const _BottomBar({required this.current, required this.onSelect, required this.onMore});
+  const _BottomBar({required this.current, required this.onSelect});
   final _Tab current;
   final ValueChanged<_Tab> onSelect;
-  final VoidCallback onMore;
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final bar = dark ? const Color(0xFF2A2A2E) : charcoal;
-    Widget round(String label, IconData icon, VoidCallback onTap) => Semantics(
-          button: true,
-          label: label,
-          excludeSemantics: true,
-          child: Tooltip(
-            message: label,
-            child: Material(
-              color: Colors.white.withValues(alpha: 0.12),
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onTap();
-                },
-                child: SizedBox(width: 48, height: 48, child: Icon(icon, size: 21, color: cloud)),
-              ),
-            ),
-          ),
-        );
-    return SafeArea(
-      top: false,
-      minimum: const EdgeInsets.only(bottom: 10),
-      child: Center(
-        heightFactor: 1,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(color: bar, borderRadius: BorderRadius.circular(40)),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+    final c = Theme.of(context).colorScheme;
+    final lit = _barTabs.any((b) => b.$1 == current) ? current : _Tab.more; // pages reached from More keep More lit
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.2,
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: c.surface, border: Border(top: BorderSide(color: c.outline))),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 64,
+            child: Row(children: [
               for (final (tab, label, icon) in _barTabs)
-                if (tab == current)
-                  Expanded(
-                    child: Semantics(
-                      button: true,
-                      selected: true,
-                      label: label,
-                      excludeSemantics: true,
-                      child: Container(
-                        height: 48,
-                        margin: const EdgeInsets.only(right: 4),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-                        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          Icon(icon, size: 20, color: accent),
-                          const SizedBox(width: 6),
-                          Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: graphite, fontSize: 14, fontWeight: FontWeight.w600))),
-                        ]),
-                      ),
+                Expanded(
+                  child: Semantics(
+                    button: true,
+                    selected: tab == lit,
+                    label: label,
+                    excludeSemantics: true,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        onSelect(tab);
+                      },
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        AnimatedContainer(
+                          duration: motion(context, 160),
+                          width: 52,
+                          height: 28,
+                          decoration: BoxDecoration(color: tab == lit ? c.primary.withValues(alpha: 0.16) : Colors.transparent, borderRadius: BorderRadius.circular(14)),
+                          child: Icon(icon, size: 22, color: tab == lit ? c.tertiary : c.onSurfaceVariant),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(label, maxLines: 1, style: TextStyle(fontSize: 12, height: 1.2, fontWeight: tab == lit ? FontWeight.w600 : FontWeight.w500, color: tab == lit ? c.onSurface : c.onSurfaceVariant)),
+                      ]),
                     ),
-                  )
-                else
-                  Padding(padding: const EdgeInsets.only(right: 4), child: round(label, icon, () => onSelect(tab))),
-              if (!_barTabs.any((b) => b.$1 == current)) const Spacer(),
-              round('More', LvIcons.list, onMore),
+                  ),
+                ),
             ]),
           ),
         ),
@@ -203,7 +171,7 @@ class _BottomBar extends StatelessWidget {
 }
 
 @visibleForTesting
-Widget bottomBarForTest({ValueChanged<String>? onTap}) => _BottomBar(current: _Tab.home, onSelect: (t) => onTap?.call(t.name), onMore: () => onTap?.call('more'));
+Widget bottomBarForTest({ValueChanged<String>? onTap}) => _BottomBar(current: _Tab.home, onSelect: (t) => onTap?.call(t.name));
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -476,22 +444,14 @@ class _DashboardState extends State<Dashboard> {
         canPop: _tab == _Tab.home && _back.isEmpty,
         onPopInvokedWithResult: (didPop, _) => didPop ? null : (_back.isNotEmpty ? _pop() : _go(_Tab.home)),
         child: Scaffold(
-          key: _shellKey,
-          drawer: _Menu(current: _tab, data: () => _loaded, onSelect: _go),
-          drawerScrimColor: Colors.black.withValues(alpha: 0.45),
-          floatingActionButton: _tab == _Tab.home || _tab == _Tab.workout || _tab == _Tab.diet ? const CoachLauncher() : null,
           // Typing needs the room, so the bar steps aside while the keyboard is up.
           bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
               ? null
-              : _BottomBar(current: _tab, onSelect: _go, onMore: () => _shellKey.currentState?.openDrawer()),
+              : _BottomBar(current: _tab, onSelect: _go),
           body: AnimatedSwitcher(
-            duration: motion(context, 320),
-            switchInCurve: spring,
-            transitionBuilder: (child, a) => FadeTransition(
-              opacity: a,
-              child: SlideTransition(position: Tween(begin: const Offset(0, 0.015), end: Offset.zero).animate(a), child: child),
-            ),
-            child: KeyedSubtree(key: ValueKey(_tab), child: _BackScope(onBack: _back.isEmpty ? null : _pop, onBar: _barTabs.any((b) => b.$1 == _tab), child: _body(context))),
+            duration: motion(context, 160),
+            transitionBuilder: (child, a) => FadeTransition(opacity: a, child: child),
+            child: KeyedSubtree(key: ValueKey(_tab), child: _BackScope(onBack: _back.isNotEmpty ? _pop : (_barTabs.any((b) => b.$1 == _tab) ? null : () => _go(_Tab.home)), onBar: _barTabs.any((b) => b.$1 == _tab), child: _body(context))),
           ),
         ),
       );
@@ -499,6 +459,7 @@ class _DashboardState extends State<Dashboard> {
   Widget _body(BuildContext context) {
     return switch (_tab) {
       _Tab.home => _home(context),
+      _Tab.more => _MoreScreen(onOpen: _open),
       _Tab.glossary => const _GlossaryScreen(),
       _Tab.settings => _AppSettingsScreen(onOpen: _open),
       // The calculators work without the plan, but prefill from the profile once it has loaded (keyed, so the
@@ -533,7 +494,7 @@ class _DashboardState extends State<Dashboard> {
             _Tab.hydration => _HydrationScreen(data: d),
             _Tab.habits => _HabitsScreen(data: d, logged: _logged),
             _Tab.calendar => _CalendarScreen(plan: d.plan),
-            _Tab.progress => _ProgressScreen(data: d, onPlanChanged: () => setState(() { _data = _load(); })),
+            _Tab.progress => _ProgressScreen(data: d, level: _levelCard(d, _logged, _minutes, _dailyTasks), onPlanChanged: () => setState(() { _data = _load(); })),
             _Tab.foods => _FoodsScreen(data: d),
             _Tab.foodDiary => FoodDiaryScreen(
                 leading: const _ShellMenu(),
@@ -581,7 +542,7 @@ class _DashboardState extends State<Dashboard> {
               saving: _saving,
               onToggleToday: _toggleToday,
               onCheckLevel: () => _go(_Tab.workout),
-              onOpen: _go,
+              onOpen: _open,
               onAddWater: _addWater,
               layout: _layout,
               dailyTasks: _dailyTasks,
@@ -705,7 +666,7 @@ Widget dashboardBentoForTest(Map<String, dynamic> plan, {Set<DateTime> logged = 
       onCheckLevel: () {},
       onOpen: (_) {},
       onAddWater: () {},
-      layout: layout ?? defaultLayout,
+      layout: layout ?? [for (final id in dashboardCards.keys) (id: id, visible: true)],
       dailyTasks: dailyTasks ?? defaultDailyTasks,
       lastCelebrated: null,
       onCustomise: () {},
@@ -715,6 +676,27 @@ Widget dashboardBentoForTest(Map<String, dynamic> plan, {Set<DateTime> logged = 
       onPlanChanged: () {},
     );
 
+
+/// Rank, rating and the 66-day challenge, from the last [levelUpWindow] days.
+Widget _levelCard(_Data data, Set<DateTime> logged, Map<DateTime, int> minutes, Set<String> dailyTasks) {
+  final today = _day(DateTime.now());
+  final perWeek = (data.plan['trainingDaysPerWeek'] as int).clamp(1, 7);
+  final tasks = {for (final h in _habitList(data, logged, data.habits, data.water)) h.$1: h.$5};
+  bool complete(DateTime d) => dayComplete(tasks, dailyTasks, d);
+  bool waterMet(DateTime d) => (data.water[d] ?? 0) >= waterTarget(data.profile);
+  final from = today.subtract(const Duration(days: levelUpWindow - 1));
+  final window = [for (var d = from; !d.isAfter(today); d = d.add(const Duration(days: 1))) d];
+  return LevelUpCard(
+    xp: xpFor(
+      sessions: logged.where((d) => !d.isBefore(from)).length,
+      completeDays: window.where(complete).length,
+      waterDays: window.where(waterMet).length,
+      activeMinutes: minutes.entries.where((e) => !e.key.isBefore(from)).fold(0, (s, e) => s + e.value),
+    ),
+    ratings: ratingsFor(today: today, trained: logged, minutes: minutes, sessionsPerWeek: perWeek, waterMet: waterMet, dayComplete: complete),
+    dayComplete: complete,
+  );
+}
 
 class _Bento extends StatelessWidget {
   const _Bento({
@@ -824,22 +806,7 @@ class _Bento extends StatelessWidget {
               onCelebrated: onCelebrated,
               onChoose: onChooseTasks,
             ),
-          'levelup' => () {
-              bool complete(DateTime d) => dayComplete(tasks, dailyTasks, d);
-              bool waterMet(DateTime d) => (data.water[d] ?? 0) >= waterTarget(data.profile);
-              final from = today.subtract(const Duration(days: levelUpWindow - 1));
-              final window = [for (var d = from; !d.isAfter(today); d = d.add(const Duration(days: 1))) d];
-              return LevelUpCard(
-                xp: xpFor(
-                  sessions: logged.where((d) => !d.isBefore(from)).length,
-                  completeDays: window.where(complete).length,
-                  waterDays: window.where(waterMet).length,
-                  activeMinutes: minutes.entries.where((e) => !e.key.isBefore(from)).fold(0, (s, e) => s + e.value),
-                ),
-                ratings: ratingsFor(today: today, trained: logged, minutes: minutes, sessionsPerWeek: perWeek, waterMet: waterMet, dayComplete: complete),
-                dayComplete: complete,
-              );
-            }(),
+          'levelup' => _levelCard(data, logged, minutes, dailyTasks),
           'week' => _WeekStrip(monday: monday, today: today, dayGoal: dayGoal, logged: logged, streak: streak),
           'hydration' => _HydrationTile(ml: data.water[today] ?? 0, target: waterTarget(data.profile, training: isTrainingDay), onAdd: onAddWater, onOpen: () => onOpen(_Tab.hydration)),
           'habits' => _HabitsTile(
@@ -858,35 +825,25 @@ class _Bento extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 112), // room for the floating assistant
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           children: staggered([
             Row(children: [
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${_days[now.weekday - 1]}, ${now.day} ${_months[now.month - 1]}'.toUpperCase(), style: monoLabel(context)),
+                  const SizedBox(height: 2),
+                  Text(first.isEmpty ? hello : '$hello, $first', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.headlineMedium),
+                ]),
+              ),
+              const _CoachButton(),
+              const SizedBox(width: 8),
               Tooltip(
                 message: 'Profile',
                 child: InkWell(
                   customBorder: const CircleBorder(),
                   onTap: () => onOpen(_Tab.profile),
-                  child: UserAvatar(name: data.name ?? '', avatar: data.profile['avatar'] as String?, photoUrl: data.profile['avatar_url'] as String?, size: 56),
+                  child: UserAvatar(name: data.name ?? '', avatar: data.profile['avatar'] as String?, photoUrl: data.profile['avatar_url'] as String?, size: 44),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(first.isEmpty ? hello : '$hello, $first', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.secondary, borderRadius: BorderRadius.circular(20)),
-                    child: Text('${_days[now.weekday - 1]}, ${now.day} ${_months[now.month - 1]}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSecondary, fontWeight: FontWeight.w500)),
-                  ),
-                ]),
-              ),
-              IconButton(
-                tooltip: 'Reminders',
-                onPressed: () => onOpen(_Tab.reminders),
-                style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surface, minimumSize: const Size(48, 48)),
-                icon: const Icon(LvIcons.timer, size: 21),
               ),
             ]),
             const SizedBox(height: 20),
@@ -968,39 +925,36 @@ class _Rings extends StatelessWidget {
         );
     return Semantics(
       label: '$days of $daysTarget training days and $minutes of $minutesTarget active minutes this week',
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(cardRadius + 4)),
-        child: IntrinsicHeight(
-          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Expanded(
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: 1),
-                duration: motion(context, 1300),
-                curve: spring,
-                builder: (_, v, _) => CustomPaint(
-                  painter: _ArcsPainter(
-                    outer: (days / daysTarget).clamp(0.0, 1.0) * v,
-                    inner: (minutes / minutesTarget).clamp(0.0, 1.0) * v,
-                    outerColor: c.primary,
-                    innerColor: c.onSurface,
-                    track: c.surface,
-                  ),
+      child: _Tile(
+        child: Row(children: [
+          SizedBox.square(
+            dimension: 116,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: motion(context, 700),
+              curve: spring,
+              builder: (_, v, _) => CustomPaint(
+                painter: _RingsPainter(
+                  outer: (days / daysTarget).clamp(0.0, 1.0) * v,
+                  inner: (minutes / minutesTarget).clamp(0.0, 1.0) * v,
+                  outerColor: c.primary,
+                  innerColor: progressColor(context),
+                  track: c.surfaceContainerHighest,
                 ),
               ),
             ),
-            Container(
-              width: 168,
-              padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
-              decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius)),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                stat(c.primary, 'Training', '$days', 'of $daysTarget ${daysTarget == 1 ? 'day' : 'days'}'),
-                stat(c.onSurface, 'Active', '$minutes', 'of $minutesTarget min'),
-                stat(progressColor(context), 'Streak', '$streak', streak == 1 ? 'week on plan' : 'weeks on plan'),
-              ]),
-            ),
-          ]),
-        ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('YOUR WEEK', style: monoLabel(context)),
+              const SizedBox(height: 4),
+              stat(c.primary, 'Training', '$days', 'of $daysTarget ${daysTarget == 1 ? 'day' : 'days'}'),
+              stat(progressColor(context), 'Active', '$minutes', 'of $minutesTarget min'),
+              if (streak > 0) Text('$streak ${streak == 1 ? 'week' : 'weeks'} on plan', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            ]),
+          ),
+        ]),
       ),
     );
   }
@@ -1031,39 +985,6 @@ class _RingsPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingsPainter old) => old.outer != outer || old.inner != inner || old.outerColor != outerColor;
-}
-
-/// Two progress arcs: training days outside, active minutes inside.
-class _ArcsPainter extends CustomPainter {
-  _ArcsPainter({required this.outer, required this.inner, required this.outerColor, required this.innerColor, required this.track});
-  final double outer, inner;
-  final Color outerColor, innerColor, track;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const w = 20.0;
-    // A quarter circle from the card's lower left, curving up behind the white stats panel.
-    final center = Offset(size.width + 10, size.height + 6);
-    final radius = math.min(size.width + 10 - w / 2 - 12, size.height - w / 2 - 8);
-    if (radius <= w * 2) return;
-    canvas.clipRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(cardRadius)));
-    void arc(double r, double v, Color color) {
-      Paint pen(Color col) => Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = w
-        ..strokeCap = StrokeCap.round
-        ..color = col;
-      final rect = Rect.fromCircle(center: center, radius: r);
-      canvas.drawArc(rect, math.pi, math.pi / 2, false, pen(track));
-      if (v > 0) canvas.drawArc(rect, math.pi, math.pi / 2 * v, false, pen(color));
-    }
-
-    arc(radius, outer, outerColor);
-    arc(radius - w - 8, inner, innerColor);
-  }
-
-  @override
-  bool shouldRepaint(_ArcsPainter old) => old.outer != outer || old.inner != inner || old.outerColor != outerColor || old.track != track;
 }
 
 /// Today's session with its moves animated, and one action to start it.
@@ -1109,15 +1030,17 @@ class _TodayCard extends StatelessWidget {
         Row(children: [
           Container(width: 8, height: 8, decoration: BoxDecoration(color: isTrainingDay ? c.primary : c.onSurfaceVariant, shape: BoxShape.circle)),
           const SizedBox(width: 8),
-          Expanded(child: Text(isTrainingDay ? 'TODAY\'S WORKOUT' : 'TODAY  ·  REST DAY', style: monoLabel(context))),
+          Expanded(child: Text(isTrainingDay ? 'TODAY\'S WORKOUT' : 'TODAY', style: monoLabel(context))),
           if (done) Text('DONE', style: monoLabel(context).copyWith(color: c.tertiary)),
         ]),
         const SizedBox(height: 10),
-        Text(isTrainingDay ? name : 'Recover today', style: t.titleLarge),
+        Text(isTrainingDay ? name : 'Rest day', style: t.titleLarge),
         const SizedBox(height: 2),
-        Text(isTrainingDay ? meta : 'Sleep, walk, eat well. Or train anyway, it still counts.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
-        const SizedBox(height: 16),
-        MoveStrip(ids: ids, level: level, tile: 112, injury: injury, lighter: lighter || medicalHold),
+        Text(isTrainingDay ? meta : 'Sleep, walk and eat well.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+        if (isTrainingDay) ...[
+          const SizedBox(height: 16),
+          MoveStrip(ids: ids, level: level, tile: 112, injury: injury, lighter: lighter || medicalHold),
+        ],
         for (final b in blocks) ...[
           const SizedBox(height: 12),
           Text(blockSummary(b).toUpperCase(), style: monoLabel(context)),
@@ -1145,18 +1068,10 @@ class _TodayCard extends StatelessWidget {
                 ])
               : Row(key: const ValueKey('start'), children: [
                   Expanded(
-                    child: FilledButton(onPressed: start, child: Text(isTrainingDay ? 'Start workout' : 'Train anyway')),
+                    child: isTrainingDay ? FilledButton(onPressed: start, child: const Text('Start workout')) : OutlinedButton(onPressed: start, child: const Text('Train anyway')),
                   ),
                   const SizedBox(width: 10),
-                  SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: OutlinedButton(
-                      onPressed: saving ? null : onToggle,
-                      style: OutlinedButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(48, 48)),
-                      child: Tooltip(message: 'Log as done', child: Icon(LvIcons.check, size: 20, color: c.onSurface)),
-                    ),
-                  ),
+                  TextButton(onPressed: saving ? null : onToggle, child: const Text('Log as done')),
                 ]),
         ),
       ]),
@@ -1343,7 +1258,7 @@ class _Tile extends StatelessWidget {
     final body = Padding(padding: padding, child: child);
     final tile = Material(
       color: c.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius), side: BorderSide(color: c.outline)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius), side: BorderSide.none),
       clipBehavior: Clip.antiAlias,
       child: onTap == null ? body : InkWell(onTap: onTap, child: body),
     );

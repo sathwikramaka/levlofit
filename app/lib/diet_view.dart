@@ -23,7 +23,7 @@ class PlateInfoCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius), border: Border.all(color: c.outline)),
+      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title, style: monoLabel(context).copyWith(color: c.tertiary)),
         for (final l in lines) ...[
@@ -162,10 +162,7 @@ class _PlateMealCardState extends State<PlateMealCard> {
     return Pressable(
       child: Material(
         color: c.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(cardRadius),
-          side: BorderSide(color: c.outline),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () {
@@ -185,7 +182,7 @@ class _PlateMealCardState extends State<PlateMealCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(m.name, style: t.titleLarge),
+                          Text(m.name, style: t.titleMedium),
                           Text([m.time.toUpperCase(), ?widget.tag].join('  ·  '), style: monoLabel(context).copyWith(color: c.tertiary)),
                         ],
                       ),
@@ -249,7 +246,7 @@ class _PlateMealCardState extends State<PlateMealCard> {
                         ),
                       )
                     else if (widget.onAte != null)
-                      FilledButton(
+                      OutlinedButton(
                         onPressed: _busy
                             ? null
                             : () async {

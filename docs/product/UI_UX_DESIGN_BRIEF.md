@@ -5,9 +5,22 @@ Tokens and logo rules in full: `DESIGN.md`. Code: `app/lib/theme.dart`.
 
 ## 1. Direction
 
-Soft, calm, rounded, easy to scan: white cards on soft grey, one floating bar, one accent. Premium and trustworthy for
-Indian users, and never looking AI-made. Owner chose this look on 2026-11-07 from reference images; it was rebuilt in
-Levlofit's own form and data, not copied.
+Calm, plain and easy to scan: white cards on soft grey, one accent, and the next action obvious. Premium and trustworthy
+for Indian users, and never looking AI-made. Redesigned 2026-11-07 at the owner's request after reviewing Apple Fitness,
+Google Fit and Google Health, and the strength loggers Hevy and Strong. Patterns were learned from them; the look, words
+and data are Levlofit's own.
+
+What the review changed:
+
+| Pattern seen | What Levlofit does |
+|---|---|
+| Apple Fitness and Google Health: a few fixed bottom tabs, and a first screen you can customise | Five named tabs that never move: Today, Workout, Diet, Progress, More. Today's cards can be reordered or hidden |
+| Google Health: a weekly target beside the day's plan | Two weekly rings, training days and active minutes (WHO), with plain numbers beside them |
+| Hevy and Strong: open, tap the routine, start lifting | Workout opens on today's session. A session opens on its exercises, with warm-up folded |
+| Coach inside the app, not on top of it | Levlofit AI is a button at the top of the main tabs and a row in More; it no longer floats over content |
+| Rank and rating belong with results | Rank, rating and the 66-day challenge moved from Today to Progress |
+
+Not copied: Apple's three coloured rings, Google's names, any layouts or artwork.
 
 Principles: one clear next action per screen; useful information before decoration; real data only; no guilt; every
 number has a label or unit.
@@ -44,7 +57,7 @@ reading. Headings 22 to 30 px bold, body 15 to 16, captions 13, small uppercase 
 
 | Component | Rule |
 |---|---|
-| Floating bar | Charcoal pill; current tab a white pill with an orange icon and its name; others round icons with tooltips |
+| Bottom bar | Docked; five named tabs in fixed positions; current tab has a soft orange mark behind its icon and a bolder name |
 | Activity card | Grey panel with two arcs, white stats panel beside it |
 | Tiles | Label, big number, short caption; half-width tiles pair up |
 | Plate meal card | Plate picture, name and time, kcal and protein, servings; tap for grams; Swap and Ate it |
@@ -69,6 +82,7 @@ errors with icon and text. Check at 320 and 390 dp, light and dark.
 
 ## 9. Review status
 
-Seen in the new look: Home, plate cards, coach, Workout, session, Progress, Water, Habits, Settings, sign-in, first
-onboarding step. **Not reviewed:** later onboarding steps, Build my plate, side menu, food diary, Handbook, exercise
-library, Calendar. **Nothing on a real phone yet.**
+Seen in the 2026-11-07 redesign, on web at 390 px with a local test account: sign-in, first onboarding step, Today, Workout,
+session, Diet, Progress, More, Handbook and a book chapter, coach, Calendar, food diary, Water. **Not reviewed:** later
+onboarding steps, Build my plate, Protocol, Habits after its change, exercise library, Profile, Settings, dark mode by eye.
+**Nothing on a real phone yet.**
