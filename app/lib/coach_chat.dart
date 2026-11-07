@@ -597,7 +597,7 @@ class _Empty extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: 1.45,
+          childAspectRatio: 1.2,
           children: [
             for (final (icon, text) in starters)
               Pressable(

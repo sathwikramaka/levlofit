@@ -82,7 +82,6 @@ errors with icon and text. Check at 320 and 390 dp, light and dark.
 
 ## 9. Review status
 
-Seen in the 2026-11-07 redesign, on web at 390 px with a local test account: sign-in, first onboarding step, Today, Workout,
-session, Diet, Progress, More, Handbook and a book chapter, coach, Calendar, food diary, Water. **Not reviewed:** later
-onboarding steps, Build my plate, Protocol, Habits after its change, exercise library, Profile, Settings, dark mode by eye.
-**Nothing on a real phone yet.**
+Seen in the 2026-11-07 redesign, on a real Android phone (debug test build, local test account): sign-in, permissions, Today,
+Workout, session, Diet, Progress, More, Handbook list, Protocol, exercise library, Habits, Profile, Settings, dark mode. On web
+only: a book chapter and its link, coach, Calendar, food diary, Water. **Not reviewed:** later onboarding steps, Build my plate.

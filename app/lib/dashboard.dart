@@ -613,9 +613,7 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
     final height = double.tryParse(h.text), weight = double.tryParse(w.text), display = name.text.trim();
-    name.dispose();
-    h.dispose();
-    w.dispose();
+    // Not disposed: the sheet is still animating away with this field on screen, and disposing now throws.
     if (ok != true) return;
     if (height == null || weight == null || height < bmiHeightCm.min || height > bmiHeightCm.max || weight < bmiWeightKg.min || weight > bmiWeightKg.max) {
       if (mounted) {

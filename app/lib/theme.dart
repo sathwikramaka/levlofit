@@ -303,7 +303,8 @@ ThemeData _build(ColorScheme c, Color bg) {
       selectedColor: c.secondary,
       secondarySelectedColor: c.secondary,
       checkmarkColor: c.onSecondary,
-      labelStyle: GoogleFonts.geist(fontSize: 14, fontWeight: FontWeight.w500, color: c.onSurface),
+      // FilterChip reads labelStyle whether selected or not, so the colour follows the state.
+      labelStyle: GoogleFonts.geist(fontSize: 14, fontWeight: FontWeight.w500, color: WidgetStateColor.resolveWith((s) => s.contains(WidgetState.selected) ? c.onSecondary : c.onSurface)),
       secondaryLabelStyle: GoogleFonts.geist(fontSize: 14, fontWeight: FontWeight.w600, color: c.onSecondary),
       showCheckmark: false,
     ),
