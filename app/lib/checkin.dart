@@ -104,8 +104,8 @@ class _CheckInCardState extends State<CheckInCard> {
         Container(
           width: 38,
           height: 38,
-          decoration: BoxDecoration(color: summary.isEmpty ? c.primary : c.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
-          child: Icon(summary.isEmpty ? LvIcons.notePencil : LvIcons.checkCircle, size: 20, color: summary.isEmpty ? c.onPrimary : c.primary),
+          decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
+          child: Icon(summary.isEmpty ? LvIcons.notePencil : LvIcons.checkCircle, size: 20, color: summary.isEmpty ? c.onSurface : c.primary),
         ),
         const SizedBox(width: 12),
         Expanded(

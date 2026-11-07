@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'handbook_book.dart';
 import 'icons.dart';
 import 'main.dart';
 import 'theme.dart';
@@ -66,7 +65,7 @@ class _HandbookScreenState extends State<HandbookScreen> {
         children: [
           Reveal(child: Text('Know why, not just what.', style: t.headlineMedium)),
           const SizedBox(height: 6),
-          Reveal(index: 1, child: Text('Short, visual chapters. Every number names its source. General information from published guidelines, not medical advice and not reviewed by a clinician.', style: t.bodyMedium?.copyWith(color: muted))),
+          Reveal(index: 1, child: Text('Every number names its source. General information from published guidelines, not medical advice and not reviewed by a clinician.', style: t.bodyMedium?.copyWith(color: muted))),
           const SizedBox(height: 20),
           Reveal(
             index: 2,
@@ -94,15 +93,6 @@ class _HandbookScreenState extends State<HandbookScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          // Read like a book: introduction and objectives first, the conclusion after the last chapter.
-          if (_query.isEmpty) ...[
-            Text('START HERE', style: monoLabel(context)),
-            const SizedBox(height: 10),
-            const BookPageTile(bookIntroduction),
-            const SizedBox(height: 10),
-            const BookPageTile(bookObjectives),
-            const SizedBox(height: 26),
-          ],
           FutureBuilder(
             future: _chapters,
             builder: (context, snap) {
@@ -128,14 +118,6 @@ class _HandbookScreenState extends State<HandbookScreen> {
                   ]);
                 }
                 out.addAll([_ChapterTile(r), const SizedBox(height: 10)]);
-              }
-              if (_query.isEmpty) {
-                out.addAll([
-                  const SizedBox(height: 16),
-                  Text('THE END', style: monoLabel(context)),
-                  const SizedBox(height: 10),
-                  const BookPageTile(bookConclusion),
-                ]);
               }
               return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: staggered(out));
             },

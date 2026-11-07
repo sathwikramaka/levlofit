@@ -322,9 +322,9 @@ Eat **150 g** protein.
         home: Scaffold(bottomNavigationBar: bottomBarForTest(onTap: tapped.add)),
       ));
       expect(tester.takeException(), isNull);
-      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('Today'), findsOneWidget);
       for (final label in ['Workout', 'Diet', 'Progress', 'More']) {
-        final target = find.byTooltip(label);
+        final target = find.widgetWithText(InkWell, label);
         expect(target, findsOneWidget);
         expect(tester.getSize(target).height, greaterThanOrEqualTo(48));
         await tester.tap(target);

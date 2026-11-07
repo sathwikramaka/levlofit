@@ -35,16 +35,19 @@ answer "please update".
 
 ## 3. Main navigation
 
-Floating bottom bar, on every tab, hidden while typing: **Home, Workout, Diet, Progress, More**.
-The floating AI button sits on Home, Workout and Diet.
+Docked bottom bar with five named tabs in fixed positions, hidden while typing: **Today, Workout, Diet, Progress, More**.
+Pages opened from another page have a back arrow; pages reached from More keep More lit.
 
-More opens the side menu: Workout, Protocol, Calendar, Progress; Diet, Hydration, Food diary, Food library; Habits, BMI
-calculator; the Learn section (Handbook, exercise library, glossary); Reminders, Profile.
+Levlofit AI: a button at the top of Today, Workout, Diet and Progress, and a row in More.
 
-## 4. Home
+More is a page of groups: coach and learn (Levlofit AI, Handbook, Exercise library, Glossary); training (Protocol, Calendar,
+Habits); food and body (Food diary, Food library, Water, BMI calculator); account (Reminders, Profile).
 
-Header (avatar opens Profile, timer icon opens Reminders), then cards the person can reorder or hide:
-activity arcs, today's session, daily check-in, daily goal, rank and rating, week, water, habits, food targets, body.
+## 4. Today
+
+Header (date, greeting, Levlofit AI, avatar opening Profile), then cards the person can reorder or hide. Shown by default:
+weekly rings, today's session, daily check-in, week, water, food targets. Off by default, on from Customise: daily goal,
+rank and rating, habits, body.
 Under today's session when they apply: level prompt, safety notes, then **welcome back** (14+ days away) or **plan fit**
 (three short weeks).
 
@@ -67,8 +70,11 @@ targets and protein foods ─> recipes with AI.
 
 ## 6. Other flows
 
-- **Workout:** goals and levels, week of sessions, edit goals, level check (a pass rebuilds the plan).
-- **Progress:** weight verdict, weekly report, stats, strength, weight, measurements, body check, photos, 12-week chart.
+- **Workout:** today's session with Start, the other days as one line each, goals and levels, edit goals, level check (a
+  pass rebuilds the plan), then "Your path" folded.
+- **Session:** exercises first; warm-up and cooldown fold away.
+- **Progress:** weight verdict, weekly report, stats, strength, weight, measurements, body check, photos, 12-week chart, steps
+  where the phone supports them, then rank, rating and the 66-day challenge.
 - **Calendar:** tap a day to log or remove training, or edit its length, effort and pain.
 - **Protocol:** days, minutes, weekdays, time, equipment, goal, activity, water; saving rebuilds the plan.
 - **Coach:** chats, memory, edit and regenerate; proposals (swap, lighter day, moved session, plan change, meal log) apply

@@ -463,8 +463,8 @@ class ExerciseScreen extends StatelessWidget {
                     guide!,
                     ErrorLine(
                       missing
-                          ? 'The animation and steps for this move are not in the catalogue yet.'
-                          : 'The animation and steps could not load. Check your connection.',
+                          ? 'More details for this move are not in the catalogue yet.'
+                          : 'More details could not load. Check your connection.',
                     ),
                   );
                 }

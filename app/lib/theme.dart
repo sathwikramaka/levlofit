@@ -9,8 +9,8 @@ const accent = Color(0xFFFF6A1A); // Levlofit Orange: fills only
 const graphite = Color(0xFF0E0E10);
 const cloud = Color(0xFFF0EEE9);
 const softGrey = Color(0xFFECECEE); // light page background (soft card look, owner request 2026-11-07)
-const charcoal = Color(0xFF3A3A3E); // the floating bottom bar
-const cardRadius = 28.0;
+const charcoal = Color(0xFF3A3A3E);
+const cardRadius = 20.0;
 
 /// Progress and done fills: green, the one colour beside the orange. Pair it with a number or label.
 Color progressColor(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? const Color(0xFF8CC67A) : const Color(0xFF7DB86A);
@@ -113,7 +113,7 @@ Duration motion(BuildContext context, [int ms = 220]) => MediaQuery.disableAnima
 /// The brand ease (DESIGN.md, logo motion): fast start, long soft settle.
 const spring = Cubic(0.32, 0.72, 0, 1);
 
-/// Fades and lifts its child into place once, staggered by [index] so lists arrive in order.
+/// Fades its child in once. Short on purpose: a long page must never sit empty while sections wait their turn.
 class Reveal extends StatelessWidget {
   const Reveal({super.key, required this.child, this.index = 0});
   final Widget child;
@@ -121,18 +121,13 @@ class Reveal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final d = motion(context, 520 + 60 * index.clamp(0, 8));
+    final d = motion(context, 180);
     if (d == Duration.zero) return child;
-    // The stagger lives in the curve: each later item waits a little longer inside the same timeline.
-    final delay = (60 * index.clamp(0, 8)) / d.inMilliseconds;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: d,
-      curve: Interval(delay, 1, curve: spring),
-      builder: (_, v, c) => Opacity(
-        opacity: v,
-        child: Transform.translate(offset: Offset(0, 18 * (1 - v)), child: c),
-      ),
+      curve: Curves.easeOut,
+      builder: (_, v, c) => Opacity(opacity: v, child: c),
       child: child,
     );
   }
@@ -289,7 +284,7 @@ ThemeData _build(ColorScheme c, Color bg) {
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(cardRadius),
-        side: BorderSide(color: c.outline),
+        side: BorderSide.none,
       ),
     ),
     dialogTheme: DialogThemeData(
