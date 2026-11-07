@@ -4,7 +4,7 @@ import { chapters, HANDBOOK_NOTE } from "@/lib/handbook";
 
 export const metadata: Metadata = {
   title: "The Handbook",
-  description: "Levlofit's training and food guide in 43 short chapters, each with its sources.",
+  description: "Levlofit's guide to training, food, recovery and tracking, with the sources for each chapter.",
 };
 
 export default function HandbookIndex() {
@@ -15,7 +15,7 @@ export default function HandbookIndex() {
         <p className="font-mono text-[11px] tracking-[0.2em] text-muted uppercase">The Handbook</p>
         <h1 className="mt-4 text-[clamp(40px,6vw,72px)] leading-[0.98] font-bold tracking-[-0.04em]">Know why, not just what.</h1>
         <p className="mt-6 text-[18px] leading-relaxed text-muted">
-          {chapters.length} short chapters on training and food, the same ones as in the app. Every number names its source.
+          {chapters.length} chapters on training, food, recovery and progress, the same ones as in the app. Every number names its source.
         </p>
         <p className="mt-4 text-[14px] leading-relaxed text-muted">{HANDBOOK_NOTE}</p>
       </header>
