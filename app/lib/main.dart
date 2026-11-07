@@ -184,8 +184,8 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(color: c.primary, borderRadius: BorderRadius.circular(12)),
-                child: Icon(icon, color: c.onPrimary, size: 20),
+                decoration: BoxDecoration(color: c.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, color: c.onSurface, size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(

@@ -287,6 +287,26 @@ bool isLift(String id) => setsFor(id, 1) > 0 && !_carries.contains(id) && !_core
 
 typedef SetLog = ({int reps, double? kg});
 
+/// Set rows newest day first, split into today's sets and each lift's most recent earlier session. A set number logged
+/// twice today keeps its latest entry.
+({Map<String, List<SetLog>> last, Map<String, List<SetLog>> today}) splitSetLogs(List<Map<String, dynamic>> rows, String today) {
+  final last = <String, List<SetLog>>{};
+  final day = <String, String>{};
+  final now = <String, Map<int, SetLog>>{};
+  for (final r in rows) {
+    final id = r['exercise_id'] as String;
+    final on = r['performed_on'] as String;
+    final log = (reps: r['reps'] as int, kg: (r['kg'] as num?)?.toDouble());
+    if (on == today) {
+      (now[id] ??= {})[r['set_no'] as int] = log;
+      continue;
+    }
+    day.putIfAbsent(id, () => on);
+    if (day[id] == on) (last[id] ??= []).add(log);
+  }
+  return (last: last, today: {for (final e in now.entries) e.key: (e.value.keys.toList()..sort()).map((k) => e.value[k]!).toList()});
+}
+
 /// The coach's next step for a lift, from last session's sets, by double progression (Handbook,
 /// "Sets, reps and progress", ACSM 2026): stay at a weight until every set reaches 12 reps, then add the
 /// smallest weight step you have and work back up from 8.
@@ -768,19 +788,21 @@ class _SessionScreenState extends State<SessionScreen> {
           .select('exercise_id, performed_on, set_no, reps, kg')
           .eq('user_id', supabase.auth.currentUser!.id)
           .inFilter('exercise_id', lifts)
-          .lt('performed_on', today)
+          .lte('performed_on', today)
           .order('performed_on', ascending: false)
           .order('set_no', ascending: true)
           .limit(300);
-      final last = <String, List<SetLog>>{};
-      final day = <String, String>{};
-      for (final r in rows) {
-        final id = r['exercise_id'] as String;
-        day.putIfAbsent(id, () => r['performed_on'] as String);
-        if (day[id] != r['performed_on']) continue;
-        (last[id] ??= []).add((reps: r['reps'] as int, kg: (r['kg'] as num?)?.toDouble()));
+      final split = splitSetLogs(rows, today);
+      if (mounted) {
+        setState(() {
+          _last = split.last;
+          // Sets already logged today stay ticked when the session is reopened.
+          for (final e in split.today.entries) {
+            _today[e.key] = e.value;
+            _ticked[e.key] = e.value.length;
+          }
+        });
       }
-      if (mounted) setState(() => _last = last);
     } catch (_) {
       // Without history the session still works; the hint says it is the first time.
     }
@@ -816,7 +838,7 @@ class _SessionScreenState extends State<SessionScreen> {
                   controller: kg,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}(\.\d?)?$'))],
-                  decoration: const InputDecoration(labelText: 'Weight, leave empty for bodyweight', suffixText: 'kg'),
+                  decoration: const InputDecoration(labelText: 'Weight (empty for bodyweight)', suffixText: 'kg'),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(width: double.infinity, child: FilledButton(onPressed: () => Navigator.pop(sheet, true), child: const Text('Log set'))),
@@ -827,7 +849,7 @@ class _SessionScreenState extends State<SessionScreen> {
       ),
     );
     final load = double.tryParse(kg.text);
-    kg.dispose();
+    // Not disposed: the sheet is still animating away with this field on screen, and disposing now throws.
     if (saved != true || _savingSet) return;
     _savingSet = true;
     try {
@@ -942,6 +964,7 @@ class _SessionScreenState extends State<SessionScreen> {
     try {
       // The logging side reports its own errors; only a confirmed save marks the session done.
       if (!await widget.onFinish!()) return;
+      _stopRest(); // the workout is over, so no more rest countdown
       HapticFeedback.heavyImpact();
       if (mounted) setState(() => _done = true);
       if (mounted) await _askHowItWent();
@@ -1054,6 +1077,7 @@ class _SessionScreenState extends State<SessionScreen> {
                       level: _levelOf(m['id'] as String),
                       lighter: _light,
                       ticked: _ticked[m['id']] ?? 0,
+                      logged: _today[m['id']] ?? const [],
                       // No "add weight" hints while a doctor has not cleared harder training.
                       hint: !widget.medicalHold && isLift(m['id'] as String) ? liftHint(_last[m['id']] ?? const [], _advice) : null,
                       care: _check.care[m['id']] == null ? null : careNote(_check.care[m['id']]!),
@@ -1307,8 +1331,9 @@ class _InjuryNotice extends StatelessWidget {
 }
 
 class _MoveCard extends StatelessWidget {
-  const _MoveCard({required this.number, required this.move, required this.level, required this.ticked, required this.hint, required this.onSet, this.care, this.lighter = false});
+  const _MoveCard({required this.number, required this.move, required this.level, required this.ticked, required this.hint, required this.onSet, this.care, this.lighter = false, this.logged = const []});
   final bool lighter;
+  final List<SetLog> logged; // today's sets, shown so the numbers stay in sight
   final String? care; // injury caution for this move, from the injury check
   final int number;
   final Map<String, dynamic> move;
@@ -1328,7 +1353,7 @@ class _MoveCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: c.surface,
         borderRadius: BorderRadius.circular(cardRadius),
-        border: Border.all(color: complete ? c.primary : c.outline, width: complete ? 1.5 : 1),
+        border: complete ? Border.all(color: progressColor(context), width: 1.5) : null,
       ),
       padding: const EdgeInsets.all(12),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1370,19 +1395,24 @@ class _MoveCard extends StatelessWidget {
                       child: AnimatedContainer(
                         duration: motion(context, 220),
                         curve: spring,
-                        width: 36,
-                        height: 36,
+                        width: 44,
+                        height: 44,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: s <= ticked ? c.primary : Colors.transparent,
+                          color: s <= ticked ? progressColor(context) : Colors.transparent,
                           shape: BoxShape.circle,
-                          border: Border.all(color: s <= ticked ? c.primary : c.outline, width: 1.5),
+                          border: Border.all(color: s <= ticked ? progressColor(context) : c.onSurfaceVariant, width: 1.5),
                         ),
-                        child: s <= ticked ? Icon(LvIcons.check, size: 16, color: c.onPrimary) : Text('$s', style: monoNumber(context, size: 13)),
+                        child: s <= ticked ? const Icon(LvIcons.check, size: 18, color: graphite) : Text('$s', style: monoNumber(context, size: 14)),
                       ),
                     ),
                   ),
               ]),
+            for (final (i, l) in logged.indexed)
+              Padding(
+                padding: EdgeInsets.only(top: i == 0 ? 8 : 0),
+                child: Text('Set ${i + 1}: ${l.reps} reps${l.kg == null || l.kg == 0 ? ', bodyweight' : ' at ${l.kg! % 1 == 0 ? l.kg!.toInt() : l.kg} kg'}', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              ),
           ]),
         ),
       ]),

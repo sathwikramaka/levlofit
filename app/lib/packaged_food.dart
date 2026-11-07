@@ -71,7 +71,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
         ],
       ),
     );
-    c.dispose();
+    // Not disposed: the sheet is still animating away with this field on screen, and disposing now throws.
     if (code != null && validBarcode(code)) {
       _finish(code);
     } else if (code != null && mounted) {

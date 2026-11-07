@@ -290,7 +290,7 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.titleSmall),
-              Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              Text(meta.split('  ·  ').where((p) => !p.endsWith(' min')).join('  ·  '), maxLines: 1, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             ]),
           ),
           const SizedBox(width: 8),
@@ -317,7 +317,7 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
           ],
         ],
         const SizedBox(height: 14),
-        SizedBox(width: double.infinity, child: FilledButton(onPressed: open, child: Text(done ? 'Open session' : 'Start workout'))),
+        SizedBox(width: double.infinity, child: done ? OutlinedButton(onPressed: open, child: const Text('Open session')) : FilledButton(onPressed: open, child: const Text('Start workout'))),
       ]),
     );
   }
@@ -650,23 +650,37 @@ class _DietScreenState extends State<_DietScreen> {
       title: 'Diet',
       children: [
         // Day picker: each day rotates the foods so the week does not repeat.
-        SizedBox(
-          height: 44,
-          child: ListView(scrollDirection: Axis.horizontal, children: [
-            for (var d = 0; d < 7; d++)
-              Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: ChoiceChip(
-                  label: Text(_days[d]),
+        Row(children: [
+          for (var d = 0; d < 7; d++)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Semantics(
+                  button: true,
                   selected: _day == d,
-                  onSelected: (_) {
-                    HapticFeedback.selectionClick();
-                    setState(() => _day = d);
-                  },
+                  child: Material(
+                    color: _day == d ? c.secondary : c.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _day = d);
+                      },
+                      child: SizedBox(
+                        height: 44,
+                        child: Center(
+                          child: FittedBox(
+                            child: Text(_days[d], style: t.labelMedium?.copyWith(fontWeight: FontWeight.w600, color: _day == d ? c.onSecondary : c.onSurface)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-          ]),
-        ),
+            ),
+        ]),
         const SizedBox(height: 12),
         _Tile(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1433,8 +1447,6 @@ class _CalendarScreenState extends State<_CalendarScreen> {
             FilterChip(
               selected: _shown.contains(m),
               showCheckmark: false,
-              selectedColor: c.surface,
-              labelStyle: TextStyle(color: c.onSurface),
               avatar: Container(width: 10, height: 10, decoration: BoxDecoration(color: _markColor(c, m), shape: BoxShape.circle)),
               label: Text(text),
               onSelected: (on) => setState(() => on ? _shown.add(m) : _shown.remove(m)),

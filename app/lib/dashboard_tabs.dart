@@ -146,7 +146,7 @@ class _HydrationScreenState extends State<_HydrationScreen> {
         ],
       ),
     );
-    field.dispose();
+    // Not disposed: the sheet is still animating away with this field on screen, and disposing now throws.
     if (ml != null) _add(ml);
   }
 
@@ -1258,7 +1258,7 @@ class _HydrationTile extends StatelessWidget {
         _Label('WATER', trailing: Icon(LvIcons.drop, size: 16, color: c.primary)),
         const SizedBox(height: 10),
         Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          CountUp((ml / 1000).toStringAsFixed(1), style: monoNumber(context, size: 26)),
+          CountUp((ml / 1000).toStringAsFixed(ml % 100 == 0 ? 1 : 2), style: monoNumber(context, size: 26)),
           const SizedBox(width: 4),
           Flexible(child: Padding(padding: const EdgeInsets.only(bottom: 3), child: Text('of ${(target / 1000).toStringAsFixed(1)} L', overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)))),
         ]),
@@ -1630,8 +1630,12 @@ Widget _row(BuildContext context, IconData icon, String label, VoidCallback onTa
       child: Row(children: [
         Icon(icon, size: 20, color: color ?? c.onSurface),
         const SizedBox(width: 14),
-        Expanded(flex: 3, child: Text(label, style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: color))),
-        if (trailing != null) Expanded(flex: 2, child: Text(trailing, textAlign: TextAlign.end, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant))),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(label, style: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: color)),
+            if (trailing != null) Text(trailing, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          ]),
+        ),
         const SizedBox(width: 6),
         Icon(LvIcons.caretRight, size: 16, color: c.onSurfaceVariant),
       ]),
