@@ -200,9 +200,11 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (0), updated 2026-11-07
+## Pending production items (1), updated 2026-11-07
 
-None.
+- 20261107300000_handbook_book: replaces the 43 chapters with the 69-chapter book. Not applied. Tested on a throwaway
+  local stack only. Order: app build with the book reader live and older builds forced to update, then this file, then
+  coach-chat. See RELEASE_CHECKLIST.md item 3.7ab.
 
 Applied 2026-11-07 (kept for the record):
 
