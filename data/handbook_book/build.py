@@ -17,7 +17,21 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 OUT = HERE.parents[1] / "website" / "src" / "lib" / "handbook_book.json"
 MIGRATION = HERE.parents[1] / "supabase" / "migrations" / "20261107300000_handbook_book.sql"
+REDIRECTS = HERE.parents[1] / "website" / "public" / "_redirects"
 ROMAN = ["I", "II", "III", "IV", "V", "VI"]
+# Old chapter addresses people may have saved, and the book chapter that replaces each.
+MOVED = {
+    "how-training-works": "exercise-science", "effort-and-rir": "exercise-science", "warm-up": "warmup-mobility",
+    "sets-reps-progress": "progressive-overload", "rest-between-sets": "exercise-science", "sleep-recovery": "sleep-guide",
+    "one-step-at-a-time": "combining-training", "tracking-progress": "why-track", "plateaus-deloads": "plateaus",
+    "habits": "sustainable-habits", "food-basics": "nutrition-fundamentals", "water": "hydration",
+    "carbs-fibre-fats": "nutrition-fundamentals", "meal-timing": "nutrient-timing", "body-measures": "body-measurements",
+    "calories": "calories-body-composition", "fat-loss": "body-fat-lean", "supplements": "supplements-guide",
+    "build-muscle": "aesthetic-physique", "physique": "aesthetic-physique", "calisthenics": "calisthenics-ladders",
+    "mobility": "mobility-flexibility", "running": "running-guide", "hyrox": "hyrox-guide",
+    "soreness-pain-injury": "injury-prevention", "busy-weeks": "staying-consistent", "home-training": "home-training-guide",
+    "mind-motivation": "motivation", "putting-it-together": "building-a-week",
+}
 BANNED = re.compile(r"\bAPS\b|Chapter \d|—|earlier editions", re.I)
 
 
@@ -158,7 +172,15 @@ insert into public.handbook_chapters (id, slug, part, part_title, title, summary
 """
 
 
+def redirects():
+    slugs = {c["slug"] for c in CHAPTERS}
+    assert not (MOVED.keys() & slugs), "a moved address is still a chapter"
+    assert set(MOVED.values()) <= slugs, "a redirect points at a missing chapter"
+    return "".join(f"/handbook/{a} /handbook/{b} 301\n" for a, b in MOVED.items())
+
+
 if __name__ == "__main__":
+    REDIRECTS.write_text(redirects(), encoding="utf-8", newline="\n")
     OUT.write_text(json.dumps(CHAPTERS, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     MIGRATION.write_text(migration(), encoding="utf-8", newline="\n")
     print(len(CHAPTERS), "chapters,", sum(c["minutes"] for c in CHAPTERS), "minutes:", ", ".join(c["slug"] for c in CHAPTERS))
