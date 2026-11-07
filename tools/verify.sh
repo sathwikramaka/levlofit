@@ -34,6 +34,8 @@ handbook() {
 }
 handbook4() {  # Handbook v4 book draft (data/handbook_v4): builds the draft only, never the production migration
   step "handbook4: draft book tests" '^(Ran|OK)' python -I data/handbook_v4/test_book.py
+  step "handbook book: builds and checks" 'chapters' python -X utf8 data/handbook_book/build.py
+  step "handbook book: register --check" 'reviewed' python -X utf8 data/evidence/extract_claims.py --check --builder data/handbook_book/build.py --claims data/handbook_book/claims_register.csv --sources data/handbook_book/sources_register.csv --passages supabase/functions/_shared/handbook-book-passages.json
 }
 functions() {
   step "functions: node tests" '^# pass' node --test $F/_shared/plan-engine.test.ts $F/_shared/llm.test.ts $F/_shared/body-check.test.ts $F/_shared/handbook.test.ts $F/_shared/research-assess.test.ts $F/_shared/rate.test.ts \

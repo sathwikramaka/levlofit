@@ -227,14 +227,14 @@ export const CASES: Case[] = [
   {
     id: 'paraphrase-rest', persona: 'meera', about: 'a reworded rest question ("wait between sets") reaches the rest chapter and is cited',
     message: WAIT_Q, liveOk: true,
-    score: (o, per) => [scoreFormat(o), scorePrivacy(o, per, false), scoreRank(o, 'rest-between-sets', 1), scoreCitations(o, true)],
+    score: (o, per) => [scoreFormat(o), scorePrivacy(o, per, false), scoreRank(o, 'exercise-science', 1), scoreCitations(o, true)],
     good: [`Rest about 2 minutes between sets of big lifts; if you are new to lifting, 1 to 2 minutes is enough [H:${WAIT}].`],
     bad: [{ check: 'citations', steps: ['Rest about 2 minutes [H:made-up:b09].'] }],
   },
   {
     id: 'paraphrase-cardio', persona: 'vikram', about: 'a reworded running-versus-lifting question reaches the interference passages and is cited',
     message: CARDIO_Q, liveOk: true,
-    score: (o, per) => [scoreFormat(o), scorePrivacy(o, per, false), scoreRank(o, 'one-step-at-a-time', 1), scoreCitations(o, true)],
+    score: (o, per) => [scoreFormat(o), scorePrivacy(o, per, false), scoreRank(o, 'combining-training', 1), scoreCitations(o, true)],
     good: [`Not if you plan it: endurance work mainly costs power, and size mostly suffers with lots of running [H:${CARDIO}].`],
     bad: [{ check: 'citations', steps: ['Cardio is fine [H:made-up:b09].'] }],
   },
