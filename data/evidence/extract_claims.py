@@ -101,6 +101,15 @@ def _render(value) -> str:
     return str(value)
 
 
+INLINE_SOURCE = re.compile(r"\s*\{([a-z0-9-]+)\}")  # the book's inline markup (data/handbook_book/build.py)
+INLINE_LINK = re.compile(r"\[\[[a-z0-9-]+\|([^\]]+)\]\]")
+
+
+def _plain(text: str) -> str:
+    """Claim text as a reader sees it: no source marks, bold marks or chapter link syntax."""
+    return INLINE_LINK.sub(r"\1", INLINE_SOURCE.sub("", text)).replace("**", "").strip()
+
+
 def _is_leaf(value, path: str = "") -> bool:
     """An item to treat as one claim: text, a table row or header, or a dict with no lists inside. Other lists of
     text (compare and cycle items) are split, one unit per entry."""
@@ -137,7 +146,7 @@ def _units(block: dict):
 def _auto_kind(text: str, block_type: str, field: str) -> str:
     if NUMBER.search(text):
         return "numeric"
-    if block_type == "week" or field.endswith(("title", "head")) or len(text.split()) <= 3:
+    if block_type in ("week", "h2", "h3") or field.endswith(("title", "head")) or len(text.split()) <= 3:
         return "label"
     return "statement"
 
@@ -154,15 +163,17 @@ def extract(module) -> list[dict]:
                 if field == "unit":
                     continue  # the unit is folded into each item of that block
                 text = _render(item)
-                if block["t"] == "table" and field.startswith("rows[") and isinstance(item, list) and block.get("head"):
+                if block["t"] in ("table", "rows") and field.startswith("rows[") and isinstance(item, list) and block.get("head"):
                     # A table row reads on its own only with its column names.
                     text = "; ".join(f"{_render(h)}: {_render(v)}" for h, v in zip(block["head"], item))
+                inline = list(dict.fromkeys(INLINE_SOURCE.findall(text)))
+                text = _plain(text)
                 numeric_item = isinstance(item, dict) and any(isinstance(v, (int, float)) for v in item.values())
                 if unit_suffix and numeric_item:
                     text += unit_suffix
                 direct = item.get("source") if isinstance(item, dict) else None
                 direct = direct or block.get("source")
-                direct_list = [direct] if direct else []
+                direct_list = ([direct] if direct else []) + inline
                 kind = _auto_kind(text, block["t"], field)
                 flags = []
                 if kind == "numeric" and not direct_list:
@@ -320,7 +331,7 @@ def check(module, claims: list[dict], sources: list[dict], strict: bool = False)
 PASSAGES_JSON = HERE / "handbook-passages.json"   # v3 record; coach-chat ships the v4 file (data/handbook_v4/test_book.py)
 
 
-NAV_BLOCKS = {"next", "part"}
+NAV_BLOCKS = {"next", "part", "h2", "h3"}
 
 
 def build_passages(module, claims: list[dict]) -> dict:
@@ -382,7 +393,7 @@ def build_passages(module, claims: list[dict]) -> dict:
             "claimIds": [u["claim_id"] for u in units],
         })
     return {
-        "generatedBy": "data/evidence/extract_claims.py --sync (from data/build_handbook.py and claims_register.csv); do not edit",
+        "generatedBy": getattr(module, "GENERATED_BY", "data/evidence/extract_claims.py --sync (from data/build_handbook.py and claims_register.csv); do not edit"),
         "sources": {k: module.SRC[k] for k in sorted(used)},
         "passages": passages,
     }

@@ -561,7 +561,7 @@ test('handbook: matching passages are sent before the personal data block, which
   const passages = prompt.indexOf('HANDBOOK PASSAGES (');
   assert.ok(passages > 0, 'no passages block');
   assert.ok(passages < prompt.indexOf('\n\nTODAY:'), 'passages must sit before the personal data block');
-  assert.match(prompt, /\[H:rest-between-sets:b\d\d\]/);
+  assert.match(prompt, /\[H:exercise-science:b\d\d\]/);
   assert.match(prompt, /not a clinical review/);
 });
 
