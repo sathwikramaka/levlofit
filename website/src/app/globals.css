@@ -52,6 +52,7 @@
   --font-sans: var(--font-geist);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-unbounded);
+  --font-serif: var(--font-noto-serif);
   --ease-spring: var(--spring);
 }
 
