@@ -1010,7 +1010,7 @@ class _OnboardingState extends State<Onboarding> {
                   controller: _birthYear,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
-                  decoration: InputDecoration(hintText: '${_thisYear - 25}', helperText: 'For adults 18 to 80. We only ask the year, so we count the youngest age you could be.'),
+                  decoration: InputDecoration(hintText: '${_thisYear - 25}', helperText: 'For adults 18 to 80. We only ask the year, so we count the youngest age you could be.', helperMaxLines: 3),
                   // Only the year is stored, so 18 is certain only for those born 19 years ago or earlier (generate-plan checks the same).
                   validator: (v) => range(v, _thisYear - 81, _thisYear - 19, 'a year'),
                 ),
@@ -1352,7 +1352,9 @@ class ChoiceTile extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(title, style: t.titleMedium?.copyWith(color: fg)),
+                            // One long word (Intermediate) shrinks to fit a narrow tile instead of breaking mid-word.
+                            if (title.contains(' ')) Text(title, style: t.titleMedium?.copyWith(color: fg))
+                            else FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(title, maxLines: 1, style: t.titleMedium?.copyWith(color: fg))),
                             if (subtitle != null) Text(subtitle!, style: t.bodySmall?.copyWith(color: sub)),
                             if (note != null) Text(note, style: t.bodySmall?.copyWith(color: sub)),
                           ],
