@@ -8,6 +8,16 @@ import 'package:levlo/session.dart';
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
+  test('personal bests: heaviest ever, or most reps at a weight lifted before; never on the first log', () {
+    const before = [(reps: 10, kg: 40.0), (reps: 8, kg: 45.0), (reps: 6, kg: null)];
+    expect(personalBest(before, (reps: 3, kg: 47.5)), 'heaviest');
+    expect(personalBest(before, (reps: 9, kg: 45.0)), 'reps');
+    expect(personalBest(before, (reps: 8, kg: 45.0)), isNull, reason: 'a tie is not a best');
+    expect(personalBest(before, (reps: 12, kg: 42.5)), isNull, reason: 'a new weight below the heaviest has nothing to compare');
+    expect(personalBest(before, (reps: 7, kg: null)), 'reps', reason: 'bodyweight counts as one weight');
+    expect(personalBest(const [], (reps: 10, kg: 40.0)), isNull);
+  });
+
   test('a finished session counts the minutes it took, not the plan', () {
     final start = DateTime(2026, 11, 11, 18);
     expect(sessionMinutesSpent(start, start.add(const Duration(minutes: 37, seconds: 20))), 37);
