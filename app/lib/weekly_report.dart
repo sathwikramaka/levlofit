@@ -3,6 +3,8 @@
 // short for a weight trend, so weight is shown as a plain difference of averages and never drives the advice.
 import 'package:flutter/material.dart';
 
+import 'icons.dart';
+import 'share_card.dart';
 import 'theme.dart';
 
 typedef Weigh = ({DateTime day, double kg});
@@ -155,9 +157,28 @@ StrengthTrend? strengthTrend(List<Map<String, dynamic>> sets, DateTime monday) {
 
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+/// '3 NOV TO 9 NOV' for the week starting [monday].
+String weekSpan(DateTime monday) {
+  final sun = monday.add(const Duration(days: 6));
+  return '${monday.day} ${_months[monday.month - 1].toUpperCase()} TO ${sun.day} ${_months[sun.month - 1].toUpperCase()}';
+}
+
+/// The shareable picture of a week: sessions, the streak and lifts up. Food and weight stay private.
+ShareCard weekShareCard(WeekReport r, {required int streakWeeks}) => ShareCard(
+      kicker: 'MY WEEK  ·  ${weekSpan(r.monday)}',
+      big: '${r.done} of ${r.planned} sessions',
+      line: r.done >= r.planned ? 'Every planned session done.' : 'Showing up, one session at a time.',
+      facts: [
+        ('$streakWeeks', streakWeeks == 1 ? 'WEEK STREAK' : 'WEEKS STREAK'),
+        if (r.strength case final s?) ('${s.up}', 'LIFTS UP'),
+        if (r.checkinDays case final d?) ('$d / 7', 'CHECK-INS'),
+      ],
+    );
+
 class WeeklyReportCard extends StatelessWidget {
-  const WeeklyReportCard({super.key, required this.report});
+  const WeeklyReportCard({super.key, required this.report, this.onShare});
   final WeekReport report;
+  final VoidCallback? onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +198,11 @@ class WeeklyReportCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(cardRadius), border: Border.all(color: c.outline)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('LAST WEEK  ·  ${r.monday.day} ${_months[r.monday.month - 1].toUpperCase()} TO ${sun.day} ${_months[sun.month - 1].toUpperCase()}', style: monoLabel(context)),
+        Row(children: [
+          Expanded(child: Text('${sun.isBefore(_d(DateTime.now())) ? 'LAST' : 'THIS'} WEEK  ·  ${weekSpan(r.monday)}', style: monoLabel(context))),
+          if (onShare != null)
+            IconButton(onPressed: onShare, tooltip: 'Share your week', visualDensity: VisualDensity.compact, icon: const Icon(LvIcons.shareNetwork, size: 20)),
+        ]),
         const SizedBox(height: 8),
         Text(r.observation, style: t.titleMedium),
         const SizedBox(height: 10),

@@ -34,6 +34,7 @@ import 'reminders.dart';
 import 'level_up.dart';
 import 'rewards.dart';
 import 'session.dart';
+import 'share_card.dart';
 import 'steps.dart' show StepsCard, healthPermissionScreenRequested, onHealthRationale;
 import 'swaps.dart';
 import 'theme.dart';
