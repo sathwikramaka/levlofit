@@ -16,5 +16,10 @@ class MainActivity : FlutterActivity() {
             if (call.method != "install") return@setMethodCallHandler result.notImplemented()
             UpdateInstaller.handle(this, call.argument<String>("url") ?: "", call.argument<String>("sha256") ?: "", result)
         }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TodayWidget.CHANNEL).setMethodCallHandler { call, result ->
+            if (call.method != "refresh") return@setMethodCallHandler result.notImplemented()
+            TodayWidget.refresh(this)
+            result.success(null)
+        }
     }
 }

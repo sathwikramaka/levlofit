@@ -22,6 +22,7 @@ import 'diet_view.dart';
 import 'exercises.dart';
 import 'food_diary.dart' show EmptyFoodsText, FoodCredit, FoodDiaryScreen, diaryTotals, entryFromRow, foodDataPendingText, isoDay, matchesFoodQuery, supabaseDiary;
 import 'handbook.dart';
+import 'home_widget.dart';
 import 'icons.dart';
 import 'main.dart';
 import 'mark.dart';
@@ -806,6 +807,15 @@ class _Bento extends StatelessWidget {
     final todayBlocks = blocksFor(week, now.weekday, data.tier, kitOf(data.profile), isTrainingDay ? ids : const []);
     final ownBlock = ownAddOn == null ? null : todayBlocks.first;
     final cardGoal = ownAddOn == null ? todayGoal : {...ownAddOn.session, 'name': '${ownAddOn.name} add-on', 'startLevel': ownBlock!.level};
+    // The home screen widget mirrors today's card and the week (after the frame: a build never waits on storage).
+    WidgetsBinding.instance.addPostFrameCallback((_) => updateHomeWidget(widgetLines(
+          session: isTrainingDay || ownAddOn != null ? (cardGoal['name'] ?? cardGoal['goal']) as String : null,
+          done: logged.contains(today),
+          minutes: ownBlock == null ? sessionMinutes : ownBlock.minutes + 5,
+          doneThisWeek: doneThisWeek,
+          perWeek: perWeek,
+          streakWeeks: streak,
+        )));
 
     final first = (data.name ?? '').split(' ').first;
     final hello = greetingFor(now);
