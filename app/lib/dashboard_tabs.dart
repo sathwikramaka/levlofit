@@ -659,6 +659,7 @@ class _SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<_SettingsScreen> {
+  ReminderExtras _extras = loadExtras();
   ReminderPrefs? _prefs;
   List<CustomReminder>? _custom; // null while loading
   bool _customFailed = false;
@@ -802,6 +803,23 @@ class _SettingsScreenState extends State<_SettingsScreen> {
                     const Expanded(child: _Label('REMINDERS')),
                     Semantics(label: 'Reminders', child: Switch(value: prefs.enabled, onChanged: (on) => _save(with_(enabled: on)))),
                   ]),
+                  if (prefs.enabled)
+                    for (final (label, sub, on, set) in [
+                      ('Sunday recap', 'Sunday 7 pm: your week, minutes and new bests', _extras.recap, (bool v) => (recap: v, coach: _extras.coach, meals: _extras.meals)),
+                      ('Morning check-in', '7:30 am: one line from Levlofit AI on today', _extras.coach, (bool v) => (recap: _extras.recap, coach: v, meals: _extras.meals)),
+                      ('Meal nudges', 'At breakfast, lunch, snack and dinner: one tap to log', _extras.meals, (bool v) => (recap: _extras.recap, coach: _extras.coach, meals: v)),
+                    ])
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(label, style: t.bodyLarge),
+                        subtitle: Text(sub, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                        value: on,
+                        onChanged: (v) async {
+                          setState(() => _extras = set(v));
+                          await saveExtras(_extras);
+                          widget.onRemindersChanged();
+                        },
+                      ),
                   if (kIsWeb)
                     Text('On the web, reminders appear inside the app while it is open. The phone app sends them even when Levlofit is closed.',
                         style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),

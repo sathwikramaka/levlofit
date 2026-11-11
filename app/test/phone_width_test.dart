@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:levlo/main.dart' show prefs;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:levlo/dashboard.dart';
 import 'package:levlo/exercises.dart';
 import 'package:levlo/tools.dart';
@@ -8,6 +10,10 @@ import 'package:levlo/tools.dart';
 // Phone width (375 x 812, a common small Android size). The in-app browser cannot take input under mobile
 // emulation, so these interactions are checked here; a real device pass is still in the plan.
 void main() {
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    prefs = await SharedPreferences.getInstance(); // the reminder settings read local switches
+  });
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
   void phone(WidgetTester tester) {
