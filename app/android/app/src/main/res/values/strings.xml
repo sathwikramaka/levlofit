@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="today_widget_label">Levlofit today</string>
+    <string name="today_widget_description">Today\'s session and your week so far</string>
+</resources>
