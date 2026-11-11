@@ -1912,10 +1912,10 @@ class _ProgressScreenState extends State<_ProgressScreen> {
 
 /// Renders the progress body from rows, without Supabase, so layout can be tested.
 @visibleForTesting
-Widget progressBodyForTest(Map<String, dynamic> plan, List<Map<String, dynamic>> logs, List<Map<String, dynamic>> body) => Builder(
+Widget progressBodyForTest(Map<String, dynamic> plan, List<Map<String, dynamic>> logs, List<Map<String, dynamic>> body, {List<DateTime> photoDays = const []}) => Builder(
       builder: (context) => _Page(
         title: 'Is this working?',
-        children: _progressBody(context, plan: plan, logs: logs, body: body, photos: const [], uploading: false, onLogWeight: () {}, onLogTape: () {}, onAddPhoto: () {}, onViewPhoto: (_) {}),
+        children: _progressBody(context, plan: plan, logs: logs, body: body, photos: [for (final (i, d) in photoDays.indexed) (id: '$i', path: '$i', day: d, url: null)], uploading: false, onLogWeight: () {}, onLogTape: () {}, onAddPhoto: () {}, onViewPhoto: (_) {}),
       ),
     );
 
@@ -1968,6 +1968,15 @@ List<Widget> _progressBody(
           child: p.url == null ? ColoredBox(color: c.surfaceContainerHighest) : Image.network(p.url!, fit: BoxFit.cover, webHtmlElementStrategy: WebHtmlElementStrategy.prefer),
         ),
       );
+  final grid = GridView.count(
+    crossAxisCount: 4,
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    mainAxisSpacing: 6,
+    crossAxisSpacing: 6,
+    childAspectRatio: 3 / 4,
+    children: [for (final p in photos) photo(p)],
+  );
 
   final report = weeklyReport(
     // Sunday shows the week now ending (the Sunday recap opens here); other days, the last full week.
@@ -1996,7 +2005,8 @@ List<Widget> _progressBody(
     const SizedBox(height: 12),
     WeeklyReportCard(
       report: report,
-      onShare: () => showShareSheet(context, weekShareCard(report, streakWeeks: weekStreak(days, monday, perWeek).weeks),
+      // Only a week with training in it is offered for sharing.
+      onShare: report.done == 0 ? null : () => showShareSheet(context, weekShareCard(report, streakWeeks: weekStreak(days, monday, perWeek).weeks),
           fileName: 'levlofit-week.png', text: 'My week on Levlofit'),
     ),
     const SizedBox(height: 12),
@@ -2114,7 +2124,8 @@ List<Widget> _progressBody(
           const SizedBox(height: 8),
           if (photos.length > 1) ...[
             // First and latest side by side: change you cannot see day to day. At 4, 8 and 12 weeks apart, a one-time reveal.
-            _PhotoReveal(weeks: photoMilestone(photos.last.day, photos.first.day), child: Row(children: [
+            // The grid sits inside the reveal too, so the covered pair is not shown below it.
+            _PhotoReveal(weeks: photoMilestone(photos.last.day, photos.first.day), child: Column(children: [Row(children: [
               for (final (label, p) in [('FIRST', photos.last), ('LATEST', photos.first)]) ...[
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -2125,18 +2136,9 @@ List<Widget> _progressBody(
                 ),
                 if (label == 'FIRST') const SizedBox(width: 10),
               ],
-            ])),
-            const SizedBox(height: 12),
+            ]), const SizedBox(height: 12), grid])),
           ],
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 6,
-            childAspectRatio: 3 / 4,
-            children: [for (final p in photos) photo(p)],
-          ),
+          if (photos.length == 1) grid,
         ],
       ]),
     ),

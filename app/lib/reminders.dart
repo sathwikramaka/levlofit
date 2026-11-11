@@ -82,7 +82,7 @@ List<Slot> slotsFor(ReminderPrefs p, Map<int, String> sessions, {List<CustomRemi
       if (r.enabled)
         for (final day in r.weekdays.isEmpty || r.weekdays.length == 7 ? const <int?>[null] : (r.weekdays.toList()..sort()))
           (id: 1000 + 8 * i + (day ?? 0), weekday: day, hour: r.at.hour, minute: r.at.minute, title: r.name, body: 'Your Levlofit reminder.'),
-    if (extras.recap) (id: 400, weekday: 7, hour: 19, minute: 0, title: recapTitle, body: 'Sessions, minutes and any new bests from this week. Tap to see it.'),
+    if (extras.recap) (id: 400, weekday: 7, hour: 19, minute: 0, title: recapTitle, body: 'Your weekly report: sessions, check-ins and lifts. Tap to see it.'),
     if (extras.coach) (id: 410, weekday: null, hour: 7, minute: 30, title: coachTitle, body: 'One line from Levlofit AI on what today holds. Tap to ask.'),
     if (extras.meals)
       for (final (i, (title, hour)) in const [('Breakfast time', 8), ('Lunch time', 13), ('Snack time', 17), ('Dinner time', 20)].indexed)
@@ -180,10 +180,12 @@ abstract final class Reminders {
 
   /// The title of the reminder the person tapped while the app was running; the dashboard opens its screen.
   static final tapped = ValueNotifier<String?>(null);
+  static var _launchRead = false;
 
   /// The title of the reminder that launched the app, if one did.
   static Future<String?> launchedFrom() async {
-    if (kIsWeb) return null;
+    if (kIsWeb || _launchRead) return null; // once per app start: a new sign-in must not reopen the old reminder
+    _launchRead = true;
     await _init();
     final d = await _plugin.getNotificationAppLaunchDetails();
     return d?.didNotificationLaunchApp == true ? payloadTitle(d!.notificationResponse?.payload) : null;

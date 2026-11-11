@@ -7,6 +7,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /** Home screen widget: today's session and the week so far, as the app last wrote them (lib/home_widget.dart). */
 class TodayWidget : AppWidgetProvider() {
@@ -17,10 +20,12 @@ class TodayWidget : AppWidgetProvider() {
             context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+        // Lines written on another day are stale (yesterday's "done"): ask for an open instead.
+        val fresh = prefs.getString("flutter.widget_day", null) == SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()) // the phone's local day, as the app writes it
         for (id in ids) {
             val views = RemoteViews(context.packageName, R.layout.today_widget)
-            views.setTextViewText(R.id.widget_today, prefs.getString("flutter.widget_today", null) ?: "Open Levlofit to see today")
-            views.setTextViewText(R.id.widget_week, prefs.getString("flutter.widget_week", null) ?: "")
+            views.setTextViewText(R.id.widget_today, if (fresh) prefs.getString("flutter.widget_today", null) else "Open Levlofit to see today")
+            views.setTextViewText(R.id.widget_week, if (fresh) prefs.getString("flutter.widget_week", null) ?: "" else "")
             views.setOnClickPendingIntent(R.id.widget_root, open)
             manager.updateAppWidget(id, views)
         }

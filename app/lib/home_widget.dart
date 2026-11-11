@@ -18,9 +18,24 @@ const _channel = MethodChannel('levlofit/widget');
 /// Saves the lines and redraws the widget when they changed. Android only.
 Future<void> updateHomeWidget(({String today, String week}) lines) async {
   if (kIsWeb || !Platform.isAndroid) return; // the real platform: widget tests run on the desktop host
-  if (prefs.getString('widget_today') == lines.today && prefs.getString('widget_week') == lines.week) return;
+  final day = DateTime.now().toIso8601String().substring(0, 10);
+  if (prefs.getString('widget_today') == lines.today && prefs.getString('widget_week') == lines.week && prefs.getString('widget_day') == day) return;
   await prefs.setString('widget_today', lines.today);
   await prefs.setString('widget_week', lines.week);
+  await prefs.setString('widget_day', day); // the widget shows its lines on this day only
+  await _redraw();
+}
+
+/// Empties the widget, on sign-out and account deletion.
+Future<void> clearHomeWidget() async {
+  if (kIsWeb || !Platform.isAndroid) return;
+  for (final k in ['widget_today', 'widget_week', 'widget_day']) {
+    await prefs.remove(k);
+  }
+  await _redraw();
+}
+
+Future<void> _redraw() async {
   try {
     await _channel.invokeMethod<void>('refresh');
   } on PlatformException catch (_) {} on MissingPluginException catch (_) {} // no widget host: nothing to redraw

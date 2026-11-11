@@ -6,6 +6,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:levlo/session.dart';
 
 void main() {
+  test('session start: an earlier start today is kept when the screen is reopened; another day or over 4 h starts now', () {
+    final now = DateTime(2026, 11, 11, 18, 30);
+    expect(sessionStart(DateTime(2026, 11, 11, 18, 0).toIso8601String(), now), DateTime(2026, 11, 11, 18, 0));
+    expect(sessionStart(DateTime(2026, 11, 10, 18, 0).toIso8601String(), now), now);
+    expect(sessionStart(DateTime(2026, 11, 11, 14, 0).toIso8601String(), now), now);
+    expect(sessionStart(null, now), now);
+    expect(sessionStart('rubbish', now), now);
+  });
+
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
   test('personal bests: heaviest ever, or most reps at a weight lifted before; never on the first log', () {

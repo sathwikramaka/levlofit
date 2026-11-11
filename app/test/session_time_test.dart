@@ -10,6 +10,18 @@ void main() {
     expect(estimateMinutes(['qXTaZnJ', 'DFGXwZr'], 1), ((300 + 2 * 160 + 60) / 60).round());
   });
 
+  test('a lighter day counts one set fewer; the first-session starter (25-minute setting) fits every strength session at levels 1 and 2', () {
+    expect(estimateMinutes(['qXTaZnJ', 'iny3m5y'], 2, lighter: true), ((300 + 2 * 160 + 2 * 130) / 60).round());
+    for (final tier in Tier.values) {
+      for (var level = 1; level <= 2; level++) {
+        for (var i = 0; i < 4; i++) {
+          final fit = fitToTime(sessionIds('strength', tier, level, i), level, starterMinutes, lighter: true);
+          expect(overTimeNotice(fit.estimate, starterMinutes), isNull, reason: '$tier L$level $i: ${fit.estimate} min');
+        }
+      }
+    }
+  });
+
   test('a run block has no set length, so no estimate', () {
     expect(estimateMinutes(['oLrKqDH', 'bJYHBIN'], 2), isNull);
   });

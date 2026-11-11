@@ -31,7 +31,8 @@ class ShareCard extends StatelessWidget {
             color: graphite,
             padding: const EdgeInsets.all(24),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const LevloWordmark(fontSize: 18),
+              // The wordmark takes the surrounding text colour; the sheet around the card is light.
+              const DefaultTextStyle(style: TextStyle(color: cloud), child: LevloWordmark(fontSize: 18)),
               const Spacer(),
               Text(kicker, style: monoLabel(context).copyWith(color: c.tertiary)),
               const SizedBox(height: 8),

@@ -805,7 +805,7 @@ class _SettingsScreenState extends State<_SettingsScreen> {
                   ]),
                   if (prefs.enabled)
                     for (final (label, sub, on, set) in [
-                      ('Sunday recap', 'Sunday 7 pm: your week, minutes and new bests', _extras.recap, (bool v) => (recap: v, coach: _extras.coach, meals: _extras.meals)),
+                      ('Sunday recap', 'Sunday 7 pm: your weekly report', _extras.recap, (bool v) => (recap: v, coach: _extras.coach, meals: _extras.meals)),
                       ('Morning check-in', '7:30 am: one line from Levlofit AI on today', _extras.coach, (bool v) => (recap: _extras.recap, coach: v, meals: _extras.meals)),
                       ('Meal nudges', 'At breakfast, lunch, snack and dinner: one tap to log', _extras.meals, (bool v) => (recap: _extras.recap, coach: _extras.coach, meals: v)),
                     ])

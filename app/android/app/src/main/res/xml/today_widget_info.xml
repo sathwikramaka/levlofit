@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Redrawn by the app when today's session or the week changes; the daily period is only a fallback. -->
+<!-- Redrawn by the app when its lines change; every 30 min (the shortest period) so a new day drops stale lines. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/today_widget_description"
     android:initialLayout="@layout/today_widget"
     android:minWidth="180dp"
-    android:minHeight="80dp"
+    android:minHeight="110dp"
     android:resizeMode="horizontal|vertical"
     android:targetCellWidth="3"
-    android:targetCellHeight="1"
-    android:updatePeriodMillis="86400000"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

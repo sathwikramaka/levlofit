@@ -51,7 +51,7 @@ through the web app. People with medical conditions are told to involve a doctor
 - Active minutes are the minutes a session took (opened to finished), not the planned length.
 - Weekly streak: weeks that met the plan; one short week in any 4 is let off when a met week follows. Never a weight or
   calorie streak.
-- First win: a new plan with no session yet offers a 20-minute starter, one set lighter.
+- First win: a new plan with no session yet offers a short starter (a 25-minute setting, one set lighter).
 - Moments: a new best (heaviest, or most reps at a weight) shows while logging; passing a level check opens a level-up
   screen; Profile lists the level earned per goal. Week and level can be shared as a picture (sessions, streak, lifts,
   check-ins, level); food and weight never appear on it.

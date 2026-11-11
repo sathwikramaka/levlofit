@@ -47,7 +47,7 @@ Habits); food and body (Food diary, Food library, Water, BMI calculator); accoun
 
 Header (date, greeting, Levlofit AI, avatar opening Profile), then cards the person can reorder or hide. Shown by default:
 weekly rings, today's session, daily check-in, week, Today's read, water, food targets. Off by default, on from
-Customise: daily goal, rank and rating, habits, body. A new plan with no session yet shows "Try a 20-minute starter" under
+Customise: daily goal, rank and rating, habits, body. A new plan with no session yet shows "Try a short starter" (25 minutes, one set lighter) under
 Start workout.
 Under today's session when they apply: level prompt, safety notes, then **welcome back** (14+ days away) or **plan fit**
 (three short weeks).
