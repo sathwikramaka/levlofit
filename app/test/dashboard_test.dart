@@ -34,6 +34,10 @@ final _plan = <String, dynamic>{
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    prefs = await SharedPreferences.getInstance(); // the reminder settings read local switches
+  });
 
   for (final w in [390.0, 360.0]) {
   for (final name in ['light', 'dark']) {

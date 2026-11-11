@@ -42,11 +42,31 @@ String describeDays(Set<int> days) {
   return [for (final d in days.toList()..sort()) names[d - 1]].join(', ');
 }
 
+/// Nudges kept on this phone: the Sunday recap (on unless turned off), a morning Levlofit AI check-in and meal-time
+/// nudges (both off unless turned on). At most one of each kind a day.
+typedef ReminderExtras = ({bool recap, bool coach, bool meals});
+const noExtras = (recap: false, coach: false, meals: false);
+ReminderExtras loadExtras() => (recap: prefs.getBool('remind_recap') ?? true, coach: prefs.getBool('remind_coach') ?? false, meals: prefs.getBool('remind_meals') ?? false);
+Future<void> saveExtras(ReminderExtras e) async {
+  await prefs.setBool('remind_recap', e.recap);
+  await prefs.setBool('remind_coach', e.coach);
+  await prefs.setBool('remind_meals', e.meals);
+}
+
+/// Titles of the extra nudges; a tap on one opens the screen it is about.
+const recapTitle = 'Your week in Levlofit', coachTitle = 'Your plan for today', mealTitles = {'Breakfast time', 'Lunch time', 'Snack time', 'Dinner time'};
+
+/// The title a reminder payload carries (slotKey), or null.
+String? payloadTitle(String? payload) {
+  final parts = payload?.split('|');
+  return parts != null && parts.length >= 8 ? parts[6] : null;
+}
+
 /// Every reminder the settings produce. Pure, so it can be tested.
 /// [sessions] maps training weekdays (1 = Monday) to that day's session name. The master switch silences
 /// [custom] reminders too. Custom ids are 1000 + 8 x position + weekday (0 = every day): unique, and clear of the
 /// built-in 100-300 range and the test notification (1).
-List<Slot> slotsFor(ReminderPrefs p, Map<int, String> sessions, {List<CustomReminder> custom = const []}) {
+List<Slot> slotsFor(ReminderPrefs p, Map<int, String> sessions, {List<CustomReminder> custom = const [], ReminderExtras extras = noExtras}) {
   if (!p.enabled) return const [];
   final w = p.workout;
   final own = custom.take(maxCustomReminders).toList();
@@ -62,6 +82,11 @@ List<Slot> slotsFor(ReminderPrefs p, Map<int, String> sessions, {List<CustomRemi
       if (r.enabled)
         for (final day in r.weekdays.isEmpty || r.weekdays.length == 7 ? const <int?>[null] : (r.weekdays.toList()..sort()))
           (id: 1000 + 8 * i + (day ?? 0), weekday: day, hour: r.at.hour, minute: r.at.minute, title: r.name, body: 'Your Levlofit reminder.'),
+    if (extras.recap) (id: 400, weekday: 7, hour: 19, minute: 0, title: recapTitle, body: 'Sessions, minutes and any new bests from this week. Tap to see it.'),
+    if (extras.coach) (id: 410, weekday: null, hour: 7, minute: 30, title: coachTitle, body: 'One line from Levlofit AI on what today holds. Tap to ask.'),
+    if (extras.meals)
+      for (final (i, (title, hour)) in const [('Breakfast time', 8), ('Lunch time', 13), ('Snack time', 17), ('Dinner time', 20)].indexed)
+        (id: 420 + i, weekday: null, hour: hour, minute: 0, title: title, body: 'Your planned meal is ready in Diet. One tap logs it.'),
   ];
 }
 
@@ -153,6 +178,17 @@ abstract final class Reminders {
     }
   }
 
+  /// The title of the reminder the person tapped while the app was running; the dashboard opens its screen.
+  static final tapped = ValueNotifier<String?>(null);
+
+  /// The title of the reminder that launched the app, if one did.
+  static Future<String?> launchedFrom() async {
+    if (kIsWeb) return null;
+    await _init();
+    final d = await _plugin.getNotificationAppLaunchDetails();
+    return d?.didNotificationLaunchApp == true ? payloadTitle(d!.notificationResponse?.payload) : null;
+  }
+
   static Future<void> _init() async {
     if (_ready || kIsWeb) return;
     tzdata.initializeTimeZones();
@@ -166,6 +202,7 @@ abstract final class Reminders {
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         iOS: DarwinInitializationSettings(requestAlertPermission: false, requestSoundPermission: false, requestBadgePermission: false),
       ),
+      onDidReceiveNotificationResponse: (r) => tapped.value = payloadTitle(r.payload),
     );
     _ready = true;
   }
@@ -261,7 +298,7 @@ abstract final class Reminders {
   static Future<void> _lastApply = Future.value();
 
   static Future<void> _apply(ReminderPrefs p, Map<int, String> sessions, {List<CustomReminder>? custom, void Function(String title, String body)? inApp}) async {
-    var slots = slotsFor(p, sessions, custom: custom ?? const []);
+    var slots = slotsFor(p, sessions, custom: custom ?? const [], extras: loadExtras());
     _ticker?.cancel();
     if (kIsWeb) {
       if (inApp != null && slots.isNotEmpty) _startTicker(slots, inApp);

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:levlo/main.dart' show prefs;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:levlo/dashboard.dart';
 import 'package:levlo/reminders.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -9,6 +11,10 @@ import 'package:timezone/timezone.dart' as tz;
 
 // The alarm-clock timing experiment: one standalone test alarm, kept apart from saved reminders.
 void main() {
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    prefs = await SharedPreferences.getInstance(); // the reminder settings read local switches
+  });
   setUpAll(() {
     GoogleFonts.config.allowRuntimeFetching = false;
     tzdata.initializeTimeZones(); // the app does this in Reminders._init

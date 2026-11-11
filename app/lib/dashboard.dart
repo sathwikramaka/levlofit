@@ -196,6 +196,9 @@ class _DashboardState extends State<Dashboard> {
   @override
   void initState() {
     super.initState();
+    // A tapped nudge opens what it is about: the week in Progress, Levlofit AI, or the meal in Diet.
+    Reminders.tapped.addListener(_onReminderTap);
+    Reminders.launchedFrom().then(_openFor, onError: (Object _) {});
     // Health Connect opens the app from its permission screens to show why steps are read: show the privacy policy.
     healthPermissionScreenRequested().then((asked) {
       if (asked && mounted) showPrivacyPolicy(context);
@@ -207,6 +210,15 @@ class _DashboardState extends State<Dashboard> {
   }
 
   // A swap confirmed in Levlofit AI changes today's session: load it again.
+  void _onReminderTap() => _openFor(Reminders.tapped.value);
+
+  void _openFor(String? title) {
+    if (title == null || !mounted) return;
+    if (title == recapTitle) _go(_Tab.progress);
+    if (title == coachTitle) openCoach(context, prompt: 'What does today hold for me?');
+    if (mealTitles.contains(title)) _go(_Tab.diet);
+  }
+
   void _reloadForSwap() {
     if (!mounted) return;
     setState(() {
@@ -217,6 +229,7 @@ class _DashboardState extends State<Dashboard> {
   @override
   void dispose() {
     swapsChanged.removeListener(_reloadForSwap);
+    Reminders.tapped.removeListener(_onReminderTap);
     super.dispose();
   }
 
