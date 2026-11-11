@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:levlo/mark.dart';
 import 'package:levlo/share_card.dart';
+import 'package:levlo/theme.dart';
 import 'package:levlo/weekly_report.dart';
 
 void main() {
@@ -20,7 +22,7 @@ void main() {
     final card = weekShareCard(week(), streakWeeks: 5);
     expect(card.big, '3 of 4 sessions');
     expect(card.kicker, 'MY WEEK  ·  2 NOV TO 8 NOV');
-    expect(card.facts.map((f) => f.$2), ['WEEKS STREAK', 'CHECK-INS']);
+    expect(card.facts.map((f) => f.$2), ['WEEK STREAK', 'CHECK-INS']);
     expect([card.big, card.line, ...card.facts.expand((f) => [f.$1, f.$2])].join(' '), isNot(matches(RegExp('kcal|kg|weight|calor', caseSensitive: false))));
     expect(weekShareCard(week(done: 4), streakWeeks: 1).line, 'Every planned session done.');
   });
@@ -38,5 +40,7 @@ void main() {
     ));
     await tester.pump();
     expect(tester.takeException(), isNull);
+    // The wordmark takes the surrounding text colour: light on the dark card, even inside a light sheet.
+    expect(DefaultTextStyle.of(tester.element(find.byType(LevloWordmark))).style.color, cloud);
   });
 }

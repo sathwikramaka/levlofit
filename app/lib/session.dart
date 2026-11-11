@@ -289,6 +289,16 @@ typedef SetLog = ({int reps, double? kg});
 
 /// Minutes from opening a session to finishing it, so the week's active minutes are what was done, not what was
 /// planned. At least 1; capped at 4 hours in case the screen was left open.
+/// When today's session started: a start saved earlier today (the person left the screen and came back), or [now].
+/// A start over 4 hours old is a session left open, not this one.
+DateTime sessionStart(String? saved, DateTime now) {
+  final s = saved == null ? null : DateTime.tryParse(saved);
+  final sameDay = s != null && s.year == now.year && s.month == now.month && s.day == now.day;
+  return sameDay && !s.isAfter(now) && now.difference(s).inHours < 4 ? s : now;
+}
+
+const _startKey = 'session_started';
+
 int sessionMinutesSpent(DateTime opened, DateTime finished) => (finished.difference(opened).inSeconds / 60).round().clamp(1, 240);
 
 /// Set rows newest day first, split into today's sets and each lift's most recent earlier session. A set number logged
@@ -351,9 +361,9 @@ int totalSets(List<String> ids, List<String> missing, int level) =>
 /// Rough minutes for a session as prescribed: 5 min warm-up, about 40 s of work per set plus the rest shown after
 /// it, 1 min per hold or drill. A Levlofit planning estimate, not a measured time. Null when the session has a run
 /// block, whose length the session does not set.
-int? estimateMinutes(List<String> ids, int level) {
+int? estimateMinutes(List<String> ids, int level, {bool lighter = false}) {
   if (ids.contains(_run)) return null;
-  return ((300 + ids.fold(0, (s, id) => s + _moveSeconds(id, level))) / 60).round();
+  return ((300 + ids.fold(0, (s, id) => s + _moveSeconds(id, level, lighter: lighter))) / 60).round();
 }
 
 /// The notice when the estimate runs past the person's session length (5 min of slack), else null.
@@ -365,6 +375,10 @@ String? overTimeNotice(int? estimate, int? sessionMinutes) => estimate == null |
 /// estimate for what is shown.
 typedef TimeFit = ({List<String> ids, List<String> leftOut, int? estimate});
 
+/// The first-session starter's length setting: short, and every strength session at levels 1 and 2 fits it once
+/// lighter (test/session_time_test.dart).
+const starterMinutes = 25;
+
 /// Never trims a session below this many moves (a full-body session keeps a lower-body, a push and a pull).
 const minMovesWhenShortened = 3;
 
@@ -375,8 +389,8 @@ const minMovesWhenShortened = 3;
 /// [minMovesWhenShortened] moves, and no set or dose changes. Unchanged when it already fits, when there is no
 /// setting, or when the session cannot be estimated (a run block). It may still run over when only protected moves
 /// are left; the over-time notice then still shows.
-TimeFit fitToTime(List<String> ids, int level, int? sessionMinutes) {
-  var estimate = estimateMinutes(ids, level);
+TimeFit fitToTime(List<String> ids, int level, int? sessionMinutes, {bool lighter = false}) {
+  var estimate = estimateMinutes(ids, level, lighter: lighter);
   bool over() => overTimeNotice(estimate, sessionMinutes) != null;
   if (!over()) return (ids: ids, leftOut: const [], estimate: estimate);
   final keep = [...ids];
@@ -384,7 +398,7 @@ TimeFit fitToTime(List<String> ids, int level, int? sessionMinutes) {
   for (var i = keep.length - 1; i >= 0 && over() && keep.length > minMovesWhenShortened; i--) {
     if (_compounds.contains(keep[i])) continue;
     leftOut.insert(0, keep.removeAt(i));
-    estimate = estimateMinutes(keep, level);
+    estimate = estimateMinutes(keep, level, lighter: lighter);
   }
   return (ids: keep, leftOut: leftOut, estimate: estimate);
 }
@@ -405,14 +419,14 @@ String shortenedNotice(List<String> names, int? estimate, int sessionMinutes) =>
 typedef AddOnBlock = ({String name, String goal, String kind, int level, List<String> ids, int minutes});
 
 /// Seconds a move takes as prescribed: about 40 s of work per set plus the rest after it; 1 min per hold or drill.
-int _moveSeconds(String id, int level) {
-  final sets = setsFor(id, level);
+int _moveSeconds(String id, int level, {bool lighter = false}) {
+  final sets = setsFor(id, level, lighter: lighter);
   return sets == 0 ? 60 : sets * (40 + restFor(id));
 }
 
 /// Minutes for a block of [ids] at [level]; a block with the easy run always takes the whole add-on time.
-int blockMinutes(List<String> ids, int level) =>
-    ids.contains(_run) ? addOnMinutes : (ids.fold(0, (s, id) => s + _moveSeconds(id, level)) / 60).round();
+int blockMinutes(List<String> ids, int level, {bool lighter = false}) =>
+    ids.contains(_run) ? addOnMinutes : (ids.fold(0, (s, id) => s + _moveSeconds(id, level, lighter: lighter)) / 60).round();
 
 /// The block for the session [spec] (a plan goal, or the extra-strength session), never repeating [exclude]. The
 /// week's other session variant fills in when the first one is already in the day. Empty (0 min) only when every
@@ -456,9 +470,9 @@ typedef DayFit = ({TimeFit main, List<AddOnBlock> blocks, List<String> blockLeft
 /// The main session first gives up its accessories under [fitToTime] (budget: the setting less the blocks' minutes);
 /// then blocks lose moves, last block and last move first, keeping one move each. Main lifts and doses never change.
 /// A run session cannot be estimated, so nothing is trimmed then. Still over afterwards: the over-time notice shows.
-DayFit fitDay(List<String> ids, int level, List<AddOnBlock> blocks, int? sessionMinutes) {
+DayFit fitDay(List<String> ids, int level, List<AddOnBlock> blocks, int? sessionMinutes, {bool lighter = false}) {
   int blocksTotal(List<AddOnBlock> bs) => bs.fold(0, (s, b) => s + b.minutes);
-  final main = fitToTime(ids, level, sessionMinutes == null || blocks.isEmpty ? sessionMinutes : sessionMinutes - blocksTotal(blocks));
+  final main = fitToTime(ids, level, sessionMinutes == null || blocks.isEmpty ? sessionMinutes : sessionMinutes - blocksTotal(blocks), lighter: lighter);
   final kept = [...blocks];
   final leftOut = <String>[];
   int? total() => main.estimate == null ? null : main.estimate! + blocksTotal(kept);
@@ -738,7 +752,7 @@ class _SessionScreenState extends State<SessionScreen> {
       if ([for (final id in b.ids) if (_check.ids.contains(id)) id] case final ids)
         (name: b.name, goal: b.goal, kind: b.kind, level: b.level, ids: ids, minutes: ids.isEmpty ? 0 : blockMinutes(ids, b.level)),
   ];
-  late final _fit = fitDay([for (final id in widget.ids) if (_check.ids.contains(id)) id], widget.level, _blocks, widget.sessionMinutes);
+  late final _fit = fitDay([for (final id in widget.ids) if (_check.ids.contains(id)) id], widget.level, _blocks, widget.sessionMinutes, lighter: _light);
   late final _levels = {for (final b in _blocks) for (final id in b.ids) id: b.level};
   int _levelOf(String id) => _levels[id] ?? widget.level;
   bool _full = false; // the person chose the full session over the shortened one
@@ -748,7 +762,7 @@ class _SessionScreenState extends State<SessionScreen> {
 
   /// The estimate for [shown] moves: the main session's (with its warm-up) plus each block's.
   int? _estimateOf(List<String> shown) {
-    final main = estimateMinutes([for (final id in shown) if (!_levels.containsKey(id)) id], widget.level);
+    final main = estimateMinutes([for (final id in shown) if (!_levels.containsKey(id)) id], widget.level, lighter: _light);
     return main == null ? null : main + _blocks.fold(0, (s, b) => s + blockMinutes([for (final id in b.ids) if (shown.contains(id)) id], b.level));
   }
   List<String> _missing = const []; // ids with no catalogue row; their sets do not count
@@ -770,6 +784,12 @@ class _SessionScreenState extends State<SessionScreen> {
   void initState() {
     super.initState();
     _opened = DateTime.now();
+    if (widget.onFinish != null && !widget.done) {
+      try {
+        _opened = sessionStart(prefs.getString(_startKey), _opened);
+        unawaited(prefs.setString(_startKey, _opened.toIso8601String()));
+      } catch (_) {} // no local storage (tests): the clock starts now
+    }
     _loadLast();
     _loadAdvice();
     _moves.then((m) {
@@ -1000,6 +1020,9 @@ class _SessionScreenState extends State<SessionScreen> {
     try {
       // The logging side reports its own errors; only a confirmed save marks the session done.
       if (!await widget.onFinish!(sessionMinutesSpent(_opened, DateTime.now()))) return;
+      try {
+        unawaited(prefs.remove(_startKey));
+      } catch (_) {} // no local storage (tests)
       _stopRest(); // the workout is over, so no more rest countdown
       HapticFeedback.heavyImpact();
       if (mounted) setState(() => _done = true);

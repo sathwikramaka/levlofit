@@ -169,7 +169,7 @@ ShareCard weekShareCard(WeekReport r, {required int streakWeeks}) => ShareCard(
       big: '${r.done} of ${r.planned} sessions',
       line: r.done >= r.planned ? 'Every planned session done.' : 'Showing up, one session at a time.',
       facts: [
-        ('$streakWeeks', streakWeeks == 1 ? 'WEEK STREAK' : 'WEEKS STREAK'),
+        ('$streakWeeks', 'WEEK STREAK'),
         if (r.strength case final s?) ('${s.up}', 'LIFTS UP'),
         if (r.checkinDays case final d?) ('$d / 7', 'CHECK-INS'),
       ],

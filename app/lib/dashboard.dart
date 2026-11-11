@@ -212,7 +212,12 @@ class _DashboardState extends State<Dashboard> {
   }
 
   // A swap confirmed in Levlofit AI changes today's session: load it again.
-  void _onReminderTap() => _openFor(Reminders.tapped.value);
+  void _onReminderTap() {
+    final title = Reminders.tapped.value;
+    if (title == null) return;
+    Reminders.tapped.value = null; // so the same reminder tapped again next time still notifies
+    _openFor(title);
+  }
 
   void _openFor(String? title) {
     if (title == null || !mounted) return;
@@ -880,7 +885,12 @@ class _Bento extends StatelessWidget {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('${_days[now.weekday - 1]}, ${now.day} ${_months[now.month - 1]}'.toUpperCase(), style: monoLabel(context)),
                   const SizedBox(height: 2),
-                  Text(first.isEmpty ? hello : '$hello, $first', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.headlineMedium),
+                  // Scaled down rather than cut: "Almost bedtime, Arjun" must keep the name at 390 dp.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(first.isEmpty ? hello : '$hello, $first', maxLines: 1, style: Theme.of(context).textTheme.headlineMedium),
+                  ),
                 ]),
               ),
               const _CoachButton(),
@@ -1064,13 +1074,13 @@ class _TodayCard extends StatelessWidget {
           MaterialPageRoute<void>(
               builder: (_) => SessionScreen(
                   title: short ? 'Starter: $name' : name,
-                  ids: ids, // a 20-minute setting fits the session to time (fitToTime): the main lifts stay
+                  ids: ids, // a short setting fits the session to time (fitToTime): the main lifts stay
                   level: level,
                   blocks: short ? const [] : blocks,
                   done: done,
                   onFinish: done ? null : (m) => onToggle(m),
                   injury: injury,
-                  sessionMinutes: short ? 20 : minutes,
+                  sessionMinutes: short ? starterMinutes : minutes,
                   lighter: short || lighter,
                   medicalHold: medicalHold,
                   kind: (goal['kind'] as String?) ?? 'strength',
@@ -1130,7 +1140,7 @@ class _TodayCard extends StatelessWidget {
           TextButton.icon(
             onPressed: () => start(short: true),
             icon: const Icon(LvIcons.timer, size: 18),
-            label: const Text('New here? Try a 20-minute starter, one set lighter'),
+            label: const Text('New here? Try a short starter, one set lighter'),
           ),
         ],
       ]),

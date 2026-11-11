@@ -111,6 +111,23 @@ void main() {
   }
   }
 
+  testWidgets('photo reveal: 8 weeks apart covers the pair and the grid until tapped; one photo shows plainly', (tester) async {
+    tester.view.physicalSize = const Size(390, 2400) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final now = DateTime.now();
+    await tester.pumpWidget(MaterialApp(home: progressBodyForTest(_plan, const [], const [], photoDays: [now, now.subtract(const Duration(days: 60))])));
+    await tester.pump(const Duration(seconds: 2));
+    await tester.scrollUntilVisible(find.text('8 WEEKS APART'), 200, scrollable: find.byType(Scrollable).first);
+    expect(find.byType(GridView), findsNothing, reason: 'nothing to spoil the reveal');
+    await tester.tap(find.text('See your 8-week change'));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1)); // the switcher drops the cover after its animation ends
+    expect(find.byType(GridView), findsOneWidget);
+    expect(find.text('See your 8-week change'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   test('weight trend and verdict', () {
     final start = DateTime(2026, 9, 1);
     // 80 kg losing 0.6 kg a week: about -0.75 % a week, inside the cut range.
@@ -265,7 +282,7 @@ Eat **150 g** protein.
     expect(find.textContaining('Exact timing'), findsNothing);
   });
 
-  testWidgets('first win: a new plan with no session offers the 20-minute starter on a training day; a logged session hides it', (tester) async {
+  testWidgets('first win: a new plan with no session offers the short starter on a training day; a logged session hides it', (tester) async {
     tester.view.physicalSize = const Size(390, 2400) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -274,10 +291,10 @@ Eat **150 g** protein.
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: dashboardBentoForTest(_plan, planSince: today.subtract(const Duration(days: 1))))));
     await tester.pump(const Duration(seconds: 2));
     final training = find.text("TODAY'S WORKOUT").evaluate().isNotEmpty;
-    expect(find.textContaining('20-minute starter'), training ? findsOneWidget : findsNothing);
+    expect(find.textContaining('short starter'), training ? findsOneWidget : findsNothing);
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: dashboardBentoForTest(_plan, logged: {today.subtract(const Duration(days: 1))}, planSince: today.subtract(const Duration(days: 3))))));
     await tester.pump(const Duration(seconds: 2));
-    expect(find.textContaining('20-minute starter'), findsNothing);
+    expect(find.textContaining('short starter'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

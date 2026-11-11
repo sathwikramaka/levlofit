@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'home_widget.dart';
 import 'main.dart';
 import 'offline_cache.dart';
 import 'reminders.dart';
@@ -9,6 +10,7 @@ import 'reminders.dart';
 /// Signs out after cancelling this account's reminders on the phone (best effort; sign-out always happens).
 Future<void> signOutAndClearReminders() async {
   await Reminders.clearAll().catchError((_) {});
+  await clearHomeWidget().catchError((_) {});
   await clearOfflineRows();
   await supabase.auth.signOut();
 }
@@ -65,6 +67,7 @@ Future<void> confirmAndDeleteAccount(BuildContext context) async {
   if (!deleted) return;
   // The account is gone: its reminders must not keep firing on this phone (best effort, never blocks sign-out).
   await Reminders.clearAll().catchError((_) {});
+  await clearHomeWidget().catchError((_) {});
   await clearOfflineRows();
   // The user no longer exists server-side, so only clear the local session.
   await supabase.auth.signOut(scope: SignOutScope.local);
