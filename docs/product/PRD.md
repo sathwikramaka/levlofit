@@ -1,6 +1,6 @@
 # Levlofit: Product Requirements Document
 
-Last updated: 2026-11-12, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.0.12. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Summary
 
@@ -25,7 +25,7 @@ Target hypotheses, not benchmarks: onboarding 70%+, D7 25%+, D30 15%+. Accounts 
 Adults 18 to 80 in India, beginners to experienced. Vegetarian, eggitarian, vegan or non-vegetarian. Android first; iPhone
 through the web app. People with medical conditions are told to involve a doctor; the app does not treat anyone.
 
-## 4. Requirements: live in 1.0.11
+## 4. Requirements: live in 1.0.12
 
 ### Plan and training
 - Onboarding builds a plan from goals, body, schedule, health check, equipment, food settings and a level check.
@@ -70,8 +70,9 @@ through the web app. People with medical conditions are told to involve a doctor
 - Works without AI: every core feature runs when the provider is down.
 
 ### Learning and account
-- Handbook: 43 chapters live; a 69-chapter book in six volumes is built and waits for release (database migration
-  `20261107300000_handbook_book`). Exercise library; glossary; BMI and body-fat tools.
+- Handbook: a 69-chapter book in six volumes, live in the app and on the website since 2026-11-12. Not clinician-reviewed;
+  1,379 of 2,381 claims still unreviewed (the coach cites only checked passages). Exercise library; glossary; BMI and
+  body-fat tools.
 - Google or email sign-in, Terms and Privacy at sign-up, delete account, send feedback (saved and emailed), in-app update, and an Android
   notification when a new version is out (checked about every 12 hours, once per version).
 
