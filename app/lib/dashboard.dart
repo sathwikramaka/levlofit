@@ -696,6 +696,27 @@ Widget _levelCard(_Data data, Set<DateTime> logged, Map<DateTime, int> minutes, 
   );
 }
 
+/// Consecutive weeks, counting back from last week, in which the planned number of days was logged; this week joins
+/// once it is met. One short week a month is let off for illness or travel: it does not break the streak or count in
+/// it, as long as no other week was let off in the four weeks before it.
+@visibleForTesting
+({int weeks, bool forgiven}) weekStreak(Set<DateTime> logged, DateTime monday, int perWeek) {
+  int daysIn(DateTime start) => logged.where((d) => !d.isBefore(start) && d.isBefore(start.add(const Duration(days: 7)))).length;
+  var weeks = daysIn(monday) >= perWeek ? 1 : 0;
+  int? letOff, pending; // weeks back of the last week let off; a short week waiting for an older met week
+  for (var w = 1; w <= 7; w++) {
+    if (daysIn(monday.subtract(Duration(days: 7 * w))) >= perWeek) {
+      weeks++;
+      if (pending != null) (letOff, pending) = (pending, null); // the streak went on past it: the pass is used
+    } else if (pending == null && (letOff == null || w - letOff >= 4)) {
+      pending = w;
+    } else {
+      break;
+    }
+  }
+  return (weeks: weeks, forgiven: letOff != null);
+}
+
 class _Bento extends StatelessWidget {
   const _Bento({
     required this.data,
@@ -746,7 +767,8 @@ class _Bento extends StatelessWidget {
     final minutesThisWeek = minutes.entries.where((e) => thisWeek(e.key)).fold(0, (s, e) => s + e.value);
     // WHO 2020: 150 to 300 minutes of moderate activity a week; the plan carries the range.
     final moveTarget = ((plan['activityGuideline'] as _Json?)?['moderateMinutesPerWeek'] as List?)?.first as int? ?? 150;
-    final streak = _weekStreak(logged, monday, perWeek);
+    final onPlan = weekStreak(logged, monday, perWeek);
+    final streak = onPlan.weeks;
     // A session moved with Levlofit AI shows on its new day and leaves a rest day behind (swaps.dart).
     final sessionDay = sessionDayFor(now.weekday, dayGoal.keys.toSet(), data.moves);
     final todayGoal = dayGoal[sessionDay] ?? dayGoal[now.weekday] ?? goals.first;
@@ -779,7 +801,7 @@ class _Bento extends StatelessWidget {
     final tasks = {for (final h in habits) h.$1: h.$5};
 
     Widget card(String id) => switch (id) {
-          'rings' => _Rings(days: doneThisWeek, daysTarget: perWeek, minutes: minutesThisWeek, minutesTarget: moveTarget, streak: streak),
+          'rings' => _Rings(days: doneThisWeek, daysTarget: perWeek, minutes: minutesThisWeek, minutesTarget: moveTarget, streak: streak, forgiven: onPlan.forgiven),
           'today' => _TodayCard(
               isTrainingDay: isTrainingDay || ownAddOn != null,
               goal: cardGoal,
@@ -876,17 +898,6 @@ class _Bento extends StatelessWidget {
     );
   }
 
-  /// Consecutive weeks, counting back from last week, in which the planned number of days was logged.
-  /// This week joins the count once it is already met.
-  static int _weekStreak(Set<DateTime> logged, DateTime monday, int perWeek) {
-    int daysIn(DateTime start) => logged.where((d) => !d.isBefore(start) && d.isBefore(start.add(const Duration(days: 7)))).length;
-    var streak = daysIn(monday) >= perWeek ? 1 : 0;
-    for (var w = 1; w <= 7; w++) {
-      if (daysIn(monday.subtract(Duration(days: 7 * w))) < perWeek) break;
-      streak++;
-    }
-    return streak;
-  }
 }
 
 // ---------------------------------------------------------------- rings and today
@@ -894,8 +905,9 @@ class _Bento extends StatelessWidget {
 /// Activity rings, read at a glance: outer is training days against the plan, inner is active minutes
 /// against the WHO weekly target. Both close when the week's job is done.
 class _Rings extends StatelessWidget {
-  const _Rings({required this.days, required this.daysTarget, required this.minutes, required this.minutesTarget, required this.streak});
+  const _Rings({required this.days, required this.daysTarget, required this.minutes, required this.minutesTarget, required this.streak, this.forgiven = false});
   final int days, daysTarget, minutes, minutesTarget, streak;
+  final bool forgiven; // a short week inside the streak was let off
 
   @override
   Widget build(BuildContext context) {
@@ -950,7 +962,7 @@ class _Rings extends StatelessWidget {
               const SizedBox(height: 4),
               stat(c.primary, 'Training', '$days', 'of $daysTarget ${daysTarget == 1 ? 'day' : 'days'}'),
               stat(progressColor(context), 'Active', '$minutes', 'of $minutesTarget min'),
-              if (streak > 0) Text('$streak ${streak == 1 ? 'week' : 'weeks'} on plan', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              if (streak > 0) Text('$streak ${streak == 1 ? 'week' : 'weeks'} on plan${forgiven ? ', one short week let off' : ''}', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
             ]),
           ),
         ]),

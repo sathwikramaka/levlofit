@@ -2001,7 +2001,7 @@ List<Widget> _progressBody(
         const SizedBox(width: 10),
         Expanded(child: _Stat(value: '${days.length}', label: 'SESSIONS')),
         const SizedBox(width: 10),
-        Expanded(child: _Stat(value: '${_Bento._weekStreak(days, monday, perWeek)}', label: 'WEEK STREAK')),
+        Expanded(child: _Stat(value: '${weekStreak(days, monday, perWeek).weeks}', label: 'WEEK STREAK')),
       ]),
     ),
     const SizedBox(height: 12),
