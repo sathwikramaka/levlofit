@@ -794,7 +794,8 @@ class _Bento extends StatelessWidget {
               done: logged.contains(today),
               saving: saving,
               // An add-on day logs its own length (the block and a warm-up), not the full session setting.
-              onToggle: () => onToggleToday(cardGoal['goal'] as String, ownBlock == null ? sessionMinutes : ownBlock.minutes + 5),
+              // Finished in a session: the minutes it took. Ticked without one: the planned length (an add-on day, its block and a warm-up).
+              onToggle: (spent) => onToggleToday(cardGoal['goal'] as String, spent ?? (ownBlock == null ? sessionMinutes : ownBlock.minutes + 5)),
             ),
           'rewards' => _RewardsCard(
               tasks: [for (final h in habits) if (dailyTasks.contains(h.$1)) (label: h.$3, done: h.$5(today))],
@@ -1009,7 +1010,7 @@ class _TodayCard extends StatelessWidget {
   final List<String> ids;
   final List<AddOnBlock> blocks; // today's add-on blocks after the main session
   final String? injury; // the user's injury note, for the injury check
-  final Future<bool> Function() onToggle;
+  final Future<bool> Function(int? spent) onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -1021,7 +1022,7 @@ class _TodayCard extends StatelessWidget {
     void start() => Navigator.push(
           context,
           MaterialPageRoute<void>(
-              builder: (_) => SessionScreen(title: name, ids: ids, level: level, blocks: blocks, done: done, onFinish: done ? null : onToggle, injury: injury, sessionMinutes: minutes, lighter: lighter, medicalHold: medicalHold, kind: (goal['kind'] as String?) ?? 'strength', gym: gym)),
+              builder: (_) => SessionScreen(title: name, ids: ids, level: level, blocks: blocks, done: done, onFinish: done ? null : (m) => onToggle(m), injury: injury, sessionMinutes: minutes, lighter: lighter, medicalHold: medicalHold, kind: (goal['kind'] as String?) ?? 'strength', gym: gym)),
         );
     return _Tile(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1062,14 +1063,14 @@ class _TodayCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Expanded(child: Text('Done today', style: t.titleMedium)),
-                  TextButton(onPressed: saving ? null : onToggle, child: const Text('Undo')),
+                  TextButton(onPressed: saving ? null : () => onToggle(null), child: const Text('Undo')),
                 ])
               : Row(key: const ValueKey('start'), children: [
                   Expanded(
                     child: isTrainingDay ? FilledButton(onPressed: start, child: const Text('Start workout')) : OutlinedButton(onPressed: start, child: const Text('Train anyway')),
                   ),
                   const SizedBox(width: 10),
-                  TextButton(onPressed: saving ? null : onToggle, child: const Text('Log as done')),
+                  TextButton(onPressed: saving ? null : () => onToggle(null), child: const Text('Log as done')),
                 ]),
         ),
       ]),
