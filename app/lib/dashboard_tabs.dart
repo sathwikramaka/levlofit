@@ -1072,6 +1072,17 @@ class _LevelCheckScreenState extends State<_LevelCheckScreen> {
       saved = true;
       await supabase.functions.invoke('generate-plan');
       HapticFeedback.heavyImpact();
+      if (_level > widget.current && mounted) {
+        final row = (await _ladder).firstWhere((r) => r['level'] == _level, orElse: () => const {});
+        if (mounted) {
+          await Navigator.push(context, MaterialPageRoute<void>(fullscreenDialog: true, builder: (_) => LevelUpMoment(
+            goalName: widget.goalName,
+            level: _level,
+            title: row['title'] as String?,
+            practice: ((row['practice'] as List?) ?? const []).cast<String>(),
+          )));
+        }
+      }
       if (mounted) Navigator.pop(context, true);
     } catch (_) {
       if (mounted) {
@@ -1715,6 +1726,28 @@ class _ProfileScreen extends StatelessWidget {
           ]),
         ),
         const SizedBox(height: 14),
+        // Earned levels, one badge per goal: the brand's "find your level", kept where the person can see it.
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: _Tile(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('LEVELS EARNED', style: monoLabel(context)),
+              const SizedBox(height: 10),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                for (final g in ((data.plan['goals'] as List?) ?? const []).cast<_Json>())
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(14)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text('L${g['startLevel']}', style: monoNumber(context, size: 16).copyWith(color: Theme.of(context).colorScheme.tertiary, fontWeight: FontWeight.w700)),
+                      const SizedBox(width: 8),
+                      Text((g['name'] ?? g['goal']) as String, style: Theme.of(context).textTheme.bodyMedium),
+                    ]),
+                  ),
+              ]),
+            ]),
+          ),
+        ),
         _section(context, 'YOU', [
           _row(context, LvIcons.userCircle, 'Profile picture', change, trailing: 'Avatar or your photo'),
           _row(context, LvIcons.pencilSimple, 'Edit name, height and weight', onEditDetails),

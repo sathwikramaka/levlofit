@@ -3,8 +3,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import 'icons.dart';
 import 'main.dart' show prefs;
+import 'mark.dart';
 import 'theme.dart';
 
 /// 66 days: the median time to automaticity in Lally et al., Eur J Soc Psychol 2010;40:998 (range 18 to 254 days).
@@ -186,6 +189,60 @@ class _LevelUpCardState extends State<LevelUpCard> {
         const SizedBox(height: 8),
         Text('Source for 66 days: $challengeSource.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
       ]),
+    );
+  }
+}
+
+/// A passed level check, shown as an event: the mark settles, the new level is named, and what it unlocks is listed.
+/// Only for moving up; a lower result is just saved.
+class LevelUpMoment extends StatelessWidget {
+  const LevelUpMoment({super.key, required this.goalName, required this.level, this.title, this.practice = const [], this.onShare});
+  final String goalName;
+  final int level;
+  final String? title; // the level's name on the curriculum ladder
+  final List<String> practice; // what this level trains
+  final VoidCallback? onShare;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const Spacer(),
+            const Center(child: LevloMark(size: 72, animate: true)),
+            const SizedBox(height: 28),
+            Text('LEVEL UP', textAlign: TextAlign.center, style: monoLabel(context).copyWith(color: c.tertiary)),
+            const SizedBox(height: 8),
+            Text('Level $level', textAlign: TextAlign.center, style: GoogleFonts.unbounded(fontSize: 44, fontWeight: FontWeight.w700, letterSpacing: -1, color: c.onSurface)),
+            const SizedBox(height: 6),
+            Text([goalName, ?title].join('  ·  '), textAlign: TextAlign.center, style: t.titleMedium?.copyWith(color: c.onSurfaceVariant)),
+            if (practice.isNotEmpty) ...[
+              const SizedBox(height: 28),
+              Text('WHAT YOU TRAIN NOW', style: monoLabel(context)),
+              const SizedBox(height: 8),
+              for (final p in practice)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Padding(padding: const EdgeInsets.only(top: 3), child: Icon(LvIcons.check, size: 16, color: progressColor(context))),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(p, style: t.bodyMedium)),
+                  ]),
+                ),
+            ],
+            const Spacer(),
+            if (onShare != null) ...[
+              OutlinedButton.icon(onPressed: onShare, icon: const Icon(LvIcons.shareNetwork, size: 18), label: const Text('Share')),
+              const SizedBox(height: 10),
+            ],
+            FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Continue')),
+          ]),
+        ),
+      ),
     );
   }
 }
