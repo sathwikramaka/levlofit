@@ -3,13 +3,17 @@
 // site unless --dart-define=LEVLOFIT_UPDATE_URL overrides it (1.0.0 and 1.0.1 shipped without the define, so they never
 // checked). Other builds, the web app (it cannot install an APK) and offline starts show nothing.
 // Update installs inside the app on Android (installUpdate, android/.../UpdateInstaller.kt); the browser is the fallback.
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show MethodChannel;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:workmanager/workmanager.dart';
 
 import 'app_version.dart';
 import 'main.dart' show backendChoice, prefs;
@@ -43,6 +47,7 @@ Future<Update?>? _check;
 
 Future<Update?> checkForUpdate({http.Client? client}) => _check ??= () async {
       if (updateUrl.isEmpty || kIsWeb) return null;
+      unawaited(_watchForUpdates());
       try {
         final res = await (client ?? http.Client()).get(Uri.parse(updateUrl)).timeout(const Duration(seconds: 8));
         if (res.statusCode != 200) return null;
@@ -57,6 +62,54 @@ Future<Update?> checkForUpdate({http.Client? client}) => _check ??= () async {
         return null;
       }
     }();
+
+// ---- notification when a new version is out ------------------------------------------------------------------------
+// Levlofit has no push service, so the phone asks: Android runs this about every 12 hours with a network, even when the
+// app is closed, and notifies once per version. The timing is Android's: it can be late, and battery savers can delay it.
+
+const _notifiedKey = 'update_notified_build';
+const _watchTask = 'levlofit_update_watch';
+
+/// The update to notify about: only a newer version, and only once for each one.
+Update? updateToNotify(String body, {int currentBuild = appBuild, int? alreadyNotified}) {
+  final u = parseUpdate(body, currentBuild: currentBuild);
+  return u == null || u.build == alreadyNotified ? null : u;
+}
+
+Future<void> _watchForUpdates() async {
+  if (defaultTargetPlatform != TargetPlatform.android) return;
+  try {
+    await Workmanager().initialize(updateWatchDispatcher);
+    await Workmanager().registerPeriodicTask(_watchTask, _watchTask,
+        frequency: const Duration(hours: 12),
+        constraints: Constraints(networkType: NetworkType.connected),
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.keep);
+  } catch (_) {} // the card on the dashboard still offers the update
+}
+
+/// Runs in Android's background worker, apart from the app: nothing from main() is set up here.
+@pragma('vm:entry-point')
+void updateWatchDispatcher() {
+  Workmanager().executeTask((_, _) async {
+    final res = await http.get(Uri.parse(updateUrl)).timeout(const Duration(seconds: 20));
+    if (res.statusCode != 200) return true;
+    final saved = await SharedPreferences.getInstance();
+    final u = updateToNotify(res.body, alreadyNotified: saved.getInt(_notifiedKey));
+    if (u == null) return true;
+    final plugin = FlutterLocalNotificationsPlugin();
+    await plugin.initialize(settings: const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')));
+    await plugin.show(
+      id: 2, // below the reminder ids, so the reminder schedule never cancels it
+      title: 'Levlofit ${u.version} is ready',
+      body: 'Open Levlofit to install the update.',
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails('levlo_updates_v1', 'App updates', channelDescription: 'When a new version of Levlofit is out', color: Color(0xFFFF6A1A)),
+      ),
+    );
+    await saved.setInt(_notifiedKey, u.build);
+    return true;
+  });
+}
 
 const _installer = MethodChannel('levlofit/update');
 

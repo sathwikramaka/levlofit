@@ -158,9 +158,9 @@ class ExerciseGif extends StatelessWidget {
   final double? size;
   final String? id; // the move, for its licensed drawing when no animation may be shown
 
-  /// The catalogue url, else the ExerciseDB V1 media address for a catalogue id (same host and pattern), so a move
+  /// The catalogue url (a blank one counts as none), else the ExerciseDB V1 media address for a catalogue id (same host and pattern), so a move
   /// still animates when its catalogue row has not loaded.
-  String? get _src => url ?? (id != null && RegExp(r'^[A-Za-z0-9]{7}$').hasMatch(id!) ? 'https://static.exercisedb.dev/media/$id.gif' : null);
+  String? get _src => (url?.trim().isNotEmpty ?? false) ? url : (id != null && RegExp(r'^[A-Za-z0-9]{7}$').hasMatch(id!) ? 'https://static.exercisedb.dev/media/$id.gif' : null);
 
   @override
   Widget build(BuildContext context) => Container(

@@ -1,6 +1,6 @@
 # Levlofit: Technical Requirements Document
 
-Last updated: 2026-11-11, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Architecture
 
@@ -46,7 +46,8 @@ check-ins and own supplements are not sent. Deleting an account removes its file
 **Offline.** Encrypted per-account copy of the last plan; read-only.
 **Phone-only data.** Reminder switches, photo reveals and the home screen widget's two lines live in shared_preferences;
 the widget (`TodayWidget.kt`) reads them natively and is redrawn over the `levlofit/widget` channel. Sharing uses
-`share_plus` (BSD-3-Clause) with a PNG drawn on the phone.
+`share_plus` (BSD-3-Clause) with a PNG drawn on the phone. The update notice runs in Android's background worker
+(`workmanager`, MIT) about every 12 hours with a network, reads `/version.json` and notifies once per build.
 **Time.** All logs key on the phone's local day. The server takes `localDay` from the app.
 
 ## 4. Secrets (names only, never values)

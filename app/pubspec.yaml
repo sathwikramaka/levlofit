@@ -47,6 +47,7 @@ dependencies:
   url_launcher: ^6.3.3
   flutter_secure_storage: ^11.2.0
   flutter_zxing: ^3.1.0
+  workmanager: ^0.10.10
   share_plus: ^13.3.1
 dependency_overrides:
   flutter_local_notifications:

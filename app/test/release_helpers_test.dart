@@ -91,4 +91,13 @@ void main() {
     expect(errorRow('x', null, platform: TargetPlatform.windows, web: true)!['platform'], 'web');
     expect(errorRow('   ', null, platform: TargetPlatform.android, web: false), isNull);
   });
+
+  test('update notification: a newer version once, never for this version or a failed read', () {
+    const body = '{"version":"1.0.9","build":11,"url":"https://x.test/a.apk"}';
+    expect(updateToNotify(body, currentBuild: 10)?.version, '1.0.9');
+    expect(updateToNotify(body, currentBuild: 10, alreadyNotified: 11), isNull);
+    expect(updateToNotify(body, currentBuild: 10, alreadyNotified: 10)?.build, 11);
+    expect(updateToNotify(body, currentBuild: 11), isNull);
+    expect(updateToNotify('not json', currentBuild: 10), isNull);
+  });
 }
