@@ -2108,13 +2108,13 @@ List<Widget> _progressBody(
         if (photos.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text('Same light, pose, distance and time of day, every few weeks. Private to your account.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+            child: Text('Same light, pose, distance and time of day, every few weeks. Private to your account. At 4, 8 and 12 weeks, Levlofit shows the first and the latest side by side.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
           )
         else ...[
           const SizedBox(height: 8),
           if (photos.length > 1) ...[
-            // First and latest side by side: change you cannot see day to day.
-            Row(children: [
+            // First and latest side by side: change you cannot see day to day. At 4, 8 and 12 weeks apart, a one-time reveal.
+            _PhotoReveal(weeks: photoMilestone(photos.last.day, photos.first.day), child: Row(children: [
               for (final (label, p) in [('FIRST', photos.last), ('LATEST', photos.first)]) ...[
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -2125,7 +2125,7 @@ List<Widget> _progressBody(
                 ),
                 if (label == 'FIRST') const SizedBox(width: 10),
               ],
-            ]),
+            ])),
             const SizedBox(height: 12),
           ],
           GridView.count(
@@ -2162,6 +2162,56 @@ List<Widget> _progressBody(
     Text('Trend targets: ISSN position stand on diets and body composition (Aragon et al., 2017); off-season gain rates (Iraki et al., 2019).',
         style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
   ];
+}
+
+/// The photo milestone reached between the first and latest photo: 12, 8 or 4 weeks apart, else null.
+int? photoMilestone(DateTime first, DateTime latest) {
+  final weeks = latest.difference(first).inDays ~/ 7;
+  return [12, 8, 4].where((m) => weeks >= m).firstOrNull;
+}
+
+/// Covers the first-and-latest pair once per milestone; a tap reveals it, remembered on this phone.
+class _PhotoReveal extends StatefulWidget {
+  const _PhotoReveal({required this.weeks, required this.child});
+  final int? weeks;
+  final Widget child;
+
+  @override
+  State<_PhotoReveal> createState() => _PhotoRevealState();
+}
+
+class _PhotoRevealState extends State<_PhotoReveal> {
+  String get _key => 'photo_reveal_${widget.weeks}';
+  bool get _hidden => widget.weeks != null && prefs.getBool(_key) != true;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (widget.weeks case final w?) ...[
+        Text('$w WEEKS APART', style: monoLabel(context).copyWith(color: c.tertiary)),
+        const SizedBox(height: 8),
+      ],
+      AnimatedSwitcher(
+        duration: motion(context, 420),
+        child: _hidden
+            ? SizedBox(
+                key: const ValueKey('cover'),
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    await prefs.setBool(_key, true);
+                    HapticFeedback.mediumImpact();
+                    if (mounted) setState(() {});
+                  },
+                  icon: const Icon(LvIcons.camera, size: 18),
+                  label: Text('See your ${widget.weeks}-week change'),
+                ),
+              )
+            : KeyedSubtree(key: const ValueKey('shown'), child: widget.child),
+      ),
+    ]);
+  }
 }
 
 class _Stat extends StatelessWidget {
