@@ -1777,9 +1777,6 @@ class _ProfileScreen extends StatelessWidget {
           _row(context, LvIcons.pencilSimple, 'Edit name, height and weight', onEditDetails),
           _row(context, LvIcons.notePencil, 'Protocol', () => onOpen(_Tab.protocol), trailing: 'Goals, days, diet, budget'),
         ]),
-        _section(context, 'MORE', [
-          _row(context, LvIcons.gear, 'Settings', () => onOpen(_Tab.settings), trailing: 'Theme, help, privacy'),
-        ]),
         _section(context, '', [
           _row(context, LvIcons.signOut, 'Sign out', onSignOut),
           _row(context, LvIcons.trash, 'Delete account', onDelete, color: c.error),
