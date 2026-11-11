@@ -2,6 +2,19 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one. Older entries name paths from before docs were sorted into folders (2026-11-07); see `docs/README.md`.
 
+## 2026-11-11: release 1.0.11, habit features (owner-approved: APK, website, MIN_APP_BUILD secret)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 79ed8e2 plus the version bump 86c92e4, built from a clean git worktree; the uncommitted update-notification work in the main folder is not shipped. Website pages built from the 1.0.10 sources (30c848e), without `_redirects` and the book JSON: the 43-chapter Handbook stays live until the book is finished (owner decision 2026-11-07) | git worktree; `git diff 30c848e -- website` empty |
+| Checks before release | flutter analyze clean, 663 pass + 1 skip; release helper tests 6/6; debug APK built; walk-through of the web app on a throwaway local stack (synthetic user): starter, set logging, personal best, finish and minutes, Today's read, weekly report and share, level check and level-up share, Profile levels, reminder switches, photo reveal (by widget test, the pane was hidden) | flutter test, browser pane |
+| CI | Not run on the last commits before release | - |
+| Android APK | com.levlofit.app 1.0.11, versionCode 2013, 13,720,503 bytes (13.7 MB), release certificate 7c510c35...4c431384 (CN=Levlofit); manifest has the TodayWidget receiver | aapt2, apksigner on the live file |
+| APK SHA-256 | 3f05fca435713c6586cb323d9bb33290a903cd8c350d11be3dd492c69fd22305, equal on the live download and /version.json | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 12fe7fc5; home links levlofit-1.0.11.apk; /version.json = 1.0.11 build 13, min_build 13; /handbook lists 43 chapters; /app/ 200 | curl |
+| Secret | MIN_APP_BUILD = 13 (digest equals sha256 of "13") | supabase secrets list |
+| Not verified | Nothing on a real phone: the home screen widget, the Android share sheet, notification taps (recap, check-in, meals), haptics, the in-app update from 1.0.10. Database and functions unchanged; the book migration is still not applied | - |
+
 ## 2026-11-07: release 1.0.10, soft card look (owner-approved: APK, website, MIN_APP_BUILD secret)
 
 | What | Value | How checked |

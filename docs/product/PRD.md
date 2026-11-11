@@ -1,6 +1,6 @@
 # Levlofit: Product Requirements Document
 
-Last updated: 2026-11-11, for release 1.0.10. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-11, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Summary
 
@@ -25,7 +25,7 @@ Target hypotheses, not benchmarks: onboarding 70%+, D7 25%+, D30 15%+. Accounts 
 Adults 18 to 80 in India, beginners to experienced. Vegetarian, eggitarian, vegan or non-vegetarian. Android first; iPhone
 through the web app. People with medical conditions are told to involve a doctor; the app does not treat anyone.
 
-## 4. Requirements: live in 1.0.10
+## 4. Requirements: live in 1.0.11
 
 ### Plan and training
 - Onboarding builds a plan from goals, body, schedule, health check, equipment, food settings and a level check.
@@ -92,7 +92,7 @@ subscriptions. iOS native (no Mac); Ironman or triathlon content (no sourced swi
 
 ## 7. Known limits
 
-- **Not on a real phone yet:** the new look (1.0.10) and most 1.0.9 features. See `IMPLEMENTATION_PLAN.md`.
+- **Not on a real phone yet:** the 1.0.11 habit features (widget, sharing, notification taps), the 1.0.10 look and most 1.0.9 features. See `IMPLEMENTATION_PLAN.md`.
 - Diary has raw and dry values only; cooked rice and dal need a verified import.
 - Protein uses actual body weight; adjusted weight for higher BMI needs a dietitian (`docs/legal/OUTSTANDING_REVIEWS.md`).
 - High-calorie plans can show large counts (7 rotis, 10 idlis at a meal).

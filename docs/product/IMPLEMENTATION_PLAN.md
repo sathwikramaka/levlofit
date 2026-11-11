@@ -1,6 +1,6 @@
 # Levlofit: Implementation Plan
 
-Last updated: 2026-11-11, for release 1.0.10. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-11, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 Detail: `docs/PROGRESS.md` (log), `docs/release/RELEASE_RECORD.md` (what shipped), `docs/archive/ROADMAP_AUDIT_2026-11-03.md` (roadmap).
 
 Status labels are kept apart: Source, Automated, CI, Deployed, Production verified, Real device.
@@ -15,17 +15,18 @@ Status labels are kept apart: Source, Automated, CI, Deployed, Production verifi
 | Diet accuracy: rice in grams, real servings, raw and dry names | Deployed in 1.0.9 |
 | Custom supplements, Supplements card, pre- and post-workout meals | Deployed in 1.0.9 |
 | Soft card look, floating bottom bar | Deployed in 1.0.10 (CI green) |
+| Habit features: personal bests, forgiving streak, level-up screen, nudges, share pictures, short starter, Today's read, photo reveal, home widget | Deployed in 1.0.11 |
 | Encrypted Storage backup job and restore drill | Source and drill only: **inactive, see below** |
 
 ## 2. Next, in order
 
 | # | Task | Owner | Why now |
 |---|---|---|---|
-| 1 | Run the device checklist on 1.0.10 (`docs/operations/DEVICE_CHECKLIST_1_0_8.md`) | Owner | Nothing recent has run on a real phone |
+| 1 | Run the device checklist on 1.0.11 (`docs/operations/DEVICE_CHECKLIST_1_0_8.md`) | Owner | Nothing recent has run on a real phone |
 | 2 | Add `STORAGE_S3_KEY_ID`, `STORAGE_S3_SECRET`; run "Daily Storage backup" once | Owner | Photos are not backed up automatically; the job fails nightly |
 | 3 | Finish the 2026-11-07 redesign review (not shipped): later onboarding, Build my plate, coach replies, then a release build on a phone | Claude, owner for the phone | Main screens tested on a phone with a debug build |
 | 4 | Finish, test and commit the update notification work (uncommitted in the folder) | Claude, owner | Requested; needs a phone test |
-| 4a | Phone-test and ship the 2026-11-11 habit work (source and tests only): personal bests, forgiving streak, level-up screen, recap, check-in and meal nudges, share pictures, short starter, Today's read, photo reveal, Android home widget | Owner for the phone, Claude | Built without a phone; the widget and sharing need a real device |
+| 4a | Phone-test the habit features released in 1.0.11: home screen widget, share sheet, notification taps, haptics | Owner | Released after a web walk-through; Android-only parts not seen on a phone |
 | 5 | Cooked rice and dal in the diary, from USDA values | Owner approves import | People log cooked food against raw values |
 | 6 | Enforce the website CSP after a signed-in web app check | Owner, Claude | Report-only today |
 | 7 | Rebuild the Handbook as a 69-chapter book in six volumes: 55 on the APS chapters with text checked against sources, plus 14 Levlofit chapters APS does not cover, kept at the owner's choice (`data/handbook_book/`). All volumes drafted. Website and app readers built and tested locally, not on a phone. Evidence register started (`data/handbook_book/claims_register.csv`): 1,002 of 2,381 claims reviewed, 316 with a quoted source passage; 1,379 still unreviewed, which the coach cannot cite. Coach code reads the book passages locally. Migration `20261107300000_handbook_book` tested on a throwaway local stack, not applied. Release order: app with the book reader and forced update (older apps show lists, tables and notes blank), then the migration, then `coach-chat` and the website. Website shows only the book, with the 29 old addresses redirected (`website/public/_redirects`). Clinical review is not done | Claude, owner approves | Owner decision 2026-11-07; the 43-chapter Handbook stays live until the book is finished |
