@@ -1,6 +1,6 @@
 # Levlofit: App Flow
 
-Last updated: 2026-11-07, for release 1.0.10. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-11, for release 1.0.10. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. First run
 
@@ -46,8 +46,9 @@ Habits); food and body (Food diary, Food library, Water, BMI calculator); accoun
 ## 4. Today
 
 Header (date, greeting, Levlofit AI, avatar opening Profile), then cards the person can reorder or hide. Shown by default:
-weekly rings, today's session, daily check-in, week, water, food targets. Off by default, on from Customise: daily goal,
-rank and rating, habits, body.
+weekly rings, today's session, daily check-in, week, Today's read, water, food targets. Off by default, on from
+Customise: daily goal, rank and rating, habits, body. A new plan with no session yet shows "Try a 20-minute starter" under
+Start workout.
 Under today's session when they apply: level prompt, safety notes, then **welcome back** (14+ days away) or **plan fit**
 (three short weeks).
 
@@ -58,6 +59,10 @@ Under today's session when they apply: level prompt, safety notes, then **welcom
 | Check-in | Sheet of optional answers; a second save the same day edits it |
 | Plan fit: Switch | Sets days per week, rebuilds the plan. Keep hides it for 4 weeks |
 | Welcome back: Got it | Hidden until the next break |
+| Log a set that beats the last best | Haptic, a "New best" note, the move card marked |
+| Pass a level check | Level-up screen ─> Share (picture) or Continue |
+| Tap a nudge | Recap ─> Progress, check-in ─> Levlofit AI, meal ─> Diet |
+| Today's read | Opens the chapter |
 
 ## 5. Diet
 
@@ -73,15 +78,16 @@ targets and protein foods ─> recipes with AI.
 - **Workout:** today's session with Start, the other days as one line each, goals and levels, edit goals, level check (a
   pass rebuilds the plan), then "Your path" folded.
 - **Session:** exercises first; warm-up and cooldown fold away.
-- **Progress:** weight verdict, weekly report, stats, strength, weight, measurements, body check, photos, 12-week chart, steps
+- **Progress:** weight verdict, weekly report (Share as a picture; on Sundays the week now ending), stats, strength, weight, measurements, body check, photos (a one-time reveal at 4, 8 and 12 weeks), 12-week chart, steps
   where the phone supports them, then rank, rating and the 66-day challenge.
 - **Calendar:** tap a day to log or remove training, or edit its length, effort and pain.
 - **Protocol:** days, minutes, weekdays, time, equipment, goal, activity, water; saving rebuilds the plan.
 - **Coach:** chats, memory, edit and regenerate; proposals (swap, lighter day, moved session, plan change, meal log) apply
   only after the person confirms.
 - **Food diary:** day, meal, search or barcode, grams with a raw-weight warning; edit, remove, recipes.
-- **Settings:** theme (light by default), support, feedback, glossary, notifications, data use, privacy, licences.
-- **Profile:** details, avatar, sign out, delete account.
+- **Settings:** theme (light by default), support, feedback, glossary, notifications (with recap, check-in and meal switches), data use, privacy, licences.
+- **Profile:** details, avatar, levels earned, sign out, delete account.
+- **Home screen widget (Android):** today's session and the week; a tap opens the app.
 
 ## 7. Failure behaviour
 

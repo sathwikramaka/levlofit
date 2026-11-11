@@ -46,12 +46,22 @@ through the web app. People with medical conditions are told to involve a doctor
 - Food diary with search, packaged foods by barcode, recipes, whole-meal logging, raw-weight warnings.
 
 ### Daily use and progress
-- Dashboard: activity arcs, today's session, optional daily check-in, daily goal, rank and rating, week strip, water,
-  habits, food targets, BMI. Customisable.
+- Dashboard: activity arcs, today's session, optional daily check-in, daily goal, rank and rating, week strip, Today's
+  read (one Handbook chapter a day, by training or rest day), water, habits, food targets, BMI. Customisable.
+- Active minutes are the minutes a session took (opened to finished), not the planned length.
+- Weekly streak: weeks that met the plan; one short week in any 4 is let off when a met week follows. Never a weight or
+  calorie streak.
+- First win: a new plan with no session yet offers a 20-minute starter, one set lighter.
+- Moments: a new best (heaviest, or most reps at a weight) shows while logging; passing a level check opens a level-up
+  screen; Profile lists the level earned per goal. Week and level can be shared as a picture (sessions, streak, lifts,
+  check-ins, level); food and weight never appear on it.
+- Progress photos: at 4, 8 and 12 weeks between first and latest, a one-time reveal of the pair.
+- Android home screen widget: today's session and sessions this week.
 - Weekly report: sessions against plan, logged food against targets from 3 logged days, lift trend, weight change only
   with enough weigh-ins, one observation, one next step.
 - Weight trend, measurements, optional private progress photos, optional body check.
-- Reminders: workout, water with chosen hours, weigh-in, the person's own; opt-in, master switch.
+- Reminders: workout, water with chosen hours, weigh-in, the person's own; opt-in, master switch. Under it: Sunday
+  recap (on), morning Levlofit AI check-in and meal-time nudges (off); each at most once a day and opens its screen.
 - Welcome-back card after 14 days away. No guilt wording anywhere.
 
 ### Levlofit AI

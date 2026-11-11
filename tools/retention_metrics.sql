@@ -9,6 +9,7 @@
 --   activation         an account with at least one generated plan (finished onboarding and got a plan).
 --   Dn retention       share of a signup-week cohort with a meaningful action exactly n days after signup. A cohort is
 --                      shown for Dn only once every account in it is at least n days old.
+--   sessions per week  last full week: distinct workout days per user, among users with at least one.
 --   workout adherence  last full week (Mon-Sun): sum over users of min(sessions, planned days) / sum of planned days,
 --                      for users with a plan; planned days from their latest plan's trainingDaysPerWeek.
 -- Small cohorts swing a lot: treat anything under 20 accounts as anecdote, not a rate.
@@ -59,6 +60,10 @@ select metric, value from (
   union all
   select 4, 'workout adherence, last full week (%)', coalesce(round(100.0 * sum(least(coalesce(d.n, 0), p.days)) / nullif(sum(p.days), 0), 1)::text, 'n/a')
     from planned p left join done d using (user_id) where p.days > 0
+  union all
+  select 5, 'sessions per week, users who trained last full week', coalesce(round(avg(d.n), 2)::text, 'n/a') from done d
+  union all
+  select 6, 'users who trained on 3+ days last full week', count(*) filter (where d.n >= 3)::text from done d
 ) m order by ord;
 
 rollback;
