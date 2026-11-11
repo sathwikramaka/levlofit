@@ -12,6 +12,7 @@ abstract final class LvIcons {
   static const lightning = IconData(0xe2de, fontFamily: _f);
   static const mountains = IconData(0xe7ae, fontFamily: _f);
   static const trophy = IconData(0xe67e, fontFamily: _f);
+  static const shareNetwork = IconData(0xe408, fontFamily: _f);
   static const eyeSlash = IconData(0xe224, fontFamily: _f);
   static const check = IconData(0xe182, fontFamily: _f);
   static const arrowLeft = IconData(0xe058, fontFamily: _f, matchTextDirection: true);
