@@ -79,6 +79,7 @@ class _MoreScreen extends StatelessWidget {
       group('ACCOUNT', [
         row(LvIcons.timer, 'Reminders', () => onOpen(_Tab.reminders)),
         row(LvIcons.userCircle, 'Profile', () => onOpen(_Tab.profile)),
+        row(LvIcons.gear, 'Settings', () => onOpen(_Tab.settings)), // its own row, not inside Profile (owner, 2026-11-12)
       ]),
     ]);
   }

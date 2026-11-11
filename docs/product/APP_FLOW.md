@@ -1,6 +1,6 @@
 # Levlofit: App Flow
 
-Last updated: 2026-11-11, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. First run
 
@@ -85,7 +85,7 @@ targets and protein foods ─> recipes with AI.
 - **Coach:** chats, memory, edit and regenerate; proposals (swap, lighter day, moved session, plan change, meal log) apply
   only after the person confirms.
 - **Food diary:** day, meal, search or barcode, grams with a raw-weight warning; edit, remove, recipes.
-- **Settings:** theme (light by default), support, feedback, glossary, notifications (with recap, check-in and meal switches), data use, privacy, licences.
+- **Settings** (its own row in More, not inside Profile): theme (light by default), support, feedback, glossary, notifications (with recap, check-in and meal switches), data use, privacy, licences.
 - **Profile:** details, avatar, levels earned, sign out, delete account.
 - **Home screen widget (Android):** today's session and the week; a tap opens the app.
 
