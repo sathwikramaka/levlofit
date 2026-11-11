@@ -15,6 +15,7 @@ const dashboardCards = <String, String>{
   'rewards': 'Daily goal and streak',
   'levelup': 'Level, rating and 66-day challenge',
   'week': 'This week',
+  'read': "Today's read",
   'hydration': 'Water',
   'habits': 'Habits',
   'fuel': 'Food targets',

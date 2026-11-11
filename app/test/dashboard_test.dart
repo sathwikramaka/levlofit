@@ -265,6 +265,22 @@ Eat **150 g** protein.
     expect(find.textContaining('Exact timing'), findsNothing);
   });
 
+  testWidgets('first win: a new plan with no session offers the 20-minute starter on a training day; a logged session hides it', (tester) async {
+    tester.view.physicalSize = const Size(390, 2400) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: dashboardBentoForTest(_plan, planSince: today.subtract(const Duration(days: 1))))));
+    await tester.pump(const Duration(seconds: 2));
+    final training = find.text("TODAY'S WORKOUT").evaluate().isNotEmpty;
+    expect(find.textContaining('20-minute starter'), training ? findsOneWidget : findsNothing);
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: dashboardBentoForTest(_plan, logged: {today.subtract(const Duration(days: 1))}, planSince: today.subtract(const Duration(days: 3))))));
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.textContaining('20-minute starter'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('plan fit: three short weeks show the fewer-days offer; Keep hides it; a fresh plan shows none', (tester) async {
     SharedPreferences.setMockInitialValues({});
     try {
