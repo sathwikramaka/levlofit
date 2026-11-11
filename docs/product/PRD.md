@@ -1,6 +1,6 @@
 # Levlofit: Product Requirements Document
 
-Last updated: 2026-11-11, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Summary
 
@@ -72,7 +72,8 @@ through the web app. People with medical conditions are told to involve a doctor
 ### Learning and account
 - Handbook: 43 chapters live; a 69-chapter book in six volumes is built and waits for release (database migration
   `20261107300000_handbook_book`). Exercise library; glossary; BMI and body-fat tools.
-- Google or email sign-in, Terms and Privacy at sign-up, delete account, send feedback (saved and emailed), in-app update.
+- Google or email sign-in, Terms and Privacy at sign-up, delete account, send feedback (saved and emailed), in-app update, and an Android
+  notification when a new version is out (checked about every 12 hours, once per version).
 
 ### Website
 - Marketing pages, Handbook pages, privacy, terms, delete-account, APK download, web app at `/app/`.

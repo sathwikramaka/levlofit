@@ -307,4 +307,11 @@ void main() {
     }
     expect(File('assets/drawings/everkinetic/LICENSE').readAsStringSync(), contains('Attribution-ShareAlike 4.0'));
   });
+
+  testWidgets('a blank catalogue url still shows the real animation, not the drawn fallback', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: ExerciseGif('', id: 'EIeI8Vf', size: 100)));
+    final image = tester.widget<Image>(find.byType(Image)).image as NetworkImage;
+    expect(image.url, 'https://static.exercisedb.dev/media/EIeI8Vf.gif');
+  });
 }
+
