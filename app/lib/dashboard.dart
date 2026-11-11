@@ -829,6 +829,8 @@ class _Bento extends StatelessWidget {
               gym: data.tier == Tier.gym,
               done: logged.contains(today),
               saving: saving,
+              // A new plan and no session yet: offer a short first one, so the first win comes on day one.
+              starter: logged.isEmpty && planSince != null && now.difference(planSince!).inDays < 14,
               // An add-on day logs its own length (the block and a warm-up), not the full session setting.
               // Finished in a session: the minutes it took. Ticked without one: the planned length (an add-on day, its block and a warm-up).
               onToggle: (spent) => onToggleToday(cardGoal['goal'] as String, spent ?? (ownBlock == null ? sessionMinutes : ownBlock.minutes + 5)),
@@ -842,6 +844,7 @@ class _Bento extends StatelessWidget {
               onChoose: onChooseTasks,
             ),
           'levelup' => _levelCard(data, logged, minutes, dailyTasks),
+          'read' => _ReadCard(slugs: readsFor(trainingDay: isTrainingDay), day: today),
           'week' => _WeekStrip(monday: monday, today: today, dayGoal: dayGoal, logged: logged, streak: streak),
           'hydration' => _HydrationTile(ml: data.water[today] ?? 0, target: waterTarget(data.profile, training: isTrainingDay), onAdd: onAddWater, onOpen: () => onOpen(_Tab.hydration)),
           'habits' => _HabitsTile(
@@ -1025,11 +1028,12 @@ class _TodayCard extends StatelessWidget {
     this.lighter = false,
     this.medicalHold = false,
     this.gym = false,
+    this.starter = false,
     required this.done,
     required this.saving,
     required this.onToggle,
   });
-  final bool isTrainingDay, done, saving, lighter, medicalHold, gym;
+  final bool isTrainingDay, done, saving, lighter, medicalHold, gym, starter;
   final _Json goal;
   final _Json? levelRow;
   final int? minutes;
@@ -1045,10 +1049,22 @@ class _TodayCard extends StatelessWidget {
     final name = (goal['name'] ?? goal['goal']) as String;
     final level = goal['startLevel'] as int;
     final meta = ['Level $level', if (levelRow != null) levelRow!['title'] as String, if (minutes != null) '$minutes min'].join('  ·  ');
-    void start() => Navigator.push(
+    void start({bool short = false}) => Navigator.push(
           context,
           MaterialPageRoute<void>(
-              builder: (_) => SessionScreen(title: name, ids: ids, level: level, blocks: blocks, done: done, onFinish: done ? null : (m) => onToggle(m), injury: injury, sessionMinutes: minutes, lighter: lighter, medicalHold: medicalHold, kind: (goal['kind'] as String?) ?? 'strength', gym: gym)),
+              builder: (_) => SessionScreen(
+                  title: short ? 'Starter: $name' : name,
+                  ids: ids, // a 20-minute setting fits the session to time (fitToTime): the main lifts stay
+                  level: level,
+                  blocks: short ? const [] : blocks,
+                  done: done,
+                  onFinish: done ? null : (m) => onToggle(m),
+                  injury: injury,
+                  sessionMinutes: short ? 20 : minutes,
+                  lighter: short || lighter,
+                  medicalHold: medicalHold,
+                  kind: (goal['kind'] as String?) ?? 'strength',
+                  gym: gym)),
         );
     return _Tile(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1099,6 +1115,14 @@ class _TodayCard extends StatelessWidget {
                   TextButton(onPressed: saving ? null : () => onToggle(null), child: const Text('Log as done')),
                 ]),
         ),
+        if (starter && !done && isTrainingDay) ...[
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () => start(short: true),
+            icon: const Icon(LvIcons.timer, size: 18),
+            label: const Text('New here? Try a 20-minute starter, one set lighter'),
+          ),
+        ],
       ]),
     );
   }
@@ -1320,6 +1344,67 @@ class _Grow extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------- week
+
+/// Handbook chapters for Today's read: training ones on a training day, recovery and food ones on a rest day.
+List<String> readsFor({required bool trainingDay}) => trainingDay
+    ? const ['progressive-overload', 'exercise-science', 'protein', 'deload-week', 'plateaus']
+    : const ['sleep-guide', 'hydration', 'nutrition-fundamentals', 'calories-body-composition', 'supplements-guide'];
+
+/// One chapter a day from [slugs], rotating by date, picked from the ones the Handbook has. Hidden when none load.
+class _ReadCard extends StatefulWidget {
+  const _ReadCard({required this.slugs, required this.day});
+  final List<String> slugs;
+  final DateTime day;
+
+  @override
+  State<_ReadCard> createState() => _ReadCardState();
+}
+
+class _ReadCardState extends State<_ReadCard> {
+  late Future<_Json?> _pick = _load();
+
+  @override
+  void didUpdateWidget(_ReadCard old) {
+    super.didUpdateWidget(old);
+    if (old.day != widget.day || old.slugs != widget.slugs) _pick = _load();
+  }
+
+  Future<_Json?> _load() async {
+    final rows = await supabase.from('handbook_chapters').select('slug, title, summary, minutes').inFilter('slug', widget.slugs);
+    final have = {for (final r in rows) r['slug'] as String: r};
+    final order = [for (final s in widget.slugs) ?have[s]];
+    return order.isEmpty ? null : order[widget.day.difference(DateTime(2026)).inDays % order.length];
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<_Json?>(
+        future: _pick,
+        builder: (context, snap) {
+          final r = snap.data;
+          if (r == null) return const SizedBox.shrink();
+          final c = Theme.of(context).colorScheme;
+          final t = Theme.of(context).textTheme;
+          return _Tile(
+            child: InkWell(
+              onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ChapterScreen(slug: r['slug'] as String))),
+              child: Row(children: [
+                Icon(LvIcons.bookOpen, color: c.tertiary),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text("TODAY'S READ${r['minutes'] is int ? '  ·  ${r['minutes']} MIN' : ''}", style: monoLabel(context)),
+                    const SizedBox(height: 4),
+                    Text(r['title'] as String, style: t.titleMedium),
+                    if (r['summary'] case final String s) Text(s, maxLines: 2, overflow: TextOverflow.ellipsis, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+                  ]),
+                ),
+                Icon(LvIcons.caretRight, size: 18, color: c.onSurfaceVariant),
+              ]),
+            ),
+          );
+        },
+      );
+}
 
 class _WeekStrip extends StatelessWidget {
   const _WeekStrip({required this.monday, required this.today, required this.dayGoal, required this.logged, required this.streak});
