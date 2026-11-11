@@ -830,7 +830,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b01:text"
@@ -853,7 +853,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b02:text"
@@ -876,7 +876,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b04:text"
@@ -899,7 +899,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b05:head",
@@ -925,7 +925,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b06:text"
@@ -948,7 +948,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b08:text"
@@ -971,7 +971,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b09:text"
@@ -994,7 +994,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b10:title",
@@ -1018,7 +1018,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b12:text"
@@ -1067,7 +1067,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b14:text"
@@ -1090,7 +1090,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b15:items[0]",
@@ -1114,7 +1114,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b17:text"
@@ -1137,7 +1137,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b19:text"
@@ -1188,7 +1188,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b21:text"
@@ -1237,7 +1237,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b24:text"
@@ -1260,7 +1260,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b26:text"
@@ -1313,7 +1313,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b28:text"
@@ -1336,7 +1336,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b29:head",
@@ -1362,7 +1362,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b31:text"
@@ -1415,7 +1415,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b33:text"
@@ -1438,7 +1438,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b35:text"
@@ -1461,7 +1461,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b36:text"
@@ -1484,7 +1484,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b38:text"
@@ -1507,7 +1507,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b39:text"
@@ -1530,7 +1530,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b41:text"
@@ -1553,7 +1553,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b43:text"
@@ -1576,7 +1576,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "exercise-science:b44:title",
@@ -1600,7 +1600,7 @@
     "schoenfeld2024",
     "henselmans2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "exercise-science:b46:items[0]",
@@ -2533,7 +2533,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b01:text"
@@ -2553,7 +2553,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b02:text"
@@ -2573,7 +2573,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b04:text"
@@ -2593,7 +2593,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b05:text"
@@ -2613,7 +2613,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b06:title",
@@ -2664,7 +2664,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b09:text"
@@ -2710,7 +2710,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b12:text"
@@ -2730,7 +2730,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b13:items[0]",
@@ -2752,7 +2752,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b15:text"
@@ -2772,7 +2772,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b16:items[0]",
@@ -2794,7 +2794,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b17:text"
@@ -2814,7 +2814,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b18:text"
@@ -2834,7 +2834,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b19:head",
@@ -2859,7 +2859,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b20:text"
@@ -2879,7 +2879,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b22:text"
@@ -2899,7 +2899,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b23:items[0]",
@@ -2921,7 +2921,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b25:text"
@@ -2941,7 +2941,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b26:head",
@@ -2966,7 +2966,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b27:text"
@@ -2986,7 +2986,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b29:items[0]",
@@ -3010,7 +3010,7 @@
     "acsm2026",
     "schoenfeld2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "progressive-overload:b31:items[0]",
@@ -6063,7 +6063,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b01:text"
@@ -6119,7 +6119,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b05:text"
@@ -6160,7 +6160,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b08:text"
@@ -6215,7 +6215,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b12:items[0]",
@@ -6236,7 +6236,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b13:text"
@@ -6272,7 +6272,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b16:text"
@@ -6289,7 +6289,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b17:head",
@@ -6312,7 +6312,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b18:text"
@@ -6329,7 +6329,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b19:head",
@@ -6351,7 +6351,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b20:text"
@@ -6368,7 +6368,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "deload-week:b22:text"
@@ -6385,7 +6385,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b23:text"
@@ -6402,7 +6402,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b25:items[0]",
@@ -6423,7 +6423,7 @@
    "chapterSources": [
     "bell2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "deload-week:b27:items[0]",
@@ -6447,7 +6447,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b01:text"
@@ -6467,7 +6467,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b02:text"
@@ -6487,7 +6487,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b04:head",
@@ -6512,7 +6512,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b05:title",
@@ -6533,7 +6533,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b06:text"
@@ -6553,7 +6553,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b08:text"
@@ -6597,7 +6597,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b11:text"
@@ -6617,7 +6617,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b12:head",
@@ -6642,7 +6642,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b14:text"
@@ -6662,7 +6662,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "plateaus:b15:text"
@@ -6682,7 +6682,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b17:text"
@@ -6753,7 +6753,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b20:text"
@@ -6773,7 +6773,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b22:items[0]",
@@ -6798,7 +6798,7 @@
     "pelland2025",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "plateaus:b24:items[0]",
@@ -7099,7 +7099,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b01:text"
@@ -7118,7 +7118,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b02:text"
@@ -7137,7 +7137,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b04:text"
@@ -7184,7 +7184,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "nutrition-fundamentals:b06:title",
@@ -7204,7 +7204,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b08:text"
@@ -7223,7 +7223,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b09:head",
@@ -7269,7 +7269,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b11:text"
@@ -7288,7 +7288,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b13:head",
@@ -7310,7 +7310,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b14:text"
@@ -7373,7 +7373,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b19:text"
@@ -7415,7 +7415,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "nutrition-fundamentals:b21:title",
@@ -7441,7 +7441,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "nutrition-fundamentals:b23:text"
@@ -7460,7 +7460,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b25:text"
@@ -7479,7 +7479,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "nutrition-fundamentals:b27:title",
@@ -7504,7 +7504,7 @@
     "issnprotein",
     "whocarb2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "nutrition-fundamentals:b29:items[0]",
@@ -7530,7 +7530,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "protein:b01:text"
@@ -7551,7 +7551,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "protein:b02:text"
@@ -7625,7 +7625,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "protein:b06:text"
@@ -7646,7 +7646,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "protein:b08:text"
@@ -7694,7 +7694,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "protein:b10:text"
@@ -7715,7 +7715,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "protein:b12:text"
@@ -7760,7 +7760,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "protein:b14:title",
@@ -7836,7 +7836,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "protein:b18:text"
@@ -7907,7 +7907,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "protein:b23:title",
@@ -7929,7 +7929,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "protein:b25:items[0]",
@@ -7953,7 +7953,7 @@
     "usda174275",
     "ifct2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "protein:b27:items[0]",
@@ -8167,7 +8167,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b01:text"
@@ -8185,7 +8185,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "calories-body-composition:b03:head",
@@ -8206,7 +8206,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b04:text"
@@ -8248,7 +8248,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b07:title",
@@ -8267,7 +8267,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b08:text"
@@ -8285,7 +8285,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b09:items[0]",
@@ -8306,7 +8306,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "calories-body-composition:b11:text"
@@ -8324,7 +8324,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b12:title",
@@ -8343,7 +8343,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b13:text"
@@ -8361,7 +8361,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b15:text"
@@ -8422,7 +8422,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b19:text"
@@ -8440,7 +8440,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b20:items[0]",
@@ -8461,7 +8461,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b21:text"
@@ -8479,7 +8479,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b23:title",
@@ -8498,7 +8498,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b25:text"
@@ -8516,7 +8516,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "calories-body-composition:b26:head",
@@ -8539,7 +8539,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b27:text"
@@ -8557,7 +8557,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "calories-body-composition:b29:title",
@@ -8581,7 +8581,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "calories-body-composition:b31:items[0]",
@@ -8604,7 +8604,7 @@
     "aragon2017",
     "helms2014"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "calories-body-composition:b33:items[0]",
@@ -9681,7 +9681,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "supplements-guide:b01:text"
@@ -9702,7 +9702,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "supplements-guide:b03:text"
@@ -9723,7 +9723,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "supplements-guide:b04:items[0]",
@@ -9773,7 +9773,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "supplements-guide:b07:text"
@@ -9794,7 +9794,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "supplements-guide:b08:items[0]",
@@ -9817,7 +9817,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "supplements-guide:b09:title",
@@ -9890,7 +9890,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "supplements-guide:b13:text"
@@ -9934,7 +9934,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "supplements-guide:b17:text"
@@ -9955,7 +9955,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "supplements-guide:b18:head",
@@ -9981,7 +9981,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "supplements-guide:b19:title",
@@ -10003,7 +10003,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "supplements-guide:b21:text"
@@ -10054,7 +10054,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "supplements-guide:b24:title",
@@ -10109,7 +10109,7 @@
     "issnprotein",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "supplements-guide:b28:items[0]",
@@ -10131,7 +10131,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "hydration:b01:text"
@@ -10253,7 +10253,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "hydration:b11:text"
@@ -10292,7 +10292,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "hydration:b13:text"
@@ -10309,7 +10309,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "hydration:b15:text"
@@ -10326,7 +10326,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "hydration:b16:items[0]",
@@ -10346,7 +10346,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "hydration:b17:text"
@@ -10363,7 +10363,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "hydration:b19:text"
@@ -10380,7 +10380,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "hydration:b20:head",
@@ -10400,7 +10400,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "hydration:b21:title",
@@ -10418,7 +10418,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "hydration:b23:text"
@@ -10435,7 +10435,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "hydration:b24:head",
@@ -10456,7 +10456,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "hydration:b25:text"
@@ -10473,7 +10473,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "hydration:b27:items[0]",
@@ -10495,7 +10495,7 @@
    "chapterSources": [
     "kenefick2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "hydration:b29:items[0]",
@@ -11177,7 +11177,7 @@
     "dobrosielski2021",
     "craven2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "sleep-guide:b01:text"
@@ -11222,7 +11222,7 @@
     "dobrosielski2021",
     "craven2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "sleep-guide:b04:text"
@@ -11267,7 +11267,7 @@
     "dobrosielski2021",
     "craven2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "sleep-guide:b07:text"
@@ -11333,7 +11333,7 @@
     "dobrosielski2021",
     "craven2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "sleep-guide:b11:items[0]",
@@ -11432,7 +11432,7 @@
     "dobrosielski2021",
     "craven2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "sleep-guide:b17:text"
@@ -11499,7 +11499,7 @@
     "dobrosielski2021",
     "craven2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "sleep-guide:b23:title",
@@ -11527,7 +11527,7 @@
     "dobrosielski2021",
     "craven2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "sleep-guide:b25:items[0]",
@@ -11552,7 +11552,7 @@
     "dobrosielski2021",
     "craven2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "sleep-guide:b27:items[0]",
