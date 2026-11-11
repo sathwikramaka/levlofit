@@ -293,8 +293,9 @@ int sessionMinutesSpent(DateTime opened, DateTime finished) => (finished.differe
 
 /// Set rows newest day first, split into today's sets and each lift's most recent earlier session. A set number logged
 /// twice today keeps its latest entry.
-({Map<String, List<SetLog>> last, Map<String, List<SetLog>> today}) splitSetLogs(List<Map<String, dynamic>> rows, String today) {
+({Map<String, List<SetLog>> last, Map<String, List<SetLog>> today, Map<String, List<SetLog>> earlier}) splitSetLogs(List<Map<String, dynamic>> rows, String today) {
   final last = <String, List<SetLog>>{};
+  final earlier = <String, List<SetLog>>{}; // every set before today, for personal bests
   final day = <String, String>{};
   final now = <String, Map<int, SetLog>>{};
   for (final r in rows) {
@@ -305,10 +306,23 @@ int sessionMinutesSpent(DateTime opened, DateTime finished) => (finished.differe
       (now[id] ??= {})[r['set_no'] as int] = log;
       continue;
     }
+    (earlier[id] ??= []).add(log);
     day.putIfAbsent(id, () => on);
     if (day[id] == on) (last[id] ??= []).add(log);
   }
-  return (last: last, today: {for (final e in now.entries) e.key: (e.value.keys.toList()..sort()).map((k) => e.value[k]!).toList()});
+  return (last: last, earlier: earlier, today: {for (final e in now.entries) e.key: (e.value.keys.toList()..sort()).map((k) => e.value[k]!).toList()});
+}
+
+/// A new personal best for this lift, or null: the heaviest weight ever, or the most repetitions ever at a weight
+/// lifted before (bodyweight counts as one weight). Nothing counts as a best the first time a lift is logged.
+String? personalBest(List<SetLog> before, SetLog set) {
+  if (before.isEmpty) return null;
+  final kg = set.kg ?? 0;
+  final heaviest = before.map((s) => s.kg ?? 0).reduce((a, b) => a > b ? a : b);
+  if (kg > heaviest) return 'heaviest';
+  final atWeight = before.where((s) => (s.kg ?? 0) == kg).map((s) => s.reps);
+  if (atWeight.isNotEmpty && set.reps > atWeight.reduce((a, b) => a > b ? a : b)) return 'reps';
+  return null;
 }
 
 /// The coach's next step for a lift, from last session's sets, by double progression (Handbook,
@@ -741,6 +755,8 @@ class _SessionScreenState extends State<SessionScreen> {
   final _ticked = <String, int>{};
   final _today = <String, List<SetLog>>{}; // sets logged in this session, by move
   Map<String, List<SetLog>> _last = {}; // the previous session's sets, by move
+  Map<String, List<SetLog>> _earlier = {}; // every set before today, by move (the last 300 rows)
+  final Map<String, Set<int>> _bests = {}; // today's sets that were personal bests, by move
   List<Advice> _advice = const []; // notes from earlier sessions: pain, a long break, effort, a lighter week
   bool _saving = false;
   bool _savingSet = false; // one set save at a time, so a double tap cannot store the same set twice
@@ -797,11 +813,12 @@ class _SessionScreenState extends State<SessionScreen> {
           .lte('performed_on', today)
           .order('performed_on', ascending: false)
           .order('set_no', ascending: true)
-          .limit(300);
+          .limit(300); // ponytail: bests compare against the last 300 sets; read a per-lift maximum if logs grow long
       final split = splitSetLogs(rows, today);
       if (mounted) {
         setState(() {
           _last = split.last;
+          _earlier = split.earlier;
           // Sets already logged today stay ticked when the session is reopened.
           for (final e in split.today.entries) {
             _today[e.key] = e.value;
@@ -869,10 +886,23 @@ class _SessionScreenState extends State<SessionScreen> {
         'kg': load,
       });
       if (!mounted) return;
+      final best = personalBest([...?_earlier[id], ...?_today[id]], (reps: reps, kg: load));
       setState(() {
         (_today[id] ??= []).add((reps: reps, kg: load));
         _ticked[id] = setNo;
+        if (best != null) (_bests[id] ??= {}).add(setNo);
       });
+      if (best != null) {
+        HapticFeedback.heavyImpact();
+        final what = load == null || load == 0 ? '$reps reps, bodyweight' : '${load % 1 == 0 ? load.toInt() : load} kg × $reps';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Row(children: [
+            const Icon(LvIcons.trophy, size: 20, color: accent),
+            const SizedBox(width: 10),
+            Expanded(child: Text('New best on ${moveGuide[id]?.name ?? 'this lift'}: $what${best == 'reps' ? ' (most reps at this weight)' : ''}')),
+          ]),
+        ));
+      }
       if (_doneSets < _totalSets) _startRest(restFor(id));
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save the set. Check your connection.')));
@@ -1084,6 +1114,7 @@ class _SessionScreenState extends State<SessionScreen> {
                       lighter: _light,
                       ticked: _ticked[m['id']] ?? 0,
                       logged: _today[m['id']] ?? const [],
+                      bests: _bests[m['id']] ?? const {},
                       // No "add weight" hints while a doctor has not cleared harder training.
                       hint: !widget.medicalHold && isLift(m['id'] as String) ? liftHint(_last[m['id']] ?? const [], _advice) : null,
                       care: _check.care[m['id']] == null ? null : careNote(_check.care[m['id']]!),
@@ -1337,7 +1368,8 @@ class _InjuryNotice extends StatelessWidget {
 }
 
 class _MoveCard extends StatelessWidget {
-  const _MoveCard({required this.number, required this.move, required this.level, required this.ticked, required this.hint, required this.onSet, this.care, this.lighter = false, this.logged = const []});
+  const _MoveCard({required this.number, required this.move, required this.level, required this.ticked, required this.hint, required this.onSet, this.care, this.lighter = false, this.logged = const [], this.bests = const {}});
+  final Set<int> bests; // set numbers that were personal bests today
   final bool lighter;
   final List<SetLog> logged; // today's sets, shown so the numbers stay in sight
   final String? care; // injury caution for this move, from the injury check
@@ -1417,7 +1449,7 @@ class _MoveCard extends StatelessWidget {
             for (final (i, l) in logged.indexed)
               Padding(
                 padding: EdgeInsets.only(top: i == 0 ? 8 : 0),
-                child: Text('Set ${i + 1}: ${l.reps} reps${l.kg == null || l.kg == 0 ? ', bodyweight' : ' at ${l.kg! % 1 == 0 ? l.kg!.toInt() : l.kg} kg'}', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                child: Text('Set ${i + 1}: ${l.reps} reps${l.kg == null || l.kg == 0 ? ', bodyweight' : ' at ${l.kg! % 1 == 0 ? l.kg!.toInt() : l.kg} kg'}${bests.contains(i + 1) ? '  ·  New best' : ''}', style: t.bodySmall?.copyWith(color: bests.contains(i + 1) ? c.tertiary : c.onSurfaceVariant, fontWeight: bests.contains(i + 1) ? FontWeight.w600 : null)),
               ),
           ]),
         ),
