@@ -1,6 +1,6 @@
 # Levlofit: Technical Requirements Document
 
-Last updated: 2026-11-07, for release 1.0.10. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-11, for release 1.0.10. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Architecture
 
@@ -44,6 +44,9 @@ check-ins and own supplements are not sent. Deleting an account removes its file
 **Accessibility.** 48 dp targets, text scaling tested to 1.5, meaning never by colour alone, reduced-motion respected.
 **Devices.** Works at 320 dp and up; light and dark. Android `targetSdk 36`.
 **Offline.** Encrypted per-account copy of the last plan; read-only.
+**Phone-only data.** Reminder switches, photo reveals and the home screen widget's two lines live in shared_preferences;
+the widget (`TodayWidget.kt`) reads them natively and is redrawn over the `levlofit/widget` channel. Sharing uses
+`share_plus` (BSD-3-Clause) with a PNG drawn on the phone.
 **Time.** All logs key on the phone's local day. The server takes `localDay` from the app.
 
 ## 4. Secrets (names only, never values)

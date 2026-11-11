@@ -31,11 +31,7 @@ class ShareCard extends StatelessWidget {
             color: graphite,
             padding: const EdgeInsets.all(24),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                const LevloMark(size: 28),
-                const SizedBox(width: 10),
-                Text('Levlofit', style: GoogleFonts.unbounded(fontSize: 15, fontWeight: FontWeight.w600, color: cloud)),
-              ]),
+              const LevloWordmark(fontSize: 18),
               const Spacer(),
               Text(kicker, style: monoLabel(context).copyWith(color: c.tertiary)),
               const SizedBox(height: 8),

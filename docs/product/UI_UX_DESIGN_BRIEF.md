@@ -1,6 +1,6 @@
 # Levlofit: UI/UX Design Brief
 
-Last updated: 2026-11-07, for release 1.0.10. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-11, for release 1.0.10. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 Tokens and logo rules in full: `DESIGN.md`. Code: `app/lib/theme.dart`.
 
 ## 1. Direction
@@ -44,7 +44,7 @@ for progress and done, always with a number or label. No other accents.
 
 ## 3. Type
 
-Geist everywhere in the app; numbers with tabular figures. Unbounded for the wordmark only. Noto Serif for long Handbook
+Geist everywhere in the app; numbers with tabular figures. Unbounded for the wordmark and moment numbers (level up, share card). Noto Serif for long Handbook
 reading. Headings 22 to 30 px bold, body 15 to 16, captions 13, small uppercase labels 12 with light tracking. 12 px minimum.
 
 ## 4. Shape and motion
@@ -64,6 +64,9 @@ reading. Headings 22 to 30 px bold, body 15 to 16, captions 13, small uppercase 
 | Info card | Label plus short lines: training day, supplements |
 | Coach | Your messages in charcoal, replies on white cards, pill composer |
 | Dark panels | Water, Habits, Progress verdict: charcoal, light text |
+| Moments | Level up: full screen, mark, Unbounded level number, Share and Continue. New best: heavy haptic and a short note. No confetti |
+| Share card | Square, always dark, wordmark, one big line, up to three facts; never food or weight |
+| Home widget | Graphite, 20 dp corners, orange-text label, cloud title, muted line |
 
 ## 6. Words
 

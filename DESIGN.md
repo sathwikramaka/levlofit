@@ -47,7 +47,7 @@ Why this orange: Strava owns red-orange `#FC4C02` and is shown on white. Levlofi
 
 | Use | Typeface | Notes |
 |---|---|---|
-| Wordmark, splash, level-up moments, website hero | **Unbounded** 700 | Wide and rounded. Letter spacing -0.02 to -0.03 em. Not for body or long headings in the app |
+| Wordmark, splash, level-up moments, share cards, website hero | **Unbounded** 700 | Wide and rounded. Letter spacing -0.02 to -0.03 em. Not for body or long headings in the app |
 | App UI, headings, body | **Geist** 400 to 700 | Headings 700 with -0.02 to -0.03 em |
 | Numbers, labels, data | **Geist Mono** 400 to 500 | Uppercase labels at 11 px with 0.14 em tracking |
 | Handbook long-form reading | **Noto Serif** (Noto Serif Devanagari for Hindi) | 16 to 17 px, line-height 1.6 |
