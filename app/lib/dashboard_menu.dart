@@ -1969,6 +1969,19 @@ List<Widget> _progressBody(
         ),
       );
 
+  final report = weeklyReport(
+    // Sunday shows the week now ending (the Sunday recap opens here); other days, the last full week.
+    monday: DateTime.now().weekday == DateTime.sunday ? monday : monday.subtract(const Duration(days: 7)),
+    plannedPerWeek: perWeek,
+    trained: days,
+    food: food,
+    checkinDays: checkinDays,
+    weights: weights,
+    kcalTarget: (plan['nutrition'] as _Json?)?['energyKcal'] as num?,
+    proteinTarget: (plan['nutrition'] as _Json?)?['proteinG'] as num?,
+    sets: sets,
+  );
+
   return [
     // The verdict leads, as the answer to the page's question.
     _Tile(
@@ -1982,17 +1995,9 @@ List<Widget> _progressBody(
     ),
     const SizedBox(height: 12),
     WeeklyReportCard(
-      report: weeklyReport(
-        monday: monday.subtract(const Duration(days: 7)),
-        plannedPerWeek: perWeek,
-        trained: days,
-        food: food,
-        checkinDays: checkinDays,
-        weights: weights,
-        kcalTarget: (plan['nutrition'] as _Json?)?['energyKcal'] as num?,
-        proteinTarget: (plan['nutrition'] as _Json?)?['proteinG'] as num?,
-        sets: sets,
-      ),
+      report: report,
+      onShare: () => showShareSheet(context, weekShareCard(report, streakWeeks: weekStreak(days, monday, perWeek).weeks),
+          fileName: 'levlofit-week.png', text: 'My week on Levlofit'),
     ),
     const SizedBox(height: 12),
     IntrinsicHeight(

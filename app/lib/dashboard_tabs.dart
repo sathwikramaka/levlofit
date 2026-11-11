@@ -1098,6 +1098,12 @@ class _LevelCheckScreenState extends State<_LevelCheckScreen> {
             level: _level,
             title: row['title'] as String?,
             practice: ((row['practice'] as List?) ?? const []).cast<String>(),
+            onShare: () => showShareSheet(
+              context,
+              ShareCard(kicker: 'LEVEL UP', big: 'Level $_level', line: [widget.goalName, ?row['title'] as String?].join('  ·  ')),
+              fileName: 'levlofit-level.png',
+              text: 'Level $_level in ${widget.goalName} on Levlofit',
+            ),
           )));
         }
       }
