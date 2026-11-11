@@ -1,6 +1,6 @@
 # Levlofit: Technical Requirements Document
 
-Last updated: 2026-11-11, for release 1.0.10. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-11, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Architecture
 
@@ -91,5 +91,5 @@ Recovery: `docs/operations/BACKUP_RECOVERY_PLAN.md`. The repository is public: l
 
 ## 8. Live versions
 
-App 1.0.10 build 12; `generate-plan` and `coach-chat` from 2026-11-06; `send-feedback` from 2026-11-03; `body-check` from
+App 1.0.11 build 13; `generate-plan` and `coach-chat` from 2026-11-06; `send-feedback` from 2026-11-03; `body-check` from
 2026-11-02; `delete-account` from 2026-10-27. History: `docs/release/RELEASE_RECORD.md`.
