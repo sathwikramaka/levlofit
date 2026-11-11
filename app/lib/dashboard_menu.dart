@@ -271,9 +271,8 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
               kind: g['kind'] as String? ?? 'strength',
               gym: data.tier == Tier.gym,
               onFinish: isToday && !done
-                  ? () async {
-                      // An add-on day logs its own length (the block and a warm-up), not the session setting.
-                      final saved = await widget.onToggleToday(g['goal'] as String, ownBlock == null ? minutes : ownBlock.minutes + 5);
+                  ? (spent) async {
+                      final saved = await widget.onToggleToday(g['goal'] as String, spent);
                       if (saved && mounted) setState(() => _logged = {..._logged, today});
                       return saved;
                     }

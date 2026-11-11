@@ -8,6 +8,13 @@ import 'package:levlo/session.dart';
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
+  test('a finished session counts the minutes it took, not the plan', () {
+    final start = DateTime(2026, 11, 11, 18);
+    expect(sessionMinutesSpent(start, start.add(const Duration(minutes: 37, seconds: 20))), 37);
+    expect(sessionMinutesSpent(start, start.add(const Duration(seconds: 10))), 1);
+    expect(sessionMinutesSpent(start, start.add(const Duration(hours: 9))), 240);
+  });
+
   test('reopening a session keeps the sets from today; earlier sets stay as last time', () {
     Map<String, dynamic> row(String on, int no, int reps, double? kg) => {'exercise_id': 'a', 'performed_on': on, 'set_no': no, 'reps': reps, 'kg': kg};
     final s = splitSetLogs([row('2026-11-07', 1, 10, 40), row('2026-11-07', 2, 9, 40), row('2026-11-05', 1, 8, 35), row('2026-11-05', 2, 8, 35), row('2026-11-01', 1, 6, 30)], '2026-11-07');

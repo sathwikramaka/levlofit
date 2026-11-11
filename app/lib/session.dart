@@ -287,6 +287,10 @@ bool isLift(String id) => setsFor(id, 1) > 0 && !_carries.contains(id) && !_core
 
 typedef SetLog = ({int reps, double? kg});
 
+/// Minutes from opening a session to finishing it, so the week's active minutes are what was done, not what was
+/// planned. At least 1; capped at 4 hours in case the screen was left open.
+int sessionMinutesSpent(DateTime opened, DateTime finished) => (finished.difference(opened).inSeconds / 60).round().clamp(1, 240);
+
 /// Set rows newest day first, split into today's sets and each lift's most recent earlier session. A set number logged
 /// twice today keeps its latest entry.
 ({Map<String, List<SetLog>> last, Map<String, List<SetLog>> today}) splitSetLogs(List<Map<String, dynamic>> rows, String today) {
@@ -699,7 +703,7 @@ class SessionScreen extends StatefulWidget {
   final int level;
   final List<AddOnBlock> blocks; // add-on blocks after the main session, each at its own goal's level
   final Future<Moves> Function(List<String> ids)? moves; // tests only; the app loads from the catalogue
-  final Future<bool> Function()? onFinish; // logs today's session and says whether it saved; null when not today's
+  final Future<bool> Function(int minutes)? onFinish; // logs today's session with the minutes spent; says whether it saved; null when not today's
   final bool done;
   final String? injury; // the user's injury note (profiles.injuries); null keeps the session as planned
   final int? sessionMinutes; // the person's session length, for the over-time notice
@@ -711,6 +715,7 @@ class SessionScreen extends StatefulWidget {
 }
 
 class _SessionScreenState extends State<SessionScreen> {
+  late DateTime _opened; // when the session was opened, for the minutes it took
   bool get _light => widget.lighter || widget.medicalHold;
   // The injury check runs over the whole day; each part (main session, each block) keeps its own moves that passed.
   late final _check = checkInjury([...widget.ids, for (final b in widget.blocks) ...b.ids], widget.injury);
@@ -748,6 +753,7 @@ class _SessionScreenState extends State<SessionScreen> {
   @override
   void initState() {
     super.initState();
+    _opened = DateTime.now();
     _loadLast();
     _loadAdvice();
     _moves.then((m) {
@@ -963,7 +969,7 @@ class _SessionScreenState extends State<SessionScreen> {
     setState(() => _saving = true);
     try {
       // The logging side reports its own errors; only a confirmed save marks the session done.
-      if (!await widget.onFinish!()) return;
+      if (!await widget.onFinish!(sessionMinutesSpent(_opened, DateTime.now()))) return;
       _stopRest(); // the workout is over, so no more rest countdown
       HapticFeedback.heavyImpact();
       if (mounted) setState(() => _done = true);
