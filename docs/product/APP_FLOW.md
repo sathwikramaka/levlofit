@@ -1,6 +1,6 @@
 # Levlofit: App Flow
 
-Last updated: 2026-11-12, for release 1.0.11. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.0.12. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. First run
 
@@ -41,7 +41,7 @@ Pages opened from another page have a back arrow; pages reached from More keep M
 Levlofit AI: a button at the top of Today, Workout, Diet and Progress, and a row in More.
 
 More is a page of groups: coach and learn (Levlofit AI, Handbook, Exercise library, Glossary); training (Protocol, Calendar,
-Habits); food and body (Food diary, Food library, Water, BMI calculator); account (Reminders, Profile).
+Habits); food and body (Food diary, Food library, Water, BMI calculator); account (Reminders, Profile, Settings).
 
 ## 4. Today
 

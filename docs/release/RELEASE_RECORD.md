@@ -2,6 +2,21 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one. Older entries name paths from before docs were sorted into folders (2026-11-07); see `docs/README.md`.
 
+## 2026-11-12: release 1.0.12, Handbook book live, Settings row, update notice (owner-approved: Handbook migration, coach-chat deploy, APK, website, MIN_APP_BUILD secret)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 2ce625d (Settings row ccf5d9a, update notice 2ce625d) plus the version bump, built from the main folder with nothing uncommitted | git status empty before the build |
+| Checks before release | flutter analyze clean, 663 pass + 1 skip; debug APK with workmanager built; functions node 285/0, offline eval 85/0 strict, tsc clean | flutter test, tools/verify.sh functions |
+| Backup | The 43 live `handbook_chapters` rows saved as JSON in the private folder before the migration (rollback: reload them, or re-apply the v4 book migration, checklist 3.7m) | row count 43 in the file |
+| Migration | 20261107300000_handbook_book (file sha256 7a25f76f...), one transaction through `supabase db query --linked`; history not written (forward-only). Before: 43 rows, no goal_catalog link. After: 69 rows, ids 1 to 69, every row has blocks, fingerprint c3d91b22 as expected | read-only queries before and after |
+| Function | coach-chat v40 ACTIVE (book passages); unauthenticated call 401 | supabase functions list, curl |
+| Android APK | com.levlofit.app 1.0.12, versionCode 2014, 13,882,404 bytes (13.9 MB), release certificate 7c510c35...4c431384 | aapt2, apksigner on the live file |
+| APK SHA-256 | d4837e36eb96136be3750e998a9a26c185b8d1033c50cef79c37905297d4894f, equal on the live download and /version.json | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 635fc9a7; /version.json = 1.0.12 build 14, min_build 14; /handbook lists 69 chapters; /handbook/warm-up 301 to /handbook/warmup-mobility; /app/ 200 | curl |
+| Secret | MIN_APP_BUILD = 14 (digest equals sha256 of "14") | supabase secrets list |
+| Not verified | Nothing on a real phone (docs/operations/DEVICE_CHECKLIST_1_0_12.md). The book is not clinician-reviewed and 1,379 claims are unreviewed: the owner chose to ship it now | - |
+
 ## 2026-11-11: release 1.0.11, habit features (owner-approved: APK, website, MIN_APP_BUILD secret)
 
 | What | Value | How checked |
