@@ -34,6 +34,15 @@ void main() {
     expect(plateShares((name: 'Empty', time: '', items: const [])).values, everyElement(0));
   });
 
+  test('healthy plate check: by weight, milk, oil and shakes beside the plate', () {
+    final p = plateCheck([breakfast, lunch]);
+    // breakfast: oats 40 grain, banana 120 fruit; lunch: chilla 60 grain, dal 30 protein, spinach 150 veg.
+    expect(p.vegFruit, closeTo(270 / 400, 1e-9));
+    expect(p.grains, closeTo(100 / 400, 1e-9));
+    expect(p.protein, closeTo(30 / 400, 1e-9));
+    expect(plateCheck(const []).vegFruit, 0);
+  });
+
   test('Ate it rows: planned rows, dishes as ingredients, shakes left out', () {
     final codes = plannerRowCodes([
       {'code': 'FDC173904'}, {'code': 'FDC174288'}, {'code': 'FDC174256'}, {'code': 'L002'},

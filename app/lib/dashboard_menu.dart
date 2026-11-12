@@ -978,6 +978,40 @@ class _DietScreenState extends State<_DietScreen> {
               ),
               const SizedBox(height: 6),
               Text('Grams. Your plan sets energy and protein; carbs, fat and fibre follow from the foods.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              // The healthy plate, by weight (Harvard's plate and ICMR-NIN 2024): about half vegetables and fruit.
+              const SizedBox(height: 14),
+              Text('HEALTHY PLATE CHECK  ·  BY WEIGHT', style: monoLabel(context)),
+              const SizedBox(height: 6),
+              ...(() {
+                final p = plateCheck(training?.meals ?? meals);
+                Widget bar(String label, double share, double lo, double hi, String aim) {
+                  final ok = share >= lo && share <= hi;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        Expanded(child: Text(label, style: t.bodyMedium)),
+                        Text('${(share * 100).round()}%  ·  $aim', style: monoNumber(context, size: 13).copyWith(color: ok ? progressColor(context) : c.tertiary)),
+                      ]),
+                      const SizedBox(height: 3),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(value: share.clamp(0.0, 1.0), minHeight: 6, backgroundColor: c.surfaceContainerHighest, color: ok ? progressColor(context) : c.primary),
+                      ),
+                    ]),
+                  );
+                }
+                return [
+                  bar('Vegetables and fruit', p.vegFruit, 0.4, 1, 'aim about half'),
+                  bar('Grains', p.grains, 0.15, 0.35, 'aim about a quarter'),
+                  bar('Protein foods', p.protein, 0.15, 0.4, 'aim about a quarter'),
+                  if (p.vegFruit < 0.4)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text('Add a vegetable side or a fruit to a meal; Swap can bring in a meal with more vegetables.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                    ),
+                ];
+              })(),
             ]),
           );
         }),

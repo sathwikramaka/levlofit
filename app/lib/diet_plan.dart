@@ -1354,6 +1354,27 @@ Map<String, double> plateShares(PlanMeal m) {
   return {for (final e in kcal.entries) e.key: total <= 0 ? 0.0 : e.value / total};
 }
 
+/// The day's food on the healthy plate (Harvard's Healthy Eating Plate, ICMR-NIN 2024), by weight: vegetables and fruit,
+/// grains, protein foods. Milk, curd, oil and shakes sit beside the plate, so they are left out. Shares of 0 to 1.
+({double vegFruit, double grains, double protein}) plateCheck(List<PlanMeal> meals) {
+  var veg = 0.0, grain = 0.0, prot = 0.0;
+  for (final i in [for (final m in meals) ...m.items]) {
+    if (i.unit == 'oil' || i.unit == 'scoop') continue;
+    switch (itemRole(i)) {
+      case 'VEGETABLE' || 'SALAD' || 'FRUIT':
+        veg += i.grams;
+      case 'GRAIN' || 'BREAKFAST DISH' || 'BREAKFAST CEREAL':
+        grain += i.grams;
+      case 'DAIRY':
+        break;
+      default:
+        prot += i.grams;
+    }
+  }
+  final total = veg + grain + prot;
+  return total <= 0 ? (vegFruit: 0.0, grains: 0.0, protein: 0.0) : (vegFruit: veg / total, grains: grain / total, protein: prot / total);
+}
+
 /// Diary rows (food table code, grams) for a planned meal the person ate: dishes as their recipe ingredients, each
 /// planner code as the database row it was planned from ([rowCode], from the fetched rows). Shakes are left out:
 /// powder is not in the food table, so it is logged from its own label.

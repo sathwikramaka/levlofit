@@ -222,9 +222,33 @@ def _write(path: Path, columns: list[str], rows: list[dict]) -> None:
 def merge_claims(extracted: list[dict], existing: list[dict]) -> tuple[list[dict], dict]:
     """New register rows: extracted facts plus kept review columns. Changed text after review becomes 'stale'."""
     old = {r["claim_id"]: r for r in existing}
+    # A claim that only moved (a block inserted above it shifts its id) keeps its review: same chapter, same text.
+    # Pass 1: same id and same text. Pass 2: same text under another old id. Pass 3: the old row at the same id.
+    used, match = set(), {}
+    for r in extracted:
+        p = old.get(r["claim_id"])
+        if p is not None and p.get("text_sha") == r["text_sha"]:
+            match[r["claim_id"]] = p
+            used.add(p["claim_id"])
+    by_text = {}
+    for p in existing:
+        if p["claim_id"] not in used:
+            by_text.setdefault((p.get("chapter"), p.get("text_sha")), []).append(p)
+    for r in extracted:
+        if r["claim_id"] in match:
+            continue
+        cands = [p for p in by_text.get((r.get("chapter"), r["text_sha"]), []) if p["claim_id"] not in used]
+        if cands:
+            match[r["claim_id"]] = cands[0]
+            used.add(cands[0]["claim_id"])
+    for r in extracted:
+        p = old.get(r["claim_id"])
+        if r["claim_id"] not in match and p is not None and p["claim_id"] not in used:
+            match[r["claim_id"]] = p
+            used.add(p["claim_id"])
     out, changes = [], {"added": [], "removed": [], "stale": []}
     for r in extracted:
-        prev = old.get(r["claim_id"])
+        prev = match.get(r["claim_id"])
         row = dict(r)
         if prev is None:
             row.update({k: "" for k in CLAIM_HUMAN})
@@ -239,8 +263,7 @@ def merge_claims(extracted: list[dict], existing: list[dict]) -> tuple[list[dict
             elif prev.get("text_sha") != r["text_sha"] and row["evidence_status"] == "auto_label" and r["auto_kind"] != "label":
                 row["evidence_status"] = "unreviewed"
         out.append(row)
-    ids = {r["claim_id"] for r in extracted}
-    changes["removed"] = [i for i in old if i not in ids]
+    changes["removed"] = [i for i in old if i not in used]
     return out, changes
 
 
