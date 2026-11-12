@@ -78,7 +78,8 @@ targets and protein foods ─> recipes with AI.
 
 - **Workout:** day picker (today first) ─> that day's plan sheet: warm-up list, moves with sets, reps and rest, Start
   (today) or View session; then goals and levels, edit goals, level check (a pass rebuilds the plan), "Your path" folded.
-- **Handbook chapter:** ends with Previous chapter and Next chapter, each naming its chapter.
+- **Handbook chapter:** figures drawn in the page (no images); ends with Previous chapter and Next chapter, each naming its chapter.
+- **Diet:** the day's totals end with the healthy plate check (three bars by weight).
 - **Session:** exercises first; warm-up and cooldown fold away.
 - **Progress:** weight verdict, weekly report (Share as a picture; on Sundays the week now ending), stats (adherence, sessions, streak, this month, hours, 30-day weight), 12-month activity map, strength, weight, measurements, body check, photos (a one-time reveal at 4, 8 and 12 weeks), 12-week chart, steps
   where the phone supports them, then rank, rating and the 66-day challenge.

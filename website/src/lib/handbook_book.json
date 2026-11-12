@@ -172,8 +172,263 @@
   ]
  },
  {
-  "slug": "safety-first",
+  "slug": "start-here",
   "number": 2,
+  "part": "I",
+  "partTitle": "Training",
+  "volume": "Volume I · Training",
+  "title": "Start here: what actually matters",
+  "summary": "The five things that decide your results, how fast change really comes, and how to begin without burning out.",
+  "minutes": 5,
+  "sources": {
+   "who2020": "Bull FC et al. World Health Organization 2020 guidelines on physical activity and sedentary behaviour. Br J Sports Med 2020;54:1451-1462.",
+   "gollwitzer2009": "Gollwitzer PM, Sheeran P, Michalski V, Seifert AE. When intentions go public: does social reality widen the intention-behavior gap? Psychol Sci 2009;20(5):612-618."
+  },
+  "blocks": [
+   {
+    "t": "h2",
+    "text": "Chapter overview"
+   },
+   {
+    "t": "p",
+    "text": "Fitness looks complicated because there is so much advice. Results come from a short list of basics, done for a long time. Get these right before you worry about anything else."
+   },
+   {
+    "t": "stats",
+    "items": [
+     {
+      "value": "5",
+      "unit": "things",
+      "label": "decide almost all of your results",
+      "source": null
+     },
+     {
+      "value": "150",
+      "unit": "min a week",
+      "label": "of moderate activity, the health minimum",
+      "source": "who2020"
+     },
+     {
+      "value": "2",
+      "unit": "days a week",
+      "label": "of strength training for every adult",
+      "source": "who2020"
+     }
+    ]
+   },
+   {
+    "t": "h2",
+    "text": "The five things that matter most"
+   },
+   {
+    "t": "steps",
+    "title": "What decides your results",
+    "items": [
+     {
+      "title": "Train hard enough",
+      "text": "Sets that end a few reps short of failure, on a plan that suits your level."
+     },
+     {
+      "title": "Progress over time",
+      "text": "Add reps, weight or sets as you get stronger, so the work keeps asking more of you."
+     },
+     {
+      "title": "Eat for your goal",
+      "text": "The right calories for losing, keeping or gaining weight, and enough protein every day."
+     },
+     {
+      "title": "Recover",
+      "text": "Sleep, rest days and lighter weeks: the body adapts between sessions, not during them."
+     },
+     {
+      "title": "Keep going",
+      "text": "Months and years of the four above beat any perfect plan you stop after three weeks."
+     }
+    ]
+   },
+   {
+    "t": "p",
+    "text": "Everything else (exact exercises, meal timing, supplements, gadgets) changes results far less. Spending your energy on details while the basics slip is the most common way to stall. See [[progressive-overload|Progressive overload]] and [[nutrition-fundamentals|Nutrition fundamentals]]."
+   },
+   {
+    "t": "h2",
+    "text": "Exercise or training?"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "Exercise",
+     "items": [
+      "For today: you feel good, you move, you burn energy.",
+      "Any activity on any day counts.",
+      "Great for health and mood."
+     ]
+    },
+    "dont": {
+     "title": "Training",
+     "items": [
+      "For a goal months away: a stronger lift, a faster run, a different body.",
+      "Each session builds on the last, so the plan matters.",
+      "Needs a proven programme, and progress you can measure."
+     ]
+    }
+   },
+   {
+    "t": "p",
+    "text": "Both are good. Levlofit builds a training plan, because that is how bodies change on purpose. If you only want to be active, any movement you enjoy, done most days, meets the health goal. See [[general-fitness|General fitness and heart health]]."
+   },
+   {
+    "t": "h2",
+    "text": "Start smaller than you think"
+   },
+   {
+    "t": "p",
+    "text": "People who fail often try to change everything in one week. Pick one or two changes you are sure you can keep, and add more only when those feel easy."
+   },
+   {
+    "t": "steps",
+    "title": "A first month that sticks",
+    "items": [
+     {
+      "title": "Week 1",
+      "text": "Train on two fixed days. Keep sessions short. Add one glass of water each morning."
+     },
+     {
+      "title": "Week 2",
+      "text": "Same days. Add vegetables to one meal a day."
+     },
+     {
+      "title": "Week 3",
+      "text": "Add a third session if the first two felt easy. Start logging your sets."
+     },
+     {
+      "title": "Week 4",
+      "text": "Hit your protein target on most days. Weigh in once a week, same time of day."
+     }
+    ]
+   },
+   {
+    "t": "p",
+    "text": "Going to the gym once a week, every week, beats a perfect plan you drop. Habits grow from repetition, not motivation. See [[sustainable-habits|Building habits that last]]."
+   },
+   {
+    "t": "h2",
+    "text": "How fast change really comes"
+   },
+   {
+    "t": "bars",
+    "title": "Realistic first-year changes",
+    "unit": "per month",
+    "items": [
+     {
+      "label": "Muscle, men new to training",
+      "value": 0.9,
+      "note": "about 0.5 to 1 kg a month in the first year, then slower"
+     },
+     {
+      "label": "Muscle, women new to training",
+      "value": 0.45,
+      "note": "about half of that"
+     },
+     {
+      "label": "Fat loss, sustainable pace",
+      "value": 2.5,
+      "note": "0.5 to 1% of body weight a week (about 2 to 3 kg a month for a 70 kg person)"
+     }
+    ],
+    "source": null
+   },
+   {
+    "t": "p",
+    "text": "These are rough planning figures from coaching experience, not promises; genetics, age, sleep and how well you eat all move them. Visible change usually needs 2 to 3 months. Muscle comes slower than most people expect; fat loss comes faster than muscle gain. Losing fat and gaining muscle at the same time is possible for beginners and people returning after a break, but slower than doing one at a time. See [[weight-change-answers|Losing and gaining weight: your questions]]."
+   },
+   {
+    "t": "h2",
+    "text": "Every goal is made of the same parts"
+   },
+   {
+    "t": "p",
+    "text": "Whatever you want, it breaks down into some mix of these:"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Lose some fat.",
+     "Gain some muscle.",
+     "Strength training.",
+     "Cardio and conditioning.",
+     "Skill in particular movements (a pull-up, a run, a punch).",
+     "The eating that supports the above."
+    ]
+   },
+   {
+    "t": "p",
+    "text": "A \"toned\" look, for example, is some muscle plus low enough body fat to see it. A marathon is mostly cardio, some strength and a lot of skill practice. Name the mix and the plan becomes obvious."
+   },
+   {
+    "t": "h2",
+    "text": "Why strength training is worth it for everyone"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "Strength training gives you",
+     "items": [
+      "Stronger bones and a lower risk of osteoporosis",
+      "Better balance and fewer falls as you age",
+      "Lower blood pressure and better blood sugar",
+      "Easier daily life: lifting, carrying, climbing stairs"
+     ]
+    },
+    "dont": {
+     "title": "It does not",
+     "items": [
+      "Make you bulky by accident: building lots of muscle takes years of effort",
+      "Make you slow or inflexible when you train through a full range",
+      "Need a gym: bands, bodyweight and dumbbells work",
+      "Replace cardio; you want both"
+     ]
+    }
+   },
+   {
+    "t": "p",
+    "text": "Cardio adds a stronger heart and lungs, better recovery between sets, mood and sleep. It does not \"kill your gains\". See [[heart-rate-calories|Heart rate, sweat and calories burned]]."
+   },
+   {
+    "t": "h2",
+    "text": "Motivation is not the plan"
+   },
+   {
+    "t": "p",
+    "text": "Motivation comes and goes. Habits and a plan carry you on the days it does not show up."
+   },
+   {
+    "t": "list",
+    "items": [
+     "**Love the result, not every session.** Many people never enjoy every workout; they enjoy being fitter.",
+     "**Separate training and play.** Train to your plan, and keep a sport or walk you do just for fun.",
+     "**Keep goals quiet until you have done the work.** Announcing a big goal can feel like progress already made, which makes people less likely to follow through. Share what you have done, not what you will do. {gollwitzer2009}",
+     "**Expect bad weeks.** Miss a day, return the next. One missed week changes nothing; quitting changes everything."
+    ]
+   },
+   {
+    "t": "h2",
+    "text": "Key takeaways"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Training hard enough, progressing, eating for your goal, recovering and staying consistent decide almost everything.",
+     "Start with one or two changes you can keep, then build.",
+     "Muscle comes slowly; give any plan 2 to 3 months before judging it.",
+     "Strength training helps everyone, and cardio helps your lifting."
+    ]
+   }
+  ]
+ },
+ {
+  "slug": "safety-first",
+  "number": 3,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -287,7 +542,7 @@
  },
  {
   "slug": "how-levlofit-works",
-  "number": 3,
+  "number": 4,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -413,7 +668,7 @@
  },
  {
   "slug": "foundations",
-  "number": 4,
+  "number": 5,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -649,7 +904,7 @@
  },
  {
   "slug": "exercise-science",
-  "number": 5,
+  "number": 6,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -938,8 +1193,285 @@
   ]
  },
  {
+  "slug": "muscle-map",
+  "number": 7,
+  "part": "I",
+  "partTitle": "Training",
+  "volume": "Volume I · Training",
+  "title": "Your muscles, mapped",
+  "summary": "Every major muscle group, what it does, and the moves that train it, plus how to fix a lagging or uneven muscle.",
+  "minutes": 4,
+  "sources": {
+   "openstax2022": "Betts JG et al. Anatomy and Physiology, 2nd edition. Houston: OpenStax, Rice University, 2022."
+  },
+  "blocks": [
+   {
+    "t": "h2",
+    "text": "Chapter overview"
+   },
+   {
+    "t": "p",
+    "text": "Knowing which muscle does what makes every plan easier to read: why a session has the moves it has, and what to swap in when you cannot do one. Names here follow standard anatomy. {openstax2022}"
+   },
+   {
+    "t": "h2",
+    "text": "Upper body"
+   },
+   {
+    "t": "rows",
+    "head": [
+     "Muscle group",
+     "What it does",
+     "Main moves",
+     "Smaller moves"
+    ],
+    "rows": [
+     [
+      "Chest (pectorals)",
+      "Pushes the arms forward and across the body",
+      "Bench press, push-up, dips",
+      "Cable or dumbbell fly"
+     ],
+     [
+      "Front shoulders (anterior deltoid)",
+      "Raises the arm forward and overhead",
+      "Overhead press, incline press",
+      "Front raise"
+     ],
+     [
+      "Side shoulders (lateral deltoid)",
+      "Raises the arm out to the side; makes the shoulders look wider",
+      "Overhead press (partly)",
+      "Lateral raise, cable lateral raise"
+     ],
+     [
+      "Rear shoulders (posterior deltoid)",
+      "Pulls the arm back",
+      "Rows",
+      "Rear-delt fly, face pull"
+     ],
+     [
+      "Upper back (lats)",
+      "Pulls the arms down and back; the V-shape",
+      "Pull-up, chin-up, pulldown",
+      "Straight-arm pulldown, pullover"
+     ],
+     [
+      "Mid back (rhomboids, middle trapezius)",
+      "Squeezes the shoulder blades together",
+      "Rows (barbell, dumbbell, cable)",
+      "Reverse fly"
+     ],
+     [
+      "Upper trapezius",
+      "Lifts the shoulders",
+      "Deadlift, carries",
+      "Shrug"
+     ],
+     [
+      "Biceps",
+      "Bends the elbow and turns the palm up",
+      "Chin-up, rows",
+      "Curls (standing, incline, preacher)"
+     ],
+     [
+      "Brachialis and forearm",
+      "Bends the elbow with the palm sideways or down",
+      "Rows",
+      "Hammer curl, reverse curl"
+     ],
+     [
+      "Triceps",
+      "Straightens the elbow",
+      "Bench press, dips, close-grip push-up",
+      "Overhead extension, pushdown"
+     ],
+     [
+      "Forearms and grip",
+      "Close the hand and move the wrist",
+      "Deadlift, carries, hangs",
+      "Wrist curl, reverse wrist curl"
+     ]
+    ]
+   },
+   {
+    "t": "h2",
+    "text": "Lower body and trunk"
+   },
+   {
+    "t": "rows",
+    "head": [
+     "Muscle group",
+     "What it does",
+     "Main moves",
+     "Smaller moves"
+    ],
+    "rows": [
+     [
+      "Quadriceps (front thigh)",
+      "Straightens the knee",
+      "Squat, leg press, lunge, split squat",
+      "Leg extension"
+     ],
+     [
+      "Hamstrings (back thigh)",
+      "Bends the knee and extends the hip",
+      "Romanian deadlift, deadlift",
+      "Leg curl, Nordic curl"
+     ],
+     [
+      "Glutes",
+      "Extends the hip; keeps the pelvis level",
+      "Squat, hip thrust, deadlift, lunge",
+      "Glute bridge, kickback"
+     ],
+     [
+      "Adductors (inner thigh)",
+      "Bring the legs together",
+      "Sumo squat, wide stance squat",
+      "Adductor machine, Copenhagen plank"
+     ],
+     [
+      "Abductors (outer hip)",
+      "Move the leg out; steady the hip on one leg",
+      "Single-leg work, lunges",
+      "Band walks, abductor machine"
+     ],
+     [
+      "Calves",
+      "Point the foot; push off when walking and running",
+      "Running, jumping",
+      "Standing calf raise (gastrocnemius), seated calf raise (soleus)"
+     ],
+     [
+      "Abs (rectus abdominis)",
+      "Curl the trunk; brace against bending back",
+      "Heavy squats and deadlifts (bracing)",
+      "Crunch, leg raise, ab wheel"
+     ],
+     [
+      "Obliques",
+      "Twist and bend the trunk sideways; resist twisting",
+      "Carries, single-arm work",
+      "Pallof press, side plank, cable woodchop"
+     ],
+     [
+      "Lower back (erectors)",
+      "Keep the spine straight under load",
+      "Deadlift, squat, rows",
+      "Back extension, good morning"
+     ]
+    ]
+   },
+   {
+    "t": "h2",
+    "text": "Push, pull and legs"
+   },
+   {
+    "t": "plate",
+    "title": "How a full week splits the body",
+    "items": [
+     {
+      "label": "Push: chest, front and side shoulders, triceps",
+      "share": 0.33,
+      "note": "bench, overhead press, dips"
+     },
+     {
+      "label": "Pull: back, rear shoulders, biceps, grip",
+      "share": 0.33,
+      "note": "rows, pull-ups, curls"
+     },
+     {
+      "label": "Legs and trunk: quads, hamstrings, glutes, calves, abs",
+      "share": 0.34,
+      "note": "squat, hinge, lunge, core"
+     }
+    ],
+    "source": null
+   },
+   {
+    "t": "p",
+    "text": "Every balanced plan covers all three. A rough rule: about as many pulling sets as pushing sets, which keeps shoulders comfortable and posture balanced. See [[push-sessions|Building a push session]], [[pull-sessions|Building a pull session]] and [[leg-sessions|Building a leg session]]."
+   },
+   {
+    "t": "h2",
+    "text": "When you cannot do a move"
+   },
+   {
+    "t": "p",
+    "text": "Pick another move from the same row: same muscle, same job, different tool. For example, no pull-up bar: a pulldown or band-assisted pull-up. No barbell: dumbbell or machine versions. Levlofit's Workout tab lists other moves for each exercise, and Levlofit AI can make a swap stick."
+   },
+   {
+    "t": "h2",
+    "text": "A muscle that lags behind"
+   },
+   {
+    "t": "steps",
+    "title": "Bringing up one muscle",
+    "items": [
+     {
+      "title": "Check the basics first",
+      "text": "Are you eating enough and progressing on your main lifts? A muscle cannot grow without both."
+     },
+     {
+      "title": "Train it more often",
+      "text": "Add 2 to 4 hard sets for it on one more day a week."
+     },
+     {
+      "title": "Add a direct move",
+      "text": "If it only gets compound work, add an isolation move for it near the end of a session."
+     },
+     {
+      "title": "Try other rep ranges",
+      "text": "Lighter sets of 15 to 30 reps or heavier sets of 6 to 8, taken close to failure."
+     },
+     {
+      "title": "Be patient",
+      "text": "Small muscles (calves, forearms, side shoulders) change slowest; judge over 8 to 12 weeks."
+     }
+    ]
+   },
+   {
+    "t": "p",
+    "text": "Occasionally the fix is less work, not more, when recovery is the problem; that is the less common case."
+   },
+   {
+    "t": "h2",
+    "text": "Left and right are different"
+   },
+   {
+    "t": "p",
+    "text": "Small differences between sides are normal and rarely matter. For a clear gap:"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Use single-arm and single-leg moves, starting with the weaker side.",
+     "Let the weaker side set the reps and weight; the stronger side matches, no more.",
+     "Film your bilateral lifts to stop leaning or twisting toward the stronger side."
+    ]
+   },
+   {
+    "t": "p",
+    "text": "See [[lagging-muscles|Lagging muscles]] and [[posture|Posture and movement]]."
+   },
+   {
+    "t": "h2",
+    "text": "Key takeaways"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Every muscle group has a main move and a few smaller moves; any one from the same row trains it.",
+     "Balance pushing and pulling across the week.",
+     "For a lagging muscle: eat enough, then add sets or a direct move, and give it 8 to 12 weeks."
+    ]
+   }
+  ]
+ },
+ {
   "slug": "cardio-intensity",
-  "number": 6,
+  "number": 8,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -1055,8 +1587,213 @@
   ]
  },
  {
+  "slug": "heart-rate-calories",
+  "number": 9,
+  "part": "I",
+  "partTitle": "Training",
+  "volume": "Volume I · Training",
+  "title": "Heart rate, sweat and calories burned",
+  "summary": "Heart-rate zones, the fat-burning zone, what sweat means, how far to trust calorie counts, and how to mix cardio with lifting.",
+  "minutes": 3,
+  "sources": {
+   "tanaka2001": "Tanaka H, Monahan KD, Seals DR. Age-predicted maximal heart rate revisited. J Am Coll Cardiol 2001;37(1):153-156.",
+   "garber2011": "Garber CE et al. American College of Sports Medicine position stand. Quantity and quality of exercise for developing and maintaining cardiorespiratory, musculoskeletal, and neuromotor fitness in apparently healthy adults. Med Sci Sports Exerc 2011;43(7):1334-1359.",
+   "shcherbina2017": "Shcherbina A et al. Accuracy in wrist-worn, sensor-based measurements of heart rate and energy expenditure in a diverse cohort. J Pers Med 2017;7(2):3.",
+   "schumann2022": "Schumann M et al. Compatibility of concurrent aerobic and strength training for skeletal muscle size and function: an updated systematic review and meta-analysis. Sports Med 2022;52(3):601-612. doi:10.1007/s40279-021-01587-7",
+   "murlasits2018": "Murlasits Z, Kneffel Z, Thalib L. The physiological effects of concurrent strength and endurance training sequence: a systematic review and meta-analysis. J Sports Sci 2018;36(11):1212-1219."
+  },
+  "blocks": [
+   {
+    "t": "h2",
+    "text": "Chapter overview"
+   },
+   {
+    "t": "p",
+    "text": "Watches and machines give numbers for everything. Some are useful, some mislead. This chapter shows which to trust and how to use them."
+   },
+   {
+    "t": "h2",
+    "text": "Your heart-rate zones"
+   },
+   {
+    "t": "p",
+    "text": "A simple estimate of your maximum heart rate is 208 minus 0.7 times your age. {tanaka2001} It is an estimate: your real maximum can be 10 beats or more either way."
+   },
+   {
+    "t": "band",
+    "title": "Intensity by % of maximum heart rate",
+    "unit": "% of max",
+    "ranges": [
+     {
+      "from": 50,
+      "to": 57,
+      "label": "Very light: easy walking",
+      "tone": "good"
+     },
+     {
+      "from": 57,
+      "to": 64,
+      "label": "Light: warm-ups, brisk walking",
+      "tone": "good"
+     },
+     {
+      "from": 64,
+      "to": 77,
+      "label": "Moderate: you can talk in sentences",
+      "tone": "good"
+     },
+     {
+      "from": 77,
+      "to": 96,
+      "label": "Vigorous: a few words at a time",
+      "tone": "ok"
+     },
+     {
+      "from": 96,
+      "to": 100,
+      "label": "Near maximum: short intervals only",
+      "tone": "bad"
+     }
+    ],
+    "source": "garber2011"
+   },
+   {
+    "t": "stats",
+    "items": [
+     {
+      "value": "208 - 0.7 x age",
+      "unit": "bpm",
+      "label": "estimated maximum heart rate",
+      "source": "tanaka2001"
+     },
+     {
+      "value": "187",
+      "unit": "bpm",
+      "label": "estimated maximum for a 30-year-old",
+      "source": "tanaka2001"
+     },
+     {
+      "value": "120 to 142",
+      "unit": "bpm",
+      "label": "moderate zone (64 to 76%) for that 30-year-old",
+      "source": "garber2011"
+     }
+    ]
+   },
+   {
+    "t": "p",
+    "text": "Heart rate is most useful for steady cardio such as easy runs and cycling. During lifting and short intervals, wrist monitors lag and jump, so go by effort instead. Heat, caffeine, stress, poor sleep and illness all raise heart rate on a given day. See [[cardio-intensity|Easy, moderate and hard cardio]]."
+   },
+   {
+    "t": "h2",
+    "text": "The \"fat-burning zone\""
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "What it really means",
+     "items": [
+      "At easy effort, a higher share of the energy you use comes from fat.",
+      "Harder effort burns more energy per minute, so often as much fat or more in the same time.",
+      "Easy effort lets you go longer and recover faster."
+     ]
+    },
+    "dont": {
+     "title": "What people think it means",
+     "items": [
+      "Easy cardio burns more fat in total.",
+      "You must stay in the zone to lose fat.",
+      "Hard cardio is wasted for fat loss."
+     ]
+    }
+   },
+   {
+    "t": "p",
+    "text": "Fat loss depends on your energy balance over days and weeks, not on the zone of one session. Choose the cardio you can do regularly. See [[calories-body-composition|Calories and body composition]]."
+   },
+   {
+    "t": "h2",
+    "text": "Sweat is not a score"
+   },
+   {
+    "t": "p",
+    "text": "Sweat cools you down. How much you sweat depends on heat, humidity, your genes, body size and fitness; fitter people often start sweating sooner. A dry session can be a great one, and a dripping one can be easy. To manage heavy sweating: train in cooler hours, wear light clothes, carry a towel, and replace fluid and salt on long or hot days. See [[hydration|Hydration and electrolytes]]."
+   },
+   {
+    "t": "h2",
+    "text": "How far to trust calories burned"
+   },
+   {
+    "t": "bars",
+    "title": "Error in energy burned, 7 wrist devices tested",
+    "unit": "% average error",
+    "items": [
+     {
+      "label": "Most accurate device",
+      "value": 27,
+      "note": "still off by about a quarter"
+     },
+     {
+      "label": "Least accurate device",
+      "value": 93,
+      "note": "nearly double or near zero"
+     }
+    ],
+    "source": "shcherbina2017"
+   },
+   {
+    "t": "p",
+    "text": "In a test of seven popular wrist devices, heart rate was fairly accurate but none measured energy burned well; even the best was off by about a quarter. {shcherbina2017} Gym machines and class estimates use averages that ignore your size and fitness, so they are no better. Treat calories-burned numbers as rough, and never \"eat back\" all of them. Judge your intake by the trend in your body weight instead."
+   },
+   {
+    "t": "h2",
+    "text": "Cardio and lifting together"
+   },
+   {
+    "t": "steps",
+    "title": "Mixing the two well",
+    "items": [
+     {
+      "title": "Cardio does not kill gains",
+      "text": "Adding cardio to lifting does not reduce muscle growth overall; very large amounts of running may slightly reduce leg strength gains. {schumann2022}"
+     },
+     {
+      "title": "Do the priority first",
+      "text": "Whatever you most want to improve goes first in the session, while you are fresh. {murlasits2018}"
+     },
+     {
+      "title": "Separate hard sessions",
+      "text": "Hard intervals and heavy leg days are best on different days, or 6 hours or more apart."
+     },
+     {
+      "title": "Eat for both",
+      "text": "Cardio uses energy; if you are trying to gain, eat a little more to cover it."
+     }
+    ]
+   },
+   {
+    "t": "p",
+    "text": "For general health it does not matter much which comes first; for strength goals, lift first. {murlasits2018} See [[combining-training|Combining different kinds of training]]."
+   },
+   {
+    "t": "h2",
+    "text": "Key takeaways"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Use 208 minus 0.7 times your age as a starting estimate of maximum heart rate.",
+     "The fat-burning zone is about the share of fat, not the total; any cardio you keep up helps.",
+     "Sweat cools you; it does not measure effort.",
+     "Calories-burned numbers are rough; trust your weight trend.",
+     "Lift first when strength is the goal; cardio helps, it does not kill gains."
+    ]
+   }
+  ]
+ },
+ {
   "slug": "technique",
-  "number": 7,
+  "number": 10,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -1184,8 +1921,280 @@
   ]
  },
  {
+  "slug": "gym-first-weeks",
+  "number": 11,
+  "part": "I",
+  "partTitle": "Training",
+  "volume": "Volume I · Training",
+  "title": "Your first weeks at the gym",
+  "summary": "Nerves, gym manners, learning lifts, coming back after a break, bad days, illness and grip.",
+  "minutes": 4,
+  "sources": {},
+  "blocks": [
+   {
+    "t": "h2",
+    "text": "Chapter overview"
+   },
+   {
+    "t": "p",
+    "text": "The first weeks decide whether you keep going. Most worries beginners have are common, normal and easy to handle once you know what to expect."
+   },
+   {
+    "t": "h2",
+    "text": "Feeling self-conscious"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "What it feels like",
+     "items": [
+      "Everyone is watching me.",
+      "They are judging how little I lift.",
+      "I do not belong here."
+     ]
+    },
+    "dont": {
+     "title": "What is usually true",
+     "items": [
+      "Most people are focused on their own sets and their phone.",
+      "Every strong person started light; many remember being new.",
+      "A gym is for anyone who trains, at any level."
+     ]
+    }
+   },
+   {
+    "t": "steps",
+    "title": "Making the first visits easier",
+    "items": [
+     {
+      "title": "Go at quiet hours",
+      "text": "Mid-morning or early afternoon is calmer than 6 to 8 pm."
+     },
+     {
+      "title": "Arrive with a plan",
+      "text": "Open today's session in Levlofit so you always know the next move."
+     },
+     {
+      "title": "Start with what you know",
+      "text": "Machines and dumbbells first; add barbell lifts as you learn them."
+     },
+     {
+      "title": "Keep going back",
+      "text": "Comfort comes from repetition: by the fourth or fifth visit it feels normal."
+     }
+    ]
+   },
+   {
+    "t": "h2",
+    "text": "Gym manners"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Re-rack your weights and wipe down benches and handles after use.",
+     "Do not stand directly in front of someone's mirror view or rest on a machine between long phone breaks.",
+     "Ask \"how many sets left?\" before working in on equipment.",
+     "Do not give advice to people who did not ask, even about form. You do not know their goals, injuries or programme, and it usually comes across as rude. If someone is putting others in danger, tell the staff."
+    ]
+   },
+   {
+    "t": "h2",
+    "text": "Learning a new lift"
+   },
+   {
+    "t": "p",
+    "text": "You do not need a trainer for every lift. Many people learn well from good videos and practice."
+   },
+   {
+    "t": "steps",
+    "title": "Learning a lift on your own",
+    "items": [
+     {
+      "title": "Watch",
+      "text": "Watch a clear demonstration (Levlofit's exercise library shows each move) from front and side."
+     },
+     {
+      "title": "Practise light",
+      "text": "Start with an empty bar, light dumbbells or a bodyweight version."
+     },
+     {
+      "title": "Film yourself",
+      "text": "Record from the side. What you feel and what you do are often different."
+     },
+     {
+      "title": "Compare",
+      "text": "Check your video against the demonstration and fix one thing at a time."
+     },
+     {
+      "title": "Get help when stuck",
+      "text": "A coach for one session is worth it if a lift hurts or stays wrong after a few weeks."
+     }
+    ]
+   },
+   {
+    "t": "p",
+    "text": "See [[technique|Learning a lift]]."
+   },
+   {
+    "t": "h2",
+    "text": "Coming back after a break"
+   },
+   {
+    "t": "p",
+    "text": "Strength and muscle come back faster than they took to build the first time, but your joints and tendons need a week or two to catch up."
+   },
+   {
+    "t": "band",
+    "title": "Weight to start with after a break",
+    "unit": "% of your old working weight",
+    "ranges": [
+     {
+      "from": 0,
+      "to": 50,
+      "label": "Break of 6 months or more: start here and add weight each session",
+      "tone": "good"
+     },
+     {
+      "from": 50,
+      "to": 70,
+      "label": "Break of 1 to 6 months",
+      "tone": "good"
+     },
+     {
+      "from": 70,
+      "to": 90,
+      "label": "Break of 2 to 4 weeks",
+      "tone": "ok"
+     },
+     {
+      "from": 90,
+      "to": 100,
+      "label": "Break under 2 weeks: pick up where you left off",
+      "tone": "ok"
+     }
+    ],
+    "source": null
+   },
+   {
+    "t": "p",
+    "text": "These are Levlofit's starting rules, not research limits. Expect to be back near your old numbers within weeks. Beginner-style fast progress is not something you can \"waste\"; if you are weak now, you will improve fast now."
+   },
+   {
+    "t": "h2",
+    "text": "Bad days happen"
+   },
+   {
+    "t": "p",
+    "text": "One weak session means little: poor sleep, a heavy or empty stomach, stress, dehydration or simply a bad day. Everyone has them, from beginners to elite lifters. Log it, go home, and come back for the next planned session. Look for a cause only when sessions are poor for two weeks or more. See [[plateaus|Breaking through plateaus]]."
+   },
+   {
+    "t": "h2",
+    "text": "Training when you are ill"
+   },
+   {
+    "t": "flow",
+    "title": "Should I train today?",
+    "items": [
+     {
+      "q": "Fever, body aches, chest congestion or stomach illness?",
+      "yes": "Rest. Train again 1 to 2 days after the fever is gone.",
+      "no": "Go on to the next question."
+     },
+     {
+      "q": "Only a runny nose or mild sore throat?",
+      "yes": "Light training is usually fine; drop the weight and stop if you feel worse.",
+      "no": "Train as planned."
+     }
+    ],
+    "note": null,
+    "source": null
+   },
+   {
+    "t": "p",
+    "text": "This is common practical advice, not a research rule. If you are contagious, stay home for the sake of everyone else, and wipe down what you touch. Any chest pain, fainting or unusual breathlessness means stop and see a doctor."
+   },
+   {
+    "t": "h2",
+    "text": "Is it soreness or an injury?"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "Probably normal soreness",
+     "items": [
+      "Starts 24 to 48 hours after training",
+      "A dull, spread-out ache in the muscle",
+      "Eases over 2 to 4 days",
+      "Moving gently helps"
+     ]
+    },
+    "dont": {
+     "title": "Possibly an injury",
+     "items": [
+      "Starts during the session, often suddenly",
+      "Sharp, in one spot, or in a joint",
+      "Lasts more than about 4 days, or gets worse",
+      "Swelling, bruising, clicking with pain, or weakness"
+     ]
+    }
+   },
+   {
+    "t": "p",
+    "text": "Train through mild soreness with a good warm-up; it usually eases as you move. Not being sore does not mean the session failed: soreness only means something was new. See [[muscle-soreness|Muscle soreness]] and [[injury-prevention|Injury prevention]]. See a doctor or physiotherapist for anything in the right-hand column."
+   },
+   {
+    "t": "h2",
+    "text": "When your grip gives out first"
+   },
+   {
+    "t": "p",
+    "text": "On deadlifts and rows, your grip often fails before your back or legs. Your grip should not decide how heavy you train those lifts."
+   },
+   {
+    "t": "steps",
+    "title": "Fixes, in order",
+    "items": [
+     {
+      "title": "Chalk",
+      "text": "Dry hands hold far better; liquid chalk is allowed in more gyms."
+     },
+     {
+      "title": "Grip the bar low",
+      "text": "Hold it in the fingers near the palm crease, not in the middle of the palm, to stop skin pinching."
+     },
+     {
+      "title": "Hook or mixed grip",
+      "text": "Thumb under the fingers, or one palm forward and one back, for heavy sets."
+     },
+     {
+      "title": "Straps",
+      "text": "For your heaviest sets; strong lifters use them without shame."
+     },
+     {
+      "title": "Train grip directly",
+      "text": "Dead hangs, farmer's carries and heavy holds, once or twice a week."
+     }
+    ]
+   },
+   {
+    "t": "h2",
+    "text": "Key takeaways"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Nerves fade with repetition; go at quiet hours with a plan.",
+     "Learn lifts with videos, light weights and filming yourself.",
+     "After a break, start lighter and build back for a week or two.",
+     "One bad session means nothing; rest when you have a fever or chest symptoms.",
+     "Sharp pain during a session is not soreness: stop and get it checked."
+    ]
+   }
+  ]
+ },
+ {
   "slug": "warmup-mobility",
-  "number": 8,
+  "number": 12,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -1509,7 +2518,7 @@
  },
  {
   "slug": "progressive-overload",
-  "number": 9,
+  "number": 13,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -1786,8 +2795,312 @@
   ]
  },
  {
+  "slug": "choosing-a-programme",
+  "number": 14,
+  "part": "I",
+  "partTitle": "Training",
+  "volume": "Volume I · Training",
+  "title": "Choosing a programme",
+  "summary": "Why a proven plan beats making it up, full body or split, the well-known beginner programmes, rep ranges and training to failure.",
+  "minutes": 5,
+  "sources": {
+   "schoenfeld2016f": "Schoenfeld BJ, Ogborn D, Krieger JW. Effects of resistance training frequency on measures of muscle hypertrophy: a systematic review and meta-analysis. Sports Med 2016;46(11):1689-1697.",
+   "grgic2018f": "Grgic J, Schoenfeld BJ, Davies TB, Lazinica B, Krieger JW, Pedisic Z. Effect of resistance training frequency on gains in muscular strength: a systematic review and meta-analysis. Sports Med 2018;48(5):1207-1220.",
+   "schoenfeld2017l": "Schoenfeld BJ, Grgic J, Ogborn D, Krieger JW. Strength and hypertrophy adaptations between low- vs. high-load resistance training: a systematic review and meta-analysis. J Strength Cond Res 2017;31(12):3508-3523.",
+   "refalo2023": "Refalo MC et al. Influence of resistance training proximity-to-failure on skeletal muscle hypertrophy: a systematic review with meta-analysis. Sports Med 2023;53:649-665. doi:10.1007/s40279-022-01784-y"
+  },
+  "blocks": [
+   {
+    "t": "h2",
+    "text": "Chapter overview"
+   },
+   {
+    "t": "p",
+    "text": "A programme is a set of sessions with rules for when to add weight, reps or sets. Following a proven one beats making it up as you go: it balances the body, spaces out recovery, and tells you exactly what to do next. Many good programmes work; the one you keep doing is the best one. Levlofit builds yours from your goals, days, equipment and level."
+   },
+   {
+    "t": "h2",
+    "text": "What a good programme gives you"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "A proven programme",
+     "items": [
+      "Structure that fits your week",
+      "Rest between hard sessions for the same muscles",
+      "A rule for progress, so you keep getting stronger",
+      "Every major muscle covered",
+      "Effort set for your level"
+     ]
+    },
+    "dont": {
+     "title": "Making it up each day",
+     "items": [
+      "Sessions that depend on your mood",
+      "Some muscles hit three days running, others never",
+      "The same weights for months",
+      "Lots of chest and arms, little back and legs",
+      "Sessions that are too easy or too punishing"
+     ]
+    }
+   },
+   {
+    "t": "h2",
+    "text": "How to choose"
+   },
+   {
+    "t": "flow",
+    "title": "Picking a starting point",
+    "items": [
+     {
+      "q": "New to strength training, or back after a long break?",
+      "yes": "Start with a simple full-body plan, 2 or 3 days a week, for about 3 months.",
+      "no": "Go on to the next question."
+     },
+     {
+      "q": "Can you train 4 or more days a week?",
+      "yes": "An upper/lower or push/pull/legs split, each muscle twice a week.",
+      "no": "Full body, 2 or 3 days a week."
+     }
+    ],
+    "note": null,
+    "source": null
+   },
+   {
+    "t": "p",
+    "text": "The two things that matter most are the days you can really train and the equipment you can really use. After that, effort and consistency decide results far more than the programme's name."
+   },
+   {
+    "t": "h2",
+    "text": "Full body or split?"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "Full body",
+     "items": [
+      "Each session trains the whole body",
+      "Best with 2 or 3 days a week",
+      "Each muscle 2 to 3 times a week",
+      "Ideal for beginners, who recover fast"
+     ]
+    },
+    "dont": {
+     "title": "Split (upper/lower, push/pull/legs)",
+     "items": [
+      "Each session trains part of the body",
+      "Best with 4 to 6 days a week",
+      "Each muscle about twice a week when well designed",
+      "Suits more sets per muscle as you advance"
+     ]
+    }
+   },
+   {
+    "t": "p",
+    "text": "For muscle growth, training a muscle at least twice a week works better than once, when total sets are equal. {schoenfeld2016f} For strength, frequency matters little once weekly sets are the same, so pick the layout that fits your week. {grgic2018f} A split that hits each muscle only once a week (\"bro split\") wastes a beginner's fast recovery."
+   },
+   {
+    "t": "h2",
+    "text": "Well-known programmes, in plain words"
+   },
+   {
+    "t": "p",
+    "text": "These are widely used and known to work. Levlofit does not copy them; it uses the same principles."
+   },
+   {
+    "t": "rows",
+    "head": [
+     "Type",
+     "What it looks like",
+     "Who it suits"
+    ],
+    "rows": [
+     [
+      "Simple linear progression",
+      "3 full-body days a week, alternating two sessions of 5 main lifts; add a little weight every session while you can",
+      "Complete beginners, first 3 months"
+     ],
+     [
+      "Tiered linear progression (the GZCLP style)",
+      "Each day: one heavy main lift, one lighter secondary lift, then accessories; when you miss reps, change sets and reps before cutting weight",
+      "Beginners after the first months"
+     ],
+     [
+      "Wave on a training max (the 5/3/1 style)",
+      "Work from 90% of an estimated max; three-week waves of 5, 3 and 1 rep sets, then extra lighter sets and accessories; raise the max a little each cycle",
+      "Late beginners and up, who want steady long-term progress"
+     ],
+     [
+      "Push/pull/legs",
+      "6 days: push, pull, legs, twice each, with main lifts and accessories",
+      "Those with time and good recovery"
+     ],
+     [
+      "Dumbbell-only plan",
+      "Full body or push/pull/legs with dumbbells and bodyweight",
+      "Home trainees without a barbell"
+     ],
+     [
+      "Bodyweight plan",
+      "Push-up, pull-up, dip, squat and core progressions that get harder by lever, not weight",
+      "No equipment"
+     ]
+    ]
+   },
+   {
+    "t": "h2",
+    "text": "Progress in more than one way"
+   },
+   {
+    "t": "steps",
+    "title": "Ways a programme moves you forward",
+    "items": [
+     {
+      "title": "More weight",
+      "text": "The classic: add the smallest step when every set reaches the top of the rep range."
+     },
+     {
+      "title": "More reps",
+      "text": "Same weight, one or two more reps. Counts as real progress."
+     },
+     {
+      "title": "More sets",
+      "text": "An extra set for a muscle that is lagging, when recovery allows."
+     },
+     {
+      "title": "Better technique",
+      "text": "Deeper, slower, steadier reps with the same weight."
+     }
+    ]
+   },
+   {
+    "t": "p",
+    "text": "Expect stalls. When one lift stalls for two or three sessions, take 10% off and build back up with more reps. See [[progressive-overload|Progressive overload]] and [[plateaus|Breaking through plateaus]]."
+   },
+   {
+    "t": "h2",
+    "text": "Rep ranges"
+   },
+   {
+    "t": "scale",
+    "title": "What different rep ranges are best at",
+    "items": [
+     {
+      "mark": "1 to 5",
+      "label": "Maximal strength",
+      "text": "Heaviest loads; most skill practice for heavy lifts; long rests."
+     },
+     {
+      "mark": "6 to 12",
+      "label": "Muscle and strength together",
+      "text": "The most time-efficient range for most people."
+     },
+     {
+      "mark": "12 to 20",
+      "label": "Muscle, endurance",
+      "text": "Builds as much muscle as heavier sets when taken close to failure; burns more."
+     },
+     {
+      "mark": "20 to 30 or more",
+      "label": "Muscle, endurance",
+      "text": "Works too, but sets are long and uncomfortable."
+     }
+    ],
+    "source": "schoenfeld2017l"
+   },
+   {
+    "t": "p",
+    "text": "Light and heavy sets build similar muscle when each set ends close to failure; heavy sets build more maximal strength. {schoenfeld2017l} No rep range \"tones\" or \"burns fat\": fat loss comes from eating less. Most good programmes mix ranges."
+   },
+   {
+    "t": "h2",
+    "text": "Should you train to failure?"
+   },
+   {
+    "t": "band",
+    "title": "How close to failure to stop",
+    "unit": "reps left in reserve",
+    "ranges": [
+     {
+      "from": 0,
+      "to": 1,
+      "label": "Failure: fine on safe isolation moves now and then",
+      "tone": "ok"
+     },
+     {
+      "from": 1,
+      "to": 3,
+      "label": "Where most sets should end: close enough to grow",
+      "tone": "good"
+     },
+     {
+      "from": 3,
+      "to": 5,
+      "label": "Good for heavy compound lifts while learning technique",
+      "tone": "good"
+     },
+     {
+      "from": 5,
+      "to": 8,
+      "label": "Too easy to drive much growth",
+      "tone": "bad"
+     }
+    ],
+    "source": "refalo2023"
+   },
+   {
+    "t": "p",
+    "text": "Sets stopped 1 to 3 reps short of failure build about as much muscle as sets to failure, with less fatigue. {refalo2023} People misjudge how close they are, so take a set to failure now and then on a safe move to calibrate. Beginners should not grind squats, deadlifts or presses to failure while learning them."
+   },
+   {
+    "t": "h2",
+    "text": "Checking a programme someone gave you"
+   },
+   {
+    "t": "p",
+    "text": "Ask these questions about any plan, from a website, a friend or a trainer:"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Does it train every major muscle group about twice a week?",
+     "Does it have a clear rule for adding weight, reps or sets?",
+     "Are the weekly sets reasonable: roughly 10 to 20 hard sets per muscle for most people?",
+     "Does it fit the days and time you really have?",
+     "Does it include some cardio and rest days?"
+    ]
+   },
+   {
+    "t": "p",
+    "text": "If most answers are yes, follow it for at least 3 months before judging it. If it is a long list of random exercises with no progression rule, choose another."
+   },
+   {
+    "t": "h2",
+    "text": "When to change programmes"
+   },
+   {
+    "t": "p",
+    "text": "Stay on one programme for at least 3 to 6 months. Change when you have stalled for weeks despite good sleep and food, when your goal changes, or when your schedule does. Changing every few weeks resets your progress tracking and is the most common reason people spin their wheels."
+   },
+   {
+    "t": "h2",
+    "text": "Key takeaways"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Follow a proven plan; the best one is the one you will keep doing.",
+     "Beginners do best on full body, 2 or 3 days a week; each muscle at least twice a week.",
+     "Any rep range builds muscle when sets end 1 to 3 reps short of failure.",
+     "Progress by weight, reps, sets or better technique, and stay with a plan for months."
+    ]
+   }
+  ]
+ },
+ {
   "slug": "recovery",
-  "number": 10,
+  "number": 15,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -2024,7 +3337,7 @@
  },
  {
   "slug": "push-sessions",
-  "number": 11,
+  "number": 16,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -2346,7 +3659,7 @@
  },
  {
   "slug": "pull-sessions",
-  "number": 12,
+  "number": 17,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -2580,7 +3893,7 @@
  },
  {
   "slug": "leg-sessions",
-  "number": 13,
+  "number": 18,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -2848,7 +4161,7 @@
  },
  {
   "slug": "push-variation",
-  "number": 14,
+  "number": 19,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -3074,7 +4387,7 @@
  },
  {
   "slug": "pull-variation",
-  "number": 15,
+  "number": 20,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -3234,7 +4547,7 @@
  },
  {
   "slug": "leg-variation",
-  "number": 16,
+  "number": 21,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -3424,7 +4737,7 @@
  },
  {
   "slug": "deload-week",
-  "number": 17,
+  "number": 22,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -3671,7 +4984,7 @@
  },
  {
   "slug": "plateaus",
-  "number": 18,
+  "number": 23,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -3870,7 +5183,7 @@
  },
  {
   "slug": "injury-prevention",
-  "number": 19,
+  "number": 24,
   "part": "I",
   "partTitle": "Training",
   "volume": "Volume I · Training",
@@ -4077,7 +5390,7 @@
  },
  {
   "slug": "nutrition-fundamentals",
-  "number": 20,
+  "number": 25,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -4332,8 +5645,229 @@
   ]
  },
  {
+  "slug": "healthy-plate",
+  "number": 26,
+  "part": "II",
+  "partTitle": "Nutrition",
+  "volume": "Volume II · Nutrition",
+  "title": "The healthy plate",
+  "summary": "Build any meal in four parts, see what a day of Indian food looks like on ICMR's plate, and fix common plates.",
+  "minutes": 3,
+  "sources": {
+   "harvardplate": "Harvard T.H. Chan School of Public Health, The Nutrition Source. Healthy Eating Plate. Boston: Harvard University, 2011.",
+   "icmrdg2024": "ICMR-National Institute of Nutrition. Dietary Guidelines for Indians. Hyderabad: ICMR-NIN, 2024."
+  },
+  "blocks": [
+   {
+    "t": "h2",
+    "text": "Chapter overview"
+   },
+   {
+    "t": "p",
+    "text": "You do not need to weigh every meal to eat well. A plate split into the right parts gets most meals close: half vegetables and fruit, a quarter grains, a quarter protein, a little healthy fat, and water to drink. The idea comes from Harvard's Healthy Eating Plate {harvardplate}; the amounts below come from ICMR-NIN's guidelines for Indian diets. {icmrdg2024}"
+   },
+   {
+    "t": "h2",
+    "text": "The plate"
+   },
+   {
+    "t": "plate",
+    "title": "One meal on the plate",
+    "items": [
+     {
+      "label": "Vegetables (more than fruit; potatoes do not count)",
+      "share": 0.4,
+      "note": "sabzi, salad, dal-vegetable mixes, greens"
+     },
+     {
+      "label": "Fruit",
+      "share": 0.1,
+      "note": "whole fruit rather than juice"
+     },
+     {
+      "label": "Grains, mostly whole",
+      "share": 0.25,
+      "note": "roti, brown or hand-pounded rice, millets, oats"
+     },
+     {
+      "label": "Protein",
+      "share": 0.25,
+      "note": "dal, paneer, curd, eggs, chicken, fish, soya, chana"
+     }
+    ],
+    "source": "harvardplate"
+   },
+   {
+    "t": "p",
+    "text": "Add a small amount of healthy oil for cooking (groundnut, mustard, sesame, rice bran), and drink water, buttermilk, or tea and coffee with little or no sugar. {harvardplate}"
+   },
+   {
+    "t": "h2",
+    "text": "A day on ICMR's plate"
+   },
+   {
+    "t": "bars",
+    "title": "A day's food for about 2,000 kcal",
+    "unit": "g or ml a day",
+    "items": [
+     {
+      "label": "Vegetables, including leafy greens",
+      "value": 400,
+      "note": "half the plate across the day"
+     },
+     {
+      "label": "Cereals and millets (raw weight)",
+      "value": 250,
+      "note": "rice, wheat, millets"
+     },
+     {
+      "label": "Milk and curd",
+      "value": 300,
+      "note": "ml"
+     },
+     {
+      "label": "Fruit",
+      "value": 100,
+      "note": "one medium fruit"
+     },
+     {
+      "label": "Pulses, eggs, meat or fish",
+      "value": 85,
+      "note": "raw weight; more for higher protein targets"
+     },
+     {
+      "label": "Nuts and seeds",
+      "value": 35,
+      "note": "a small handful"
+     },
+     {
+      "label": "Fats and oils",
+      "value": 27,
+      "note": "about 5 to 6 teaspoons, all cooking included"
+     }
+    ],
+    "source": "icmrdg2024"
+   },
+   {
+    "t": "p",
+    "text": "These are ICMR-NIN's amounts for a moderately active adult. {icmrdg2024} Your Levlofit plan sets your own calories and protein, so your portions may be bigger or smaller; the shares stay similar. People who train hard usually need more protein than this day gives, which is why your plan adds protein foods. See [[protein|Protein]]."
+   },
+   {
+    "t": "h2",
+    "text": "Fixing common plates"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "Common plate",
+     "items": [
+      "Three rotis, a little sabzi, no protein",
+      "Big mound of rice, thin dal",
+      "Poha or upma alone for breakfast",
+      "Biryani with raita",
+      "Fruit juice with snacks"
+     ]
+    },
+    "dont": {
+     "title": "Better plate",
+     "items": [
+      "Two rotis, a full bowl of dal or paneer sabzi, salad",
+      "Half the rice, a thick bowl of dal or rajma, a vegetable side",
+      "Poha with peanuts and a glass of milk or two eggs",
+      "Smaller biryani, a bigger raita, a salad, chicken or paneer pieces",
+      "Whole fruit, and water or buttermilk to drink"
+     ]
+    }
+   },
+   {
+    "t": "h2",
+    "text": "Eating well without counting"
+   },
+   {
+    "t": "steps",
+    "title": "Simple rules that work",
+    "items": [
+     {
+      "title": "Build every main meal on the plate",
+      "text": "Half vegetables and fruit, a quarter grains, a quarter protein."
+     },
+     {
+      "title": "Put protein in every meal",
+      "text": "Dal, curd, paneer, eggs, chicken, fish or soya, every time."
+     },
+     {
+      "title": "Prefer whole foods",
+      "text": "Whole grains, whole fruit, home-cooked over packaged most days."
+     },
+     {
+      "title": "Limit the extras, do not ban them",
+      "text": "Sweets, fried snacks, sugary drinks and alcohol in small, planned amounts."
+     },
+     {
+      "title": "Keep snacking deliberate",
+      "text": "If losing weight, snack only if it is planned in your day."
+     }
+    ]
+   },
+   {
+    "t": "p",
+    "text": "No single food makes or breaks a diet. \"Superfoods\" are marketing; what matters is the total over your days and weeks. A meal plan is good if it meets your calories and protein, has plenty of vegetables and fruit, and is one you will keep eating. See [[nutrition-fundamentals|Nutrition fundamentals]]."
+   },
+   {
+    "t": "h2",
+    "text": "A lifestyle, not a diet"
+   },
+   {
+    "t": "p",
+    "text": "Diets you plan to \"come off\" usually end with the weight coming back. Change your normal meals a little at a time instead: one more vegetable, one more protein serving, one less sugary drink. Your favourite foods can stay; the portions and how often change. See [[sustainable-habits|Building habits that last]]."
+   },
+   {
+    "t": "h2",
+    "text": "Estimating food you did not make"
+   },
+   {
+    "t": "steps",
+    "title": "At a restaurant, a canteen or a friend's house",
+    "items": [
+     {
+      "title": "Use your hand",
+      "text": "A palm of protein, a fist of rice or grains, a cupped hand of snacks, a thumb of oil or ghee."
+     },
+     {
+      "title": "Compare to what you know",
+      "text": "A restaurant curry bowl often holds 2 to 3 home servings, with more oil."
+     },
+     {
+      "title": "Log the closest match",
+      "text": "Pick the nearest food in the diary; close is better than skipping."
+     },
+     {
+      "title": "Learn from repeats",
+      "text": "Weigh a home serving of foods you eat often once, so your eye learns."
+     }
+    ]
+   },
+   {
+    "t": "p",
+    "text": "See [[eating-out|Eating out, travel and occasions]]."
+   },
+   {
+    "t": "h2",
+    "text": "Key takeaways"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Half vegetables and fruit, a quarter grains, a quarter protein, a little healthy oil, water to drink.",
+     "ICMR's day for 2,000 kcal: 400 g vegetables, 250 g cereals, 300 ml milk, 100 g fruit, 85 g pulses or meat, 35 g nuts, 27 g oil.",
+     "Protein in every meal, extras planned not banned, and changes you can keep."
+    ]
+   }
+  ]
+ },
+ {
   "slug": "protein",
-  "number": 21,
+  "number": 27,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -4587,7 +6121,7 @@
  },
  {
   "slug": "veg-protein",
-  "number": 22,
+  "number": 28,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -4745,7 +6279,7 @@
  },
  {
   "slug": "calories-body-composition",
-  "number": 23,
+  "number": 29,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -5028,8 +6562,251 @@
   ]
  },
  {
+  "slug": "weight-change-answers",
+  "number": 30,
+  "part": "II",
+  "partTitle": "Nutrition",
+  "volume": "Volume II · Nutrition",
+  "title": "Losing and gaining weight: your questions",
+  "summary": "Why the scale moves or does not, bulk or cut, losing fat and gaining muscle together, metabolism, starvation mode and body types.",
+  "minutes": 5,
+  "sources": {
+   "hall2017": "Hall KD, Guo J. Obesity energetics: body weight regulation and the effects of diet composition. Gastroenterology 2017;152(7):1718-1727.",
+   "lichtman1992": "Lichtman SW et al. Discrepancy between self-reported and actual caloric intake and exercise in obese subjects. N Engl J Med 1992;327(27):1893-1898.",
+   "barakat2020": "Barakat C, Pearson J, Escalante G, Campbell B, De Souza EO. Body recomposition: can trained individuals build muscle and lose fat at the same time? Strength Cond J 2020;42(5):7-21.",
+   "garthe2011": "Garthe I, Raastad T, Refsnes PE, Koivisto A, Sundgot-Borgen J. Effect of two different weight-loss rates on body composition and strength and power-related performance in elite athletes. Int J Sport Nutr Exerc Metab 2011;21(2):97-104.",
+   "johnstone2005": "Johnstone AM, Murison SD, Duncan JS, Rance KA, Speakman JR. Factors influencing variation in basal metabolic rate include fat-free mass, fat mass, age, and circulating thyroxine but not sex, circulating leptin, or triiodothyronine. Am J Clin Nutr 2005;82(5):941-948.",
+   "ward2019": "Ward LC. Bioelectrical impedance analysis for body composition assessment: reflections on accuracy, clinical utility, and standardisation. Eur J Clin Nutr 2019;73(2):194-199."
+  },
+  "blocks": [
+   {
+    "t": "h2",
+    "text": "Chapter overview"
+   },
+   {
+    "t": "p",
+    "text": "Weight change follows one rule: eat less energy than you use and you lose weight; eat more and you gain. Every diet that works does it by changing that balance. {hall2017} The hard part is that both sides of the balance are only estimates, so the scale over weeks is your real measure."
+   },
+   {
+    "t": "h2",
+    "text": "The two estimates that go wrong"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "Why people do not lose",
+     "items": [
+      "They eat more than they think: oil, drinks, snacks, sauces and weekends add up",
+      "Their energy use is lower than the calculator said",
+      "Calories \"burned\" by a watch were eaten back"
+     ]
+    },
+    "dont": {
+     "title": "Why people do not gain",
+     "items": [
+      "They eat less than they think: small breakfasts, skipped meals, busy days",
+      "Their energy use is higher than the calculator said",
+      "Extra activity was not covered with extra food"
+     ]
+    }
+   },
+   {
+    "t": "p",
+    "text": "In a classic study, people who said they could not lose weight on very little food were eating about twice what they reported and moving less than they reported. {lichtman1992} This is normal human error, not dishonesty. The fix is the same both ways: track honestly for two to three weeks and adjust by the trend."
+   },
+   {
+    "t": "h2",
+    "text": "Setting your calories"
+   },
+   {
+    "t": "steps",
+    "title": "Finding the number that works for you",
+    "items": [
+     {
+      "title": "Start with an estimate",
+      "text": "Your Levlofit plan already gives one; any calculator is only a starting point."
+     },
+     {
+      "title": "Adjust by goal",
+      "text": "About 10 to 20% below maintenance to lose, 10 to 20% above to gain."
+     },
+     {
+      "title": "Weigh in regularly",
+      "text": "Same time, same conditions: morning, after the toilet, before food."
+     },
+     {
+      "title": "Read the trend",
+      "text": "Compare weekly averages, not single days. Daily weight can swing by 1 to 2 kg from water, salt, food and glycogen."
+     },
+     {
+      "title": "Adjust after 2 to 3 weeks",
+      "text": "No change in the trend: move calories 100 to 200 a day in the direction you need."
+     },
+     {
+      "title": "Repeat as you change",
+      "text": "Your energy use falls as you lose weight and rises as you gain, so targets need updating."
+     }
+    ]
+   },
+   {
+    "t": "p",
+    "text": "See [[calories-body-composition|Calories and body composition]] and [[body-weight|Body weight tracking]]."
+   },
+   {
+    "t": "h2",
+    "text": "Bulk or cut?"
+   },
+   {
+    "t": "flow",
+    "title": "Which comes first",
+    "items": [
+     {
+      "q": "Clearly carrying extra fat?",
+      "yes": "Lose weight first, and lift to keep your muscle.",
+      "no": "Go on to the next question."
+     },
+     {
+      "q": "Clearly thin?",
+      "yes": "Gain weight with lifting; some fat gain is expected and fine.",
+      "no": "Go on to the next question."
+     },
+     {
+      "q": "Normal weight but soft and not strong (\"skinny fat\")?",
+      "yes": "Build muscle at a small surplus, or at maintenance as a beginner; choose the phase you mind less.",
+      "no": "Lean enough but not big enough: gain. Big enough but not lean enough: lose."
+     }
+    ],
+    "note": null,
+    "source": null
+   },
+   {
+    "t": "p",
+    "text": "If your goal is performance, avoid hard cuts. Neither choice is permanent: you can gain then lose, or lose then gain. Long-term body change asks you to accept a few months of looking a little fatter or a little smaller than you would like."
+   },
+   {
+    "t": "h2",
+    "text": "Losing fat and gaining muscle at once"
+   },
+   {
+    "t": "p",
+    "text": "It happens most in beginners, people returning after a break, and people carrying more fat. {barakat2020} Lean, experienced lifters rarely manage both. Losing slowly helps: athletes who lost about 0.7% of body weight a week gained muscle, while those losing about 1.4% a week did not. {garthe2011}"
+   },
+   {
+    "t": "band",
+    "title": "Weekly weight loss and keeping muscle",
+    "unit": "% of body weight a week",
+    "ranges": [
+     {
+      "from": 0,
+      "to": 0.5,
+      "label": "Slow: easiest to keep or even gain muscle",
+      "tone": "good"
+     },
+     {
+      "from": 0.5,
+      "to": 1,
+      "label": "Steady: the usual target; keep lifting and eat enough protein",
+      "tone": "good"
+     },
+     {
+      "from": 1,
+      "to": 1.5,
+      "label": "Fast: more muscle at risk; fine for short phases with extra fat to lose",
+      "tone": "ok"
+     },
+     {
+      "from": 1.5,
+      "to": 3,
+      "label": "Very fast: muscle loss, hunger and rebound more likely",
+      "tone": "bad"
+     }
+    ],
+    "source": "garthe2011"
+   },
+   {
+    "t": "p",
+    "text": "Recomposition is slower and harder to track, because the scale may not move. If the scale is not moving and you are not sure it is working, pick one direction for a few months."
+   },
+   {
+    "t": "h2",
+    "text": "Metabolism, starvation mode and body types"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "Common belief",
+     "items": [
+      "My metabolism is unusually slow or fast",
+      "Eating too little puts me in starvation mode and stops weight loss",
+      "Ectomorphs, mesomorphs and endomorphs need different diets",
+      "I am a hard gainer"
+     ]
+    },
+    "dont": {
+     "title": "What the research shows",
+     "items": [
+      "Most of the difference in resting energy use between people is explained by body size and muscle; true outliers are rare and medical. {johnstone2005}",
+      "Energy use falls somewhat as you lose weight, but a moderate deficit still works; weight loss does not stop while you truly eat less.",
+      "Body types come from a 1940s theory about personality; they do not predict how you gain or lose. Everyone follows the same energy balance.",
+      "Hard gainers who eat more, gain. Some people need far more food than they expect."
+     ]
+    }
+   },
+   {
+    "t": "p",
+    "text": "If you truly eat less over months and the scale does not move, or eat much more and still do not gain, see a doctor: a thyroid or other medical problem is then possible."
+   },
+   {
+    "t": "h2",
+    "text": "Body-fat scales and gadgets"
+   },
+   {
+    "t": "p",
+    "text": "Home body-fat scales and handheld devices use electrical impedance, which shifts with water, food and time of day; readings are often off by several percent and not even consistently off. {ward2019} Use body weight, a waist measurement and photos instead. If your weight is falling, you are losing fat. See [[body-measurements|Body measurements]] and [[progress-photos|Progress photos]]."
+   },
+   {
+    "t": "h2",
+    "text": "Losing weight: lift too"
+   },
+   {
+    "t": "p",
+    "text": "Lifting while you lose weight keeps your muscle, so more of what you lose is fat and you look better at the end. Hunger is normal in a deficit; protein, vegetables, fibre and enough sleep help. Plan a few weeks at maintenance after 8 to 12 weeks of losing, to rest from dieting. See [[body-fat-lean|Body fat and getting lean]]."
+   },
+   {
+    "t": "h2",
+    "text": "Gaining weight: eat more than you think"
+   },
+   {
+    "t": "p",
+    "text": "If the scale is not going up, you are not eating enough yet, whatever the plan says. Add 200 to 300 kcal a day and check again in two weeks. Easy extras: milk, curd, peanuts and peanut butter, bananas, an extra roti, ghee on dal, a shake. See [[muscle-gain|Gaining muscle and weight]]."
+   },
+   {
+    "t": "h2",
+    "text": "Macros or calories?"
+   },
+   {
+    "t": "p",
+    "text": "For weight, calories come first; diets with very different carbs and fat lose the same weight when calories and protein are matched. {hall2017} For body composition, protein comes next; carbs and fat then fill the rest of your calories in whatever mix you enjoy. Keep at least some fat (about 0.6 g per kg body weight is a common floor) for health."
+   },
+   {
+    "t": "h2",
+    "text": "Key takeaways"
+   },
+   {
+    "t": "list",
+    "items": [
+     "Calories decide weight; both sides of the balance are estimates, so trust your weekly average weight.",
+     "Change calories by 10 to 20% for your goal and adjust every 2 to 3 weeks.",
+     "Bulk or cut by what you mind less; aim to lose about 0.5 to 1% of body weight a week.",
+     "Slow metabolism, starvation mode and body types explain very little; consistent eating explains most.",
+     "Ignore body-fat scales; use weight, waist and photos."
+    ]
+   }
+  ]
+ },
+ {
   "slug": "muscle-gain",
-  "number": 24,
+  "number": 31,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -5152,7 +6929,7 @@
  },
  {
   "slug": "under-eating",
-  "number": 25,
+  "number": 32,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -5269,7 +7046,7 @@
  },
  {
   "slug": "nutrient-timing",
-  "number": 26,
+  "number": 33,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -5484,7 +7261,7 @@
  },
  {
   "slug": "budget-nutrition",
-  "number": 27,
+  "number": 34,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -5723,18 +7500,24 @@
  },
  {
   "slug": "supplements-guide",
-  "number": 28,
+  "number": 35,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
   "title": "Supplements",
   "summary": "A very short list that works, and a long one with little behind it.",
-  "minutes": 5,
+  "minutes": 7,
   "sources": {
    "issncreatine": "Kreider RB et al. International Society of Sports Nutrition position stand: safety and efficacy of creatine supplementation in exercise, sport, and medicine. J Int Soc Sports Nutr 2017;14:18.",
    "issncaffeine": "Guest NS et al. International Society of Sports Nutrition position stand: caffeine and exercise performance. J Int Soc Sports Nutr 2021;18:1.",
    "craven2022": "Craven J et al. Effects of acute sleep loss on physical performance: a systematic and meta-analytical review. Sports Med 2022;52(11):2669-2690. doi:10.1007/s40279-022-01706-y",
    "issnprotein": "Jager R et al. International Society of Sports Nutrition position stand: protein and exercise. J Int Soc Sports Nutr 2017;14:20. doi:10.1186/s12970-017-0177-8",
+   "icmr2020": "ICMR-National Institute of Nutrition. Nutrient Requirements for Indians (RDA and EAR), 2020.",
+   "nihvitd": "NIH Office of Dietary Supplements. Vitamin D: Fact Sheet for Health Professionals.",
+   "nihb12": "NIH Office of Dietary Supplements. Vitamin B12: Fact Sheet for Health Professionals.",
+   "nihomega3": "NIH Office of Dietary Supplements. Omega-3 Fatty Acids: Fact Sheet for Health Professionals.",
+   "nihiron": "NIH Office of Dietary Supplements. Iron: Fact Sheet for Health Professionals.",
+   "nihmagnesium": "NIH Office of Dietary Supplements. Magnesium: Fact Sheet for Health Professionals.",
    "aragon2017": "Aragon AA et al. International Society of Sports Nutrition position stand: diets and body composition. J Int Soc Sports Nutr 2017;14:16. doi:10.1186/s12970-017-0174-y"
   },
   "blocks": [
@@ -5885,6 +7668,89 @@
    },
    {
     "t": "h2",
+    "text": "When to take them and how much is safe"
+   },
+   {
+    "t": "p",
+    "text": "These are the official reference intakes and upper limits for healthy adults, not doses for you. Levlofit's Supplement guide and Diet tab tie each one to a meal."
+   },
+   {
+    "t": "rows",
+    "head": [
+     "Supplement",
+     "Best time",
+     "Reference intake (adults)",
+     "Upper limit"
+    ],
+    "rows": [
+     [
+      "Vitamin D3",
+      "With a main meal that has some fat",
+      "600 IU (15 mcg) a day {icmr2020}",
+      "4,000 IU (100 mcg) a day unless a doctor prescribes more {nihvitd}"
+     ],
+     [
+      "Vitamin B12",
+      "Once a day, any time",
+      "2.5 mcg a day {icmr2020}",
+      "None set; tablets often carry far more because little is absorbed {nihb12}"
+     ],
+     [
+      "Omega-3 (EPA plus DHA)",
+      "With a meal, to absorb it and avoid fishy burps",
+      "No Indian reference intake; capsules give 250 to 1,000 mg",
+      "Up to 5 g a day from supplements is considered safe {nihomega3}"
+     ],
+     [
+      "Iron",
+      "Empty stomach, with vitamin C; 2 hours from tea, coffee, milk and calcium",
+      "19 mg (men), 29 mg (women) a day {icmr2020}",
+      "45 mg a day without medical advice {nihiron}"
+     ],
+     [
+      "Magnesium",
+      "With dinner",
+      "400 to 420 mg (men), 310 to 320 mg (women) from all food {nihmagnesium}",
+      "350 mg a day from supplements {nihmagnesium}"
+     ],
+     [
+      "Calcium",
+      "With meals, no more than 500 mg at once",
+      "1,000 mg a day {icmr2020}",
+      "2,500 mg a day from food and supplements"
+     ],
+     [
+      "Creatine monohydrate",
+      "Any time, every day",
+      "3 to 5 g a day {issncreatine}",
+      "Not set; long-term use at these doses is safe in healthy people {issncreatine}"
+     ]
+    ]
+   },
+   {
+    "t": "steps",
+    "title": "Keep these apart",
+    "items": [
+     {
+      "title": "Iron and calcium",
+      "text": "At least 2 hours apart; calcium blocks iron absorption."
+     },
+     {
+      "title": "Iron and tea or coffee",
+      "text": "2 hours apart; tannins block iron."
+     },
+     {
+      "title": "Zinc and iron",
+      "text": "Separate high doses; they compete for absorption."
+     },
+     {
+      "title": "Caffeine and sleep",
+      "text": "None within about 6 hours of bed. {issncaffeine}"
+     }
+    ]
+   },
+   {
+    "t": "h2",
     "text": "Not worth your money"
    },
    {
@@ -5996,7 +7862,7 @@
  },
  {
   "slug": "hydration",
-  "number": 29,
+  "number": 36,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -6229,7 +8095,7 @@
  },
  {
   "slug": "eating-out",
-  "number": 30,
+  "number": 37,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -6452,7 +8318,7 @@
  },
  {
   "slug": "nutrition-myths",
-  "number": 31,
+  "number": 38,
   "part": "II",
   "partTitle": "Nutrition",
   "volume": "Volume II · Nutrition",
@@ -6744,7 +8610,7 @@
  },
  {
   "slug": "sleep-guide",
-  "number": 32,
+  "number": 39,
   "part": "III",
   "partTitle": "Recovery",
   "volume": "Volume III · Recovery",
@@ -6943,7 +8809,7 @@
  },
  {
   "slug": "stress-management",
-  "number": 33,
+  "number": 40,
   "part": "III",
   "partTitle": "Recovery",
   "volume": "Volume III · Recovery",
@@ -7139,7 +9005,7 @@
  },
  {
   "slug": "mobility-flexibility",
-  "number": 34,
+  "number": 41,
   "part": "III",
   "partTitle": "Recovery",
   "volume": "Volume III · Recovery",
@@ -7392,7 +9258,7 @@
  },
  {
   "slug": "muscle-soreness",
-  "number": 35,
+  "number": 42,
   "part": "III",
   "partTitle": "Recovery",
   "volume": "Volume III · Recovery",
@@ -7635,7 +9501,7 @@
  },
  {
   "slug": "recovery-tools",
-  "number": 36,
+  "number": 43,
   "part": "III",
   "partTitle": "Recovery",
   "volume": "Volume III · Recovery",
@@ -7865,7 +9731,7 @@
  },
  {
   "slug": "motivation",
-  "number": 37,
+  "number": 44,
   "part": "III",
   "partTitle": "Recovery",
   "volume": "Volume III · Recovery",
@@ -8068,7 +9934,7 @@
  },
  {
   "slug": "sustainable-habits",
-  "number": 38,
+  "number": 45,
   "part": "III",
   "partTitle": "Recovery",
   "volume": "Volume III · Recovery",
@@ -8277,7 +10143,7 @@
  },
  {
   "slug": "daily-steps",
-  "number": 39,
+  "number": 46,
   "part": "III",
   "partTitle": "Recovery",
   "volume": "Volume III · Recovery",
@@ -8353,7 +10219,7 @@
  },
  {
   "slug": "recovery-myths",
-  "number": 40,
+  "number": 47,
   "part": "III",
   "partTitle": "Recovery",
   "volume": "Volume III · Recovery",
@@ -8561,8 +10427,192 @@
   ]
  },
  {
+  "slug": "training-answers",
+  "number": 48,
+  "part": "III",
+  "partTitle": "Recovery",
+  "volume": "Volume III · Recovery",
+  "title": "Training questions, answered",
+  "summary": "Toning, spot reduction, abs, getting too big, leg day, overtraining, flexibility, young lifters, mood, protein timing and shakes.",
+  "minutes": 4,
+  "sources": {
+   "vispute2011": "Vispute SS, Smith JD, LeCheminant JD, Hurley KS. The effect of abdominal exercise on abdominal fat. J Strength Cond Res 2011;25(9):2559-2564.",
+   "afonso2021": "Afonso J et al. Strength training versus stretching for improving range of motion: a systematic review and meta-analysis. Healthcare 2021;9(4):427.",
+   "faigenbaum2009": "Faigenbaum AD et al. Youth resistance training: updated position statement paper from the National Strength and Conditioning Association. J Strength Cond Res 2009;23(5 Suppl):S60-S79.",
+   "noetel2024": "Noetel M et al. Effect of exercise for depression: systematic review and network meta-analysis of randomised controlled trials. BMJ 2024;384:e075847.",
+   "schoenfeld2013t": "Schoenfeld BJ, Aragon AA, Krieger JW. The effect of protein timing on muscle strength and hypertrophy: a meta-analysis. J Int Soc Sports Nutr 2013;10:53.",
+   "trommelen2023": "Trommelen J et al. The anabolic response to protein ingestion during recovery from exercise has no upper limit in magnitude and duration in vivo in humans. Cell Rep Med 2023;4(12):101324."
+  },
+  "blocks": [
+   {
+    "t": "h2",
+    "text": "Chapter overview"
+   },
+   {
+    "t": "p",
+    "text": "The same questions come up for almost everyone who starts training. Here are short, honest answers, with the reasons."
+   },
+   {
+    "t": "h2",
+    "text": "Toning, spot reduction and abs"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "Myth",
+     "items": [
+      "I can tone a body part with light weights and high reps",
+      "Crunches burn belly fat; arm work burns arm fat",
+      "Some exercises target the lower belly",
+      "Abs need daily ab training"
+     ]
+    },
+    "dont": {
+     "title": "Fact",
+     "items": [
+      "\"Toned\" is some muscle plus low enough body fat to see it: build the muscle, lose the fat",
+      "Training one area does not burn fat there: six weeks of ab exercises did not reduce belly fat. {vispute2011}",
+      "Where you lose fat first and last is set by your genes; often the first place you gain is the last to go",
+      "Abs show when body fat is low enough; train them two or three times a week like any muscle"
+     ]
+    }
+   },
+   {
+    "t": "h2",
+    "text": "Will I get too big?"
+   },
+   {
+    "t": "p",
+    "text": "No. Building a lot of muscle takes years of hard training and eating a surplus on purpose; nobody does it by accident. If you ever feel bigger than you want, stop adding weight and sets, and you will stay where you are."
+   },
+   {
+    "t": "h2",
+    "text": "Can I skip leg day?"
+   },
+   {
+    "t": "p",
+    "text": "Only for an injury, a doctor's restriction, or no access to the training. Running, cycling and sports are not a substitute for strength training: your legs and hips are your biggest muscles, and strong legs help those sports and protect your knees. See [[leg-sessions|Building a leg session]]."
+   },
+   {
+    "t": "h2",
+    "text": "Am I overtraining?"
+   },
+   {
+    "t": "p",
+    "text": "Almost certainly not. True overtraining takes months of far too much work with too little recovery and is rare. Feeling flat for a week is short-term fatigue: sleep more, eat enough, and take a lighter week if it lasts. See [[deload-week|Deload week]]."
+   },
+   {
+    "t": "flow",
+    "title": "Tired and weaker for a while?",
+    "items": [
+     {
+      "q": "Weaker for 2 or more weeks despite good sleep and food?",
+      "yes": "Take a lighter week: half the sets, same weights.",
+      "no": "It is a normal bad day or week: carry on."
+     },
+     {
+      "q": "Still weaker after the lighter week?",
+      "yes": "Check sleep, stress, illness and calories; see a doctor if you also feel unwell.",
+      "no": "Return to your plan."
+     }
+    ],
+    "note": null,
+    "source": null
+   },
+   {
+    "t": "h2",
+    "text": "Will lifting make me stiff?"
+   },
+   {
+    "t": "p",
+    "text": "Strength training through a full range of motion improves flexibility about as much as stretching does. {afonso2021} Stiffness comes from training only partial ranges or far more pushing than pulling. See [[mobility-flexibility|Mobility and flexibility]]."
+   },
+   {
+    "t": "h2",
+    "text": "Does lifting stunt growth?"
+   },
+   {
+    "t": "p",
+    "text": "No. Supervised strength training with good technique is safe for children and teenagers and builds strength, bone and confidence. {faigenbaum2009} Injuries in young lifters mostly come from poor supervision and badly chosen loads, not lifting itself. Levlofit's plans are for adults 18 and over."
+   },
+   {
+    "t": "h2",
+    "text": "Exercise and mood"
+   },
+   {
+    "t": "p",
+    "text": "Exercise reduces symptoms of depression, with walking, jogging, yoga and strength training among the most effective options, and more vigorous exercise doing more. {noetel2024} It works alongside treatment, not instead of it. If low mood lasts for weeks or you have thoughts of harming yourself, talk to a doctor or call Tele-MANAS at 14416. On hard days, a short walk still counts."
+   },
+   {
+    "t": "h2",
+    "text": "Soreness"
+   },
+   {
+    "t": "p",
+    "text": "Soreness means you did something new, not that you trained well. It fades as your body adapts, so no soreness after a few weeks is normal. You can train a sore muscle after a good warm-up; it often feels better once you move. See [[muscle-soreness|Muscle soreness]]."
+   },
+   {
+    "t": "h2",
+    "text": "Protein timing and shakes"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "Myth",
+     "items": [
+      "I must have a shake within 30 minutes of training",
+      "The body can only use 30 g of protein at a time",
+      "Protein shakes and mass gainers are special"
+     ]
+    },
+    "dont": {
+     "title": "Fact",
+     "items": [
+      "Total daily protein matters most; timing adds little when daily protein is enough. {schoenfeld2013t}",
+      "A larger serving keeps working for longer; you do not waste protein above 30 g. {trommelen2023}",
+      "They are powdered food: convenient protein or calories, nothing more"
+     ]
+    }
+   },
+   {
+    "t": "p",
+    "text": "If you train on an empty stomach, eat a protein meal soon after. Otherwise eat protein spread over three or four meals and reach your daily target. See [[nutrient-timing|Meal timing]]."
+   },
+   {
+    "t": "h2",
+    "text": "Fitting in enough protein"
+   },
+   {
+    "t": "p",
+    "text": "Protein has 4 kcal per gram, so even 150 g a day is only 600 kcal. Build each meal around a protein food (dal, paneer, curd, eggs, chicken, fish, soya chunks, chana) and use a shake if you fall short. See [[protein|Protein]] and [[veg-protein|Vegetarian and vegan protein]]."
+   },
+   {
+    "t": "h2",
+    "text": "Supplements in one line each"
+   },
+   {
+    "t": "p",
+    "text": "Creatine monohydrate (3 to 5 g a day) has strong evidence; caffeine helps performance; vitamin D, B12 and omega-3 are worth it only to fix a low intake or a measured deficiency. Most other products are mostly marketing. Levlofit's Supplement guide covers timing and safe amounts. See [[supplements-guide|Supplements]]."
+   },
+   {
+    "t": "h2",
+    "text": "Key takeaways"
+   },
+   {
+    "t": "list",
+    "items": [
+     "You cannot spot-reduce fat; \"toned\" is muscle plus low fat.",
+     "You will not get big by accident; legs are not optional.",
+     "Overtraining is rare; flat weeks need sleep, food and maybe a lighter week.",
+     "Full-range lifting improves flexibility; supervised lifting is safe for young people.",
+     "Total daily protein matters more than timing or serving size."
+    ]
+   }
+  ]
+ },
+ {
   "slug": "recovery-summary",
-  "number": 41,
+  "number": 49,
   "part": "III",
   "partTitle": "Recovery",
   "volume": "Volume III · Recovery",
@@ -8728,7 +10778,7 @@
  },
  {
   "slug": "body-fat-lean",
-  "number": 42,
+  "number": 50,
   "part": "IV",
   "partTitle": "Physique",
   "volume": "Volume IV · Physique",
@@ -8954,7 +11004,7 @@
  },
  {
   "slug": "aesthetic-physique",
-  "number": 43,
+  "number": 51,
   "part": "IV",
   "partTitle": "Physique",
   "volume": "Volume IV · Physique",
@@ -9214,7 +11264,7 @@
  },
  {
   "slug": "v-taper",
-  "number": 44,
+  "number": 52,
   "part": "IV",
   "partTitle": "Physique",
   "volume": "Volume IV · Physique",
@@ -9394,7 +11444,7 @@
  },
  {
   "slug": "lagging-muscles",
-  "number": 45,
+  "number": 53,
   "part": "IV",
   "partTitle": "Physique",
   "volume": "Volume IV · Physique",
@@ -9606,7 +11656,7 @@
  },
  {
   "slug": "posture",
-  "number": 46,
+  "number": 54,
   "part": "IV",
   "partTitle": "Physique",
   "volume": "Volume IV · Physique",
@@ -9794,7 +11844,7 @@
  },
  {
   "slug": "physique-myths",
-  "number": 47,
+  "number": 55,
   "part": "IV",
   "partTitle": "Physique",
   "volume": "Volume IV · Physique",
@@ -10012,7 +12062,7 @@
  },
  {
   "slug": "why-track",
-  "number": 48,
+  "number": 56,
   "part": "V",
   "partTitle": "Tracking",
   "volume": "Volume V · Tracking",
@@ -10263,7 +12313,7 @@
  },
  {
   "slug": "progress-photos",
-  "number": 49,
+  "number": 57,
   "part": "V",
   "partTitle": "Tracking",
   "volume": "Volume V · Tracking",
@@ -10489,7 +12539,7 @@
  },
  {
   "slug": "body-measurements",
-  "number": 50,
+  "number": 58,
   "part": "V",
   "partTitle": "Tracking",
   "volume": "Volume V · Tracking",
@@ -10716,7 +12766,7 @@
  },
  {
   "slug": "body-weight",
-  "number": 51,
+  "number": 59,
   "part": "V",
   "partTitle": "Tracking",
   "volume": "Volume V · Tracking",
@@ -10998,7 +13048,7 @@
  },
  {
   "slug": "workout-log",
-  "number": 52,
+  "number": 60,
   "part": "V",
   "partTitle": "Tracking",
   "volume": "Volume V · Tracking",
@@ -11273,7 +13323,7 @@
  },
  {
   "slug": "monthly-reviews",
-  "number": 53,
+  "number": 61,
   "part": "V",
   "partTitle": "Tracking",
   "volume": "Volume V · Tracking",
@@ -11476,7 +13526,7 @@
  },
  {
   "slug": "goal-setting",
-  "number": 54,
+  "number": 62,
   "part": "V",
   "partTitle": "Tracking",
   "volume": "Volume V · Tracking",
@@ -11689,7 +13739,7 @@
  },
  {
   "slug": "staying-consistent",
-  "number": 55,
+  "number": 63,
   "part": "V",
   "partTitle": "Tracking",
   "volume": "Volume V · Tracking",
@@ -11848,7 +13898,7 @@
  },
  {
   "slug": "baseline-tests",
-  "number": 56,
+  "number": 64,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -11939,7 +13989,7 @@
  },
  {
   "slug": "general-fitness",
-  "number": 57,
+  "number": 65,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -12068,7 +14118,7 @@
  },
  {
   "slug": "get-stronger",
-  "number": 58,
+  "number": 66,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -12213,7 +14263,7 @@
  },
  {
   "slug": "combining-training",
-  "number": 59,
+  "number": 67,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -12308,7 +14358,7 @@
  },
  {
   "slug": "calisthenics-ladders",
-  "number": 60,
+  "number": 68,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -12448,7 +14498,7 @@
  },
  {
   "slug": "running-guide",
-  "number": 61,
+  "number": 69,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -12563,7 +14613,7 @@
  },
  {
   "slug": "athletic-power",
-  "number": 62,
+  "number": 70,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -12668,7 +14718,7 @@
  },
  {
   "slug": "hyrox-guide",
-  "number": 63,
+  "number": 71,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -12795,7 +14845,7 @@
  },
  {
   "slug": "boxing-solo",
-  "number": 64,
+  "number": 72,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -12888,7 +14938,7 @@
  },
  {
   "slug": "kettlebells",
-  "number": 65,
+  "number": 73,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -12988,7 +15038,7 @@
  },
  {
   "slug": "home-training-guide",
-  "number": 66,
+  "number": 74,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -13094,7 +15144,7 @@
  },
  {
   "slug": "women",
-  "number": 67,
+  "number": 75,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -13230,7 +15280,7 @@
  },
  {
   "slug": "over-40",
-  "number": 68,
+  "number": 76,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
@@ -13344,7 +15394,7 @@
  },
  {
   "slug": "building-a-week",
-  "number": 69,
+  "number": 77,
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",

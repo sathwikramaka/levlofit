@@ -91,8 +91,15 @@ through the web app. People with medical conditions are told to involve a doctor
 - Works without AI: every core feature runs when the provider is down.
 
 ### Learning and account
-- Handbook: a 69-chapter book in six volumes, live in the app and on the website since 2026-11-12. Not clinician-reviewed;
-  1,379 of 2,381 claims still unreviewed (the coach cites only checked passages). Exercise library; glossary; BMI and
+- Handbook: a 77-chapter book in six volumes, live in the app and on the website since 2026-11-12. Not clinician-reviewed;
+  1,735 of 2,737 claims still unreviewed (the coach cites only checked passages). Chapters teach with figures (stat
+  tiles, numbered steps, do and avoid, bar charts, a plate, yes and no flows, ranges, scales). The facts of
+  thefitness.wiki's pages are covered in Levlofit's own words with primary sources (its text is not licensed for reuse):
+  start here, muscle map, heart rate and calories, first weeks in a gym, choosing a programme, the healthy plate
+  (Harvard's Healthy Eating Plate idea with ICMR-NIN 2024 amounts), weight-change answers and training answers; the
+  supplements chapter adds timing, safe upper limits and what to keep apart.
+- Diet's day totals include a healthy plate check: the day's food by weight against about half vegetables and fruit,
+  a quarter grains and a quarter protein foods (milk, oil and shakes sit beside the plate). Exercise library; glossary; BMI and
   body-fat tools.
 - Google or email sign-in, Terms and Privacy at sign-up, delete account, send feedback (saved and emailed), in-app update, and an Android
   notification when a new version is out (checked about every 12 hours, once per version).

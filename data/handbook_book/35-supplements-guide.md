@@ -48,6 +48,23 @@ These are general notes, not advice for you personally.
 > warn: Blood results
 > Levlofit does not interpret blood results. The right order is a test, then a clinician's reading, then a dose if you need one. This matters even more during pregnancy or breastfeeding, with any diagnosed condition, or with prescription medicine.
 
+## When to take them and how much is safe
+These are the official reference intakes and upper limits for healthy adults, not doses for you. Levlofit's Supplement guide and Diet tab tie each one to a meal.
+| Supplement | Best time | Reference intake (adults) | Upper limit |
+| Vitamin D3 | With a main meal that has some fat | 600 IU (15 mcg) a day {icmr2020} | 4,000 IU (100 mcg) a day unless a doctor prescribes more {nihvitd} |
+| Vitamin B12 | Once a day, any time | 2.5 mcg a day {icmr2020} | None set; tablets often carry far more because little is absorbed {nihb12} |
+| Omega-3 (EPA plus DHA) | With a meal, to absorb it and avoid fishy burps | No Indian reference intake; capsules give 250 to 1,000 mg | Up to 5 g a day from supplements is considered safe {nihomega3} |
+| Iron | Empty stomach, with vitamin C; 2 hours from tea, coffee, milk and calcium | 19 mg (men), 29 mg (women) a day {icmr2020} | 45 mg a day without medical advice {nihiron} |
+| Magnesium | With dinner | 400 to 420 mg (men), 310 to 320 mg (women) from all food {nihmagnesium} | 350 mg a day from supplements {nihmagnesium} |
+| Calcium | With meals, no more than 500 mg at once | 1,000 mg a day {icmr2020} | 2,500 mg a day from food and supplements |
+| Creatine monohydrate | Any time, every day | 3 to 5 g a day {issncreatine} | Not set; long-term use at these doses is safe in healthy people {issncreatine} |
+:: steps Keep these apart
+Iron and calcium | At least 2 hours apart; calcium blocks iron absorption.
+Iron and tea or coffee | 2 hours apart; tannins block iron.
+Zinc and iron | Separate high doses; they compete for absorption.
+Caffeine and sleep | None within about 6 hours of bed. {issncaffeine}
+::
+
 ## Not worth your money
 These have no strong case behind them in this Handbook's sources. That is not proof they can never work, but the burden of proof sits with the product.
 | Product | Why not |

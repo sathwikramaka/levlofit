@@ -65,6 +65,8 @@ reading. Headings 22 to 30 px bold, body 15 to 16, captions 13, small uppercase 
 | Coach | Your messages in charcoal, replies on white cards, pill composer |
 | Levlofit AI button | Floating, bottom right: the Levlofit AI robot (FitBotPainter) on a 62 dp charcoal disc (cloud in dark mode), bobbing and blinking, a soft orange ring pulsing out; still with reduced motion; no text, name on long press |
 | Activity map | 53 weeks of squares, Monday on top, green in four strengths by minutes trained, today ringed in orange text colour |
+| Book figures | Drawn, never images: stat tiles, numbered steps, do (green) and avoid, bars, a donut plate, yes and no flows, ranges, scales; a short note sits at the row end, a sentence goes under it; cites as [n] in tertiary; fit a 320 dp phone |
+| Healthy plate check | Three thin bars on Diet's day totals: share by weight and the aim; green inside the aim, orange outside, with one plain fix line |
 | Plan tables | Meal and day tables: item left, numbers right in Geist tabular figures, hairline rows, a total row on a faint orange tint with orange numbers |
 | Dark panels | Water, Habits, Progress verdict: charcoal, light text |
 | Moments | Level up: full screen, mark, Unbounded level number, Share and Continue. New best: heavy haptic and a short note. No confetti |

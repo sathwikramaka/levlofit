@@ -353,8 +353,8 @@ Widget handbookBlock(BuildContext context, Map<String, dynamic> b, String? Funct
         'rule' => _Note(label: 'RULE', text: b['text'] as String, filled: false),
         'evidence' => _Note(label: 'EVIDENCE', text: b['text'] as String, filled: true, cite: cite(b['source']), grade: b['grade'] as String?),
         'stats' => _Stats(b, cite),
-        'steps' => _Steps(b),
-        'compare' => _Compare(b),
+        'steps' => _Steps(b, cite),
+        'compare' => _Compare(b, cite),
         'bars' => _Bars(b, cite(b['source'])),
         'scale' => _Scale(b, cite(b['source'])),
         'week' => _Week(b),
@@ -895,8 +895,9 @@ class _Stats extends StatelessWidget {
 }
 
 class _Steps extends StatelessWidget {
-  const _Steps(this.b);
+  const _Steps(this.b, this.cite);
   final _Json b;
+  final String? Function(Object?) cite;
 
   @override
   Widget build(BuildContext context) {
@@ -938,7 +939,7 @@ class _Steps extends StatelessWidget {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(s['title'] as String, style: t.titleMedium),
                   const SizedBox(height: 2),
-                  Text(s['text'] as String, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+                  _BookText(s['text'] as String, cite, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
                 ]),
               ),
             ),
@@ -949,8 +950,9 @@ class _Steps extends StatelessWidget {
 }
 
 class _Compare extends StatelessWidget {
-  const _Compare(this.b);
+  const _Compare(this.b, this.cite);
   final _Json b;
+  final String? Function(Object?) cite;
 
   @override
   Widget build(BuildContext context) {
@@ -978,7 +980,7 @@ class _Compare extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Padding(padding: const EdgeInsets.only(top: 8, right: 10), child: Container(width: 5, height: 5, decoration: BoxDecoration(color: tone, shape: BoxShape.circle))),
-                Expanded(child: Text(item, style: Theme.of(context).textTheme.bodyMedium)),
+                Expanded(child: _BookText(item, cite, style: Theme.of(context).textTheme.bodyMedium)),
               ]),
             ),
         ]),
@@ -1012,9 +1014,10 @@ class _Bars extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _Title(b['title'] as String, cite: cite),
         for (final (i, item) in items.indexed) ...[
+          // A short note is the shown value ("1.6 g/kg"); a long one is a sentence under the bar (book figures).
           Row(children: [
             Expanded(child: Text(item['label'] as String, style: t.bodyMedium)),
-            Text(item['note'] as String? ?? '${item['value']}', style: monoNumber(context, size: 14)),
+            Text(_short(item['note']) ?? '${item['value']}', style: monoNumber(context, size: 14)),
           ]),
           const SizedBox(height: 6),
           _Grow(
@@ -1030,12 +1033,18 @@ class _Bars extends StatelessWidget {
               ]),
             ),
           ),
+          if (item['note'] is String && _short(item['note']) == null) ...[
+            const SizedBox(height: 4),
+            Text(item['note'] as String, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+          ],
           if (i < items.length - 1) const SizedBox(height: 14),
         ],
       ]),
     );
-  }
-}
+  }}
+
+/// A figure note short enough to sit at the row's end ("1.6 g/kg"); longer notes are sentences shown under the row.
+String? _short(Object? note) => note is String && note.isNotEmpty && note.length <= 18 ? note : null;
 
 class _Scale extends StatelessWidget {
   const _Scale(this.b, this.cite);
@@ -1172,8 +1181,13 @@ class _Plate extends StatelessWidget {
                 decoration: BoxDecoration(color: colors[i % colors.length], borderRadius: BorderRadius.circular(4), border: Border.all(color: c.outline)),
               ),
               const SizedBox(width: 10),
-              Expanded(child: Text(item['label'] as String, style: t.bodyMedium)),
-              Text(item['note'] as String? ?? '', style: monoNumber(context, size: 14)),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(item['label'] as String, style: t.bodyMedium),
+                  if (item['note'] is String && _short(item['note']) == null) Text(item['note'] as String, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                ]),
+              ),
+              Text(_short(item['note']) ?? '${((item['share'] as num) * 100).round()}%', style: monoNumber(context, size: 14)),
             ]),
           ),
       ]),
