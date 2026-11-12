@@ -41,9 +41,19 @@ export default async function ChapterPage({ params }: { params: Promise<{ slug: 
         </ol>
         <p className="mt-6 text-[13px] leading-relaxed text-muted">{HANDBOOK_NOTE}</p>
       </section>
-      <nav aria-label="Chapters" className="mt-10 flex justify-between gap-4 text-[15px]">
-        {prev ? <Link href={`/handbook/${prev.slug}`} className="underline underline-offset-4">← {prev.title}</Link> : <span />}
-        {next ? <Link href={`/handbook/${next.slug}`} className="text-right underline underline-offset-4">{next.title} →</Link> : <span />}
+      <nav aria-label="Chapters" className="mt-10 flex justify-between gap-3 text-[15px]">
+        {prev ? (
+          <Link href={`/handbook/${prev.slug}`} className="flex-1 rounded-2xl border border-line p-4 transition-colors hover:border-ink">
+            <span className="block font-mono text-[11px] tracking-wide text-muted">← PREVIOUS CHAPTER</span>
+            <span className="mt-1 block font-semibold">{prev.title}</span>
+          </Link>
+        ) : <span className="flex-1" />}
+        {next ? (
+          <Link href={`/handbook/${next.slug}`} className="flex-1 rounded-2xl border border-line p-4 transition-colors hover:border-ink text-right">
+            <span className="block font-mono text-[11px] tracking-wide text-muted">NEXT CHAPTER →</span>
+            <span className="mt-1 block font-semibold">{next.title}</span>
+          </Link>
+        ) : <span className="flex-1" />}
       </nav>
     </main>
   );

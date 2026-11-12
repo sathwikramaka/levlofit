@@ -165,10 +165,11 @@ class _ChapterTile extends StatelessWidget {
 
 class ChapterScreen extends StatelessWidget {
   // Opened by id from the chapter list, or by slug from an "Up next" link (slugs never change; ids follow book order).
-  const ChapterScreen({super.key, this.id, this.slug, @visibleForTesting this.load}) : assert(id != null || slug != null);
+  const ChapterScreen({super.key, this.id, this.slug, @visibleForTesting this.load, @visibleForTesting this.neighbours}) : assert(id != null || slug != null);
   final int? id;
   final String? slug;
   final Future<Map<String, dynamic>> Function()? load; // tests only: replaces the database read
+  final Future<List<Map<String, dynamic>>> Function(int chapter)? neighbours; // tests only: the chapters either side
 
   static String label(int? id) => id == null ? 'CHAPTER' : 'CHAPTER ${id.toString().padLeft(2, '0')}';
 
@@ -259,6 +260,7 @@ class ChapterScreen extends StatelessWidget {
                     Expanded(child: Text(sources[k]!, style: t.bodySmall?.copyWith(color: muted))),
                   ]),
                 ),
+              if (chapter > 0) ...[const SizedBox(height: 24), _ChapterNav(key: ValueKey(chapter), chapter: chapter, neighbours: neighbours)],
               ]),
             ),
           );
@@ -266,6 +268,59 @@ class ChapterScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Previous and Next chapter at the end of a chapter, by book order (ids follow reading order). Each button names its
+/// chapter; the first chapter has no Previous and the last no Next. Nothing shows when the read fails.
+class _ChapterNav extends StatefulWidget {
+  const _ChapterNav({super.key, required this.chapter, this.neighbours});
+  final int chapter;
+  final Future<List<Map<String, dynamic>>> Function(int chapter)? neighbours;
+
+  @override
+  State<_ChapterNav> createState() => _ChapterNavState();
+}
+
+class _ChapterNavState extends State<_ChapterNav> {
+  late final Future<List<Map<String, dynamic>>> _rows = Future(() => (widget.neighbours ??
+      (c) => supabase.from('handbook_chapters').select('id, title').inFilter('id', [c - 1, c + 1]))(widget.chapter));
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder(
+        future: _rows,
+        builder: (context, snap) {
+          final rows = snap.data ?? const [];
+          Map<String, dynamic>? at(int id) => rows.where((r) => r['id'] == id).firstOrNull;
+          final prev = at(widget.chapter - 1), next = at(widget.chapter + 1);
+          if (prev == null && next == null) return const SizedBox.shrink();
+          final t = Theme.of(context).textTheme;
+          Widget button(Map<String, dynamic> r, bool forward) => Expanded(
+                child: Semantics(
+                  button: true,
+                  label: '${forward ? 'Next' : 'Previous'} chapter: ${r['title']}',
+                  excludeSemantics: true,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.all(14), alignment: forward ? Alignment.centerRight : Alignment.centerLeft),
+                    onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute<void>(builder: (_) => ChapterScreen(id: r['id'] as int))),
+                    child: Column(crossAxisAlignment: forward ? CrossAxisAlignment.end : CrossAxisAlignment.start, children: [
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        if (!forward) const Icon(LvIcons.caretLeft, size: 14),
+                        Text(forward ? 'NEXT CHAPTER' : 'PREVIOUS CHAPTER', style: monoLabel(context).copyWith(fontSize: 10)),
+                        if (forward) const Icon(LvIcons.caretRight, size: 14),
+                      ]),
+                      const SizedBox(height: 4),
+                      Text(r['title'] as String, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: forward ? TextAlign.right : TextAlign.left, style: t.titleSmall),
+                    ]),
+                  ),
+                ),
+              );
+          return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (prev != null) button(prev, false) else const Spacer(),
+            const SizedBox(width: 10),
+            if (next != null) button(next, true) else const Spacer(),
+          ]);
+        },
+      );
 }
 
 /// One chapter block. Public so widget tests can draw blocks without the database.
