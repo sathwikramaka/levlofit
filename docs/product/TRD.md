@@ -1,6 +1,6 @@
 # Levlofit: Technical Requirements Document
 
-Last updated: 2026-11-12, for release 1.1.0. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.1.1. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Architecture
 
@@ -99,5 +99,5 @@ Recovery: `docs/operations/BACKUP_RECOVERY_PLAN.md`. The repository is public: l
 
 ## 8. Live versions
 
-App 1.1.0 build 15; `coach-chat` v42 from 2026-11-12 (book, week and meal sheets); `generate-plan` from 2026-11-06; `send-feedback` from 2026-11-03; `body-check` from
+App 1.1.1 build 16; `coach-chat` v45 from 2026-11-12 (77-chapter book, supplements, MedlinePlus, week and meal sheets); `generate-plan` from 2026-11-06; `send-feedback` from 2026-11-03; `body-check` from
 2026-11-02; `delete-account` from 2026-10-27. History: `docs/release/RELEASE_RECORD.md`.

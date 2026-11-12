@@ -1,6 +1,6 @@
 # Levlofit: UI/UX Design Brief
 
-Last updated: 2026-11-12, for release 1.1.0. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.1.1. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 Tokens and logo rules in full: `DESIGN.md`. Code: `app/lib/theme.dart`.
 
 ## 1. Direction
