@@ -9,6 +9,17 @@ Chapter file format:
   `> evidence: Title` or `> warn: Title` or `> tip: Title`, followed by `> paragraph` lines, makes a note.
   `{key}` cites a source from sources.json. `[[slug|Title]]` links to a chapter; the link becomes plain text until
   that chapter exists.
+  Visual blocks (2026-11-12, drawn by the app's and the website's figure renderers): a line `:: kind header` opens one,
+  each following line is a row of cells split by ` | `, and a line `::` closes it. A `{key}` cell or header part is the
+  figure's source. Kinds and their rows:
+    stats                               value | unit | label | {key}
+    steps Title                         step | text
+    compare Do title | Avoid title      do item | avoid item   (- for an empty side)
+    bars Title | unit | {key}           label | number | note
+    plate Title | {key}                 label | share 0 to 1 | note
+    flow Title | {key}                  question | if yes | if no
+    band Title | unit | {key}           from | to | label | good, ok or bad
+    scale Title | {key}                 mark | label | text
 """
 import json
 import re
@@ -35,6 +46,51 @@ MOVED = {
 BANNED = re.compile(r"\bAPS\b|Chapter \d|—|earlier editions", re.I)
 
 
+SRC_CELL = re.compile(r"^\{([a-z0-9-]+)\}$")
+
+
+def visual(kind, head, rows, where):
+    """One figure block from a `:: kind head` header and its rows (see the module docstring)."""
+    parts = [x.strip() for x in head.split(" | ")] if head else []
+    src = next((SRC_CELL.match(x)[1] for x in parts if SRC_CELL.match(x)), None)
+    parts = [x for x in parts if not SRC_CELL.match(x)]
+    def need(n):
+        for r in rows:
+            assert len(r) == n, f"{where}: a {kind} row needs {n} cells: {r}"
+    def num(x):
+        return float(x) if "." in x else int(x)
+    if kind == "stats":
+        need(4)
+        return {"t": "stats", "items": [{"value": a, "unit": b, "label": c, "source": SRC_CELL.match(d)[1] if SRC_CELL.match(d) else None} for a, b, c, d in rows]}
+    if kind == "steps":
+        need(2)
+        return {"t": "steps", "title": parts[0], "items": [{"title": a, "text": b} for a, b in rows]}
+    if kind == "compare":
+        need(2)
+        return {"t": "compare", "do": {"title": parts[0], "items": [a for a, _ in rows if a != "-"]},
+                "dont": {"title": parts[1], "items": [b for _, b in rows if b != "-"]}}
+    if kind == "bars":
+        need(3)
+        return {"t": "bars", "title": parts[0], "unit": parts[1], "items": [{"label": a, "value": num(b), "note": c} for a, b, c in rows], "source": src}
+    if kind == "plate":
+        need(3)
+        items = [{"label": a, "share": num(b), "note": c} for a, b, c in rows]
+        assert abs(sum(x["share"] for x in items) - 1) < 0.01, f"{where}: plate shares must add to 1"
+        return {"t": "plate", "title": parts[0], "items": items, "source": src}
+    if kind == "flow":
+        need(3)
+        return {"t": "flow", "title": parts[0], "items": [{"q": a, "yes": b, "no": c} for a, b, c in rows], "note": None, "source": src}
+    if kind == "band":
+        need(4)
+        for r in rows:
+            assert r[3] in ("good", "ok", "bad"), f"{where}: band tone must be good, ok or bad: {r}"
+        return {"t": "band", "title": parts[0], "unit": parts[1], "ranges": [{"from": num(a), "to": num(b), "label": c, "tone": d} for a, b, c, d in rows], "source": src}
+    if kind == "scale":
+        need(3)
+        return {"t": "scale", "title": parts[0], "items": [{"mark": a, "label": b, "text": c} for a, b, c in rows], "source": src}
+    raise AssertionError(f"{where}: unknown visual block {kind}")
+
+
 def parse(path):
     lines = path.read_text(encoding="utf-8").splitlines()
     meta, blocks, volume, i = {}, [], None, 0
@@ -45,9 +101,21 @@ def parse(path):
             k, v = lines[i].split(": ", 1)
             meta[k] = v.strip()
         i += 1
+    fig = None  # an open visual block: (kind, head, rows)
     for line in lines[i:]:
         line = line.strip()
         last = blocks[-1] if blocks else {}
+        if fig is not None:
+            if line == "::":
+                blocks.append(visual(*fig, path.name))
+                fig = None
+            elif line:
+                fig[2].append([c.strip() for c in line.split(" | ")])
+            continue
+        if line.startswith(":: "):
+            kind, _, head = line[3:].partition(" ")
+            fig = (kind, head.strip(), [])
+            continue
         if not line:
             continue
         if line.startswith("### "):
@@ -73,6 +141,7 @@ def parse(path):
                 last["paras"].append(line[2:])
         else:
             blocks.append({"t": "p", "text": line})
+    assert fig is None, f"{path.name}: a visual block is not closed with ::"
     return meta, volume, blocks
 
 
@@ -80,11 +149,25 @@ def texts(block):
     for k in ("text", "title"):
         if k in block:
             yield block[k]
-    yield from block.get("items", [])
+    yield from (x for x in block.get("items", []) if isinstance(x, str))
     yield from block.get("paras", [])
     yield from block.get("head", [])
     for row in block.get("rows", []):
         yield from row
+    # Visual blocks: every text in their items, and their sources as {key} so they are counted and listed.
+    for item in block.get("items", []) if isinstance(block.get("items"), list) else []:
+        if isinstance(item, dict):
+            for k, v in item.items():
+                if k == "source" and v:
+                    yield "{" + v + "}"
+                elif isinstance(v, str):
+                    yield v
+    for side in ("do", "dont"):
+        yield from block.get(side, {}).get("items", [])
+    for r in block.get("ranges", []):
+        yield r["label"]
+    if block.get("source"):
+        yield "{" + block["source"] + "}"
 
 
 def build():
