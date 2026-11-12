@@ -30,7 +30,7 @@ val hasReleaseSigning = missingSigning.isEmpty()
 val debugSignedRelease = System.getenv("LEVLOFIT_DEBUG_SIGNED_RELEASE") == "true" ||
     (findProperty("levlofit.debugSignedRelease") as String?) == "true"
 
-// Health Connect steps: off unless the build asks for it (settings.gradle.kts includes :healthconnect then). On, it
+// Health Connect steps: on unless the build turns it off (settings.gradle.kts includes :healthconnect then). On, it
 // adds the READ_STEPS module, the Health Connect client and the Kotlin bridge, and raises minSdk to 26 (the client's
 // minimum), so Android 7.x is not supported by such a build.
 val healthConnect = rootProject.findProject(":healthconnect") != null

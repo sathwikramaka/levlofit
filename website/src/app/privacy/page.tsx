@@ -75,11 +75,11 @@ const sections: LegalSection[] = [
           your phone, and a copy of your latest plan, profile answers and recent logs so the app opens without a connection. These stay on the device and are
           never sent to us.
         </p>
-        {/* REVIEW GATE: applies only to Android builds made with the Health Connect option; legal review before publishing. */}
+        {/* Applies to every Android build since 1.0.13 (owner approval 2026-11-12). Legal review still outstanding. */}
         <p>
           <strong>Steps from Health Connect (Android, only if you connect it):</strong> the app reads your daily step totals for the last 7 days while you look
-          at its Progress page. They stay on your phone and are not stored on our servers. If you switch on sharing, those totals are sent with your coach
-          messages about steps or walking, as described below. Disconnect in Progress, or remove access in Health Connect, at any time.
+          at its Today page. They stay on your phone and are not stored on our servers. If you switch on sharing, those totals are sent with your coach
+          messages about steps or walking, as described below. Disconnect on Today, or remove access in Health Connect, at any time.
         </p>
         <p>
           <strong>Body check (optional, only if you use it):</strong> after you agree each time, the photo you choose is sent once to Groq, which may process it
@@ -158,7 +158,7 @@ const sections: LegalSection[] = [
           your progress (results, consistency, effort, soreness or pain, weight), it sends figures our server works out from your records: sessions logged in
           the last 28 days against your plan, your effort ratings, how many sessions you marked as mildly painful or stopped by pain, your weight trend over
           6 weeks as a percentage a week (not your weight itself), and your food diary averages against your targets. Only when your chat is about
-          steps or walking, and only if you switched on sharing in the app&rsquo;s Progress page, it sends your daily step totals for the last 7 days from
+          steps or walking, and only if you switched on sharing on the app&rsquo;s Today page, it sends your daily step totals for the last 7 days from
           Health Connect.
         </p>
         <p>
@@ -270,7 +270,7 @@ export default function Privacy() {
       eyebrow="Privacy"
       title="Privacy policy"
       intro="What Levlofit collects, why, who processes it, and how you delete it. Written to be read, not skimmed past."
-      updated="28 October 2026"
+      updated="12 November 2026"
       sections={sections}
     />
   );

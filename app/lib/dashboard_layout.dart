@@ -11,6 +11,7 @@ typedef CardPref = ({String id, bool visible});
 const dashboardCards = <String, String>{
   'rings': 'Weekly rings',
   'today': "Today's session",
+  'steps': 'Steps',
   'checkin': 'Daily check-in',
   'rewards': 'Daily goal and streak',
   'levelup': 'Level, rating and 66-day challenge',

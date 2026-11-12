@@ -232,7 +232,7 @@ class _CoachScreenState extends State<CoachScreen> {
     if (widget.prompt != null) _send(widget.prompt!);
   }
 
-  /// Phone step totals for this message: only if the person switched on sharing in Progress and they were read in
+  /// Phone step totals for this message: only if the person switched on sharing on Today and they were read in
   /// the last day (steps.dart). The server checks them again and uses them only for activity questions.
   Map<String, dynamic>? _sharedSteps() {
     try {
