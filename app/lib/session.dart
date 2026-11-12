@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'exercise_guide.dart';
 import 'exercises.dart';
@@ -14,6 +15,7 @@ import 'progression.dart';
 import 'reminders.dart';
 import 'theme.dart';
 import 'week_schedule.dart' show Json, WeekPlan, addOnMinutes;
+import 'workout_prefs.dart';
 
 enum Tier { none, home, gym }
 
@@ -680,6 +682,11 @@ class SessionPlanList extends StatelessWidget {
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(names[id] ?? moveGuide[id]?.name ?? 'Move', style: t.titleSmall),
+                    if (moveGuide[id]?.main case final m? when m.isNotEmpty)
+                      Text('Targets ${m.join(', ').toLowerCase()}', style: muted?.copyWith(color: c.tertiary)),
+                    // Same muscles, another way: any one of these does the job (Levlofit AI can make a swap stick).
+                    if ([for (final v in moveGuide[id]?.versions ?? const <String>[]) ?moveGuide[v]?.name].take(3).toList() case final alt when alt.isNotEmpty)
+                      Text('Or: ${alt.join(', ')}', style: muted),
                     Text(
                       [doseFor(id, level, lighter: lighter), if (setsFor(id, level, lighter: lighter) > 0) 'rest ${restFor(id) % 60 == 0 ? '${restFor(id) ~/ 60} min' : '${restFor(id)} s'}'].join('  ·  '),
                       style: muted,
@@ -844,6 +851,7 @@ class _SessionScreenState extends State<SessionScreen> {
   void initState() {
     super.initState();
     _opened = DateTime.now();
+    if (_wp.awake) WakelockPlus.enable().catchError((Object _) {}); // the phone stays awake between sets
     if (widget.onFinish != null && !widget.done) {
       try {
         _opened = sessionStart(prefs.getString(_startKey), _opened);
@@ -983,7 +991,7 @@ class _SessionScreenState extends State<SessionScreen> {
           ]),
         ));
       }
-      if (_doneSets < _totalSets) _startRest(restFor(id));
+      if (_doneSets < _totalSets) _startRest(_wp.rest ?? restFor(id));
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save the set. Check your connection.')));
     } finally {
@@ -1009,6 +1017,9 @@ class _SessionScreenState extends State<SessionScreen> {
     } catch (_) {}
   }
 
+  final WorkoutPrefs _wp = loadWorkoutPrefs(); // Settings > During a workout
+  bool _flash = false; // the one orange flash when rest ends
+
   int get _restLeft => _restEnds == null ? 0 : _restEnds!.difference(DateTime.now()).inMilliseconds.clamp(0, 1 << 30) ~/ 1000;
 
   void _startRest(int seconds) {
@@ -1022,7 +1033,11 @@ class _SessionScreenState extends State<SessionScreen> {
       if (_restLeft <= 0) {
         _stopRest();
         HapticFeedback.heavyImpact();
-        Reminders.chime();
+        if (_wp.sounds) Reminders.chime();
+        if (_wp.flash) {
+          setState(() => _flash = true);
+          Future.delayed(const Duration(milliseconds: 700), () => mounted ? setState(() => _flash = false) : null);
+        }
       } else {
         setState(() {});
       }
@@ -1069,6 +1084,7 @@ class _SessionScreenState extends State<SessionScreen> {
   @override
   void dispose() {
     _rest?.cancel();
+    if (_wp.awake) WakelockPlus.disable().catchError((Object _) {});
     super.dispose();
   }
 
@@ -1099,6 +1115,20 @@ class _SessionScreenState extends State<SessionScreen> {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     final progress = _totalSets == 0 ? 0.0 : _doneSets / _totalSets;
+    return Stack(children: [
+      _scaffold(context, c, t, progress),
+      // Rest is over: one orange flash over everything, if chosen in Settings. Never blocks a tap.
+      IgnorePointer(
+        child: AnimatedOpacity(
+          opacity: _flash ? 0.55 : 0,
+          duration: motion(context, 180),
+          child: const ColoredBox(color: accent, child: SizedBox.expand()),
+        ),
+      ),
+    ]);
+  }
+
+  Widget _scaffold(BuildContext context, ColorScheme c, TextTheme t, double progress) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title, style: t.titleMedium),
@@ -1216,7 +1246,7 @@ class _SessionScreenState extends State<SessionScreen> {
                         }
                         setState(() => _ticked[id] = done + 1);
                         // Rest after each set except the very last one of the session.
-                        if (_doneSets < _totalSets) _startRest(restFor(id));
+                        if (_doneSets < _totalSets) _startRest(_wp.rest ?? restFor(id));
                       },
                     ),
                     const SizedBox(height: 12),
@@ -1478,11 +1508,11 @@ class _MoveCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(12),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        GestureDetector(
+        if (loadWorkoutPrefs().animations != Animations.hidden) GestureDetector(
           onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ExerciseScreen(id: id))),
           child: Container(
-            width: 104,
-            height: 104,
+            width: loadWorkoutPrefs().animations == Animations.small ? 64 : 104,
+            height: loadWorkoutPrefs().animations == Animations.small ? 64 : 104,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
             child: ExerciseGif(move['gif_url'] as String?, id: id),
