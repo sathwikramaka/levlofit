@@ -63,7 +63,7 @@ reading. Headings 22 to 30 px bold, body 15 to 16, captions 13, small uppercase 
 | Plate meal card | Plate picture, name and time, kcal and protein, servings; tap for grams; Swap and Ate it |
 | Info card | Label plus short lines: training day, supplements |
 | Coach | Your messages in charcoal, replies on white cards, pill composer |
-| Levlofit AI button | Floating, bottom right: graphite pill (cloud in dark mode), orange spark disc, slow orange glow (still with reduced motion); name and "Your plan, food, form" until first used, then the round spark only |
+| Levlofit AI button | Floating, bottom right: a 62 dp orange disc with a white (graphite in dark mode) edge, a filled graphite lightning bolt and a small graphite AI-spark badge; a ring pulses out like a heartbeat (still with reduced motion); no text, name on long press |
 | Activity map | 53 weeks of squares, Monday on top, green in four strengths by minutes trained, today ringed in orange text colour |
 | Gym check-in | Card on Today with the QR icon on an orange square; the code opens on a white sheet, black on white |
 | Plan tables | Meal and day tables: item left, numbers right in Geist tabular figures, hairline rows, a total row on a faint orange tint with orange numbers |

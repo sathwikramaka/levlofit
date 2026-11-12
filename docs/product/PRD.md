@@ -49,7 +49,8 @@ through the web app. People with medical conditions are told to involve a doctor
 - Dashboard: activity arcs, today's session, steps (Health Connect, Android: today against 8,000, or 6,000 from 60, and
   the last 7 days), optional daily check-in, daily goal, rank and rating, week strip, Today's read (one Handbook chapter a
   day, by training or rest day), water, habits, food targets, BMI. Customisable.
-- Levlofit AI floats over Today, Workout, Diet and Progress: a dark pill with the orange spark, named until first used.
+- Levlofit AI floats over Today, Workout, Diet and Progress as a round sporty icon: an orange disc with a lightning bolt
+  and a small AI spark badge, no text; its name is spoken and shown on a long press.
 - Workout: a Monday-to-Sunday picker; each day written out as a plan sheet: warm-up list, then each move with sets,
   reps, reps in reserve and rest. Diet: each meal as a table of items with kcal, protein, carbs and fat and a subtotal,
   and a total for the day against the targets (after the owner's own plan sheet, 2026-11-12).

@@ -50,13 +50,11 @@ void main() {
     expect(find.textContaining('rest 90 s'), findsOneWidget);
   });
 
-  testWidgets('floating coach: shows its name until first used, then the round spark only', (tester) async {
+  testWidgets('floating coach: a round icon with no text label, its name spoken and on long press', (tester) async {
     await phone(tester, const Align(alignment: Alignment.centerRight, child: CoachFab()));
-    expect(find.text('Ask Levlofit AI'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(find.text('Ask Levlofit AI'), findsNothing, reason: 'an icon, not a labelled pill');
     expect(find.bySemanticsLabel('Ask Levlofit AI'), findsOneWidget);
-    await prefs.setBool('coach_fab_used', true);
-    await phone(tester, const Align(alignment: Alignment.centerRight, child: CoachFab(key: ValueKey('again'))));
-    expect(find.text('Ask Levlofit AI'), findsNothing);
-    expect(find.bySemanticsLabel('Ask Levlofit AI'), findsOneWidget, reason: 'the round button keeps its spoken name');
+    expect(find.byTooltip('Levlofit AI'), findsOneWidget);
   });
 }
