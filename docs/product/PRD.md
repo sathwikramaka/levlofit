@@ -54,6 +54,14 @@ through the web app. People with medical conditions are told to involve a doctor
   reps, reps in reserve and rest. Diet: each meal as a table of items with kcal, protein, carbs and fat and a subtotal,
   and a total for the day against the targets (after the owner's own plan sheet, 2026-11-12).
 - Handbook chapters end with Previous and Next chapter buttons (app and website).
+- Plan sheets name each move's target muscles and up to three other moves for the same muscles (any one does the job).
+- Levlofit AI receives the week as the Workout tab shows it and, for food chats, the day of meals last opened in Diet,
+  and answers plan questions with tables (exercise, targets, sets and reps, rest; meal, foods, kcal and macros).
+- Settings: during a workout (keep screen on, rest length by move or 60 s to 3 min, sound and orange flash when rest
+  ends, animations full, small or hidden), export my data (every account row as one JSON file), gym check-in code
+  shown as a QR code or barcode on Today, and a switch for the floating Levlofit AI button. All kept on the phone.
+- Progress: sessions this month, hours trained, weight change over 30 days, a 12-month activity map by minutes, and a
+  weight chart over 1 month, 3 months, a year or all, with an optional goal-weight line kept on the phone.
 - Active minutes are the minutes a session took (opened to finished), not the planned length.
 - Weekly streak: weeks that met the plan; one short week in any 4 is let off when a met week follows. Never a weight or
   calorie streak.

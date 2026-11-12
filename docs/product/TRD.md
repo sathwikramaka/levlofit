@@ -49,6 +49,9 @@ steps in every build, owner approval 2026-11-12; `-Plevlofit.healthConnect=false
 the widget (`TodayWidget.kt`) reads them natively and is redrawn over the `levlofit/widget` channel. Sharing uses
 `share_plus` (BSD-3-Clause) with a PNG drawn on the phone. The update notice runs in Android's background worker
 (`workmanager`, MIT) about every 12 hours with a network, reads `/version.json` and notifies once per build.
+`wakelock_plus` (BSD-3-Clause) keeps the screen on during a session when chosen. Gym codes are drawn with
+`flutter_zxing` (already used for food barcodes). Coach context: the app sends two text sheets (`sheet.week` up to
+4,000 characters, `sheet.meals` up to 2,500), cleaned and capped by `parseSheet`; meals only for food talk.
 **Time.** All logs key on the phone's local day. The server takes `localDay` from the app.
 
 ## 4. Secrets (names only, never values)
