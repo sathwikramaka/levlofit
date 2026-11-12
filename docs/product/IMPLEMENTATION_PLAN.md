@@ -1,6 +1,6 @@
 # Levlofit: Implementation Plan
 
-Last updated: 2026-11-12, for release 1.0.12. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.0.12 (1.0.13 changes in source). Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 Detail: `docs/PROGRESS.md` (log), `docs/release/RELEASE_RECORD.md` (what shipped), `docs/archive/ROADMAP_AUDIT_2026-11-03.md` (roadmap).
 
 Status labels are kept apart: Source, Automated, CI, Deployed, Production verified, Real device.
@@ -23,6 +23,7 @@ Status labels are kept apart: Source, Automated, CI, Deployed, Production verifi
 
 | # | Task | Owner | Why now |
 |---|---|---|---|
+| 0 | Release 1.0.13 (in source, not released): steps card on Today with Health Connect in every build (minSdk 26), Workout day picker with plan sheets, Diet meal and day tables, floating Levlofit AI button, Previous/Next chapter (app and website), privacy page wording for steps on Today | Owner approves release | Built and checked on the web app with a local stack; steps need a phone |
 | 1 | Run the device checklist on 1.0.12 (`docs/operations/DEVICE_CHECKLIST_1_0_12.md`): widget, share sheet, notification taps, update notice, the book | Owner | Nothing since 1.0.10 has run on a real phone |
 | 2 | Add `STORAGE_S3_KEY_ID`, `STORAGE_S3_SECRET`; run "Daily Storage backup" once | Owner | Photos are not backed up automatically; the job fails nightly |
 | 3 | Finish the 2026-11-07 redesign review (not shipped): later onboarding, Build my plate, coach replies, then a release build on a phone | Claude, owner for the phone | Main screens tested on a phone with a debug build |

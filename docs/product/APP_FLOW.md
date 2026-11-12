@@ -1,6 +1,6 @@
 # Levlofit: App Flow
 
-Last updated: 2026-11-12, for release 1.0.12. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.0.12 (1.0.13 changes in source). Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. First run
 
@@ -45,8 +45,9 @@ Habits); food and body (Food diary, Food library, Water, BMI calculator); accoun
 
 ## 4. Today
 
-Header (date, greeting, Levlofit AI, avatar opening Profile), then cards the person can reorder or hide. Shown by default:
-weekly rings, today's session, daily check-in, week, Today's read, water, food targets. Off by default, on from
+Header (date, greeting, avatar opening Profile), then cards the person can reorder or hide; the Levlofit AI button
+floats bottom right. Shown by default: weekly rings, today's session, steps, daily check-in, week, Today's read, water,
+food targets. Off by default, on from
 Customise: daily goal, rank and rating, habits, body. A new plan with no session yet shows "Try a short starter" (25 minutes, one set lighter) under
 Start workout.
 Under today's session when they apply: level prompt, safety notes, then **welcome back** (14+ days away) or **plan fit**
@@ -69,14 +70,15 @@ Under today's session when they apply: level prompt, safety notes, then **welcom
 Day chips ─> training-day or rest-day card ─> meal cards ─> Supplements card ─> plate key ─> Build my plate ─> notes ─>
 targets and protein foods ─> recipes with AI.
 
-- Tap a meal for grams. **Swap** takes that meal from another day. **Ate it** logs it to the diary (today only).
+- Each meal is a table (item, kcal, protein, carbs, fat, subtotal); a total-for-the-day table follows the meals. Tap a meal for grams. **Swap** takes that meal from another day. **Ate it** logs it to the diary (today only).
 - **Build my plate** has 3 steps: budget; diet and regions; health, protein scoops, creatine and own supplements, pace.
   Saving rebuilds the plan.
 
 ## 6. Other flows
 
-- **Workout:** today's session with Start, the other days as one line each, goals and levels, edit goals, level check (a
-  pass rebuilds the plan), then "Your path" folded.
+- **Workout:** day picker (today first) ─> that day's plan sheet: warm-up list, moves with sets, reps and rest, Start
+  (today) or View session; then goals and levels, edit goals, level check (a pass rebuilds the plan), "Your path" folded.
+- **Handbook chapter:** ends with Previous chapter and Next chapter, each naming its chapter.
 - **Session:** exercises first; warm-up and cooldown fold away.
 - **Progress:** weight verdict, weekly report (Share as a picture; on Sundays the week now ending), stats, strength, weight, measurements, body check, photos (a one-time reveal at 4, 8 and 12 weeks), 12-week chart, steps
   where the phone supports them, then rank, rating and the 66-day challenge.
