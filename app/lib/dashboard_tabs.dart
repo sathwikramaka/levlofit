@@ -1827,6 +1827,43 @@ class _AppSettingsScreen extends StatelessWidget {
             ]),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: _Tile(padding: const EdgeInsets.fromLTRB(14, 12, 14, 14), child: const WorkoutPrefsSection()),
+        ),
+        _section(context, 'YOUR DATA AND HOME', [
+          _row(context, LvIcons.downloadSimple, 'Export my data', () async {
+            final messenger = ScaffoldMessenger.of(context);
+            try {
+              final n = await exportMyData();
+              messenger.showSnackBar(SnackBar(content: Text('$n records ready to save or send.')));
+            } catch (_) {
+              messenger.showSnackBar(const SnackBar(content: Text('Could not export just now. Check your connection.')));
+            }
+          }, trailing: 'Everything in your account, as one file'),
+          _row(context, LvIcons.qrCode, 'Gym check-in', () async {
+            await Navigator.push(context, MaterialPageRoute<bool>(builder: (_) => const GymPassEditor()));
+          }, trailing: loadGymPass() == null ? 'Show your gym code on Today' : loadGymPass()!.name),
+        ]),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: _Tile(
+            padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
+            child: ValueListenableBuilder(
+              valueListenable: coachFabShown,
+              builder: (context, shown, _) => SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('Levlofit AI button', style: t.bodyLarge),
+                subtitle: Text('Float it over Today, Workout, Diet and Progress. It stays in More either way.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                value: shown,
+                onChanged: (v) {
+                  coachFabShown.value = v;
+                  prefs.setBool('coach_fab_shown', v);
+                },
+              ),
+            ),
+          ),
+        ),
         _section(context, 'HELP', [
           _row(context, LvIcons.chatCircle, 'Contact support', _contactSupport, trailing: supportEmail),
           _row(context, LvIcons.notePencil, 'Send feedback', () => _sendFeedback(context), trailing: 'Ideas, bugs, praise'),
@@ -2013,7 +2050,7 @@ const _privacyPolicy = [
   ('What Levlofit AI sends', 'Groq runs Levlofit AI and may process your messages outside India. Each time you send a message, Groq gets: '
       'your message as you typed it (trimmed, up to 2,000 characters) and up to 12 earlier messages from that chat; your first name; your equipment, training days, '
       'session length, daily activity, sleep hours, water target and the weekdays and time of day you can train; the date, goal and minutes of workouts logged in the last 14 days; a '
-      'summary of your plan (phase, weight goal, goals and levels, sessions, next steps, calorie and protein targets with the BMR, activity factor and maintenance estimate behind them); the facts you confirmed in Memory (an injury fact only when the chat is about training, movement or pain, at most three; '
+      'summary of your plan (phase, weight goal, goals and levels, sessions, next steps, calorie and protein targets with the BMR, activity factor and maintenance estimate behind them); this week’s sessions as the Workout tab shows them, and for food chats the day of planned meals you last opened in Diet; the facts you confirmed in Memory (an injury fact only when the chat is about training, movement or pain, at most three; '
       'suggestions you have not confirmed are never sent); and two yes-or-no flags: whether your '
       'health check asks you to see a doctor first, and whether you noted an injury (in the health check or as a confirmed Memory fact). Only when the chat is about food, or a reply has to be '
       'checked against your food settings: your diet type, allergies and intolerances, foods you exclude, food budget and suggested supplements, the health conditions and protein shakes a day you chose in Build my plate, your kitchen equipment, cooking time, meals from a hostel or PG mess and your own kitchen notes, and your food diary totals '

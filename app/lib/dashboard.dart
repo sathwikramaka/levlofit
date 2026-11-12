@@ -19,8 +19,11 @@ import 'checkin.dart';
 import 'coach_chat.dart';
 import 'diet_plan.dart';
 import 'diet_view.dart';
+import 'exercise_guide.dart' show moveGuide;
 import 'exercises.dart';
 import 'food_diary.dart' show EmptyFoodsText, FoodCredit, FoodDiaryScreen, diaryTotals, entryFromRow, foodDataPendingText, isoDay, matchesFoodQuery, supabaseDiary;
+import 'data_export.dart';
+import 'gym_card.dart';
 import 'handbook.dart';
 import 'home_widget.dart';
 import 'icons.dart';
@@ -42,6 +45,7 @@ import 'theme.dart';
 import 'tools.dart';
 import 'update_check.dart';
 import 'weekly_report.dart';
+import 'workout_prefs.dart' show WorkoutPrefsSection;
 import 'week_schedule.dart' show WeekPlan, addOnLine, reminderSessions, trainingTimeLabel, trainingTimeOptions, weekPlan;
 
 part 'dashboard_menu.dart';
@@ -350,6 +354,9 @@ class _DashboardState extends State<Dashboard> {
       moves: results[8] as List<(int, int)>,
     );
     _scheduleReminders(_loaded!);
+    try {
+      coachWeekSheet = _weekSheet(_loaded!);
+    } catch (_) {} // the coach then says to open Workout; never blocks the dashboard
     return _loaded!;
   }
 
@@ -465,7 +472,10 @@ class _DashboardState extends State<Dashboard> {
         onPopInvokedWithResult: (didPop, _) => didPop ? null : (_back.isNotEmpty ? _pop() : _go(_Tab.home)),
         child: Scaffold(
           // Levlofit AI floats over the four main pages (More lists it instead).
-          floatingActionButton: const {_Tab.home, _Tab.workout, _Tab.diet, _Tab.progress}.contains(_tab) ? const CoachFab() : null,
+          floatingActionButton: ValueListenableBuilder(
+            valueListenable: coachFabShown,
+            builder: (context, shown, _) => shown && const {_Tab.home, _Tab.workout, _Tab.diet, _Tab.progress}.contains(_tab) ? const CoachFab() : const SizedBox.shrink(),
+          ),
           // Typing needs the room, so the bar steps aside while the keyboard is up.
           bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
               ? null
@@ -675,6 +685,11 @@ class _DashboardState extends State<Dashboard> {
 
 // ---------------------------------------------------------------- the bento
 
+/// The week sheet Levlofit AI receives, from a plan without Supabase.
+@visibleForTesting
+String weekSheetForTest(Map<String, dynamic> plan) => _weekSheet(
+    (name: 'Asha Rao', profile: const {}, plan: plan, input: const {'sessionMinutes': 45}, levels: const {}, proteins: const [], tier: Tier.gym, assessed: const {}, water: const {}, habits: const {}, swaps: const {}, lighter: false, moves: const []));
+
 /// Renders the dashboard body from a plan without Supabase, so layout can be tested at phone size.
 @visibleForTesting
 Widget dashboardBentoForTest(Map<String, dynamic> plan, {Set<DateTime> logged = const {}, List<CardPref>? layout, Set<String>? dailyTasks, ValueChanged<int>? onCelebrated, DateTime? planSince}) => _Bento(
@@ -871,6 +886,7 @@ class _Bento extends StatelessWidget {
               onOpen: () => onOpen(_Tab.habits),
             ),
           'steps' => StepsCard(target: switch (data.profile['birth_year']) { final int y when now.year - y >= 60 => 6000, _ => 8000 }),
+          'gym' => switch (loadGymPass()) { final p? => GymPassCard(pass: p), _ => const SizedBox.shrink() },
           'checkin' => const CheckInCard(),
           'fuel' => _FuelTile(plan: plan, proteins: data.proteins),
           'body' => _BodyTile(plan: plan),

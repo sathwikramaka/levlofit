@@ -6,6 +6,15 @@ part of 'dashboard.dart';
 
 /// Three lines of unequal length; the short ones stretch under the finger.
 /// Levlofit AI, from the top of the main pages. It never floats over content.
+/// Whether the floating Levlofit AI button shows (Settings); Levlofit AI stays in More either way.
+final coachFabShown = ValueNotifier<bool>(() {
+  try {
+    return prefs.getBool('coach_fab_shown') ?? true;
+  } catch (_) {
+    return true;
+  }
+}());
+
 /// The floating Levlofit AI button on Today, Workout, Diet and Progress (owner request 2026-11-12): a graphite pill
 /// with an orange spark that breathes slowly, so it reads as the place to ask. Still when the phone asks for less
 /// motion. The first time it shows its name; after the first chat it shrinks to the round spark.
@@ -454,6 +463,62 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
   }
 }
 
+/// The week as text for Levlofit AI: each day's session as the Workout tab shows it (moves, sets, reps, rest, target
+/// muscles, warm-up), rest days, moved sessions and add-on blocks. The same rules as the tab; built on the phone.
+String _weekSheet(_Data data) {
+  final plan = data.plan;
+  final now = DateTime.now();
+  final monday = _monday(now), today = _day(now);
+  final minutes = data.input['sessionMinutes'] as int?;
+  final week = weekPlan(plan, sessionMinutes: minutes, estimate: sessionEstimator(data.tier, kitOf(data.profile)));
+  final dayGoal = week.days;
+  final light = plan['medicalHold'] == true;
+  final injury = data.profile['injuries'] as String?;
+  String rest(String id) => restFor(id) % 60 == 0 ? '${restFor(id) ~/ 60} min' : '${restFor(id)} s';
+  String move(String id, int level) => [
+        moveGuide[id]?.name ?? id,
+        if (moveGuide[id]?.main case final m? when m.isNotEmpty) 'targets ${m.join(', ').toLowerCase()}',
+        doseFor(id, level, lighter: light),
+        if (setsFor(id, level, lighter: light) > 0) 'rest ${rest(id)}',
+      ].join(' | ');
+  final out = <String>[
+    'Week of ${monday.day} ${_months[monday.month - 1]}; ${dayGoal.length} training days${minutes == null ? '' : ', $minutes min sessions'}${light ? '; medical hold: lighter dose, no added load' : ''}.',
+  ];
+  for (var i = 0; i < 7; i++) {
+    final day = monday.add(Duration(days: i));
+    final head = '${_days[i]} ${day.day} ${_months[day.month - 1]}${day == today ? ' (today)' : ''}';
+    final src = sessionDayFor(i + 1, dayGoal.keys.toSet(), data.moves);
+    final movedTo = data.moves.where((m) => m.$1 == i + 1).map((m) => m.$2).firstOrNull;
+    final own = src == null && movedTo == null && dayGoal[i + 1] == null ? week.addOns.where((a) => a.day == i + 1).firstOrNull : null;
+    final ownBlock = own == null ? null : blocksFor(week, i + 1, data.tier, kitOf(data.profile), const []).first;
+    final g = own == null ? dayGoal[src] : {...own.session, 'name': '${own.name} add-on', 'startLevel': ownBlock!.level};
+    if (g == null) {
+      out.add('$head: ${movedTo != null ? 'session moved to ${_days[movedTo - 1]}' : 'rest day'}');
+      continue;
+    }
+    final level = g['startLevel'] as int;
+    final List<String> ids;
+    if (ownBlock != null) {
+      ids = ownBlock.ids;
+    } else {
+      final nth = [for (var d = 1; d < src!; d++) if (dayGoal[d]?['goal'] == g['goal']) d].length;
+      ids = sessionIds(g['kind'] as String? ?? 'strength', data.tier, level, nth, goal: g['goal'] as String?, kit: kitOf(data.profile));
+    }
+    final kind = g['kind'] as String? ?? 'strength';
+    final shown = checkInjury(ids, injury).ids;
+    final title = data.levels[g['goal']]?['title'] as String?;
+    out.add('$head: ${g['name'] ?? g['goal']}, level $level${title == null ? '' : ' ($title)'}');
+    out.add('  Warm-up: ${[for (final w in warmUpFor(kind: kind, level: level, gym: data.tier == Tier.gym, injury: injury, light: light)) '${w.move} ${w.dose}'].join('; ')}');
+    for (final (n, id) in shown.indexed) {
+      out.add('  ${n + 1}. ${move(id, level)}');
+    }
+    for (final b in own != null ? const <AddOnBlock>[] : blocksFor(week, i + 1, data.tier, kitOf(data.profile), ids)) {
+      out.add('  Add-on: ${blockSummary(b)}${b.ids.isEmpty ? '' : ': ${[for (final id in b.ids) moveGuide[id]?.name ?? id].join(', ')}'}');
+    }
+  }
+  return out.join('\n');
+}
+
 /// One goal: where you stand on the ladder, whether it trains now or waits, and the level check.
 class _GoalCard extends StatelessWidget {
   const _GoalCard({required this.goal, required this.primary, required this.levelRow, required this.assessed, required this.onOpen, required this.onCheck});
@@ -777,6 +842,16 @@ class _DietScreenState extends State<_DietScreen> {
         'You told Build my plate about ${conditions.map((k) => _conditionNames[k] ?? k).join(', ').toLowerCase()}. '
             'This plan is not adjusted for ${conditions.length == 1 ? 'it' : 'them'}: show it to your doctor or a registered dietitian before you follow it.',
     ];
+    // The day shown, for Levlofit AI: each meal's foods with kcal and macros (coach-chat PLANNED MEALS IN THE APP).
+    String g1(double v) => v.toStringAsFixed(v < 10 ? 1 : 0);
+    coachMealSheet = [
+      '${_days[_day]}${today ? ' (today)' : ''}, ${dayKind.title.toLowerCase()}; target ${kcal.round()} kcal, ${protein.round()} g protein; planned ${shown.kcal.round()} kcal, ${shown.protein.round()} g protein.',
+      for (final m in training?.meals ?? meals) ...[
+        '${m.name} (${m.time}): ${m.items.fold(0.0, (s, i) => s + i.kcal).round()} kcal, P ${g1(m.items.fold(0.0, (s, i) => s + i.protein))} C ${g1(m.items.fold(0.0, (s, i) => s + i.carb))} F ${g1(m.items.fold(0.0, (s, i) => s + i.fat))}',
+        for (final i in m.items) '  ${i.unit == 'oil' ? 'cooking oil ${i.grams.round()} g' : '${servingLabel(i)} (${exactLabel(i)})'}: ${i.kcal.round()} kcal, P ${g1(i.protein)} C ${g1(i.carb)} F ${g1(i.fat)}',
+      ],
+      if (suppLines.isNotEmpty) 'Supplements: ${[for (final l in suppLines) '${l.name} (${l.how})'].join('; ')}',
+    ].join('\n');
     return _Page(
       title: 'Diet',
       children: [
@@ -2193,6 +2268,29 @@ List<Widget> _progressBody(
         Expanded(child: _Stat(value: '${weekStreak(days, monday, perWeek).weeks}', label: 'WEEK STREAK')),
       ]),
     ),
+    const SizedBox(height: 10),
+    IntrinsicHeight(
+      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Expanded(child: _Stat(value: '${days.where((d) => d.year == now.year && d.month == now.month).length}', label: 'THIS MONTH')),
+        const SizedBox(width: 10),
+        Expanded(child: _Stat(value: '${minutes ~/ 60}', label: 'HOURS TRAINED')),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _Stat(
+            value: switch (weightChange(weights, now, 30)) { final d? => '${d > 0 ? '+' : ''}${d.toStringAsFixed(1)}', _ => '–' },
+            label: 'KG, 30 DAYS',
+          ),
+        ),
+      ]),
+    ),
+    const SizedBox(height: 12),
+    _Tile(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const _Label('ACTIVITY  ·  LAST 12 MONTHS'),
+        const SizedBox(height: 4),
+        ActivityHeatmap(minutes: minutesByDay(logs), today: _day(now)),
+      ]),
+    ),
     const SizedBox(height: 12),
     _Tile(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -2240,11 +2338,7 @@ List<Widget> _progressBody(
           if (fat != null) Text('Body fat $fat %', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
           if (weights.length > 1) ...[
             const SizedBox(height: 14),
-            SizedBox(
-              height: 96,
-              width: double.infinity,
-              child: _Grow(builder: (g) => CustomPaint(painter: _LinePainter(values: [for (final w in weights) w.kg], grow: g, color: c.primary))),
-            ),
+            _WeightChart(weights: weights, color: c.primary),
           ],
         ],
       ]),
@@ -2390,6 +2484,218 @@ class _PhotoRevealState extends State<_PhotoReveal> {
   }
 }
 
+/// Logged minutes per day (a day with sessions but no minutes counts as 1, so it still shows).
+Map<DateTime, int> minutesByDay(List<Map<String, dynamic>> logs) {
+  final out = <DateTime, int>{};
+  for (final l in logs) {
+    final d = DateTime.parse(l['performed_on'] as String);
+    out[d] = (out[d] ?? 0) + ((l['duration_min'] as int?) ?? 0).clamp(1, 600);
+  }
+  return out;
+}
+
+/// Weight now minus weight [days] ago: the latest weigh-in against the last one on or before that day. Null without both.
+double? weightChange(List<({DateTime day, double kg})> weights, DateTime now, int days) {
+  if (weights.length < 2) return null;
+  final cut = DateTime(now.year, now.month, now.day).subtract(Duration(days: days));
+  final before = weights.where((w) => !w.day.isAfter(cut)).lastOrNull;
+  return before == null ? null : weights.last.kg - before.kg;
+}
+
+/// A year of training as squares, one per day, Monday on top, darker for more minutes (0, under 20, under 40, under
+/// 60, 60 and over). The owner's reference app shows the same by time trained (2026-11-12).
+class ActivityHeatmap extends StatelessWidget {
+  const ActivityHeatmap({super.key, required this.minutes, required this.today});
+  final Map<DateTime, int> minutes;
+  final DateTime today;
+
+  static int level(int m) => m <= 0 ? 0 : m < 20 ? 1 : m < 40 ? 2 : m < 60 ? 3 : 4;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final green = progressColor(context);
+    final start = today.subtract(Duration(days: 7 * 52 + today.weekday - 1)); // the Monday 52 weeks back
+    final total = minutes.entries.where((e) => !e.key.isBefore(start)).fold<int>(0, (s, e) => s + e.value);
+    final active = minutes.keys.where((d) => !d.isBefore(start)).length;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Semantics(
+        label: 'Trained on $active days in the last 12 months, about ${total ~/ 60} hours.',
+        excludeSemantics: true,
+        child: AspectRatio(
+          aspectRatio: 53 / 8.2,
+          child: CustomPaint(painter: _HeatPainter(minutes: minutes, start: start, today: today, empty: c.surfaceContainerHighest, on: green, ring: c.tertiary, month: monoLabel(context).copyWith(fontSize: 9))),
+        ),
+      ),
+      const SizedBox(height: 6),
+      Row(children: [
+        Expanded(child: Text('$active days  ·  ${total ~/ 60} h', style: monoLabel(context))),
+        Text('Less ', style: monoLabel(context).copyWith(fontSize: 9)),
+        for (var l = 0; l <= 4; l++)
+          Container(
+            width: 9,
+            height: 9,
+            margin: const EdgeInsets.only(left: 2),
+            decoration: BoxDecoration(color: l == 0 ? c.surfaceContainerHighest : green.withValues(alpha: 0.25 + 0.1875 * l), borderRadius: BorderRadius.circular(2)),
+          ),
+        Text(' More', style: monoLabel(context).copyWith(fontSize: 9)),
+      ]),
+    ]);
+  }
+}
+
+class _HeatPainter extends CustomPainter {
+  _HeatPainter({required this.minutes, required this.start, required this.today, required this.empty, required this.on, required this.ring, required this.month});
+  final Map<DateTime, int> minutes;
+  final DateTime start, today;
+  final Color empty, on, ring;
+  final TextStyle month;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cell = size.width / 53, top = cell * 1.2, gap = cell * 0.18;
+    var lastMonth = start.month, labelEnd = double.negativeInfinity; // the first, partial month gets no label
+    for (var w = 0; w < 53; w++) {
+      for (var d = 0; d < 7; d++) {
+        final day = start.add(Duration(days: 7 * w + d));
+        if (day.isAfter(today)) continue;
+        if (d == 0 && day.month != lastMonth) {
+          lastMonth = day.month;
+          final tp = TextPainter(text: TextSpan(text: _months[day.month - 1], style: month), textDirection: TextDirection.ltr)..layout();
+          // A label never overlaps the one before it or runs off the right edge.
+          if (w * cell >= labelEnd + 3 && w * cell + tp.width <= size.width) {
+            tp.paint(canvas, Offset(w * cell, 0));
+            labelEnd = w * cell + tp.width;
+          }
+        }
+        final l = ActivityHeatmap.level(minutes[day] ?? 0);
+        final r = RRect.fromRectAndRadius(Rect.fromLTWH(w * cell + gap / 2, top + d * cell + gap / 2, cell - gap, cell - gap), Radius.circular(cell * 0.2));
+        canvas.drawRRect(r, Paint()..color = l == 0 ? empty : on.withValues(alpha: 0.25 + 0.1875 * l));
+        if (day == today) {
+          canvas.drawRRect(r, Paint()
+            ..color = ring
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_HeatPainter old) => old.minutes != minutes || old.today != today || old.on != on;
+}
+
+/// Body weight over a chosen range (1 month, 3 months, a year, all), with the person's goal weight as a line. The goal
+/// is kept on this phone and only drawn; it never changes the plan.
+class _WeightChart extends StatefulWidget {
+  const _WeightChart({required this.weights, required this.color});
+  final List<({DateTime day, double kg})> weights;
+  final Color color;
+
+  @override
+  State<_WeightChart> createState() => _WeightChartState();
+}
+
+class _WeightChartState extends State<_WeightChart> {
+  int _days = 90; // 0 = all
+  double? _goal = () {
+    try {
+      return prefs.getDouble('goal_weight_kg');
+    } catch (_) {
+      return null;
+    }
+  }();
+
+  Future<void> _setGoal() async {
+    final ctl = TextEditingController(text: _goal?.toStringAsFixed(1) ?? '');
+    final v = await showDialog<String>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: const Text('Goal weight'),
+        content: TextField(controller: ctl, autofocus: true, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(suffixText: 'kg', helperText: 'Shown as a line on the chart. Your plan does not change.')),
+        actions: [
+          if (_goal != null) TextButton(onPressed: () => Navigator.pop(d, ''), child: const Text('Remove')),
+          TextButton(onPressed: () => Navigator.pop(d), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(d, ctl.text), child: const Text('Save')),
+        ],
+      ),
+    );
+    ctl.dispose();
+    if (v == null) return;
+    final kg = double.tryParse(v.trim().replaceAll(',', '.'));
+    if (v.isNotEmpty && (kg == null || kg < 25 || kg > 300)) return;
+    setState(() => _goal = v.isEmpty ? null : kg);
+    v.isEmpty ? await prefs.remove('goal_weight_kg') : await prefs.setDouble('goal_weight_kg', kg!);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final last = widget.weights.last.day;
+    final shown = _days == 0 ? widget.weights : widget.weights.where((w) => last.difference(w.day).inDays <= _days).toList();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Expanded(
+          child: SegmentedButton<int>(
+            showSelectedIcon: false,
+            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            segments: const [ButtonSegment(value: 30, label: Text('1M')), ButtonSegment(value: 90, label: Text('3M')), ButtonSegment(value: 365, label: Text('1Y')), ButtonSegment(value: 0, label: Text('All'))],
+            selected: {_days},
+            onSelectionChanged: (s) => setState(() => _days = s.first),
+          ),
+        ),
+        const SizedBox(width: 8),
+        TextButton(onPressed: _setGoal, child: Text(_goal == null ? 'Goal' : 'Goal ${_goal!.toStringAsFixed(1)}')),
+      ]),
+      const SizedBox(height: 10),
+      if (shown.length < 2)
+        Text('One weigh-in in this range. Pick a longer range or log another.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: c.onSurfaceVariant))
+      else
+        SizedBox(
+          height: 110,
+          width: double.infinity,
+          child: CustomPaint(painter: _WeightPainter(values: [for (final w in shown) w.kg], goal: _goal, color: widget.color, goalColor: c.tertiary)),
+        ),
+    ]);
+  }
+}
+
+class _WeightPainter extends CustomPainter {
+  _WeightPainter({required this.values, required this.goal, required this.color, required this.goalColor});
+  final List<double> values;
+  final double? goal;
+  final Color color, goalColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final all = [...values, ?goal];
+    final lo = all.reduce(math.min) - 0.5, hi = all.reduce(math.max) + 0.5;
+    double y(double v) => size.height * (1 - (v - lo) / (hi - lo));
+    if (goal case final g?) {
+      final pen = Paint()
+        ..color = goalColor
+        ..strokeWidth = 1.2;
+      for (var x = 0.0; x < size.width; x += 8) {
+        canvas.drawLine(Offset(x, y(g)), Offset(math.min(x + 4, size.width), y(g)), pen);
+      }
+    }
+    final path = Path();
+    for (var i = 0; i < values.length; i++) {
+      final p = Offset(size.width * i / (values.length - 1), y(values[i]));
+      i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
+    }
+    canvas.drawPath(path, Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round);
+  }
+
+  @override
+  bool shouldRepaint(_WeightPainter old) => old.values != values || old.goal != goal;
+}
+
 class _Stat extends StatelessWidget {
   const _Stat({required this.value, required this.label, this.accent = false});
   final String value, label;
@@ -2438,44 +2744,3 @@ class _WeeksPainter extends CustomPainter {
   bool shouldRepaint(_WeeksPainter old) => old.grow != grow || old.weeks != weeks || old.bar != bar;
 }
 
-class _LinePainter extends CustomPainter {
-  _LinePainter({required this.values, required this.grow, required this.color});
-  final List<double> values;
-  final double grow;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final lo = values.reduce(math.min) - 0.5, hi = values.reduce(math.max) + 0.5;
-    Offset at(int i) => Offset(size.width * i / (values.length - 1), size.height * (1 - (values[i] - lo) / (hi - lo)));
-    final path = Path()..moveTo(at(0).dx, at(0).dy);
-    for (var i = 1; i < values.length; i++) {
-      path.lineTo(at(i).dx, at(i).dy);
-    }
-    // Draws left to right as it grows in.
-    canvas.save();
-    canvas.clipRect(Rect.fromLTWH(0, -6, size.width * grow, size.height + 12));
-    final fill = Path.from(path)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(
-      fill,
-      Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [color.withValues(alpha: 0.22), color.withValues(alpha: 0)]).createShader(Offset.zero & size),
-    );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
-        ..strokeJoin = StrokeJoin.round
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.restore();
-    if (grow == 1) canvas.drawCircle(at(values.length - 1), 4.5, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(_LinePainter old) => old.grow != grow || old.values != values;
-}
