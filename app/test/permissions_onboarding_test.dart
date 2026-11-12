@@ -152,6 +152,7 @@ void main() {
     expect(requests, 1);
     await tester.pumpWidget(MaterialApp(home: tabForTest('settings', const {'trainingDaysPerWeek': 3, 'goals': []})));
     await tester.pump(const Duration(seconds: 2));
+    await tester.scrollUntilVisible(find.text('Notifications and reminders'), 300, scrollable: find.byType(Scrollable).first);
     expect(find.text('Notifications and reminders'), findsOneWidget);
   });
 

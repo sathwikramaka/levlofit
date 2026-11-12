@@ -13,6 +13,10 @@ import 'steps.dart' show coachStepsPayload, latestSteps, stepsShareWithCoach;
 import 'swaps.dart';
 import 'theme.dart';
 
+/// The week's sessions and the day's planned meals as the app shows them, for Levlofit AI (coach-chat parseSheet).
+/// Set by the dashboard (week) and the Diet tab (meals); null until then.
+String? coachWeekSheet, coachMealSheet;
+
 /// Opens Levlofit AI as a floating panel over the current screen, rising from the corner where the
 /// launcher sits. [prompt] starts a new chat with that message already sent.
 Future<void> openCoach(BuildContext context, {String? prompt}) => showGeneralDialog<void>(
@@ -310,6 +314,7 @@ class _CoachScreenState extends State<CoachScreen> {
       final data = await _api.send({
         'message': text, 'threadId': ?_threadId, 'editFrom': ?editFrom, 'clientMsgId': id, 'activity': ?_sharedSteps(),
         'localDay': localDayNow(), // this phone's calendar day, not the server's UTC date (audit F7)
+        if (coachWeekSheet != null || coachMealSheet != null) 'sheet': {'week': ?coachWeekSheet, 'meals': ?coachMealSheet},
         if (today != null) 'today': {'day': today.day, 'ids': today.ids, 'restDays': today.restDays},
       });
       if (!mounted) return;
@@ -779,7 +784,7 @@ class _TypewriterState extends State<_Typewriter> with SingleTickerProviderState
   Widget build(BuildContext context) => AnimatedBuilder(animation: _c, builder: (_, _) => Markdown(_visible));
 }
 
-/// Just enough Markdown for chat replies: headings, bullet and numbered lists, **bold**, `code`, paragraphs.
+/// Just enough Markdown for chat replies: headings, bullet and numbered lists, tables, **bold**, `code`, paragraphs.
 class Markdown extends StatelessWidget {
   const Markdown(this.text, {super.key});
   final String text;
@@ -788,6 +793,15 @@ class Markdown extends StatelessWidget {
   static final _heading = RegExp(r'^#{1,4}\s+(.*)');
   static final _bullet = RegExp(r'^(\s*)[-*•]\s+(.*)');
   static final _number = RegExp(r'^(\s*)(\d+)[.)]\s+(.*)');
+  static final _rule = RegExp(r'^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$');
+
+  /// The cells of a table line ("| a | b |"), or null for any other line.
+  static List<String>? _row(String line) {
+    final s = line.trim();
+    if (!s.startsWith('|') || s.length < 3 || !s.substring(1).contains('|')) return null;
+    final inner = s.endsWith('|') ? s.substring(1, s.length - 1) : s.substring(1);
+    return [for (final c in inner.split('|')) c.trim()];
+  }
 
   List<InlineSpan> _spans(BuildContext context, String s) {
     final c = Theme.of(context).colorScheme;
@@ -817,8 +831,48 @@ class Markdown extends StatelessWidget {
           ]),
         );
     final blocks = <Widget>[];
+    final table = <List<String>>[]; // rows of a | table | being read
+    void flushTable() {
+      if (table.isEmpty) return;
+      final cols = table.map((r) => r.length).reduce((a, b) => a > b ? a : b);
+      final rows = [for (final r in table) [...r, for (var i = r.length; i < cols; i++) '']];
+      table.clear();
+      blocks.add(Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Table(
+            defaultColumnWidth: const IntrinsicColumnWidth(),
+            border: TableBorder(horizontalInside: BorderSide(color: c.outline)),
+            children: [
+              for (final (n, r) in rows.indexed)
+                TableRow(
+                  decoration: n == 0 ? BoxDecoration(color: c.surfaceContainerHighest) : null,
+                  children: [
+                    for (final cell in r)
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 220),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          child: Text.rich(TextSpan(children: _spans(context, cell)), style: n == 0 ? t.labelLarge?.copyWith(fontWeight: FontWeight.w700) : t.bodyMedium),
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ));
+    }
+
     for (final raw in text.split('\n')) {
       final line = raw.trimRight();
+      final cells = _row(line);
+      if (cells != null) {
+        if (!_rule.hasMatch(line)) table.add(cells); // the |---| line under the header is not a row
+        continue;
+      }
+      flushTable();
       if (line.trim().isEmpty) {
         blocks.add(const SizedBox(height: 8));
       } else if (_heading.firstMatch(line) case final h?) {
@@ -831,6 +885,7 @@ class Markdown extends StatelessWidget {
         blocks.add(Padding(padding: const EdgeInsets.only(bottom: 2), child: Text.rich(TextSpan(children: _spans(context, line)), style: body)));
       }
     }
+    flushTable();
     return SelectionArea(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: blocks));
   }
 }

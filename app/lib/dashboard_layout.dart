@@ -12,6 +12,7 @@ const dashboardCards = <String, String>{
   'rings': 'Weekly rings',
   'today': "Today's session",
   'steps': 'Steps',
+  'gym': 'Gym check-in (when a code is saved)',
   'checkin': 'Daily check-in',
   'rewards': 'Daily goal and streak',
   'levelup': 'Level, rating and 66-day challenge',
