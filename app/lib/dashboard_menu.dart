@@ -15,9 +15,10 @@ final coachFabShown = ValueNotifier<bool>(() {
   }
 }());
 
-/// The floating Levlofit AI button on Today, Workout, Diet and Progress (owner request 2026-11-12): a graphite pill
-/// with an orange spark that breathes slowly, so it reads as the place to ask. Still when the phone asks for less
-/// motion. The first time it shows its name; after the first chat it shrinks to the round spark.
+/// The floating Levlofit AI button on Today, Workout, Diet and Progress (owner request 2026-11-12: a sporty icon, not
+/// a labelled pill): a round orange disc with a bold lightning bolt and a small spark badge for AI. A ring pulses out
+/// from it now and then like a heartbeat; still when the phone asks for less motion. Its name is spoken and shown on
+/// a long press.
 class CoachFab extends StatefulWidget {
   const CoachFab({super.key});
 
@@ -26,22 +27,12 @@ class CoachFab extends StatefulWidget {
 }
 
 class _CoachFabState extends State<CoachFab> with SingleTickerProviderStateMixin {
-  static const _usedKey = 'coach_fab_used';
-  late final _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400));
-  bool _used = false;
-
-  @override
-  void initState() {
-    super.initState();
-    try {
-      _used = prefs.getBool(_usedKey) ?? false;
-    } catch (_) {} // no local storage (tests): show the name
-  }
+  late final _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600));
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    MediaQuery.disableAnimationsOf(context) ? _pulse.stop() : _pulse.repeat(reverse: true);
+    MediaQuery.disableAnimationsOf(context) ? _pulse.stop() : _pulse.repeat();
   }
 
   @override
@@ -53,67 +44,96 @@ class _CoachFabState extends State<CoachFab> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final bg = dark ? cloud : graphite, fg = dark ? graphite : cloud;
-    return Semantics(
-      button: true,
-      label: 'Ask Levlofit AI',
-      excludeSemantics: true,
-      child: AnimatedBuilder(
-        animation: _pulse,
-        builder: (context, child) => DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(color: accent.withValues(alpha: 0.18 + 0.22 * _pulse.value), blurRadius: 14 + 10 * _pulse.value, spreadRadius: 1),
-              BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 10, offset: const Offset(0, 4)),
-            ],
-          ),
-          child: child,
-        ),
-        child: Material(
-          color: bg,
-          borderRadius: BorderRadius.circular(32),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () async {
-              HapticFeedback.lightImpact();
-              if (!_used) {
-                setState(() => _used = true);
-                try {
-                  await prefs.setBool(_usedKey, true);
-                } catch (_) {}
-              }
-              if (context.mounted) await openCoach(context);
-            },
-            child: AnimatedSize(
-              duration: motion(context, 260),
-              curve: spring,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(8, 8, _used ? 8 : 18, 8),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(color: accent, shape: BoxShape.circle),
-                    child: const Icon(LvIcons.sparkle, size: 20, color: graphite),
-                  ),
-                  if (!_used) ...[
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Ask Levlofit AI', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: fg, fontWeight: FontWeight.w700)),
-                        Text('Your plan, food, form', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: fg.withValues(alpha: 0.7))),
-                      ]),
-                    ),
-                  ],
-                ]),
+    const size = 62.0;
+    return Tooltip(
+      message: 'Levlofit AI',
+      child: Semantics(
+        button: true,
+        label: 'Ask Levlofit AI',
+        excludeSemantics: true,
+        child: SizedBox(
+          width: size + 24,
+          height: size + 24,
+          child: Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
+            // The pulse: a ring that grows from the disc and fades, in the first half of each beat.
+            AnimatedBuilder(
+              animation: _pulse,
+              builder: (context, _) {
+                final p = (_pulse.value * 2).clamp(0.0, 1.0);
+                return Container(
+                  width: size + 22 * p,
+                  height: size + 22 * p,
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: accent.withValues(alpha: 0.55 * (1 - p)), width: 2.5)),
+                );
+              },
+            ),
+            Material(
+              color: accent,
+              shape: CircleBorder(side: BorderSide(color: dark ? graphite : Colors.white, width: 3)),
+              elevation: 6,
+              shadowColor: accent.withValues(alpha: 0.6),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  openCoach(context);
+                },
+                child: const SizedBox(width: size, height: size, child: CustomPaint(painter: _BoltPainter())),
               ),
             ),
-          ),
+            // The AI badge: a small graphite disc with a spark, on the disc's shoulder.
+            Positioned(
+              right: 8,
+              top: 8,
+              child: IgnorePointer(
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(color: graphite, shape: BoxShape.circle, border: Border.all(color: dark ? graphite : Colors.white, width: 2)),
+                  child: const Icon(LvIcons.sparkle, size: 12, color: cloud),
+                ),
+              ),
+            ),
+          ]),
         ),
       ),
     );
   }
+}
+
+/// A filled, slightly forward-leaning lightning bolt in graphite, centred on the disc.
+class _BoltPainter extends CustomPainter {
+  const _BoltPainter();
+
+  @override
+  void paint(Canvas canvas, Size s) {
+    final w = s.width, h = s.height;
+    final bolt = Path()
+      ..moveTo(w * 0.56, h * 0.18)
+      ..lineTo(w * 0.30, h * 0.54)
+      ..lineTo(w * 0.47, h * 0.54)
+      ..lineTo(w * 0.40, h * 0.83)
+      ..lineTo(w * 0.71, h * 0.43)
+      ..lineTo(w * 0.53, h * 0.43)
+      ..close();
+    canvas.drawPath(
+      bolt,
+      Paint()
+        ..color = graphite
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawPath(
+      bolt,
+      Paint()
+        ..color = graphite
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_BoltPainter old) => false;
 }
 
 /// Everything that is not used every day, in plain groups. Tabs on the bottom bar are not repeated here.
