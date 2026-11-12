@@ -1,6 +1,6 @@
 # Levlofit: Implementation Plan
 
-Last updated: 2026-11-12, for release 1.0.12 (1.0.13 changes in source). Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.1.0. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 Detail: `docs/PROGRESS.md` (log), `docs/release/RELEASE_RECORD.md` (what shipped), `docs/archive/ROADMAP_AUDIT_2026-11-03.md` (roadmap).
 
 Status labels are kept apart: Source, Automated, CI, Deployed, Production verified, Real device.
@@ -15,6 +15,7 @@ Status labels are kept apart: Source, Automated, CI, Deployed, Production verifi
 | Diet accuracy: rice in grams, real servings, raw and dry names | Deployed in 1.0.9 |
 | Custom supplements, Supplements card, pre- and post-workout meals | Deployed in 1.0.9 |
 | Soft card look, floating bottom bar | Deployed in 1.0.10 (CI green) |
+| Steps on Today, plan-sheet Workout and Diet, floating Levlofit AI, chapter buttons, workout settings, export, gym check-in, Progress activity map, coach week and meal sheets | Deployed in 1.1.0, coach-chat v42 |
 | Settings as its own row in More; notification when a new version is out; Handbook book (69 chapters) in app, coach and website | Deployed in 1.0.12, migration and coach-chat 2026-11-12 |
 | Habit features: personal bests, forgiving streak, level-up screen, nudges, share pictures, short starter, Today's read, photo reveal, home widget | Deployed in 1.0.11 |
 | Encrypted Storage backup job and restore drill | Source and drill only: **inactive, see below** |
@@ -23,8 +24,7 @@ Status labels are kept apart: Source, Automated, CI, Deployed, Production verifi
 
 | # | Task | Owner | Why now |
 |---|---|---|---|
-| 0 | Release 1.0.13 (in source, not released), then deploy coach-chat (week and meal sheets): workout settings, export my data, gym check-in, Levlofit AI switch, Progress stats and activity map, plan-sheet targets and alternatives, chat tables; and steps card on Today with Health Connect in every build (minSdk 26), Workout day picker with plan sheets, Diet meal and day tables, floating Levlofit AI button, Previous/Next chapter (app and website), privacy page wording for steps on Today | Owner approves release | Built and checked on the web app with a local stack; steps need a phone |
-| 1 | Run the device checklist on 1.0.12 (`docs/operations/DEVICE_CHECKLIST_1_0_12.md`): widget, share sheet, notification taps, update notice, the book | Owner | Nothing since 1.0.10 has run on a real phone |
+| 1 | Run the device checklist (`docs/operations/DEVICE_CHECKLIST_1_0_12.md`) on 1.1.0, plus steps on Today, screen on, gym code, export and a coach plan question: widget, share sheet, notification taps, update notice, the book | Owner | Nothing since 1.0.10 has run on a real phone |
 | 2 | Add `STORAGE_S3_KEY_ID`, `STORAGE_S3_SECRET`; run "Daily Storage backup" once | Owner | Photos are not backed up automatically; the job fails nightly |
 | 3 | Finish the 2026-11-07 redesign review (not shipped): later onboarding, Build my plate, coach replies, then a release build on a phone | Claude, owner for the phone | Main screens tested on a phone with a debug build |
 | 5 | Cooked rice and dal in the diary, from USDA values | Owner approves import | People log cooked food against raw values |
