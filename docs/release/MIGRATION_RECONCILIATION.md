@@ -80,6 +80,7 @@ Cloud history was written by `apply_migration` with apply-time versions; local f
 | 20261107100000_foods_raw_dry_names | 2026-11-07 apply_migration foods_raw_dry_names | Applied 2026-11-07 (docs/release/RELEASE_RECORD.md, release 1.0.9); names and values verified read-only |
 | 20261107200000_other_supplements | 2026-11-07 apply_migration other_supplements | Applied 2026-11-07 (docs/release/RELEASE_RECORD.md, release 1.0.9); column and privileges verified read-only |
 | 20261107300000_handbook_book | 2026-11-12 one transaction through `supabase db query --linked` (history not written) | Applied 2026-11-12 (docs/release/RELEASE_RECORD.md, release 1.1.0); 69 rows and fingerprint verified |
+| 20261112100000_handbook_book_update | 2026-11-12 one transaction through `supabase db query --linked` (history not written) | Applied 2026-11-12 (docs/release/RELEASE_RECORD.md, release 1.1.1); 77 rows verified |
 
 Schema fingerprint: grants, columns, constraints, indexes, policies, functions, triggers, storage buckets/policies,
 auth trigger and extensions are identical between cloud and a local `supabase db reset`, except the
@@ -201,11 +202,9 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (1), updated 2026-11-12
+## Pending production items (0), updated 2026-11-12
 
-- 20261112100000_handbook_book_update: replaces the 69 chapters with the 77-chapter book (thefitness.wiki facts in
-  Levlofit's own words, healthy plate, visual figures). Not applied. Order: release 1.1.1 with MIN_APP_BUILD 16, then
-  this file, then coach-chat. See RELEASE_CHECKLIST.md item 3.7ac.
+None.
 
 Applied 2026-11-07 (kept for the record):
 

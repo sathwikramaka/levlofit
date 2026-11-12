@@ -1,6 +1,6 @@
 # Levlofit: Product Requirements Document
 
-Last updated: 2026-11-12, for release 1.1.0. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.1.1. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Summary
 
@@ -25,7 +25,7 @@ Target hypotheses, not benchmarks: onboarding 70%+, D7 25%+, D30 15%+. Accounts 
 Adults 18 to 80 in India, beginners to experienced. Vegetarian, eggitarian, vegan or non-vegetarian. Android first; iPhone
 through the web app. People with medical conditions are told to involve a doctor; the app does not treat anyone.
 
-## 4. Requirements: live in 1.1.0
+## 4. Requirements: live in 1.1.1
 
 ### Plan and training
 - Onboarding builds a plan from goals, body, schedule, health check, equipment, food settings and a level check.

@@ -2,6 +2,22 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one. Older entries name paths from before docs were sorted into folders (2026-11-07); see `docs/README.md`.
 
+## 2026-11-12: release 1.1.1, Handbook 77 chapters with figures, healthy plate check (owner-approved: APK, website, MIN_APP_BUILD secret, Handbook migration with backup, coach-chat deploy, push)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | aca34f6 plus the version bump, built from the main folder with nothing uncommitted | git status empty before the build |
+| What changed | Handbook 77 chapters (thefitness.wiki facts in Levlofit's own words with primary sources, programme layouts in numbers, healthy plate), figures drawn in app and website, cites in step and compare figures, long figure notes under the row; Diet healthy plate check; supplements reference and timing, Before and After training sections, robot Levlofit AI button, export and gym check-in removed (from the commits after 1.1.0) | git log 2210b7a..HEAD |
+| Checks before release | flutter analyze clean, 680 pass + 1 skip; functions node 288/0, offline eval 85/0 strict, tsc clean; website lint, tsc, build; book builder and register checks; pgTAP 268/268 with the new migration on a throwaway local stack (since deleted) | tools/verify.sh, supabase test db |
+| Android APK | com.levlofit.app 1.1.1, versionCode 2016, 14,015,811 bytes, minSdk 26, READ_STEPS and WAKE_LOCK declared, release certificate 7c510c35...4c431384 | aapt2, apksigner on the live file |
+| APK SHA-256 | 7c2349d3be1c4ccb80dbbe7adddba24725545d30ffa80390e2f8e65c761089ad, equal on the live download and /version.json | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 572c9732; /version.json = 1.1.1 build 16, min_build 16; home links levlofit-1.1.1.apk; /handbook lists 77 chapters; /handbook/healthy-plate 200 | curl |
+| Secret | MIN_APP_BUILD = 16, set by the release script | script output |
+| Backup | The 69 live `handbook_chapters` rows saved as JSON in the private folder before the migration (rollback: reload them, or re-apply 20261107300000_handbook_book.sql) | row count 69 in the file |
+| Migration | 20261112100000_handbook_book_update, one transaction through `supabase db query --linked`, after the app release; history not written (forward-only). Before: 69 rows. After: 77 rows, ids 1 to 77, every row has blocks, last is building-a-week | read-only query before and after |
+| Function | coach-chat v45 ACTIVE (77-chapter passages, supplements reference, MedlinePlus research, fuller replies); unauthenticated call 401 | supabase functions list, curl |
+| Not verified | Nothing on a real phone: the new figures, the healthy plate check, supplement suggestions and the robot button; the coach's answers with the live model. 71 cited claims in the new chapters still await passage checks | - |
+
 ## 2026-11-12: release 1.1.0 (owner-approved: coach-chat deploy, APK, website, MIN_APP_BUILD secret; owner chose 1.1 over 1.0.13)
 
 | What | Value | How checked |
