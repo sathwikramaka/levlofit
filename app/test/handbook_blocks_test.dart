@@ -77,6 +77,27 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('previous and next chapter buttons name their chapters; the last chapter has no Next', (tester) async {
+    Future<Map<String, dynamic>> load() async => {
+          'id': 8,
+          'title': 'Warming up',
+          'minutes': 3,
+          'blocks': {'sources': <String, String>{}, 'blocks': <Map<String, dynamic>>[]},
+        };
+    await tester.pumpWidget(MaterialApp(
+        home: ChapterScreen(id: 8, load: load, neighbours: (c) async => [{'id': 7, 'title': 'Technique'}, {'id': 9, 'title': 'Sessions'}])));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('NEXT CHAPTER'), 200, scrollable: find.byType(Scrollable).first);
+    expect(find.text('PREVIOUS CHAPTER'), findsOneWidget);
+    expect(find.text('Technique'), findsOneWidget);
+    expect(find.text('Sessions'), findsOneWidget);
+
+    await tester.pumpWidget(MaterialApp(home: ChapterScreen(id: 69, load: () async => {...await load(), 'id': 69}, neighbours: (c) async => [{'id': 68, 'title': 'Training after 40'}])));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('PREVIOUS CHAPTER'), 200, scrollable: find.byType(Scrollable).first);
+    expect(find.text('NEXT CHAPTER'), findsNothing);
+  });
+
   test('chapter label pads the number and has a plain fallback', () {
     expect(ChapterScreen.label(7), 'CHAPTER 07');
     expect(ChapterScreen.label(43), 'CHAPTER 43');
