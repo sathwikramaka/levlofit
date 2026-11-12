@@ -92,12 +92,13 @@ through the web app. People with medical conditions are told to involve a doctor
 
 ### Learning and account
 - Handbook: a 77-chapter book in six volumes, live in the app and on the website since 2026-11-12. Not clinician-reviewed;
-  1,735 of 2,737 claims still unreviewed (the coach cites only checked passages). Chapters teach with figures (stat
+  1,449 of 2,794 claims still unreviewed (the coach cites only checked passages). Chapters teach with figures (stat
   tiles, numbered steps, do and avoid, bar charts, a plate, yes and no flows, ranges, scales). The facts of
   thefitness.wiki's pages are covered in Levlofit's own words with primary sources (its text is not licensed for reuse):
   start here, muscle map, heart rate and calories, first weeks in a gym, choosing a programme, the healthy plate
-  (Harvard's Healthy Eating Plate idea with ICMR-NIN 2024 amounts), weight-change answers and training answers; the
-  supplements chapter adds timing, safe upper limits and what to keep apart.
+  (Harvard's Healthy Eating Plate idea with ICMR-NIN 2024 amounts), weight-change answers and training answers; Choosing a programme gives
+  the common beginner and intermediate programme layouts in numbers (sets, reps, percentages, progression and reset
+  rules, in kg); the supplements chapter adds timing, safe upper limits and what to keep apart.
 - Diet's day totals include a healthy plate check: the day's food by weight against about half vegetables and fruit,
   a quarter grains and a quarter protein foods (milk, oil and shakes sit beside the plate). Exercise library; glossary; BMI and
   body-fat tools.
