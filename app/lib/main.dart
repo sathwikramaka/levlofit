@@ -19,6 +19,7 @@ import 'move_animation.dart' show DemoFigure, demoFigure;
 import 'onboarding.dart';
 import 'reminders.dart';
 import 'steps.dart' show forgetSteps;
+import 'supplement_guide.dart' show loadSuppGuide;
 import 'theme.dart';
 
 // Cloud project "levlo" (ap-south-1). The publishable key is public by design; RLS protects data.
@@ -82,6 +83,7 @@ Future<void> main() async {
     return;
   }
   prefs = await SharedPreferences.getInstance(); // before Supabase: the secure session store moves an old session out of it
+  await loadSuppGuide(); // a small bundled file: supplement timing and facts for Diet and the Handbook
   await Supabase.initialize(
     url: supabaseUrl,
     publishableKey: supabaseKey,

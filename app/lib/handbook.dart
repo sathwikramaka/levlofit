@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'icons.dart';
 import 'main.dart';
+import 'supplement_guide.dart';
 import 'theme.dart';
 
 typedef _Json = Map<String, dynamic>;
@@ -90,6 +91,20 @@ class _HandbookScreenState extends State<HandbookScreen> {
                         },
                       ),
               ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Quick reference beside the book: every common supplement, its timing, safe amounts and sources.
+          Card(
+            elevation: 0,
+            color: Theme.of(context).colorScheme.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+            child: ListTile(
+              leading: Icon(LvIcons.pill, color: Theme.of(context).colorScheme.tertiary),
+              title: const Text('Supplement guide'),
+              subtitle: Text('${suppGuide.items.length} supplements: what they do, when to take them, how much is safe'),
+              trailing: const Icon(LvIcons.caretRight, size: 16),
+              onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const SuppGuideScreen())),
             ),
           ),
           const SizedBox(height: 24),

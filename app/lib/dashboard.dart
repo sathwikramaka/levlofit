@@ -22,8 +22,6 @@ import 'diet_view.dart';
 import 'exercise_guide.dart' show moveGuide;
 import 'exercises.dart';
 import 'food_diary.dart' show EmptyFoodsText, FoodCredit, FoodDiaryScreen, diaryTotals, entryFromRow, foodDataPendingText, isoDay, matchesFoodQuery, supabaseDiary;
-import 'data_export.dart';
-import 'gym_card.dart';
 import 'handbook.dart';
 import 'home_widget.dart';
 import 'icons.dart';
@@ -40,6 +38,7 @@ import 'rewards.dart';
 import 'session.dart';
 import 'share_card.dart';
 import 'steps.dart' show StepsCard, healthPermissionScreenRequested, onHealthRationale;
+import 'supplement_guide.dart';
 import 'swaps.dart';
 import 'theme.dart';
 import 'tools.dart';
@@ -886,7 +885,6 @@ class _Bento extends StatelessWidget {
               onOpen: () => onOpen(_Tab.habits),
             ),
           'steps' => StepsCard(target: switch (data.profile['birth_year']) { final int y when now.year - y >= 60 => 6000, _ => 8000 }),
-          'gym' => switch (loadGymPass()) { final p? => GymPassCard(pass: p), _ => const SizedBox.shrink() },
           'checkin' => const CheckInCard(),
           'fuel' => _FuelTile(plan: plan, proteins: data.proteins),
           'body' => _BodyTile(plan: plan),

@@ -15,10 +15,9 @@ final coachFabShown = ValueNotifier<bool>(() {
   }
 }());
 
-/// The floating Levlofit AI button on Today, Workout, Diet and Progress (owner request 2026-11-12: a sporty icon, not
-/// a labelled pill): a round orange disc with a bold lightning bolt and a small spark badge for AI. A ring pulses out
-/// from it now and then like a heartbeat; still when the phone asks for less motion. Its name is spoken and shown on
-/// a long press.
+/// The floating Levlofit AI button on Today, Workout, Diet and Progress: the Levlofit AI robot (FitBotPainter, the
+/// same one that greets you in the chat) on a round dark badge, bobbing and blinking, with a soft orange ring that
+/// pulses out now and then (owner request 2026-11-12: the AI icon as before, no text). Still with reduced motion.
 class CoachFab extends StatefulWidget {
   const CoachFab({super.key});
 
@@ -27,23 +26,23 @@ class CoachFab extends StatefulWidget {
 }
 
 class _CoachFabState extends State<CoachFab> with SingleTickerProviderStateMixin {
-  late final _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600));
+  late final _loop = AnimationController(vsync: this, duration: const Duration(milliseconds: 3200));
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    MediaQuery.disableAnimationsOf(context) ? _pulse.stop() : _pulse.repeat();
+    MediaQuery.disableAnimationsOf(context) ? _loop.stop() : _loop.repeat();
   }
 
   @override
   void dispose() {
-    _pulse.dispose();
+    _loop.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final c = Theme.of(context).colorScheme;
     const size = 62.0;
     return Tooltip(
       message: 'Levlofit AI',
@@ -52,88 +51,43 @@ class _CoachFabState extends State<CoachFab> with SingleTickerProviderStateMixin
         label: 'Ask Levlofit AI',
         excludeSemantics: true,
         child: SizedBox(
-          width: size + 24,
-          height: size + 24,
-          child: Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
-            // The pulse: a ring that grows from the disc and fades, in the first half of each beat.
-            AnimatedBuilder(
-              animation: _pulse,
-              builder: (context, _) {
-                final p = (_pulse.value * 2).clamp(0.0, 1.0);
-                return Container(
-                  width: size + 22 * p,
-                  height: size + 22 * p,
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: accent.withValues(alpha: 0.55 * (1 - p)), width: 2.5)),
-                );
-              },
-            ),
-            Material(
-              color: accent,
-              shape: CircleBorder(side: BorderSide(color: dark ? graphite : Colors.white, width: 3)),
-              elevation: 6,
-              shadowColor: accent.withValues(alpha: 0.6),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  openCoach(context);
-                },
-                child: const SizedBox(width: size, height: size, child: CustomPaint(painter: _BoltPainter())),
-              ),
-            ),
-            // The AI badge: a small graphite disc with a spark, on the disc's shoulder.
-            Positioned(
-              right: 8,
-              top: 8,
-              child: IgnorePointer(
-                child: Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(color: graphite, shape: BoxShape.circle, border: Border.all(color: dark ? graphite : Colors.white, width: 2)),
-                  child: const Icon(LvIcons.sparkle, size: 12, color: cloud),
+          width: size + 22,
+          height: size + 22,
+          child: AnimatedBuilder(
+            animation: _loop,
+            builder: (context, _) {
+              final p = (_loop.value * 2).clamp(0.0, 1.0); // the ring grows in the first half of each loop
+              return Stack(alignment: Alignment.center, children: [
+                Container(
+                  width: size + 20 * p,
+                  height: size + 20 * p,
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: accent.withValues(alpha: 0.5 * (1 - p)), width: 2)),
                 ),
-              ),
-            ),
-          ]),
+                Material(
+                  color: c.secondary,
+                  shape: const CircleBorder(),
+                  elevation: 6,
+                  shadowColor: Colors.black.withValues(alpha: 0.4),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      openCoach(context);
+                    },
+                    child: SizedBox(
+                      width: size,
+                      height: size,
+                      child: CustomPaint(painter: FitBotPainter(t: _loop.value, face: c.surface, ink: c.secondary)),
+                    ),
+                  ),
+                ),
+              ]);
+            },
+          ),
         ),
       ),
     );
   }
-}
-
-/// A filled, slightly forward-leaning lightning bolt in graphite, centred on the disc.
-class _BoltPainter extends CustomPainter {
-  const _BoltPainter();
-
-  @override
-  void paint(Canvas canvas, Size s) {
-    final w = s.width, h = s.height;
-    final bolt = Path()
-      ..moveTo(w * 0.56, h * 0.18)
-      ..lineTo(w * 0.30, h * 0.54)
-      ..lineTo(w * 0.47, h * 0.54)
-      ..lineTo(w * 0.40, h * 0.83)
-      ..lineTo(w * 0.71, h * 0.43)
-      ..lineTo(w * 0.53, h * 0.43)
-      ..close();
-    canvas.drawPath(
-      bolt,
-      Paint()
-        ..color = graphite
-        ..style = PaintingStyle.fill,
-    );
-    canvas.drawPath(
-      bolt,
-      Paint()
-        ..color = graphite
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..strokeJoin = StrokeJoin.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_BoltPainter old) => false;
 }
 
 /// Everything that is not used every day, in plain groups. Tabs on the bottom bar are not repeated here.
@@ -845,6 +799,29 @@ class _DietScreenState extends State<_DietScreen> {
       scoops: scoops,
       plant: excluded.contains('dairy'),
     );
+    final dayMeals = training?.meals ?? meals;
+    final own = ((_choices['other_supplements'] as List?) ?? const []).cast<String>();
+    // Each supplement line matched to the reference (whey and creatine from the plan, the person's own by name).
+    final suppRef = [
+      for (final l in suppLines) (line: l, ref: matchSupp(l.name)),
+    ];
+    final fats = [for (final m in dayMeals) m.items.fold(0.0, (s, i) => s + i.fat)];
+    final suppMeal = {
+      for (final r in suppRef)
+        if (r.ref case final s?) r.line.name: mealFor(s.timing, fats, pre: training?.pre, post: training?.post),
+    };
+    final hidden = () {
+      try {
+        return (prefs.getStringList('supp_not_for_me') ?? const <String>[]).toSet();
+      } catch (_) {
+        return <String>{};
+      }
+    }();
+    final suggestions = suggestSupps(
+      dietType: _choices['diet_type'] as String?,
+      goals: [for (final g in (widget.data.plan['goals'] as List).cast<_Json>()) g['goal'] as String],
+      taking: {for (final r in suppRef) ?r.ref?.id},
+    ).where((x) => !hidden.contains(x.item.id)).toList();
     final short = protein - shown.protein;
     // Everything that is not a meal sits in one place under the meals; a missed target is also said at the top.
     final notes = [
@@ -926,6 +903,15 @@ class _DietScreenState extends State<_DietScreen> {
         PlateInfoCard(title: dayKind.title, lines: [for (final l in dayKind.lines) (name: null, text: l)]),
         const SizedBox(height: 10),
         for (final (mi, m) in (training?.meals ?? meals).indexed) ...[
+          // Training days: the meals around the session get their own section (ISSN nutrient timing, Kerksick 2017).
+          if (training != null && (mi == training.pre || mi == training.post))
+            _SectionHead(
+              title: mi == training.pre ? 'BEFORE TRAINING' : 'AFTER TRAINING',
+              line: mi == training.pre
+                  ? 'Eat 1 to 3 hours before: carbs for energy, some protein, little fat and fibre so it sits light.'
+                  : 'Within about 2 hours after: 20 to 40 g protein to rebuild and carbs to refill.',
+              supps: [for (final r in suppRef) if (r.ref?.timing == (mi == training.pre ? 'pre' : 'post')) r.line.name],
+            ),
           PlateMealCard(
             meal: m,
             tag: switch ([
@@ -943,6 +929,7 @@ class _DietScreenState extends State<_DietScreen> {
                 ?prepNote(m, have),
               if (training != null && mi == training.pre) 'Eat this before you train. It is part of your day\'s food, not extra.',
               if (training != null && mi == training.post) 'Eat this after you train: it brings your protein. It is part of your day\'s food, not extra.',
+              if ([for (final e in suppMeal.entries) if (e.value == mi) e.key] case final names when names.isNotEmpty) 'Take with this meal: ${names.join(', ')}.',
             ],
             // The list can hold an added "Before training" fruit, so the plan's own meal is found by name; that fruit has no swap.
             onSwap: meals.any((x) => x.name == m.name) ? () => _swap(key, days, meals.indexWhere((x) => x.name == m.name)) : null,
@@ -996,7 +983,69 @@ class _DietScreenState extends State<_DietScreen> {
         }),
         const SizedBox(height: 10),
         if (suppLines.isNotEmpty) ...[
-          PlateInfoCard(title: 'SUPPLEMENTS', lines: [for (final l in suppLines) (name: l.name, text: l.how)]),
+          _Tile(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Expanded(child: Text('YOUR SUPPLEMENTS', style: monoLabel(context))),
+                TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const SuppGuideScreen())), child: const Text('Guide')),
+              ]),
+              for (final r in suppRef)
+                InkWell(
+                  onTap: r.ref == null ? null : () => showSuppSheet(context, r.ref!),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(r.line.name, style: t.titleSmall),
+                          if (r.ref case final s?) ...[
+                            // When, in a few words (the meal and its time); the full how and why open on a tap.
+                            Text(
+                              switch (suppMeal[r.line.name]) {
+                                final i? => 'With ${dayMeals[i].name.toLowerCase()}, ${dayMeals[i].time}',
+                                _ => suppGuide.timings[s.timing] ?? '',
+                              },
+                              style: t.bodyMedium?.copyWith(color: c.tertiary, fontWeight: FontWeight.w600),
+                            ),
+                            Text(own.contains(r.line.name) ? s.when : r.line.how, maxLines: 3, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                          ] else
+                            Text(r.line.how, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+                        ]),
+                      ),
+                      if (r.ref != null) Icon(LvIcons.caretRight, size: 16, color: c.onSurfaceVariant),
+                    ]),
+                  ),
+                ),
+            ]),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (suggestions.isNotEmpty) ...[
+          _Tile(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('YOU COULD CONSIDER  ·  OPTIONAL', style: monoLabel(context)),
+              const SizedBox(height: 4),
+              Text('Food comes first and none of these is required. Add one only if it suits you.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              for (final x in suggestions)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    InkWell(onTap: () => showSuppSheet(context, x.item), child: Text(x.item.name, style: t.titleSmall?.copyWith(decoration: TextDecoration.underline))),
+                    Text(x.why, style: t.bodyMedium),
+                    Row(children: [
+                      TextButton(onPressed: () => _addSupp(x.item.name), child: const Text('Add to my list')),
+                      TextButton(
+                        onPressed: () async {
+                          await prefs.setStringList('supp_not_for_me', [...hidden, x.item.id]);
+                          if (mounted) setState(() {});
+                        },
+                        child: const Text('Not for me'),
+                      ),
+                    ]),
+                  ]),
+                ),
+            ]),
+          ),
           const SizedBox(height: 10),
         ],
         const PlateKey(),
@@ -1071,6 +1120,20 @@ class _DietScreenState extends State<_DietScreen> {
     unawaited(prefs.setStringList(_swapsKey, [week, ...others, for (final e in swaps.entries) '$_day:${e.key}:${e.value}']));
   }
 
+  /// Adds a suggested supplement to the person's own list (dietary_profiles.other_supplements, their row only).
+  Future<void> _addSupp(String name) async {
+    final own = [...((_choices['other_supplements'] as List?) ?? const []).cast<String>()];
+    if (own.contains(name)) return;
+    try {
+      await supabase.from('dietary_profiles').update({'other_supplements': [...own, name]}).eq('user_id', supabase.auth.currentUser!.id);
+      if (!mounted) return;
+      setState(() => _choices = {..._choices, 'other_supplements': [...own, name]});
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$name added. Its best time shows under Your supplements.')));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not add it just now. Check your connection.')));
+    }
+  }
+
   /// Meal names logged with Ate it today.
   Set<String> _loggedToday() {
     final prefix = '${isoDay(DateTime.now())}|';
@@ -1095,6 +1158,32 @@ class _DietScreenState extends State<_DietScreen> {
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not log that meal. Nothing was added.')));
     }
+  }
+}
+
+/// A heading over the meal before or after training, with its purpose and the supplements that go there.
+class _SectionHead extends StatelessWidget {
+  const _SectionHead({required this.title, required this.line, this.supps = const []});
+  final String title, line;
+  final List<String> supps;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(width: 4, height: 16, decoration: BoxDecoration(color: c.primary, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(width: 8),
+          Text(title, style: monoLabel(context).copyWith(color: c.tertiary, fontWeight: FontWeight.w700)),
+        ]),
+        const SizedBox(height: 4),
+        Text(line, style: t.bodyMedium),
+        if (supps.isNotEmpty) Text('Also now: ${supps.join(', ')}.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+      ]),
+    );
   }
 }
 

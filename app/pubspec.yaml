@@ -93,6 +93,7 @@ flutter:
 
   assets:
     - assets/sounds/levlo_chime.wav
+    - assets/supplements.json
     - assets/fonts/PHOSPHOR-LICENSE
     - assets/licenses/react-native-body-highlighter-LICENSE
     - assets/licenses/zxing-cpp-LICENSE
