@@ -2,6 +2,20 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one. Older entries name paths from before docs were sorted into folders (2026-11-07); see `docs/README.md`.
 
+## 2026-11-12: release 1.1.0 (owner-approved: coach-chat deploy, APK, website, MIN_APP_BUILD secret; owner chose 1.1 over 1.0.13)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 71bc59c plus the version bump d389a6f, built from the main folder with nothing uncommitted | git status empty before the build |
+| What changed | Steps on Today with Health Connect in every build (minSdk 26, READ_STEPS); Workout day picker with plan sheets (target muscles, alternatives); Diet meal and day tables; floating Levlofit AI button with a switch; Previous/Next chapter (app and website); workout settings (screen on, rest, sound, flash, animations); export my data; gym check-in; Progress month, hours, 30-day weight, 12-month activity map, weight ranges and goal; chat tables | commits cd2f449 to 71bc59c |
+| Checks before release | flutter analyze clean, 675 pass + 1 skip; functions node 286/0, offline eval 85/0 strict, tsc clean; debug APK built; web app walked on a throwaway local stack (Today, Workout, Diet, chapters, Progress, Settings, export: 22 tables read, file correct) | flutter test, tools/verify.sh functions, browser pane |
+| Function | coach-chat v42 ACTIVE (week and meal sheets, table rule); unauthenticated call 401. Older apps send no sheets and get the "not sent" line | supabase functions list, curl |
+| Android APK | com.levlofit.app 1.1.0, versionCode 2015, 14,025,132 bytes (14.0 MB), minSdk 26, READ_STEPS and WAKE_LOCK declared, release certificate 7c510c35...4c431384 | aapt2, apksigner on the live file |
+| APK SHA-256 | d108037f83680321fa9ffb22ca2809a7628df7acf7afb495f486f549102eb1d4, equal on the live download and /version.json | sha256sum of the live file |
+| Website | Cloudflare Pages deployment b720379b; /version.json = 1.1.0 build 15, min_build 15; home links levlofit-1.1.0.apk; /handbook lists 69 chapters; privacy page names steps on Today and the coach sheets | curl |
+| Secret | MIN_APP_BUILD = 15 (digest equals sha256 of "15") | supabase secrets list |
+| Not verified | Nothing on a real phone: Health Connect steps, screen on, gym code drawing, share sheet export, the coach's table answers with the live model. Android 7 phones cannot install 1.1.0 | - |
+
 ## 2026-11-12: release 1.0.12, Handbook book live, Settings row, update notice (owner-approved: Handbook migration, coach-chat deploy, APK, website, MIN_APP_BUILD secret)
 
 | What | Value | How checked |
