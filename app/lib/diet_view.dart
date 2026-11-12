@@ -135,6 +135,58 @@ class PlateKey extends StatelessWidget {
 
 /// One meal: plate, servings, a short note, Swap and Ate it; tap for grams and nutrients.
 /// [onAte] is null when the meal is not today's (only today can be logged); [logged] once it is in the diary.
+/// One row of a [MacroTable]: what it is, an optional exact amount under it, energy and grams of macros.
+typedef MacroRow = ({String label, String? detail, double kcal, double protein, double carb, double fat});
+
+/// Item, kcal, protein, carbs and fat in columns, with a total row: the meal table from the owner's own plan sheet
+/// (owner request 2026-11-12). Numbers right-aligned with tabular figures so the columns line up.
+class MacroTable extends StatelessWidget {
+  const MacroTable({super.key, required this.rows, this.totalLabel = 'Total'});
+  final List<MacroRow> rows;
+  final String totalLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final digits = monoNumber(context, size: 13);
+    String g(double v) => v.toStringAsFixed(v < 10 ? 1 : 0);
+    TableRow line(MacroRow r, {bool total = false}) => TableRow(
+          decoration: total ? BoxDecoration(color: c.primary.withValues(alpha: 0.08)) : null,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(r.label, style: total ? t.labelLarge?.copyWith(fontWeight: FontWeight.w700) : t.bodyMedium),
+                if (r.detail != null) Text(r.detail!, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+              ]),
+            ),
+            for (final v in ['${r.kcal.round()}', g(r.protein), g(r.carb), g(r.fat)])
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 6, 4, 6),
+                child: Text(v, textAlign: TextAlign.right, style: total ? digits.copyWith(fontWeight: FontWeight.w700, color: c.tertiary) : digits),
+              ),
+          ],
+        );
+    double sum(double Function(MacroRow) f) => rows.fold(0.0, (s, r) => s + f(r));
+    return Table(
+      columnWidths: const {0: FlexColumnWidth(), 1: FixedColumnWidth(48), 2: FixedColumnWidth(42), 3: FixedColumnWidth(42), 4: FixedColumnWidth(40)},
+      border: TableBorder(horizontalInside: BorderSide(color: c.outline)),
+      children: [
+        TableRow(children: [
+          for (final (i, h) in ['ITEM', 'KCAL', 'PRO', 'CARB', 'FAT'].indexed)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+              child: Text(h, textAlign: i == 0 ? TextAlign.left : TextAlign.right, style: monoLabel(context).copyWith(fontSize: 10)),
+            ),
+        ]),
+        for (final r in rows) line(r),
+        line((label: totalLabel, detail: null, kcal: sum((r) => r.kcal), protein: sum((r) => r.protein), carb: sum((r) => r.carb), fat: sum((r) => r.fat)), total: true),
+      ],
+    );
+  }
+}
+
 class PlateMealCard extends StatefulWidget {
   const PlateMealCard({super.key, required this.meal, this.tag, this.notes = const [], this.onSwap, this.onAte, this.logged = false});
   final PlanMeal meal;
@@ -196,25 +248,23 @@ class _PlateMealCardState extends State<PlateMealCard> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                for (final i in food)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: _open
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(child: Text(servingLabel(i), style: t.bodyLarge)),
-                              const SizedBox(width: 10),
-                              Text(
-                                '${exactLabel(i)}\n${i.kcal.round()} kcal · P ${i.protein.toStringAsFixed(1)} g',
-                                textAlign: TextAlign.right,
-                                style: t.bodySmall?.copyWith(color: c.onSurfaceVariant),
-                              ),
-                            ],
-                          )
-                        : Text(servingLabel(i), style: t.bodyLarge),
-                  ),
+                const SizedBox(height: 12),
+                // Item by item with its energy and macros, then the meal's subtotal (oil counted on its own row).
+                MacroTable(
+                  rows: [
+                    for (final i in food) (label: servingLabel(i), detail: _open ? exactLabel(i) : null, kcal: i.kcal, protein: i.protein, carb: i.carb, fat: i.fat),
+                    if (m.items.where((i) => i.unit == 'oil').toList() case final oil when oil.isNotEmpty)
+                      (
+                        label: 'Cooking oil',
+                        detail: _open ? '${oil.fold(0.0, (s, i) => s + i.grams).round()} g' : null,
+                        kcal: oil.fold(0.0, (s, i) => s + i.kcal),
+                        protein: 0.0,
+                        carb: 0.0,
+                        fat: oil.fold(0.0, (s, i) => s + i.fat),
+                      ),
+                  ],
+                  totalLabel: 'Subtotal',
+                ),
                 for (final n in widget.notes)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),

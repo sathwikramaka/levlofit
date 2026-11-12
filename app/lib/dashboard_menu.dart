@@ -6,16 +6,105 @@ part of 'dashboard.dart';
 
 /// Three lines of unequal length; the short ones stretch under the finger.
 /// Levlofit AI, from the top of the main pages. It never floats over content.
-class _CoachButton extends StatelessWidget {
-  const _CoachButton();
+/// The floating Levlofit AI button on Today, Workout, Diet and Progress (owner request 2026-11-12): a graphite pill
+/// with an orange spark that breathes slowly, so it reads as the place to ask. Still when the phone asks for less
+/// motion. The first time it shows its name; after the first chat it shrinks to the round spark.
+class CoachFab extends StatefulWidget {
+  const CoachFab({super.key});
 
   @override
-  Widget build(BuildContext context) => IconButton(
-        tooltip: 'Levlofit AI',
-        onPressed: () => openCoach(context),
-        style: IconButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surface, minimumSize: const Size(44, 44)),
-        icon: const Icon(LvIcons.sparkle, size: 20),
-      );
+  State<CoachFab> createState() => _CoachFabState();
+}
+
+class _CoachFabState extends State<CoachFab> with SingleTickerProviderStateMixin {
+  static const _usedKey = 'coach_fab_used';
+  late final _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400));
+  bool _used = false;
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      _used = prefs.getBool(_usedKey) ?? false;
+    } catch (_) {} // no local storage (tests): show the name
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    MediaQuery.disableAnimationsOf(context) ? _pulse.stop() : _pulse.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final bg = dark ? cloud : graphite, fg = dark ? graphite : cloud;
+    return Semantics(
+      button: true,
+      label: 'Ask Levlofit AI',
+      excludeSemantics: true,
+      child: AnimatedBuilder(
+        animation: _pulse,
+        builder: (context, child) => DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(color: accent.withValues(alpha: 0.18 + 0.22 * _pulse.value), blurRadius: 14 + 10 * _pulse.value, spreadRadius: 1),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: child,
+        ),
+        child: Material(
+          color: bg,
+          borderRadius: BorderRadius.circular(32),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () async {
+              HapticFeedback.lightImpact();
+              if (!_used) {
+                setState(() => _used = true);
+                try {
+                  await prefs.setBool(_usedKey, true);
+                } catch (_) {}
+              }
+              if (context.mounted) await openCoach(context);
+            },
+            child: AnimatedSize(
+              duration: motion(context, 260),
+              curve: spring,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(8, 8, _used ? 8 : 18, 8),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(color: accent, shape: BoxShape.circle),
+                    child: const Icon(LvIcons.sparkle, size: 20, color: graphite),
+                  ),
+                  if (!_used) ...[
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Ask Levlofit AI', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: fg, fontWeight: FontWeight.w700)),
+                        Text('Your plan, food, form', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: fg.withValues(alpha: 0.7))),
+                      ]),
+                    ),
+                  ],
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Everything that is not used every day, in plain groups. Tabs on the bottom bar are not repeated here.
@@ -99,12 +188,13 @@ class _Page extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     final onBar = context.dependOnInheritedWidgetOfExactType<_BackScope>()?.onBar ?? false;
     return Scaffold(
-      appBar: AppBar(leading: const _ShellMenu(), actions: [if (onBar && title != 'More') const Padding(padding: EdgeInsets.only(right: 16), child: _CoachButton())]),
+      appBar: AppBar(leading: const _ShellMenu()),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 760),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+            // Room at the end for the floating Levlofit AI button on the bar's pages.
+            padding: EdgeInsets.fromLTRB(20, 0, 20, onBar && title != 'More' ? 104 : 32),
             children: staggered([
               Text(title, style: t.headlineMedium),
               if (subtitle != null) ...[
@@ -135,6 +225,7 @@ class _WorkoutScreen extends StatefulWidget {
 
 class _WorkoutScreenState extends State<_WorkoutScreen> {
   late Set<DateTime> _logged = widget.logged;
+  int _sel = DateTime.now().weekday - 1; // the day shown in full, Monday 0; today at first
 
   Future<void> _checkLevel(_Json g) async {
     final changed = await Navigator.push<bool>(
@@ -162,21 +253,58 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
     return _Page(
       title: 'Workout',
       children: [
-        for (var i = 0; i < 7; i++)
-          if (monday.add(Duration(days: i)) == today) ...[
-            Text('TODAY', style: monoLabel(context)),
-            const SizedBox(height: 8),
-            _dayTile(context, i, week, monday, today, minutes),
-            const SizedBox(height: 24),
-          ],
         Text('THIS WEEK  ·  ${dayGoal.length} DAYS${minutes == null ? '' : '  ·  $minutes MIN'}${switch (trainingTimeLabel(plan)) { final l? => '  ·  ${l.toUpperCase()}', _ => '' }}',
             style: monoLabel(context)),
         const SizedBox(height: 8),
-        for (var i = 0; i < 7; i++)
-          if (monday.add(Duration(days: i)) != today) ...[
-            _dayTile(context, i, week, monday, today, minutes),
-            const SizedBox(height: 8),
-          ],
+        // Day picker, as on the owner's own workout page: any day opens its whole plan below.
+        Row(children: [
+          for (var i = 0; i < 7; i++)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Semantics(
+                  button: true,
+                  selected: _sel == i,
+                  label: '${_days[i]} ${monday.add(Duration(days: i)).day}${dayGoal.containsKey(i + 1) ? ', training' : ', rest'}',
+                  excludeSemantics: true,
+                  child: Material(
+                    color: _sel == i ? c.secondary : c.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _sel = i);
+                      },
+                      child: SizedBox(
+                        height: 60,
+                        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Text(_days[i].substring(0, 1), style: t.labelMedium?.copyWith(fontWeight: FontWeight.w600, color: _sel == i ? c.onSecondary : c.onSurfaceVariant)),
+                          Text('${monday.add(Duration(days: i)).day}', style: t.titleSmall?.copyWith(color: _sel == i ? c.onSecondary : c.onSurface)),
+                          const SizedBox(height: 3),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _logged.contains(monday.add(Duration(days: i)))
+                                  ? progressColor(context)
+                                  : dayGoal.containsKey(i + 1)
+                                  ? c.primary
+                                  : Colors.transparent,
+                            ),
+                          ),
+                        ]),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ]),
+        const SizedBox(height: 10),
+        _dayTile(context, _sel, week, monday, today, minutes),
+        const SizedBox(height: 8),
         for (final a in week.addOns)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -230,19 +358,23 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
     final own = src == null && movedTo == null && dayGoal[i + 1] == null ? week.addOns.where((a) => a.day == i + 1).firstOrNull : null;
     final ownBlock = own == null ? null : blocksFor(week, i + 1, data.tier, kitOf(data.profile), const []).first;
     final g = own == null ? dayGoal[src] : {...own.session, 'name': '${own.name} add-on', 'startLevel': ownBlock!.level};
-    final label = isToday ? '' : '${_days[i]} ${day.day}';
+    final label = '${isToday ? 'TODAY' : _days[i].toUpperCase()}  ·  ${day.day} ${_months[day.month - 1].toUpperCase()}';
     if (g == null) {
       final line = movedTo != null ? 'Session moved to ${_days[movedTo - 1]}' : dayGoal.containsKey(i + 1) ? 'Open session' : 'Rest and recover';
-      return isToday
-          ? _Tile(child: Text(line, style: t.titleMedium))
-          : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(children: [
-                SizedBox(width: 60, child: Text(label, style: monoLabel(context))),
-                Expanded(child: Text(line, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant))),
-                if (done) Icon(LvIcons.checkCircle, size: 18, color: progressColor(context)),
-              ]),
-            );
+      return _Tile(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: monoLabel(context)),
+          const SizedBox(height: 6),
+          Row(children: [
+            Expanded(child: Text(line, style: t.titleLarge)),
+            if (done) Icon(LvIcons.checkCircle, size: 20, color: progressColor(context)),
+          ]),
+          if (movedTo == null && !dayGoal.containsKey(i + 1)) ...[
+            const SizedBox(height: 4),
+            Text('Walk, stretch, sleep well and eat your plan. Training anyway still counts: log it from Today.', style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
+          ],
+        ]),
+      );
     }
     final name = (g['name'] ?? g['goal']) as String;
     final level = g['startLevel'] as int;
@@ -281,43 +413,42 @@ class _WorkoutScreenState extends State<_WorkoutScreen> {
             ),
           ),
         );
-    if (!isToday) {
-      return _Tile(
-        onTap: open,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(children: [
-          SizedBox(width: 60, child: Text(label, style: monoLabel(context))),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.titleSmall),
-              Text(meta.split('  ·  ').where((p) => !p.endsWith(' min')).join('  ·  '), maxLines: 1, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
-            ]),
-          ),
-          const SizedBox(width: 8),
-          if (done) Icon(LvIcons.checkCircle, size: 18, color: progressColor(context)) else Icon(LvIcons.caretRight, size: 16, color: c.onSurfaceVariant),
-        ]),
-      );
-    }
+    final light = data.plan['medicalHold'] == true;
     return _Tile(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: monoLabel(context)),
+        const SizedBox(height: 6),
         Row(children: [
           Expanded(child: Text(name, style: t.titleLarge)),
           if (done) Text('DONE', style: monoLabel(context).copyWith(color: c.tertiary)),
         ]),
         const SizedBox(height: 2),
         Text(meta, style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant)),
-        const SizedBox(height: 14),
-        MoveStrip(ids: ids, level: level, tile: 104, injury: data.profile['injuries'] as String?, lighter: data.plan['medicalHold'] == true),
+        const SizedBox(height: 6),
+        Text(light ? medicalHoldNotice : 'Lower each rep under control and lift with intent. Stop every set with the reps in reserve shown; never train through pain.',
+            style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+        const SizedBox(height: 16),
+        SessionPlanList(
+          ids: ids,
+          level: level,
+          kind: g['kind'] as String? ?? 'strength',
+          gym: data.tier == Tier.gym,
+          injury: data.profile['injuries'] as String?,
+          lighter: light,
+        ),
         for (final b in blocks) ...[
           const SizedBox(height: 10),
           Text(blockSummary(b).toUpperCase(), style: monoLabel(context)),
           if (b.ids.isNotEmpty) ...[
             const SizedBox(height: 6),
-            MoveStrip(ids: b.ids, level: b.level, tile: 80, injury: data.profile['injuries'] as String?, lighter: data.plan['medicalHold'] == true),
+            MoveStrip(ids: b.ids, level: b.level, tile: 80, injury: data.profile['injuries'] as String?, lighter: light),
           ],
         ],
         const SizedBox(height: 14),
-        SizedBox(width: double.infinity, child: done ? OutlinedButton(onPressed: open, child: const Text('Open session')) : FilledButton(onPressed: open, child: const Text('Start workout'))),
+        SizedBox(
+          width: double.infinity,
+          child: isToday && !done ? FilledButton(onPressed: open, child: const Text('Start workout')) : OutlinedButton(onPressed: open, child: const Text('View session')),
+        ),
       ]),
     );
   }
@@ -725,6 +856,50 @@ class _DietScreenState extends State<_DietScreen> {
           ),
           const SizedBox(height: 10),
         ],
+        // The day against the targets, as the owner's own plan sheet ends: planned totals under the plan's targets.
+        Builder(builder: (context) {
+          final items = [for (final m in training?.meals ?? meals) ...m.items];
+          double sum(double Function(PlanItem) f) => items.fold(0.0, (s, i) => s + f(i));
+          final digits = monoNumber(context, size: 13);
+          Widget cell(String s, {bool bold = false}) => Padding(
+                padding: const EdgeInsets.fromLTRB(0, 8, 4, 8),
+                child: Text(s, textAlign: TextAlign.right, style: bold ? digits.copyWith(fontWeight: FontWeight.w700, color: c.tertiary) : digits),
+              );
+          Widget label(String s, {bool bold = false}) => Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+                child: Text(s, style: bold ? t.labelLarge?.copyWith(fontWeight: FontWeight.w700) : t.bodyMedium),
+              );
+          return _Tile(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('TOTAL FOR THE DAY', style: monoLabel(context)),
+              const SizedBox(height: 8),
+              Table(
+                columnWidths: const {0: FlexColumnWidth(), 1: FixedColumnWidth(50), 2: FixedColumnWidth(44), 3: FixedColumnWidth(44), 4: FixedColumnWidth(40), 5: FixedColumnWidth(44)},
+                border: TableBorder(horizontalInside: BorderSide(color: c.outline)),
+                children: [
+                  TableRow(children: [
+                    for (final (i, h) in ['', 'KCAL', 'PRO', 'CARB', 'FAT', 'FIBRE'].indexed)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+                        child: Text(h, textAlign: i == 0 ? TextAlign.left : TextAlign.right, style: monoLabel(context).copyWith(fontSize: 10)),
+                      ),
+                  ]),
+                  TableRow(children: [label('Target'), cell('${kcal.round()}'), cell('${protein.round()}'), cell('–'), cell('–'), cell('–')]),
+                  TableRow(
+                    decoration: BoxDecoration(color: c.primary.withValues(alpha: 0.08)),
+                    children: [
+                      label('Planned', bold: true),
+                      for (final v in [sum((i) => i.kcal), sum((i) => i.protein), sum((i) => i.carb), sum((i) => i.fat), sum((i) => i.fiber)]) cell('${v.round()}', bold: true),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text('Grams. Your plan sets energy and protein; carbs, fat and fibre follow from the foods.', style: t.bodySmall?.copyWith(color: c.onSurfaceVariant)),
+            ]),
+          );
+        }),
+        const SizedBox(height: 10),
         if (suppLines.isNotEmpty) ...[
           PlateInfoCard(title: 'SUPPLEMENTS', lines: [for (final l in suppLines) (name: l.name, text: l.how)]),
           const SizedBox(height: 10),
@@ -1902,8 +2077,6 @@ class _ProgressScreenState extends State<_ProgressScreen> {
         onAddPhoto: _addPhoto,
         onViewPhoto: _viewPhoto,
       ),
-        const SizedBox(height: 12),
-        const StepsCard(),
         const SizedBox(height: 12),
         ?widget.level,
       ],

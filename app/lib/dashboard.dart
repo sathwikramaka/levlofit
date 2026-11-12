@@ -464,6 +464,8 @@ class _DashboardState extends State<Dashboard> {
         canPop: _tab == _Tab.home && _back.isEmpty,
         onPopInvokedWithResult: (didPop, _) => didPop ? null : (_back.isNotEmpty ? _pop() : _go(_Tab.home)),
         child: Scaffold(
+          // Levlofit AI floats over the four main pages (More lists it instead).
+          floatingActionButton: const {_Tab.home, _Tab.workout, _Tab.diet, _Tab.progress}.contains(_tab) ? const CoachFab() : null,
           // Typing needs the room, so the bar steps aside while the keyboard is up.
           bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
               ? null
@@ -868,6 +870,7 @@ class _Bento extends StatelessWidget {
               week: [for (var i = 6; i >= 0; i--) habits.where((h) => h.$5(today.subtract(Duration(days: i)))).length],
               onOpen: () => onOpen(_Tab.habits),
             ),
+          'steps' => StepsCard(target: switch (data.profile['birth_year']) { final int y when now.year - y >= 60 => 6000, _ => 8000 }),
           'checkin' => const CheckInCard(),
           'fuel' => _FuelTile(plan: plan, proteins: data.proteins),
           'body' => _BodyTile(plan: plan),
@@ -878,7 +881,7 @@ class _Bento extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 104), // room for the floating Levlofit AI button
           children: staggered([
             Row(children: [
               Expanded(
@@ -893,8 +896,6 @@ class _Bento extends StatelessWidget {
                   ),
                 ]),
               ),
-              const _CoachButton(),
-              const SizedBox(width: 8),
               Tooltip(
                 message: 'Profile',
                 child: InkWell(
