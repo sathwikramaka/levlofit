@@ -30,14 +30,25 @@ Future<void> _pumpWeek(WidgetTester tester, Map<String, dynamic> plan, {List<(in
   await tester.pump(const Duration(seconds: 2));
 }
 
+/// The Workout tab shows one day at a time: pick each day in turn and count the days whose card shows [text].
+Future<int> _daysShowing(WidgetTester tester, String text) async {
+  var n = 0;
+  for (final d in ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']) {
+    await tester.tap(find.bySemanticsLabel(RegExp('^$d ')));
+    await tester.pump(const Duration(milliseconds: 300));
+    if (find.text(text, skipOffstage: false).evaluate().isNotEmpty) n++;
+  }
+  return n;
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
 
   testWidgets('every training day the engine counts has a session (no silent "Open session")', (tester) async {
     await _pumpWeek(tester, _runningPlan(days: 6, extraStrength: 2, addOns: 0));
-    expect(find.text('Open session', skipOffstage: false), findsNothing, reason: 'extra strength sessions from the engine were dropped');
-    expect(find.text('Rest and recover', skipOffstage: false), findsNWidgets(1), reason: '6 training days leave 1 rest day');
+    expect(await _daysShowing(tester, 'Open session'), 0, reason: 'extra strength sessions from the engine were dropped');
+    expect(await _daysShowing(tester, 'Rest and recover'), 1, reason: '6 training days leave 1 rest day');
   });
 
   testWidgets('a session moved with Levlofit AI shows on its new day; the day it left says where it went', (tester) async {
@@ -47,14 +58,19 @@ void main() {
     final to = [for (var d = from + 1; d <= 7; d++) if (!training.contains(d)) d].first;
     const names = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     await _pumpWeek(tester, plan);
-    final restBefore = find.text('Rest and recover', skipOffstage: false).evaluate().length;
+    final restBefore = await _daysShowing(tester, 'Rest and recover');
     await _pumpWeek(tester, plan, moves: [(from, to)]);
-    expect(find.text('Session moved to ${names[to - 1]}', skipOffstage: false), findsOneWidget);
-    expect(find.text('Rest and recover', skipOffstage: false), findsNWidgets(restBefore - 1), reason: 'the day it moved to now has the session');
+    expect(await _daysShowing(tester, 'Session moved to ${names[to - 1]}'), 1);
+    expect(await _daysShowing(tester, 'Rest and recover'), restBefore - 1, reason: 'the day it moved to now has the session');
   });
 
   testWidgets('strength add-on blocks from the engine are shown in the week', (tester) async {
     await _pumpWeek(tester, _runningPlan(days: 4, extraStrength: 0, addOns: 2));
+    for (final d in ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']) {
+      if (find.textContaining(RegExp('strength', caseSensitive: false), skipOffstage: false).evaluate().isNotEmpty) break;
+      await tester.tap(find.bySemanticsLabel(RegExp('^$d ')));
+      await tester.pump(const Duration(milliseconds: 300));
+    }
     expect(find.textContaining(RegExp('strength', caseSensitive: false), skipOffstage: false), findsWidgets,
         reason: 'the plan has 2 strength add-on blocks but the week never mentions strength');
   });

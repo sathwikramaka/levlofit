@@ -52,7 +52,7 @@ void main() {
   });
 
   testWidgets('plate card at phone width: servings, Swap and Ate it; a tap shows grams', (tester) async {
-    tester.view.physicalSize = const Size(375, 812) * 3;
+    tester.view.physicalSize = const Size(375, 1400) * 3; // phone width; tall enough for both cards with their tables
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     var swapped = 0, ate = 0;

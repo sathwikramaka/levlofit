@@ -636,6 +636,66 @@ String missingMovesText(int n) => n == 1
 String moveName(Map<String, dynamic> m) => _poseNames[m['id']] ?? moveGuide[m['id']]?.name ?? (m['name'] as String).split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
 
 /// A horizontal strip of animated moves with names and doses. Tapping a move opens its detail.
+/// A session written out as a plan sheet (owner request 2026-11-12, after the owner's own workout page): the warm-up
+/// as a list, then each move numbered with its sets, reps and rest. The same moves, doses and injury check as the
+/// session screen; nothing here is ticked.
+class SessionPlanList extends StatelessWidget {
+  const SessionPlanList({super.key, required this.ids, required this.level, required this.kind, this.gym = false, this.injury, this.lighter = false});
+  final List<String> ids;
+  final int level;
+  final String kind;
+  final bool gym, lighter;
+  final String? injury;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final muted = t.bodySmall?.copyWith(color: c.onSurfaceVariant);
+    final check = checkInjury(ids, injury);
+    return FutureBuilder(
+      future: loadMoves(check.ids),
+      builder: (context, snap) {
+        final names = {for (final m in snap.data?.found ?? const <Map<String, dynamic>>[]) m['id'] as String: moveName(m)};
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('WARM-UP  ·  ABOUT 5 MIN', style: monoLabel(context)),
+          const SizedBox(height: 6),
+          for (final w in warmUpFor(kind: kind, level: level, gym: gym, injury: injury, light: lighter))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Padding(padding: const EdgeInsets.only(top: 7, right: 10), child: Container(width: 5, height: 5, decoration: BoxDecoration(color: c.tertiary, shape: BoxShape.circle))),
+                Expanded(child: Text.rich(TextSpan(children: [TextSpan(text: w.move, style: t.bodyMedium), TextSpan(text: '  ·  ${w.dose}', style: muted)]))),
+              ]),
+            ),
+          const SizedBox(height: 14),
+          Text('MAIN SESSION  ·  ${check.ids.length} MOVES', style: monoLabel(context)),
+          const SizedBox(height: 4),
+          for (final (i, id) in check.ids.indexed)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(border: i == 0 ? null : Border(top: BorderSide(color: c.outline))),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                SizedBox(width: 30, child: Text((i + 1).toString().padLeft(2, '0'), style: monoLabel(context).copyWith(color: c.tertiary))),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(names[id] ?? moveGuide[id]?.name ?? 'Move', style: t.titleSmall),
+                    Text(
+                      [doseFor(id, level, lighter: lighter), if (setsFor(id, level, lighter: lighter) > 0) 'rest ${restFor(id) % 60 == 0 ? '${restFor(id) ~/ 60} min' : '${restFor(id)} s'}'].join('  ·  '),
+                      style: muted,
+                    ),
+                  ]),
+                ),
+              ]),
+            ),
+          if (check.setAside.isNotEmpty)
+            Text('${check.setAside.length} ${check.setAside.length == 1 ? 'move is' : 'moves are'} set aside for your injury note.', style: muted),
+        ]);
+      },
+    );
+  }
+}
+
 class MoveStrip extends StatelessWidget {
   const MoveStrip({super.key, required this.ids, required this.level, this.tile = 128, this.injury, this.lighter = false});
   final bool lighter; // a lighter day or a medical hold: the preview shows the dose the session will ask for
