@@ -1,6 +1,6 @@
 # Levlofit: Product Requirements Document
 
-Last updated: 2026-11-12, for release 1.0.12. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.0.12 (1.0.13 changes in source). Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Summary
 
@@ -46,8 +46,14 @@ through the web app. People with medical conditions are told to involve a doctor
 - Food diary with search, packaged foods by barcode, recipes, whole-meal logging, raw-weight warnings.
 
 ### Daily use and progress
-- Dashboard: activity arcs, today's session, optional daily check-in, daily goal, rank and rating, week strip, Today's
-  read (one Handbook chapter a day, by training or rest day), water, habits, food targets, BMI. Customisable.
+- Dashboard: activity arcs, today's session, steps (Health Connect, Android: today against 8,000, or 6,000 from 60, and
+  the last 7 days), optional daily check-in, daily goal, rank and rating, week strip, Today's read (one Handbook chapter a
+  day, by training or rest day), water, habits, food targets, BMI. Customisable.
+- Levlofit AI floats over Today, Workout, Diet and Progress: a dark pill with the orange spark, named until first used.
+- Workout: a Monday-to-Sunday picker; each day written out as a plan sheet: warm-up list, then each move with sets,
+  reps, reps in reserve and rest. Diet: each meal as a table of items with kcal, protein, carbs and fat and a subtotal,
+  and a total for the day against the targets (after the owner's own plan sheet, 2026-11-12).
+- Handbook chapters end with Previous and Next chapter buttons (app and website).
 - Active minutes are the minutes a session took (opened to finished), not the planned length.
 - Weekly streak: weeks that met the plan; one short week in any 4 is let off when a met week follows. Never a weight or
   calorie streak.

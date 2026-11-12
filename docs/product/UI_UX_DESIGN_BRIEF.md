@@ -1,6 +1,6 @@
 # Levlofit: UI/UX Design Brief
 
-Last updated: 2026-11-12, for release 1.0.12. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.0.12 (1.0.13 changes in source). Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 Tokens and logo rules in full: `DESIGN.md`. Code: `app/lib/theme.dart`.
 
 ## 1. Direction
@@ -63,6 +63,8 @@ reading. Headings 22 to 30 px bold, body 15 to 16, captions 13, small uppercase 
 | Plate meal card | Plate picture, name and time, kcal and protein, servings; tap for grams; Swap and Ate it |
 | Info card | Label plus short lines: training day, supplements |
 | Coach | Your messages in charcoal, replies on white cards, pill composer |
+| Levlofit AI button | Floating, bottom right: graphite pill (cloud in dark mode), orange spark disc, slow orange glow (still with reduced motion); name and "Your plan, food, form" until first used, then the round spark only |
+| Plan tables | Meal and day tables: item left, numbers right in Geist tabular figures, hairline rows, a total row on a faint orange tint with orange numbers |
 | Dark panels | Water, Habits, Progress verdict: charcoal, light text |
 | Moments | Level up: full screen, mark, Unbounded level number, Share and Continue. New best: heavy haptic and a short note. No confetti |
 | Share card | Square, always dark, wordmark, one big line, up to three facts; never food or weight |

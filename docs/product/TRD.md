@@ -1,6 +1,6 @@
 # Levlofit: Technical Requirements Document
 
-Last updated: 2026-11-12, for release 1.0.12. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-12, for release 1.0.12 (1.0.13 changes in source). Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Architecture
 
@@ -42,7 +42,8 @@ closed on rate-limit errors, session in secure storage, secrets only in Supabase
 **Privacy.** Logs hold no content. Allowlisted context to the AI provider, with `LLM_DATA_APPROVED` required. Daily
 check-ins and own supplements are not sent. Deleting an account removes its files and all rows (cascade).
 **Accessibility.** 48 dp targets, text scaling tested to 1.5, meaning never by colour alone, reduced-motion respected.
-**Devices.** Works at 320 dp and up; light and dark. Android `targetSdk 36`.
+**Devices.** Works at 320 dp and up; light and dark. Android `targetSdk 36`, `minSdk 26` from 1.0.13 (Health Connect
+steps in every build, owner approval 2026-11-12; `-Plevlofit.healthConnect=false` builds without it).
 **Offline.** Encrypted per-account copy of the last plan; read-only.
 **Phone-only data.** Reminder switches, photo reveals and the home screen widget's two lines live in shared_preferences;
 the widget (`TodayWidget.kt`) reads them natively and is redrawn over the `levlofit/widget` channel. Sharing uses
