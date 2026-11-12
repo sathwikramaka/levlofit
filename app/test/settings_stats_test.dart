@@ -1,11 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:levlo/dashboard.dart' show ActivityHeatmap, minutesByDay, weightChange;
-import 'package:levlo/data_export.dart';
-import 'package:levlo/gym_card.dart';
 import 'package:levlo/main.dart' show prefs;
 import 'package:levlo/workout_prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,19 +50,5 @@ void main() {
     expect(restLabel(180), '3 min');
   });
 
-  test('gym pass: saved on the phone, read back, removed', () async {
-    expect(loadGymPass(), isNull);
-    await saveGymPass((name: 'Iron House', code: 'M-1234', qr: false));
-    expect(loadGymPass(), (name: 'Iron House', code: 'M-1234', qr: false));
-    await saveGymPass(null);
-    expect(loadGymPass(), isNull);
-  });
 
-  test('export file: every table read, and the ones that failed are named, never silently missing', () {
-    final j = jsonDecode(exportJson(DateTime.utc(2026, 11, 12), {'workout_logs': [{'performed_on': '2026-11-10'}]}, ['coach_messages'])) as Map;
-    expect(j['tables']['workout_logs'], hasLength(1));
-    expect(j['not_exported'], ['coach_messages']);
-    expect(exportTables['profiles'], 'id');
-    expect(exportTables.values.where((c) => c != 'user_id'), ['id'], reason: 'only profiles keys on its own id');
-  });
 }

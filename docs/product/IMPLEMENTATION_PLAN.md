@@ -15,7 +15,7 @@ Status labels are kept apart: Source, Automated, CI, Deployed, Production verifi
 | Diet accuracy: rice in grams, real servings, raw and dry names | Deployed in 1.0.9 |
 | Custom supplements, Supplements card, pre- and post-workout meals | Deployed in 1.0.9 |
 | Soft card look, floating bottom bar | Deployed in 1.0.10 (CI green) |
-| Steps on Today, plan-sheet Workout and Diet, floating Levlofit AI, chapter buttons, workout settings, export, gym check-in, Progress activity map, coach week and meal sheets | Deployed in 1.1.0, coach-chat v42 |
+| Steps on Today, plan-sheet Workout and Diet, floating Levlofit AI, chapter buttons, workout settings, Progress activity map, coach week and meal sheets | Deployed in 1.1.0, coach-chat v42 |
 | Settings as its own row in More; notification when a new version is out; Handbook book (69 chapters) in app, coach and website | Deployed in 1.0.12, migration and coach-chat 2026-11-12 |
 | Habit features: personal bests, forgiving streak, level-up screen, nudges, share pictures, short starter, Today's read, photo reveal, home widget | Deployed in 1.0.11 |
 | Encrypted Storage backup job and restore drill | Source and drill only: **inactive, see below** |
@@ -32,6 +32,10 @@ Status labels are kept apart: Source, Automated, CI, Deployed, Production verifi
 | 7 | Handbook book review: 1,379 of 2,381 claims unreviewed (the coach cannot cite them); no clinical review. The book itself is live since 2026-11-12 (migration applied, coach-chat v40, website with the 29 old addresses redirected) | Claude, clinician | Owner shipped the book before review, 2026-11-12 |
 
 ## 3. Decisions waiting on the owner
+
+- Handbook book: add a vitamins and minerals section to the supplements chapter (needs a book migration). The
+  Supplement guide already covers them in the app.
+- Export and gym check-in were removed on 2026-11-12 (owner: data is tied to the account email).
 
 - Not built from the 2026-11-12 screenshots: language (Hindi is later), kg or lb, week starting Sunday, several equipment
   profiles, accent colour (the brand keeps orange), body diagram choice, and effort per set (RIR or RPE per set needs a

@@ -1831,20 +1831,6 @@ class _AppSettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 14),
           child: _Tile(padding: const EdgeInsets.fromLTRB(14, 12, 14, 14), child: const WorkoutPrefsSection()),
         ),
-        _section(context, 'YOUR DATA AND HOME', [
-          _row(context, LvIcons.downloadSimple, 'Export my data', () async {
-            final messenger = ScaffoldMessenger.of(context);
-            try {
-              final n = await exportMyData();
-              messenger.showSnackBar(SnackBar(content: Text('$n records ready to save or send.')));
-            } catch (_) {
-              messenger.showSnackBar(const SnackBar(content: Text('Could not export just now. Check your connection.')));
-            }
-          }, trailing: 'Everything in your account, as one file'),
-          _row(context, LvIcons.qrCode, 'Gym check-in', () async {
-            await Navigator.push(context, MaterialPageRoute<bool>(builder: (_) => const GymPassEditor()));
-          }, trailing: loadGymPass() == null ? 'Show your gym code on Today' : loadGymPass()!.name),
-        ]),
         Padding(
           padding: const EdgeInsets.only(bottom: 14),
           child: _Tile(
@@ -2070,7 +2056,7 @@ const _privacyPolicy = [
       'you reported a medical condition and whether you noted an injury, not what they are), and the answers you type in that chat. Levlofit '
       'does not keep that chat; only the levels it suggests are saved to your account. You can skip it and use your own ratings.'),
   ('Research search', 'When you ask Levlofit AI a question about facts or evidence, our server sends a few topic words taken from your question '
-      'to Europe PMC (run by EMBL-EBI) and Wikipedia (run by the Wikimedia Foundation) to find review articles and a short summary. Numbers, '
+      'to Europe PMC (run by EMBL-EBI), MedlinePlus (run by the US National Library of Medicine) and Wikipedia (run by the Wikimedia Foundation) to find review articles, a health topic and a short summary. Numbers, '
       'names inside a sentence and common personal words are removed first, and nothing from your profile, plan, logs or Memory is sent. '
       'The search comes from our server, so those services do not see your IP address. A word that opens a sentence is searched as written, '
       'so leave out details you do not want searched.'),

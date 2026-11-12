@@ -49,18 +49,24 @@ through the web app. People with medical conditions are told to involve a doctor
 - Dashboard: activity arcs, today's session, steps (Health Connect, Android: today against 8,000, or 6,000 from 60, and
   the last 7 days), optional daily check-in, daily goal, rank and rating, week strip, Today's read (one Handbook chapter a
   day, by training or rest day), water, habits, food targets, BMI. Customisable.
-- Levlofit AI floats over Today, Workout, Diet and Progress as a round sporty icon: an orange disc with a lightning bolt
-  and a small AI spark badge, no text; its name is spoken and shown on a long press.
+- Levlofit AI floats over Today, Workout, Diet and Progress as its robot (the one that greets you in the chat) on a round
+  dark badge, bobbing and blinking, with a soft orange ring that pulses; no text, name on a long press.
 - Workout: a Monday-to-Sunday picker; each day written out as a plan sheet: warm-up list, then each move with sets,
   reps, reps in reserve and rest. Diet: each meal as a table of items with kcal, protein, carbs and fat and a subtotal,
   and a total for the day against the targets (after the owner's own plan sheet, 2026-11-12).
 - Handbook chapters end with Previous and Next chapter buttons (app and website).
+- Supplements: a reference of 20 common supplements (what, when, reference intake and upper limit, cautions, sources:
+  NIH, ICMR-NIN, ISSN, EFSA) in `assets/supplements.json`, shared with Levlofit AI. Diet shows when to take each one the
+  person lists (tied to a meal), names supplements on their meal, and offers optional suggestions (vitamin D after a
+  test, B12 for vegetarians, omega-3, creatine for strength goals) with Add and Not for me. A Supplement guide opens
+  from the Handbook and Diet. Training days get Before training and After training sections.
+- Levlofit AI answers in full depth for how and why questions, uses the supplement reference with the person's own
+  list, and its live research adds MedlinePlus (US National Library of Medicine) to Europe PMC and Wikipedia.
 - Plan sheets name each move's target muscles and up to three other moves for the same muscles (any one does the job).
 - Levlofit AI receives the week as the Workout tab shows it and, for food chats, the day of meals last opened in Diet,
   and answers plan questions with tables (exercise, targets, sets and reps, rest; meal, foods, kcal and macros).
 - Settings: during a workout (keep screen on, rest length by move or 60 s to 3 min, sound and orange flash when rest
-  ends, animations full, small or hidden), export my data (every account row as one JSON file), gym check-in code
-  shown as a QR code or barcode on Today, and a switch for the floating Levlofit AI button. All kept on the phone.
+  ends, animations full, small or hidden), and a switch for the floating Levlofit AI button. All kept on the phone.
 - Progress: sessions this month, hours trained, weight change over 30 days, a 12-month activity map by minutes, and a
   weight chart over 1 month, 3 months, a year or all, with an optional goal-weight line kept on the phone.
 - Active minutes are the minutes a session took (opened to finished), not the planned length.

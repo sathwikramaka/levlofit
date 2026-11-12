@@ -1853,3 +1853,29 @@ test('app sheets: the week and the day\'s meals reach the coach as data, cleaned
   const none = buildCoachContext({ ...inputs, sheet: undefined, question: 'what is my workout today?' }).text;
   assert.match(none, /THIS WEEK IN THE APP: not sent/);
 });
+
+// ---- supplement reference and MedlinePlus (2026-11-12) ---------------------------------------------------------
+
+test('supplements: what people type maps to the reference; their own list reaches the coach for supplement or food talk', async () => {
+  const { matchSupplement, supplementsNamed, supplementBlock, SUPPLEMENTS } = await import('../_shared/coach-context.ts');
+  assert.ok(SUPPLEMENTS.length >= 20);
+  assert.equal(matchSupplement('Vit D3 60k')?.id, 'vitamin_d');
+  assert.equal(matchSupplement('B12')?.id, 'b12');
+  assert.equal(matchSupplement('Omega 3 capsules')?.id, 'omega3');
+  assert.equal(matchSupplement('shilajit'), null);
+  assert.deepEqual(supplementsNamed('should I take fish oil with magnesium?').map((s) => s.id).sort(), ['magnesium', 'omega3']);
+  const b = supplementBlock(['Vitamin D3', 'Omega 3', 'Shilajit'], ['Creatine monohydrate'], 'when should I take my vitamins?', [], false)!;
+  assert.match(b, /THEIR SUPPLEMENTS/);
+  assert.match(b, /fat-soluble/);
+  assert.match(b, /not in the reference/);
+  assert.match(b, /3 to 5 g a day/);
+  assert.equal(supplementBlock(['Vitamin D3'], [], 'how many sets for chest?', [], false), null, 'kept out of unrelated chats');
+});
+
+test('research: a MedlinePlus health topic is read from its XML reply; anything else is ignored', async () => {
+  const { medlineTopic } = await import('../_shared/research.ts');
+  const xml = '<nlmSearchResult><list><document rank="1" url="https://medlineplus.gov/vitamind.html"><content name="title">&lt;span class="qt0"&gt;Vitamin&lt;/span&gt; D</content><content name="FullSummary">&lt;p&gt;Vitamin D helps your body absorb calcium.&lt;/p&gt;</content></document></list></nlmSearchResult>';
+  assert.deepEqual(medlineTopic(xml), { title: 'Vitamin D', url: 'https://medlineplus.gov/vitamind.html', summary: 'Vitamin D helps your body absorb calcium.' });
+  assert.equal(medlineTopic('<nlmSearchResult><list></list></nlmSearchResult>'), null);
+  assert.equal(medlineTopic(xml.replace('https://medlineplus.gov/', 'https://example.com/')), null);
+});

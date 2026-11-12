@@ -7,8 +7,7 @@ abstract final class LvIcons {
   static const _f = 'PhosphorLight';
   static const eye = IconData(0xe220, fontFamily: _f);
   static const gear = IconData(0xe270, fontFamily: _f);
-  static const qrCode = IconData(0xe3e6, fontFamily: _f);
-  static const downloadSimple = IconData(0xe20c, fontFamily: _f);
+  static const pill = IconData(0xe700, fontFamily: _f);
   static const personSimpleBike = IconData(0xe734, fontFamily: _f);
   static const personSimpleSwim = IconData(0xe736, fontFamily: _f);
   static const lightning = IconData(0xe2de, fontFamily: _f);
