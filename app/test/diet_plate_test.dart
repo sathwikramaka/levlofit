@@ -43,6 +43,20 @@ void main() {
     expect(plateCheck(const []).vegFruit, 0);
   });
 
+  testWidgets('healthy plate check fits a 320-wide phone and names the fix when vegetables are short', (tester) async {
+    tester.view.physicalSize = const Size(320, 1600); // tall: the test font is wide, so text wraps a lot
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final PlanMeal noVeg = (name: 'Lunch', time: '1 pm', items: [item('A015', 'Rice', 150, 'dry', 520, 10), item('B010', 'Moong dal', 60, 'dry', 208, 14)]);
+    await tester.pumpWidget(MaterialApp(theme: lightTheme, home: Scaffold(body: SingleChildScrollView(padding: const EdgeInsets.all(16), child: HealthyPlateCheck(meals: [noVeg])))));
+    expect(find.textContaining('Vegetables and fruit', findRichText: true), findsOneWidget);
+    expect(find.text('0%'), findsOneWidget);
+    expect(find.text('71%'), findsOneWidget, reason: 'rice 150 of 210 g');
+    expect(find.text('29%'), findsOneWidget, reason: 'dal 60 of 210 g');
+    expect(find.textContaining('Add a vegetable side'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('Ate it rows: planned rows, dishes as ingredients, shakes left out', () {
     final codes = plannerRowCodes([
       {'code': 'FDC173904'}, {'code': 'FDC174288'}, {'code': 'FDC174256'}, {'code': 'L002'},

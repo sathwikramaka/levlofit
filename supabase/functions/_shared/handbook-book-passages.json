@@ -276,7 +276,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b01:text"
@@ -316,7 +316,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b04:title",
@@ -339,7 +339,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "start-here:b05:text"
@@ -357,7 +357,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b07:do.title",
@@ -382,7 +382,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "start-here:b08:text"
@@ -400,7 +400,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b10:text"
@@ -418,7 +418,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b11:title",
@@ -440,7 +440,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b12:text"
@@ -458,7 +458,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b14:title",
@@ -479,7 +479,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b15:text"
@@ -497,7 +497,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b17:text"
@@ -515,7 +515,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b18:items[0]",
@@ -538,7 +538,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b19:text"
@@ -556,7 +556,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "start-here:b21:do.title",
@@ -583,7 +583,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "start-here:b22:text"
@@ -601,7 +601,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b24:text"
@@ -642,7 +642,7 @@
     "who2020",
     "gollwitzer2009"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "start-here:b27:items[0]",
@@ -2053,7 +2053,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b03:head",
@@ -2081,7 +2081,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b05:head",
@@ -2107,7 +2107,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b07:title",
@@ -2127,7 +2127,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b08:text"
@@ -2144,7 +2144,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b10:text"
@@ -2161,7 +2161,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b12:title",
@@ -2183,7 +2183,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b13:text"
@@ -2200,7 +2200,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b15:text"
@@ -2217,7 +2217,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b16:items[0]",
@@ -2236,7 +2236,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b17:text"
@@ -2253,7 +2253,7 @@
    "chapterSources": [
     "openstax2022"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "muscle-map:b19:items[0]",
@@ -2425,7 +2425,7 @@
     "schumann2022",
     "murlasits2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "heart-rate-calories:b01:text"
@@ -2523,7 +2523,7 @@
     "schumann2022",
     "murlasits2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "heart-rate-calories:b06:text"
@@ -2544,7 +2544,7 @@
     "schumann2022",
     "murlasits2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "heart-rate-calories:b08:do.title",
@@ -2572,7 +2572,7 @@
     "schumann2022",
     "murlasits2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "heart-rate-calories:b09:text"
@@ -2593,7 +2593,7 @@
     "schumann2022",
     "murlasits2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "heart-rate-calories:b11:text"
@@ -2713,7 +2713,7 @@
     "schumann2022",
     "murlasits2018"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "heart-rate-calories:b19:items[0]",
@@ -2854,7 +2854,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b01:text"
@@ -2869,7 +2869,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b03:do.title",
@@ -2891,7 +2891,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b04:title",
@@ -2910,7 +2910,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "gym-first-weeks:b06:items[0]",
@@ -2928,7 +2928,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b08:text"
@@ -2943,7 +2943,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b09:title",
@@ -2963,7 +2963,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b10:text"
@@ -2978,7 +2978,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b12:text"
@@ -2993,7 +2993,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b13:title",
@@ -3012,7 +3012,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b14:text"
@@ -3027,7 +3027,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b16:text"
@@ -3042,7 +3042,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b18:title",
@@ -3059,7 +3059,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "gym-first-weeks:b19:text"
@@ -3074,7 +3074,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "gym-first-weeks:b21:do.title",
@@ -3098,7 +3098,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "gym-first-weeks:b22:text"
@@ -3113,7 +3113,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b24:text"
@@ -3128,7 +3128,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "gym-first-weeks:b25:title",
@@ -3148,7 +3148,7 @@
    "sources": [],
    "unknownSources": [],
    "chapterSources": [],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "gym-first-weeks:b27:items[0]",
@@ -4310,7 +4310,7 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "choosing-a-programme:b01:text"
@@ -4330,7 +4330,7 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "choosing-a-programme:b03:do.title",
@@ -4361,7 +4361,7 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "choosing-a-programme:b05:title",
@@ -4383,7 +4383,7 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "choosing-a-programme:b06:text"
@@ -4403,7 +4403,7 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "choosing-a-programme:b08:do.title",
@@ -4455,7 +4455,7 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "choosing-a-programme:b11:text"
@@ -4475,7 +4475,7 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "choosing-a-programme:b12:head",
@@ -4491,6 +4491,507 @@
    "id": "choosing-a-programme:b14",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "Two sessions, A and B, on three days with a rest day between (A, B, A one week; B, A, B the next). Each lift is 3 sets of 5, with the last set taken to as many reps as you can while stopping 1 to 2 reps before your form breaks.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b14:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b15",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "rows",
+   "text": "Session | Lifts, each 3 x 5 (last set as many as you can). Session: A; Lifts, each 3 x 5 (last set as many as you can): Barbell row, bench press, squat. Session: B; Lifts, each 3 x 5 (last set as many as you can): Chin-up (or lat pulldown), overhead press, deadlift",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b15:head",
+    "choosing-a-programme:b15:rows[0]",
+    "choosing-a-programme:b15:rows[1]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b16",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "steps",
+   "text": "The rules that make it work. Warm up · Start with the empty bar for 5 reps, then add 5 to 10 kg a set while the bar still moves fast.. Rest · 2 to 3 minutes between sets; up to 5 minutes between lifts when you need it.. Add weight · Every session: 1.25 kg on upper-body lifts, 2.5 kg on squat and deadlift. More than 10 reps on the last set: add double.. Reset · Fewer than 15 reps across the 3 sets: take 10% off next time and beat your old rep numbers on the way back up.. Cardio · One easy session (brisk walk, cycle, 15 to 30 minutes) and one hard session (intervals) a week.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b16:title",
+    "choosing-a-programme:b16:items[0]",
+    "choosing-a-programme:b16:items[1]",
+    "choosing-a-programme:b16:items[2]",
+    "choosing-a-programme:b16:items[3]",
+    "choosing-a-programme:b16:items[4]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b17",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "No 1.25 kg plates? Add 2.5 kg every second session and chase more reps on the second one, or take 2.5 kg steps and accept earlier resets. After about 3 months, most people move to one of the plans below.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b17:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b19",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "Each day has three tiers: a heavy main lift (tier 1), a second main lift done lighter for more reps (tier 2), and an accessory (tier 3). When you cannot finish all the reps, you keep the weight and move to the next stage, which spreads the same work into more, smaller sets.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b19:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b20",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "rows",
+   "text": "Tier | Stage 1 | Stage 2 | Stage 3 | Rest. Tier: 1, heavy main lift; Stage 1: 5 x 3, last set as many as you can; Stage 2: 6 x 2, last set as many as you can; Stage 3: 10 x 1, last set as many as you can; Rest: 3 to 5 min. Tier: 2, second main lift; Stage 1: 3 x 10; Stage 2: 3 x 8; Stage 3: 3 x 6; Rest: 2 to 3 min. Tier: 3, accessory; Stage 1: 3 x 15, last set as many as you can; Stage 2: -; Stage 3: -; Rest: 1 to 1.5 min",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b20:head",
+    "choosing-a-programme:b20:rows[0]",
+    "choosing-a-programme:b20:rows[1]",
+    "choosing-a-programme:b20:rows[2]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b21",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "There are four days, rotating through three training days a week, so day 4 lands on the next Monday.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b21:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b22",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "rows",
+   "text": "Day | Tier 1 | Tier 2 | Tier 3. Day: 1; Tier 1: Squat; Tier 2: Bench press; Tier 3: Lat pulldown. Day: 2; Tier 1: Overhead press; Tier 2: Deadlift; Tier 3: Dumbbell row. Day: 3; Tier 1: Bench press; Tier 2: Squat; Tier 3: Lat pulldown. Day: 4; Tier 1: Deadlift; Tier 2: Overhead press; Tier 3: Dumbbell row",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b22:head",
+    "choosing-a-programme:b22:rows[0]",
+    "choosing-a-programme:b22:rows[1]",
+    "choosing-a-programme:b22:rows[2]",
+    "choosing-a-programme:b22:rows[3]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b23",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "steps",
+   "text": "Tiered progression rules. Add weight · After each session: 2.5 kg on bench and overhead press, 5 kg on squat and deadlift (tiers 1 and 2).. Tier 3 · Add weight when the last set reaches 25 reps.. Failed the last stage, tier 1 · Find a new 5-rep max and restart stage 1 at 85% of it.. Failed the last stage, tier 2 · Restart stage 1 at your last stage-1 weight plus 7.5 to 10 kg.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b23:title",
+    "choosing-a-programme:b23:items[0]",
+    "choosing-a-programme:b23:items[1]",
+    "choosing-a-programme:b23:items[2]",
+    "choosing-a-programme:b23:items[3]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b25",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "All weights come from a training max: work up to a weight you can lift 3 to 5 times with good speed, estimate your one-rep max from it, and take 90% of that. The training max is kept a little light on purpose, so every session is done well.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b25:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b26",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "rows",
+   "text": "Week | Set 1 | Set 2 | Set 3 (as many as you can) | Then 5 x 5 at. Week: Warm-up, every week; Set 1: 5 at 40%; Set 2: 5 at 50%; Set 3 (as many as you can): 3 at 60%; Then 5 x 5 at: -. Week: 1; Set 1: 5 at 65%; Set 2: 5 at 75%; Set 3 (as many as you can): 5 or more at 85%; Then 5 x 5 at: 65%. Week: 2; Set 1: 3 at 70%; Set 2: 3 at 80%; Set 3 (as many as you can): 3 or more at 90%; Then 5 x 5 at: 70%. Week: 3; Set 1: 5 at 75%; Set 2: 3 at 85%; Set 3 (as many as you can): 1 or more at 95%; Then 5 x 5 at: 75%",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b26:head",
+    "choosing-a-programme:b26:rows[0]",
+    "choosing-a-programme:b26:rows[1]",
+    "choosing-a-programme:b26:rows[2]",
+    "choosing-a-programme:b26:rows[3]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b27",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "A three-day layout: squat and bench press on day 1, deadlift and overhead press on day 2, bench press and squat on day 3. Each day also gets 50 to 100 reps each of one push (dips, push-ups, dumbbell press), one pull (chin-ups, rows, face pulls) and one single-leg or core move (lunges, step-ups, ab work), in any sets you like.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b27:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b28",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "steps",
+   "text": "Training-max rules. Each 3-week cycle · Raise the training max by 2.5 kg on bench and overhead press, 5 kg on squat and deadlift.. Test every 3 cycles · Raise the max as usual, then work up to a set at 100% of it: 3 or more reps means it is right; fewer means re-estimate your max from that set and reset.. Missing reps for a whole cycle · Lower the training max; it has run ahead of you.. No fixed deload week · Older versions rested every fourth week; the test week does that job now.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b28:title",
+    "choosing-a-programme:b28:items[0]",
+    "choosing-a-programme:b28:items[1]",
+    "choosing-a-programme:b28:items[2]",
+    "choosing-a-programme:b28:items[3]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b29",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "The extra work after the three main sets comes in a few common forms, each using that week's percentages:",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b29:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b30",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "rows",
+   "text": "Extra work | Load | Sets and reps. Extra work: Repeat the first set; Load: 65, 70, 75% in weeks 1, 2, 3; Sets and reps: 5 x 5. Extra work: Repeat the second set; Load: 75, 80, 85%; Sets and reps: 5 x 5. Extra work: Repeat the last set; Load: 85, 90, 90%; Sets and reps: 5 x 5. Extra work: Many light sets; Load: A low percentage, often 50 to 60%; Sets and reps: 5 x 10. Extra work: Many first-set fives; Load: 65, 70, 75%; Sets and reps: 10 x 5. Extra work: One long set; Load: 65, 70, 75%; Sets and reps: 1 x 15-20",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b30:head",
+    "choosing-a-programme:b30:rows[0]",
+    "choosing-a-programme:b30:rows[1]",
+    "choosing-a-programme:b30:rows[2]",
+    "choosing-a-programme:b30:rows[3]",
+    "choosing-a-programme:b30:rows[4]",
+    "choosing-a-programme:b30:rows[5]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b31",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "Common variants also keep every main set at 5 reps with no all-out last set, or swap weeks 1 and 2. A weekly version raises the max from one all-out set:",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b31:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b32",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "rows",
+   "text": "Reps on the all-out set | Add to the training max. Reps on the all-out set: 0 or 1; Add to the training max: Nothing. Reps on the all-out set: 2 or 3; Add to the training max: 2.5 kg. Reps on the all-out set: 4 or 5; Add to the training max: 2.5 to 5 kg. Reps on the all-out set: More than 5; Add to the training max: 5 to 7.5 kg",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b32:head",
+    "choosing-a-programme:b32:rows[0]",
+    "choosing-a-programme:b32:rows[1]",
+    "choosing-a-programme:b32:rows[2]",
+    "choosing-a-programme:b32:rows[3]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b34",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "Push, pull, legs, then again, with a rest day either in the middle or at the end of the week. The first lift each day is heavy and progresses every session; the rest are 8 to 12 or 15 to 20 reps for muscle.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b34:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b35",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "rows",
+   "text": "Day | Main lift | Then. Day: Pull; Main lift: Deadlift 1 x 5 or more, alternating sessions with barbell row 4 x 5 and 1 x 5 or more; Then: Pulldown or pull-up 3 x 8-12; seated or chest-supported row 3 x 8-12; face pull 5 x 15-20; hammer curl 4 x 8-12; dumbbell curl 4 x 8-12. Day: Push; Main lift: Bench press 4 x 5 and 1 x 5 or more, alternating sessions with overhead press; Then: The other press 3 x 8-12; incline dumbbell press 3 x 8-12; pushdown 3 x 8-12 paired with lateral raise 3 x 15-20; overhead triceps extension 3 x 8-12 paired with lateral raise 3 x 15-20. Day: Legs; Main lift: Squat 2 x 5 and 1 x 5 or more; Then: Romanian deadlift 3 x 8-12; leg press 3 x 8-12; leg curl 3 x 8-12; calf raise 5 x 8-12",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b35:head",
+    "choosing-a-programme:b35:rows[0]",
+    "choosing-a-programme:b35:rows[1]",
+    "choosing-a-programme:b35:rows[2]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b36",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "Add 2.5 kg a session on the presses, rows and squat, and 5 kg on the deadlift. For the 8 to 12 moves, add weight once every set reaches 12.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b36:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b38",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "For training at home with adjustable dumbbells, until you can reach a barbell. Two workouts, three days a week (A, B, A, then B, A, B).",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b38:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b39",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "rows",
+   "text": "Workout | Moves. Workout: A; Moves: Split squat or lunge; dumbbell floor press; straight-leg deadlift; plank. Workout: B; Moves: Split squat or lunge; seated shoulder press (on a bench or on the floor); two-dumbbell bent-over row; plank",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b39:head",
+    "choosing-a-programme:b39:rows[0]",
+    "choosing-a-programme:b39:rows[1]"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b40",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
+   "blockType": "p",
+   "text": "Do 3 sets of as many reps as you can, up to 10, resting 1 minute. When all 3 sets reach 10, go heavier. Hold the plank as long as you can, 3 times. Add dips and pull-ups the same way if you can. The plan runs out when your dumbbells stop going heavier; then move to a barbell plan above.",
+   "sources": [],
+   "unknownSources": [],
+   "chapterSources": [
+    "schoenfeld2016f",
+    "grgic2018f",
+    "schoenfeld2017l",
+    "refalo2023"
+   ],
+   "evidence": "editorial",
+   "clinicalReview": false,
+   "claimIds": [
+    "choosing-a-programme:b40:text"
+   ]
+  },
+  {
+   "id": "choosing-a-programme:b42",
+   "chapter": "choosing-a-programme",
+   "chapterTitle": "Choosing a programme",
    "blockType": "steps",
    "text": "Ways a programme moves you forward. More weight · The classic: add the smallest step when every set reaches the top of the rep range.. More reps · Same weight, one or two more reps. Counts as real progress.. More sets · An extra set for a muscle that is lagging, when recovery allows.. Better technique · Deeper, slower, steadier reps with the same weight.",
    "sources": [],
@@ -4501,18 +5002,18 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b14:title",
-    "choosing-a-programme:b14:items[0]",
-    "choosing-a-programme:b14:items[1]",
-    "choosing-a-programme:b14:items[2]",
-    "choosing-a-programme:b14:items[3]"
+    "choosing-a-programme:b42:title",
+    "choosing-a-programme:b42:items[0]",
+    "choosing-a-programme:b42:items[1]",
+    "choosing-a-programme:b42:items[2]",
+    "choosing-a-programme:b42:items[3]"
    ]
   },
   {
-   "id": "choosing-a-programme:b15",
+   "id": "choosing-a-programme:b43",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
    "blockType": "p",
@@ -4525,14 +5026,14 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b15:text"
+    "choosing-a-programme:b43:text"
    ]
   },
   {
-   "id": "choosing-a-programme:b17",
+   "id": "choosing-a-programme:b45",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
    "blockType": "scale",
@@ -4550,15 +5051,15 @@
    "evidence": "unreviewed",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b17:title",
-    "choosing-a-programme:b17:items[0]",
-    "choosing-a-programme:b17:items[1]",
-    "choosing-a-programme:b17:items[2]",
-    "choosing-a-programme:b17:items[3]"
+    "choosing-a-programme:b45:title",
+    "choosing-a-programme:b45:items[0]",
+    "choosing-a-programme:b45:items[1]",
+    "choosing-a-programme:b45:items[2]",
+    "choosing-a-programme:b45:items[3]"
    ]
   },
   {
-   "id": "choosing-a-programme:b18",
+   "id": "choosing-a-programme:b46",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
    "blockType": "p",
@@ -4576,11 +5077,11 @@
    "evidence": "unreviewed",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b18:text"
+    "choosing-a-programme:b46:text"
    ]
   },
   {
-   "id": "choosing-a-programme:b20",
+   "id": "choosing-a-programme:b48",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
    "blockType": "band",
@@ -4598,15 +5099,15 @@
    "evidence": "unreviewed",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b20:title",
-    "choosing-a-programme:b20:ranges[0]",
-    "choosing-a-programme:b20:ranges[1]",
-    "choosing-a-programme:b20:ranges[2]",
-    "choosing-a-programme:b20:ranges[3]"
+    "choosing-a-programme:b48:title",
+    "choosing-a-programme:b48:ranges[0]",
+    "choosing-a-programme:b48:ranges[1]",
+    "choosing-a-programme:b48:ranges[2]",
+    "choosing-a-programme:b48:ranges[3]"
    ]
   },
   {
-   "id": "choosing-a-programme:b21",
+   "id": "choosing-a-programme:b49",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
    "blockType": "p",
@@ -4624,11 +5125,11 @@
    "evidence": "unreviewed",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b21:text"
+    "choosing-a-programme:b49:text"
    ]
   },
   {
-   "id": "choosing-a-programme:b23",
+   "id": "choosing-a-programme:b51",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
    "blockType": "p",
@@ -4641,14 +5142,14 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b23:text"
+    "choosing-a-programme:b51:text"
    ]
   },
   {
-   "id": "choosing-a-programme:b24",
+   "id": "choosing-a-programme:b52",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
    "blockType": "list",
@@ -4661,18 +5162,18 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b24:items[0]",
-    "choosing-a-programme:b24:items[1]",
-    "choosing-a-programme:b24:items[2]",
-    "choosing-a-programme:b24:items[3]",
-    "choosing-a-programme:b24:items[4]"
+    "choosing-a-programme:b52:items[0]",
+    "choosing-a-programme:b52:items[1]",
+    "choosing-a-programme:b52:items[2]",
+    "choosing-a-programme:b52:items[3]",
+    "choosing-a-programme:b52:items[4]"
    ]
   },
   {
-   "id": "choosing-a-programme:b25",
+   "id": "choosing-a-programme:b53",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
    "blockType": "p",
@@ -4685,14 +5186,14 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b25:text"
+    "choosing-a-programme:b53:text"
    ]
   },
   {
-   "id": "choosing-a-programme:b27",
+   "id": "choosing-a-programme:b55",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
    "blockType": "p",
@@ -4705,14 +5206,14 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b27:text"
+    "choosing-a-programme:b55:text"
    ]
   },
   {
-   "id": "choosing-a-programme:b29",
+   "id": "choosing-a-programme:b57",
    "chapter": "choosing-a-programme",
    "chapterTitle": "Choosing a programme",
    "blockType": "list",
@@ -4725,13 +5226,13 @@
     "schoenfeld2017l",
     "refalo2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
-    "choosing-a-programme:b29:items[0]",
-    "choosing-a-programme:b29:items[1]",
-    "choosing-a-programme:b29:items[2]",
-    "choosing-a-programme:b29:items[3]"
+    "choosing-a-programme:b57:items[0]",
+    "choosing-a-programme:b57:items[1]",
+    "choosing-a-programme:b57:items[2]",
+    "choosing-a-programme:b57:items[3]"
    ]
   },
   {
@@ -9353,7 +9854,7 @@
     "harvardplate",
     "icmrdg2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "healthy-plate:b09:do.title",
@@ -9382,7 +9883,7 @@
     "harvardplate",
     "icmrdg2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "healthy-plate:b11:title",
@@ -9405,7 +9906,7 @@
     "harvardplate",
     "icmrdg2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "healthy-plate:b12:text"
@@ -9423,7 +9924,7 @@
     "harvardplate",
     "icmrdg2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "healthy-plate:b14:text"
@@ -9441,7 +9942,7 @@
     "harvardplate",
     "icmrdg2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "healthy-plate:b16:title",
@@ -9463,7 +9964,7 @@
     "harvardplate",
     "icmrdg2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "healthy-plate:b17:text"
@@ -9481,7 +9982,7 @@
     "harvardplate",
     "icmrdg2024"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "healthy-plate:b19:items[0]",
@@ -10629,7 +11130,7 @@
     "johnstone2005",
     "ward2019"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "weight-change-answers:b03:do.title",
@@ -10682,7 +11183,7 @@
     "johnstone2005",
     "ward2019"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "weight-change-answers:b06:title",
@@ -10710,7 +11211,7 @@
     "johnstone2005",
     "ward2019"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "weight-change-answers:b07:text"
@@ -10732,7 +11233,7 @@
     "johnstone2005",
     "ward2019"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "weight-change-answers:b09:title",
@@ -10757,7 +11258,7 @@
     "johnstone2005",
     "ward2019"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "weight-change-answers:b10:text"
@@ -10832,7 +11333,7 @@
     "johnstone2005",
     "ward2019"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "weight-change-answers:b14:text"
@@ -10887,7 +11388,7 @@
     "johnstone2005",
     "ward2019"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "weight-change-answers:b17:text"
@@ -10933,7 +11434,7 @@
     "johnstone2005",
     "ward2019"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "weight-change-answers:b21:text"
@@ -10955,7 +11456,7 @@
     "johnstone2005",
     "ward2019"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "weight-change-answers:b23:text"
@@ -11001,7 +11502,7 @@
     "johnstone2005",
     "ward2019"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "weight-change-answers:b27:items[0]",
@@ -12489,7 +12990,7 @@
     "nihmagnesium",
     "aragon2017"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "supplements-guide:b21:text"
@@ -16821,7 +17322,7 @@
     "schoenfeld2013t",
     "trommelen2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "training-answers:b01:text"
@@ -16876,7 +17377,7 @@
     "schoenfeld2013t",
     "trommelen2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "training-answers:b05:text"
@@ -16898,7 +17399,7 @@
     "schoenfeld2013t",
     "trommelen2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "training-answers:b07:text"
@@ -16920,7 +17421,7 @@
     "schoenfeld2013t",
     "trommelen2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "training-answers:b09:text"
@@ -16942,7 +17443,7 @@
     "schoenfeld2013t",
     "trommelen2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": true,
    "claimIds": [
     "training-answers:b10:title",
@@ -17038,7 +17539,7 @@
     "schoenfeld2013t",
     "trommelen2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "training-answers:b18:text"
@@ -17092,7 +17593,7 @@
     "schoenfeld2013t",
     "trommelen2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "editorial",
    "clinicalReview": false,
    "claimIds": [
     "training-answers:b21:text"
@@ -17114,7 +17615,7 @@
     "schoenfeld2013t",
     "trommelen2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "training-answers:b23:text"
@@ -17136,7 +17637,7 @@
     "schoenfeld2013t",
     "trommelen2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": true,
    "claimIds": [
     "training-answers:b25:text"
@@ -17158,7 +17659,7 @@
     "schoenfeld2013t",
     "trommelen2023"
    ],
-   "evidence": "unreviewed",
+   "evidence": "unsourced",
    "clinicalReview": false,
    "claimIds": [
     "training-answers:b27:items[0]",

@@ -30,7 +30,7 @@ Status labels are kept apart: Source, Automated, CI, Deployed, Production verifi
 | 3 | Finish the 2026-11-07 redesign review (not shipped): later onboarding, Build my plate, coach replies, then a release build on a phone | Claude, owner for the phone | Main screens tested on a phone with a debug build |
 | 5 | Cooked rice and dal in the diary, from USDA values | Owner approves import | People log cooked food against raw values |
 | 6 | Enforce the website CSP after a signed-in web app check | Owner, Claude | Report-only today |
-| 7 | Handbook book review: 1,735 of 2,737 claims unreviewed (the coach cannot cite them); no clinical review. The book itself is live since 2026-11-12 (migration applied, coach-chat v40, website with the 29 old addresses redirected) | Claude, clinician | Owner shipped the book before review, 2026-11-12 |
+| 7 | Handbook book review: 1,449 of 2,794 claims unreviewed (71 cited claims in the new chapters still need their passages checked) (the coach cannot cite them); no clinical review. The book itself is live since 2026-11-12 (migration applied, coach-chat v40, website with the 29 old addresses redirected) | Claude, clinician | Owner shipped the book before review, 2026-11-12 |
 
 ## 3. Decisions waiting on the owner
 
