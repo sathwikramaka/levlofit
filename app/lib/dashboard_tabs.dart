@@ -2022,7 +2022,7 @@ const _privacyPolicy = [
       '(reps and weight). Only when the chat is about your progress (results, consistency, effort, soreness or pain, weight): figures our server '
       'works out from your records: sessions logged in the last 28 days against your plan, your effort ratings, how many sessions you marked as '
       'mildly painful or stopped by pain, your weight trend over 6 weeks as a percentage a week (not your weight itself), and your food diary '
-      'averages against your targets. Only when the chat is about steps or walking, and only if you switched on sharing in Progress: your daily step totals '
+      'averages against your targets. Only when the chat is about steps or walking, and only if you switched on sharing on Today: your daily step totals '
       'for the last 7 days from Health Connect.'),
   // REVIEW GATE (legal): a second AI provider is used only if the owner sets one up and approves its data terms.
   ('If Groq is unavailable', 'We may set up a second AI provider that answers when Groq is down or busy. It would receive exactly what Groq '
@@ -2054,10 +2054,10 @@ const _privacyPolicy = [
       'stored with your account and deleted with it.'),
   ('Permissions', 'Notifications, only for the reminders you turn on. On Android, Alarms and reminders, only if you allow it, so reminders arrive at the time you set; without it they can arrive a few minutes late. Photos, only when you add a progress photo or profile picture. Camera, only while you scan a barcode.'),
   // REVIEW GATE (legal): Health Connect steps text; ships only with builds made with -Plevlofit.healthConnect=true.
-  ('Steps from Health Connect', 'Only if you connect it in Progress, and only on Android builds that support it. Levlofit reads your daily step '
-      'totals for the last 7 days while you look at Progress. They stay on this phone: they are not stored on our servers. If you switch on '
+  ('Steps from Health Connect', 'Only if you connect it on Today (Android). Levlofit reads your daily step '
+      'totals for the last 7 days while you look at Today. They stay on this phone: they are not stored on our servers. If you switch on '
       '"Share step totals with Levlofit AI", those 7 totals are sent with your coach messages and pass to the AI provider like the rest of '
-      'the chat context. Disconnect in Progress, or remove access in Health Connect, at any time.'),
+      'the chat context. Disconnect on Today, or remove access in Health Connect, at any time.'),
   ('How long we keep it', 'Until you delete your account. Every plan built for you is kept, each with a copy of the answers it used (including '
       'any injury you described); the app shows the latest. Deleting your account first removes your progress photos and profile picture; if that '
       'fails, your account is not deleted and you can try again. Then your account is deleted, along with the records linked to it in our '

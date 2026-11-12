@@ -1,8 +1,8 @@
-// Phone steps from Health Connect (Android). Daily totals only, last 7 days, read when the person opens Progress;
+// Phone steps from Health Connect (Android). Daily totals only, last 7 days, read when the person opens Today;
 // never in the background. Steps stay on this phone (no table, no upload); only when the person switches on
 // "Share with Levlofit AI" are the 7 daily totals sent with a coach message. The Android side is compiled only into
-// builds made with -Plevlofit.healthConnect=true (android/healthconnect); every other build reports "unsupported" and
-// requests nothing. Checked on an Android 16 phone 2026-10-17 (grant, revoke and re-allow in Health Connect, totals
+// builds with the healthconnect module (every build since 1.0.13; -Plevlofit.healthConnect=false leaves it out); a build
+// without it reports "unsupported" and requests nothing. Checked on an Android 16 phone 2026-10-17 (grant, revoke and re-allow in Health Connect, totals
 // equal to Health Connect's own, account switch, disconnect, privacy links, denial, reboot, R8 release build); the
 // 30-minute stale label on a phone and Android 13 or older were not run (docs/operations/STEP_COUNTER_DEVICE_CHECKLIST.md).
 import 'dart:async';
@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'icons.dart';
 import 'main.dart' show prefs;
 import 'theme.dart';
 
@@ -125,8 +126,9 @@ Map<String, dynamic>? coachStepsPayload(List<StepDay>? days, DateTime? readAt, D
 enum _State { loading, unsupported, notInstalled, updateRequired, notConnected, denied, connected, error }
 
 class StepsCard extends StatefulWidget {
-  const StepsCard({super.key, this.api, this.now});
+  const StepsCard({super.key, this.api, this.now, this.target = 8000});
   final StepsApi? api; // tests only
+  final int target; // the daily walking goal: 8,000, or 6,000 from 60 (Paluch 2022, as the Habits list)
   final DateTime Function()? now; // tests only
 
   @override
@@ -214,7 +216,7 @@ class _StepsCardState extends State<StepsCard> with WidgetsBindingObserver {
       context: context,
       builder: (d) => AlertDialog(
         title: const Text('Connect Health Connect?'),
-        content: const Text('Levlofit reads your daily step totals for the last 7 days, only while you look at Progress. '
+        content: const Text('Levlofit reads your daily step totals for the last 7 days, only while you look at Today. '
             'They stay on this phone. Levlofit AI sees them only if you switch on sharing below. '
             'You can disconnect here or remove access in Health Connect at any time.'),
         actions: [
@@ -294,9 +296,11 @@ class _StepsCardState extends State<StepsCard> with WidgetsBindingObserver {
         _State.connected => _connected(context, muted),
       },
     ];
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+    // Material, not a coloured box: the sharing switch draws its ink on it.
+    return Material(
+      color: c.surface,
+      borderRadius: BorderRadius.circular(cardRadius),
+      child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children)),
     );
   }
 
@@ -306,12 +310,64 @@ class _StepsCardState extends State<StepsCard> with WidgetsBindingObserver {
     final today = DateTime(now.year, now.month, now.day);
     final avg = dailyAverage(days, today);
     final todaySteps = days.last.steps;
-    const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const names = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final c = Theme.of(context).colorScheme;
+    final green = progressColor(context);
+    final top = [widget.target, for (final d in days) d.steps ?? 0].reduce((a, b) => a > b ? a : b);
     return [
-      Text(todaySteps == null ? 'No steps recorded today yet' : '$todaySteps steps today', style: Theme.of(context).textTheme.titleMedium),
-      Text(avg == null ? 'No full day recorded in the last 6 days.' : 'About $avg a day over the days recorded.', style: muted),
-      const SizedBox(height: 6),
-      Text([for (final d in days) '${names[d.day.weekday - 1]} ${d.steps ?? '–'}'].join('   '), style: muted),
+      Row(children: [
+        // Today against the walking goal; past the goal the ring stays full.
+        SizedBox(
+          width: 78,
+          height: 78,
+          child: Stack(alignment: Alignment.center, children: [
+            SizedBox.expand(
+              child: CircularProgressIndicator(
+                value: ((todaySteps ?? 0) / widget.target).clamp(0.0, 1.0),
+                strokeWidth: 9,
+                strokeCap: StrokeCap.round,
+                backgroundColor: c.surfaceContainerHighest,
+                color: green,
+              ),
+            ),
+            Icon(LvIcons.personSimpleRun, color: green),
+          ]),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(todaySteps == null ? 'No steps recorded today yet' : '$todaySteps steps today', style: Theme.of(context).textTheme.titleMedium),
+            Text('Goal ${widget.target}', style: muted),
+            Text(avg == null ? 'No full day recorded in the last 6 days.' : 'About $avg a day over the days recorded.', style: muted),
+          ]),
+        ),
+      ]),
+      const SizedBox(height: 14),
+      // The last 7 days as bars; a day with no data stays an empty track, never a zero.
+      SizedBox(
+        height: 64,
+        child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          for (final d in days)
+            Expanded(
+              child: Semantics(
+                label: '${const ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][d.day.weekday - 1]}: ${d.steps ?? 'no data'}',
+                excludeSemantics: true,
+                child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  Container(
+                    width: 14,
+                    height: 4 + 40 * ((d.steps ?? 0) / top),
+                    decoration: BoxDecoration(
+                      color: d.steps == null ? c.surfaceContainerHighest : ((d.steps ?? 0) >= widget.target ? green : green.withValues(alpha: 0.45)),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(names[d.day.weekday - 1], style: monoLabel(context).copyWith(fontSize: 10)),
+                ]),
+              ),
+            ),
+        ]),
+      ),
       if (stepsStale(_readAt!, now)) Text('Read at ${_readAt!.hour.toString().padLeft(2, '0')}:${_readAt!.minute.toString().padLeft(2, '0')}; may be out of date.', style: muted),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,

@@ -26,8 +26,8 @@ plugins {
 
 include(":app")
 
-// Health Connect steps (owner approval needed to ship): only builds made with -Plevlofit.healthConnect=true (or
-// LEVLOFIT_HEALTH_CONNECT=true) include the module that declares READ_STEPS. Every other build asks for nothing.
-if (providers.gradleProperty("levlofit.healthConnect").orNull == "true" || System.getenv("LEVLOFIT_HEALTH_CONNECT") == "true") {
+// Health Connect steps: in every build since 1.0.13 (owner approval 2026-11-12; raises minSdk to 26). A build made
+// with -Plevlofit.healthConnect=false (or LEVLOFIT_HEALTH_CONNECT=false) leaves the module out and asks for nothing.
+if (providers.gradleProperty("levlofit.healthConnect").orNull != "false" && System.getenv("LEVLOFIT_HEALTH_CONNECT") != "false") {
     include(":healthconnect")
 }
