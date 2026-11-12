@@ -148,9 +148,9 @@ const sections: LegalSection[] = [
           <strong>What Levlofit AI sends to Groq.</strong> Each time you send a message, our server sends Groq: your message as you typed it (trimmed, up to 2,000 characters), and up to 12
           earlier messages from that chat; your first name; your equipment, training days, session length, daily activity, sleep hours, water target and the weekdays and time of day you can train; the date,
           goal and minutes of each workout logged in the last 14 days; a summary of your current plan (phase, weight goal, goals and levels, sessions per week, next steps, and
-          calorie and protein targets, with the BMR, activity factor and maintenance estimate behind them); the facts you confirmed in Memory (an injury fact only when your chat is about training, movement or pain, at most three;
+          calorie and protein targets, with the BMR, activity factor and maintenance estimate behind them); this week&rsquo;s sessions as the Workout tab shows them (moves, sets, reps, rest); the facts you confirmed in Memory (an injury fact only when your chat is about training, movement or pain, at most three;
           suggestions you have not confirmed are never sent); and two yes-or-no flags: whether your health check asks you to see a doctor first, and
-          whether you noted an injury (in your health check or as a confirmed Memory fact). Only when your chat is about food, or a reply has to be checked against your food settings, it also sends your diet type,
+          whether you noted an injury (in your health check or as a confirmed Memory fact). Only when your chat is about food, or a reply has to be checked against your food settings, it also sends the day of planned meals you last opened in Diet, your diet type,
           allergies and intolerances, foods you exclude, food budget and any suggested supplements, the health conditions and protein shakes a day you chose in
           Build my plate, your kitchen equipment, cooking time, meals from a hostel or PG mess and your own kitchen notes, and your food diary totals for each of the last 7 days you
           logged (energy, protein, carbohydrate, fat and fibre; not the foods themselves). Only when your chat is about lifting, it sends, for each move you

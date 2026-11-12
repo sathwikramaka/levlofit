@@ -80,14 +80,14 @@ targets and protein foods ─> recipes with AI.
   (today) or View session; then goals and levels, edit goals, level check (a pass rebuilds the plan), "Your path" folded.
 - **Handbook chapter:** ends with Previous chapter and Next chapter, each naming its chapter.
 - **Session:** exercises first; warm-up and cooldown fold away.
-- **Progress:** weight verdict, weekly report (Share as a picture; on Sundays the week now ending), stats, strength, weight, measurements, body check, photos (a one-time reveal at 4, 8 and 12 weeks), 12-week chart, steps
+- **Progress:** weight verdict, weekly report (Share as a picture; on Sundays the week now ending), stats (adherence, sessions, streak, this month, hours, 30-day weight), 12-month activity map, strength, weight, measurements, body check, photos (a one-time reveal at 4, 8 and 12 weeks), 12-week chart, steps
   where the phone supports them, then rank, rating and the 66-day challenge.
 - **Calendar:** tap a day to log or remove training, or edit its length, effort and pain.
 - **Protocol:** days, minutes, weekdays, time, equipment, goal, activity, water; saving rebuilds the plan.
 - **Coach:** chats, memory, edit and regenerate; proposals (swap, lighter day, moved session, plan change, meal log) apply
   only after the person confirms.
 - **Food diary:** day, meal, search or barcode, grams with a raw-weight warning; edit, remove, recipes.
-- **Settings** (its own row in More, not inside Profile): theme (light by default), support, feedback, glossary, notifications (with recap, check-in and meal switches), data use, privacy, licences.
+- **Settings** (its own row in More, not inside Profile): theme, during a workout (screen on, rest, sound, flash, animations), export my data, gym check-in, Levlofit AI button, (light by default), support, feedback, glossary, notifications (with recap, check-in and meal switches), data use, privacy, licences.
 - **Profile:** details, avatar, levels earned, sign out, delete account.
 - **Home screen widget (Android):** today's session and the week; a tap opens the app.
 

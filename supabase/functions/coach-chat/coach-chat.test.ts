@@ -1832,3 +1832,24 @@ test('multi-goal assessment: the main goal is a preference, the model recommends
   assert.match(ASSESS_RULES, /main goal is their preference, not proof they are ready/);
   assert.match(ASSESS_RULES, /Never change their goals yourself/);
 });
+
+// ---- the plan as the app shows it (2026-11-12) ---------------------------------------------------------------
+
+test('app sheets: the week and the day\'s meals reach the coach as data, cleaned and capped; meals only for food talk', async () => {
+  const { buildCoachContext, parseSheet, SHEET_WEEK_MAX } = await import('../_shared/coach-context.ts');
+  assert.deepEqual(parseSheet(undefined), { week: null, meals: null });
+  assert.deepEqual(parseSheet({ week: 42, meals: '  ' }), { week: null, meals: null });
+  const s = parseSheet({ week: `MON: Squat 3 x 8-12\u0007 rest 2 min\nTUE: rest${'x'.repeat(5000)}`, meals: 'Breakfast: oats 60 g, 233 kcal' });
+  assert.ok(s.week!.startsWith('MON: Squat 3 x 8-12  rest 2 min\nTUE'), 'control characters out, line breaks kept');
+  assert.equal(s.week!.length, SHEET_WEEK_MAX);
+  const plan = generatePlan(validateInput({ ageYears: 30, sex: 'female', heightCm: 160, weightKg: 60, weightGoal: 'maintain', goals: [{ goal: 'strength', name: 'Strength', kind: 'strength', coachLedFromLevel: null, experience: 'beginner' }], diet: 'vegetarian', restrictions: [] })) as unknown as Record<string, unknown>;
+  const inputs = { profile: { display_name: 'Asha' }, plan, planCreatedAt: '2026-10-28', logs: [], facts: [], handbookTitles: [], recentUserMessages: [], diet: { diet_type: 'vegetarian', restrictions: [] }, sheet: s };
+  const food = buildCoachContext({ ...inputs, question: 'what should I eat for dinner?' }).text;
+  assert.match(food, /THIS WEEK IN THE APP[^\n]*\nMON: Squat/);
+  assert.match(food, /PLANNED MEALS IN THE APP[^\n]*\nBreakfast: oats/);
+  const lift = buildCoachContext({ ...inputs, question: 'what is my workout today?' }).text;
+  assert.match(lift, /MON: Squat/);
+  assert.doesNotMatch(lift, /Breakfast: oats/, 'meals stay out of training talk');
+  const none = buildCoachContext({ ...inputs, sheet: undefined, question: 'what is my workout today?' }).text;
+  assert.match(none, /THIS WEEK IN THE APP: not sent/);
+});
