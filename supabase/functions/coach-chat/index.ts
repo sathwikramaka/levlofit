@@ -20,7 +20,7 @@ import {
   summariseFoodLog, summariseLifts, summaryDue, SUMMARY_KEEP, SUMMARY_MIN_LEFT_MS, SUMMARY_READ, SUMMARY_RULES, SUMMARY_TIMEOUT_MS, summaryRequest,
   summaryTurns, type Fact,
 } from '../_shared/coach-context.ts';
-import { completeWithFallback, configFromEnv, dataUseApproved, fallbackFromEnv, type LlmConfig, statusForFailure, type Turn } from '../_shared/llm.ts';
+import { completeWithFallback, configFromEnv, dataUseApproved, estimateTokens, fallbackFromEnv, type LlmConfig, MIN_REPLY_TOKENS, statusForFailure, type Turn } from '../_shared/llm.ts';
 import { CITATION_RULES, handbookBlock, retrieve, validateCitations } from '../_shared/handbook.ts';
 import { checkLimits, LIMITS, outdatedApp, rateRefusal } from '../_shared/rate.ts';
 import {
@@ -437,10 +437,9 @@ export default {
     // Handbook passages for this question: Handbook text only, placed before the personal data block, and never
     // passages that name a food this person must avoid. Retrieval matches keywords; it does not validate content.
     const terms = restrictedTerms(diet.data ?? null);
-    const hits = retrieve(message, undefined, { exclude: terms });
-    const research = await researchRun;
+    let hits = retrieve(message, undefined, { exclude: terms });
+    let research = await researchRun;
     if (researchTerms) console.log(JSON.stringify({ event: 'research', results: research.length }));
-    const head = `${RULES}\n${CITATION_RULES}\n${RESEARCH_RULES}${progress ? `\n${PROGRESS_RULES}` : ''}\n\n${handbookBlock(hits)}${research.length ? `\n\n${researchBlock(research)}` : ''}`;
 
     // Swap talk with today's session sent: the moves and the replacements that pass every check go to the model,
     // which may pick one; the pick is checked again below and stored only as a proposal. Optional: a failed read
@@ -463,11 +462,34 @@ export default {
       (moveFrom ? `\n\n${moveBlock(moveFrom.restDays)}` : '') + (mealOffer ? `\n\n${mealBlock(mealOffer)}` : '');
 
     // Draft, then a deterministic food check against everything this person must not eat. At most one retry.
-    const first = buildCoachContext(inputs);
-    first.text += swapText;
     // Small talk gets an explicit length instruction; a draft that is still long is regenerated once, then cut.
     const smallTalk = isSmallTalk(message);
-    if (smallTalk) first.text += `\n\n${SMALL_TALK_BLOCK}`;
+    let ctxIn = inputs;
+    const assemble = () => {
+      const f = buildCoachContext(ctxIn);
+      f.text += swapText;
+      if (smallTalk) f.text += `\n\n${SMALL_TALK_BLOCK}`;
+      const h = `${RULES}\n${CITATION_RULES}\n${RESEARCH_RULES}${progress ? `\n${PROGRESS_RULES}` : ''}\n\n${handbookBlock(hits)}${research.length ? `\n\n${researchBlock(research)}` : ''}`;
+      return { head: h, first: f };
+    };
+    let { head, first } = assemble();
+    // Groq's free plan refuses any request over 8K tokens outright ("Assistant is busy"). When the instructions and
+    // context alone leave the reply too little room, the least needed parts go first: research, extra Handbook
+    // passages, the week sheet, the meal sheet, the last passage. Older chat turns are dropped later by the adapter.
+    const room = (cfg.tokenBudget ?? Infinity) - MIN_REPLY_TOKENS - estimateTokens(message);
+    const cuts = [
+      () => (research = []),
+      () => (hits = hits.slice(0, 1)),
+      () => (ctxIn = { ...ctxIn, sheet: { week: null, meals: sheet.meals } }),
+      () => (ctxIn = { ...ctxIn, sheet: { week: null, meals: null } }),
+      () => (hits = []),
+    ];
+    let cut = 0;
+    while (cut < cuts.length && estimateTokens(`${head}\n\n${first.text}`) > room) {
+      cuts[cut++]();
+      ({ head, first } = assemble());
+    }
+    if (cut) console.log(JSON.stringify({ event: 'context_trimmed', cuts: cut, tokens: estimateTokens(`${head}\n\n${first.text}`) }));
     let llm = await completeWithFallback(cfg, fallback, { system: `${head}\n\n${first.text}`, turns, deadline, maxTokens: REPLY_TOKENS });
     if (!llm.ok) {
       const status = statusForFailure(llm.kind);
@@ -503,7 +525,7 @@ export default {
     }
     let named = restrictedMentions(raw.replace(NOTE, ''), terms);
     if (named.length) {
-      const again = buildCoachContext({ ...inputs, forceDiet: true });
+      const again = buildCoachContext({ ...ctxIn, forceDiet: true });
       const fix = `\n\nYOUR DRAFT named ${named.join(', ')}, which this person must not eat. Answer again without naming or recommending any food outside FOOD SETTINGS.`;
       llm = await completeWithFallback(cfg, fallback, { system: `${head}\n\n${again.text}${swapText}${fix}`, turns, deadline, maxTokens: REPLY_TOKENS });
       if (llm.ok && !replyProblem(llm.text, NOTE)) raw = llm.text;

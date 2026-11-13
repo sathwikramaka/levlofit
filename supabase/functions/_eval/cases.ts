@@ -26,6 +26,7 @@ export type Case = {
   thread?: { summary: string | null; summary_upto: number | null }; // the chat's stored summary row
   today?: string[]; // today's session move ids, as the app sends them
   tables?: Record<string, unknown>; // extra or replaced fake tables (for example a synthetic exercise catalogue)
+  sheet?: { week: string; meals: string }; // the week and meal sheets, as the app sends them
 };
 
 const p = (id: string) => PERSONAS[id];
@@ -287,6 +288,21 @@ export const CASES: Case[] = [
       { check: 'meal', steps: ['Done, logged your lunch.\nMEAL: lunch A001 80\nMEAL: lunch C003 250'] },
       { check: 'meal', steps: ['Added chikki too.\nMEAL: lunch A001 80\nMEAL: lunch B002 40'] },
     ],
+  },
+  // ---- size: Groq's free plan refuses a request over 8K tokens (owner report 2026-11-13, a protein question) -----
+  {
+    id: 'big-context', persona: 'asha', about: 'full week and meal sheets plus a supplement question still fit the token budget',
+    message: "I'm not using plant protein, I'm using yeast protein, so change everything in my protocol from plant protein to yeast protein.",
+    liveOk: false,
+    sheet: { week: 'Mon: push day, bench press 3x8, rest 120 s, chest and triceps. '.repeat(70), meals: 'Breakfast: oats 60 g, 230 kcal, 8 g protein. '.repeat(60) },
+    score: (o) => {
+      const sizes = o.requests.map((r) => Math.ceil((r.system.length + r.turns.reduce((n, t) => n + t.content.length, 0)) / 3) + (r.maxTokens ?? 0));
+      const room = o.requests.every((r) => (r.maxTokens ?? 0) >= 1200);
+      return [o.status === 200 && sizes.length && sizes.every((n) => n <= 7700) && room
+        ? { check: 'size', strength: 'strict', status: 'pass', reason: `largest request about ${Math.max(...sizes)} tokens with the reply cap` }
+        : { check: 'size', strength: 'strict', status: 'fail', reason: `status ${o.status}, sizes ${sizes.join(', ')}, reply room ${room}` }];
+    },
+    good: ['Yeast protein works the same way in your plan: one scoop after training counts toward your protein target.'],
   },
 ];
 

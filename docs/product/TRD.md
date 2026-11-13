@@ -24,7 +24,7 @@ Next.js static site on Cloudflare Pages: marketing, Handbook, APK, /version.json
 | Backend | Supabase project `ndeozgxowggkljluaccz` (ap-south-1, free plan) | `supabase/` |
 | Plan engine | TypeScript, deterministic, version 3.5.0 | `supabase/functions/_shared/plan-engine.ts` |
 | Diet planner | Dart, deterministic, runs on the phone | `app/lib/diet_plan.dart` |
-| LLM | Groq `openai/gpt-oss-120b`; `LLM_BASE_URL`, `LLM_MODEL` switch it. Each request is fitted to `LLM_TOKEN_BUDGET` (Groq default 7,600 tokens, under the free plan's 8K a minute): oldest chat turns dropped, reply cap lowered, less reasoning when tight | `_shared/llm.ts` |
+| LLM | Groq `openai/gpt-oss-120b`; `LLM_BASE_URL`, `LLM_MODEL` switch it. Each request is fitted to `LLM_TOKEN_BUDGET` (Groq default 7,600 tokens, under the free plan's 8K a minute): coach-chat first trims its context (research, extra Handbook passages, week sheet, meal sheet) when instructions and context alone leave under 1,200 reply tokens, then oldest chat turns are dropped, reply cap lowered, less reasoning when tight; eval case `big-context` | `_shared/llm.ts` |
 | Website | Next.js 16, React 19, Tailwind 4, static export | `website/` |
 | CI and jobs | GitHub Actions | `.github/workflows/` |
 

@@ -101,7 +101,7 @@ async function runOne(c: Case, opts: { live?: boolean; steps?: Step[] }): Promis
   let status = 0, body: Record<string, unknown> | null = null;
   const started = Date.now();
   try {
-    const res = await handler(new Request('http://local/coach-chat', { method: 'POST', body: JSON.stringify({ message: c.message, threadId: THREAD, ...(c.today ? { today: { day: new Date().toISOString().slice(0, 10), ids: c.today, restDays: laterThisWeek() } } : {}) }) }));
+    const res = await handler(new Request('http://local/coach-chat', { method: 'POST', body: JSON.stringify({ message: c.message, threadId: THREAD, ...(c.sheet ? { sheet: c.sheet } : {}), ...(c.today ? { today: { day: new Date().toISOString().slice(0, 10), ids: c.today, restDays: laterThisWeek() } } : {}) }) }));
     status = res.status;
     body = await res.json().catch(() => null);
   } finally {
@@ -118,7 +118,7 @@ async function runOne(c: Case, opts: { live?: boolean; steps?: Step[] }): Promis
     status,
     body,
     reply: typeof body?.reply === 'string' ? body.reply : null,
-    requests: bodies.map((b) => ({ system: String(b.messages?.[0]?.content ?? ''), turns: (b.messages ?? []).slice(1) })),
+    requests: bodies.map((b) => ({ system: String(b.messages?.[0]?.content ?? ''), turns: (b.messages ?? []).slice(1), maxTokens: b.max_tokens })),
     writes: ops.filter((o) => o.op !== 'select').map((o) => ({ table: o.table, op: o.op, args: o.args })),
   };
   return { id: c.id, about: c.about, persona: c.persona, mode, scores: c.score(observed, persona), metrics };

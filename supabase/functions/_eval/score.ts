@@ -17,7 +17,7 @@ export type Observed = {
   status: number; // HTTP status from the handler
   body: Record<string, unknown> | null;
   reply: string | null; // body.reply when present
-  requests: { system: string; turns: { role: string; content: string }[] }[]; // what reached the provider
+  requests: { system: string; turns: { role: string; content: string }[]; maxTokens?: number }[]; // what reached the provider
   writes: { table: string; op: string; args: unknown }[]; // database writes the handler made
 };
 
