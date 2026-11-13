@@ -82,6 +82,7 @@ Cloud history was written by `apply_migration` with apply-time versions; local f
 | 20261107300000_handbook_book | 2026-11-12 one transaction through `supabase db query --linked` (history not written) | Applied 2026-11-12 (docs/release/RELEASE_RECORD.md, release 1.1.0); 69 rows and fingerprint verified |
 | 20261112100000_handbook_book_update | 2026-11-12 one transaction through `supabase db query --linked` (history not written) | Applied 2026-11-12 (docs/release/RELEASE_RECORD.md, release 1.1.1); 77 rows verified |
 | 20261113100000_handbook_book_closing | 2026-11-13 one transaction through `supabase db query --linked` (history not written) | Applied 2026-11-13 (docs/release/RELEASE_RECORD.md, release 1.1.2); 77 rows verified |
+| 20261114100000_protocol_changes | 2026-11-14 through `supabase db query --linked` (history not written) | Applied 2026-11-14 (docs/release/RELEASE_RECORD.md, release 1.1.3); column and checks verified |
 
 Schema fingerprint: grants, columns, constraints, indexes, policies, functions, triggers, storage buckets/policies,
 auth trigger and extensions are identical between cloud and a local `supabase db reset`, except the
@@ -203,11 +204,9 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (1), updated 2026-11-14
+## Pending production items (0), updated 2026-11-14
 
-- 20261114100000_protocol_changes: widens the `plan_changes` field check to every Protocol setting, adds a value-format
-  check and `dietary_profiles.protein_powder`. Additive. Apply BEFORE the new coach-chat and app (both read the column).
-  Owner approval needed.
+None.
 
 Applied 2026-11-07 (kept for the record):
 

@@ -2,6 +2,21 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one. Older entries name paths from before docs were sorted into folders (2026-11-07); see `docs/README.md`.
 
+## 2026-11-14: release 1.1.3, Levlofit AI changes any protocol setting, protein powder kind, exercise thumbnails (owner-approved: migration, coach-chat deploy, APK, website, MIN_APP_BUILD secret)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | 0d08cf1 plus the version bump, built from the main folder with nothing uncommitted | git status before the build |
+| What changed | Levlofit AI proposes changes to any Protocol setting, the protein powder kind (new `dietary_profiles.protein_powder`) and supplements, each confirmed on a card and checked again on the server; Diet and Protocol name the powder; filtered Exercise library rows show a thumbnail; coach-chat trims its context to fit Groq's 8K tokens and retries a 413 once | git log 23d9e78..HEAD |
+| Checks before release | flutter analyze clean, 682 pass + 1 skip; functions node 291/0, offline eval 87/0 strict, tsc and deno check clean; pgTAP 275/275 with the new migration on a throwaway local stack (since deleted) | tools/verify.sh, supabase test db |
+| Migration | 20261114100000_protocol_changes (sha256 bebb2a94...), through `supabase db query --linked`, before the function and app; history not written. Additive (no row backup needed). After: `protein_powder` column present, `plan_changes_field_check` lists 14 fields, `plan_changes_value_token` present | read-only query before and after |
+| Function | coach-chat v49 ACTIVE; unauthenticated call 401 | supabase functions list, curl |
+| Android APK | com.levlofit.app 1.1.3, build 18, 14,019,955 bytes | size of the live file |
+| APK SHA-256 | e1617a87943c0a299b5c08413a75264c94801502051368cfa7eca5d43cbd1c86, equal on the live download and /version.json | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 134422be; /version.json = 1.1.3 build 18, min_build 18 | curl |
+| Secret | MIN_APP_BUILD = 18, set by the release script | script output |
+| Not verified | Nothing on a real phone: a protocol change through the chat card, the powder name on Diet, exercise thumbnails; the live model choosing the PLAN line | - |
+
 ## 2026-11-13: release 1.1.2, AI long-question fix, vitamin D timing, activity since sign-up, exercise GIFs, Handbook closing (owner-approved: APK, website, MIN_APP_BUILD secret, Handbook migration with backup, coach-chat deploy)
 
 | What | Value | How checked |

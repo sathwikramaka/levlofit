@@ -1,6 +1,6 @@
 # Levlofit: Backend Schema
 
-Last updated: 2026-11-13, read from the live project. Latest applied: `20261113100000_handbook_book_closing` (2026-11-13: same 77 rows, the last chapter retitled "Putting it all together" with a closing; data only). Latest migration: `20261114100000_protocol_changes` (2026-11-14, not applied: `plan_changes` takes every Protocol setting, `dietary_profiles.protein_powder` added).
+Last updated: 2026-11-14, read from the live project. Latest applied: `20261114100000_protocol_changes` (2026-11-14: `plan_changes` takes every Protocol setting, value-format check, `dietary_profiles.protein_powder`). Latest migration: the same.
 Keep current: see "Keeping these documents current" in `CLAUDE.md`; a test fails when a migration or table is missing here.
 Source of truth: `supabase/migrations/`. Never change the schema any other way.
 
