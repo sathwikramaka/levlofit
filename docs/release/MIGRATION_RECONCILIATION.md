@@ -202,9 +202,11 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (0), updated 2026-11-12
+## Pending production items (1), updated 2026-11-13
 
-None.
+- 20261113100000_handbook_book_closing: data only. The last chapter becomes "Putting it all together" with a first
+  twelve weeks, signs it is working, where to go next and a closing word; the other 76 chapters are unchanged. Safe on
+  any app build that reads figures (16 on). Owner approval needed; deploy coach-chat straight after it.
 
 Applied 2026-11-07 (kept for the record):
 

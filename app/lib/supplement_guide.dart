@@ -80,19 +80,20 @@ Supp? matchSupp(String typed, [SuppGuide? guide]) {
 }
 
 /// Which meal a supplement goes with, by its timing: the meal's index in [meals], or null when it belongs around
-/// training on a rest day, or before or during, not with a meal. [fats] are each meal's fat in grams.
-int? mealFor(String timing, List<double> fats, {int? pre, int? post}) {
+/// training on a rest day, or before or during, not with a meal. [fats] are each meal's fat in grams; [snacks] are the
+/// indices of snacks, which a main-meal timing never picks.
+int? mealFor(String timing, List<double> fats, {int? pre, int? post, Set<int> snacks = const {}}) {
   if (fats.isEmpty) return null;
   return switch (timing) {
     'morning' || 'any_meal' => 0,
     'evening' => fats.length - 1,
-    // The fattiest of the later main meals (lunch onwards); fat helps absorb vitamin D and omega-3.
+    // The fattiest later main meal (lunch or dinner, never a snack); fat helps absorb omega-3.
     'fat_meal' => () {
-        var best = fats.length > 1 ? 1 : 0;
-        for (var i = best; i < fats.length; i++) {
-          if (fats[i] > fats[best]) best = i;
+        int? best;
+        for (var i = fats.length > 1 ? 1 : 0; i < fats.length; i++) {
+          if (!snacks.contains(i) && (best == null || fats[i] > fats[best])) best = i;
         }
-        return best;
+        return best ?? fats.length - 1;
       }(),
     'pre' => pre,
     'post' => post,

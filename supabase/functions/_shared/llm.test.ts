@@ -2,7 +2,7 @@
 // Contract tests for the model provider adapter, with an injected fetch and clock. No network, no keys.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { complete, completeWithFallback, configFromEnv, dataUseApproved, fallbackFromEnv, kindForStatus, statusForFailure, type LlmConfig } from './llm.ts';
+import { complete, completeWithFallback, configFromEnv, dataUseApproved, fallbackFromEnv, fitRequest, kindForStatus, statusForFailure, type LlmConfig } from './llm.ts';
 
 const env = (vars: Record<string, string>) => (k: string) => vars[k];
 const cfg = (over: Partial<LlmConfig> = {}): LlmConfig => ({
@@ -294,4 +294,19 @@ test('AI_DISABLED is a kill switch: any configured provider reads as not configu
   assert.equal(configFromEnv(env({})).ok, true);
   for (const v of ['1', 'true', 'YES', ' 1 ']) assert.deepEqual(configFromEnv(env({ AI_DISABLED: v })), { ok: false, reason: 'AI_DISABLED is set' }, v);
   for (const v of ['', '0', 'false']) assert.equal(configFromEnv(env({ AI_DISABLED: v })).ok, true, v);
+});
+
+test('a long chat is fitted into the token budget: oldest turns dropped, newest kept, reply cap lowered', async () => {
+  const long = { role: 'assistant', content: 'x'.repeat(14000) }; // about 4,000 tokens each
+  const turns = [long, { role: 'user', content: 'a' }, long, { role: 'user', content: 'big question '.repeat(100) }];
+  const fit = fitRequest({ system: 'S'.repeat(14000), turns, maxTokens: 2400 }, 7600);
+  assert.equal(fit.turns.at(-1), turns.at(-1), 'the newest message is always sent');
+  assert.ok(fit.turns.length < turns.length);
+  assert.ok(fit.maxTokens >= 1200 && fit.maxTokens <= 2400);
+  assert.deepEqual(fitRequest({ ...req, maxTokens: 2400 }), { turns: req.turns, maxTokens: 2400 }, 'no budget: unchanged');
+  const { fetch, calls } = scripted(ok());
+  await complete(cfg({ tokenBudget: 7600 }), { system: 'S'.repeat(20000), turns, maxTokens: 2400 }, { fetch, log: () => {} });
+  assert.equal(calls[0].body.reasoning_effort, 'low', 'a tight cap reasons less');
+  assert.ok(calls[0].body.max_tokens < 2400);
+  assert.equal(configFromEnv(env({ LLM_API_KEY: 'k' })).ok && (configFromEnv(env({ LLM_API_KEY: 'k' })) as any).config.tokenBudget, 7600);
 });

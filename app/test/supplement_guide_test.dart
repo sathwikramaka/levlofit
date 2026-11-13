@@ -37,9 +37,10 @@ void main() {
     expect(id('Shilajit'), isNull, reason: 'not in the reference: shown as the person\'s own, unchecked');
   });
 
-  test('timing picks a meal: the fattiest later meal for vitamin D, breakfast for B12, training meals for pre and post', () {
+  test('timing picks a meal: the fattiest later main meal for omega-3, breakfast for B12, training meals for pre and post', () {
     final fats = [8.0, 22.0, 10.0, 30.0]; // breakfast, lunch, snack, dinner
     expect(mealFor('fat_meal', fats), 3);
+    expect(mealFor('fat_meal', [8.0, 22.0, 40.0, 30.0], snacks: {2}), 3, reason: 'a fatty snack (shake) is never the main meal');
     expect(mealFor('morning', fats), 0);
     expect(mealFor('evening', fats), 3);
     expect(mealFor('pre', fats, pre: 2, post: 3), 2);

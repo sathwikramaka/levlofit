@@ -28,7 +28,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 OUT = HERE.parents[1] / "website" / "src" / "lib" / "handbook_book.json"
 # Each content release writes a new migration; earlier ones are applied and never rewritten.
-MIGRATION = HERE.parents[1] / "supabase" / "migrations" / "20261112100000_handbook_book_update.sql"
+MIGRATION = HERE.parents[1] / "supabase" / "migrations" / "20261113100000_handbook_book_closing.sql"
 REDIRECTS = HERE.parents[1] / "website" / "public" / "_redirects"
 ROMAN = ["I", "II", "III", "IV", "V", "VI"]
 # Old chapter addresses people may have saved, and the book chapter that replaces each.

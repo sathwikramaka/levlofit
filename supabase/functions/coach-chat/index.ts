@@ -285,7 +285,7 @@ export default {
     if (req.method !== 'POST') return fail(405, 'Method not allowed');
     const outdated = outdatedApp(req);
     if (outdated) return outdated;
-    let body: { message?: unknown; threadId?: unknown; editFrom?: unknown; clientMsgId?: unknown; activity?: unknown; today?: unknown; confirmSwap?: unknown; confirmChange?: unknown; confirmPlanChange?: unknown; assess?: unknown; localDay?: unknown };
+    let body: { message?: unknown; threadId?: unknown; editFrom?: unknown; clientMsgId?: unknown; activity?: unknown; today?: unknown; confirmSwap?: unknown; confirmChange?: unknown; confirmPlanChange?: unknown; assess?: unknown; localDay?: unknown; sheet?: unknown };
     try {
       body = await req.json();
     } catch {

@@ -56,8 +56,8 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -400)); // past the demonstration picture
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Push-up'), findsOneWidget);
-    expect(find.text('No equipment'), findsOneWidget); // guide wording kept as written (catalogue tags are title-cased)
+    expect(find.text('Push-up', skipOffstage: false), findsOneWidget);
+    expect(find.text('No equipment', skipOffstage: false), findsOneWidget); // guide wording kept as written (catalogue tags are title-cased)
     expect(find.text('None'), findsNothing);
     for (final v in ['Incline push-up', 'Bench press', 'Dumbbell bench press']) {
       expect(find.widgetWithText(InkWell, v), findsOneWidget, reason: v);

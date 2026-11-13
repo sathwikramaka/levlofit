@@ -15768,9 +15768,9 @@
   "part": "VI",
   "partTitle": "Disciplines",
   "volume": "Volume VI · Disciplines",
-  "title": "Building a week, and troubleshooting",
-  "summary": "The whole book put together in one week.",
-  "minutes": 2,
+  "title": "Putting it all together",
+  "summary": "The whole book in one week, your first twelve weeks, and where to go from here.",
+  "minutes": 4,
   "sources": {
    "who2020": "Bull FC et al. World Health Organization 2020 guidelines on physical activity and sedentary behaviour. Br J Sports Med 2020;54:1451-1462.",
    "stults2014": "Stults-Kolehmainen MA, Sinha R. The effects of stress on physical activity and exercise. Sports Med 2014;44:81-121. doi:10.1007/s40279-013-0090-5"
@@ -15782,7 +15782,7 @@
    },
    {
     "t": "p",
-    "text": "This closing chapter walks through how to put training into a week, then answers some common questions. It is practical guidance built on the rest of this Handbook. Your Levlofit plan does this for you, and this chapter helps you understand and adjust it."
+    "text": "This closing chapter puts the book into one week, maps out your first twelve weeks, shows how to tell it is working, and answers common questions. It is practical guidance built on the rest of this Handbook. Your Levlofit plan does this for you, and this chapter helps you understand and adjust it."
    },
    {
     "t": "h2",
@@ -15809,6 +15809,61 @@
    {
     "t": "p",
     "text": "No one calendar suits everyone. A useful pattern is to build the basics before specialising, check your progress at the end of each block, and reduce your training when fatigue says so. A year of training is that cycle repeated. Your goals and equipment can change between cycles."
+   },
+   {
+    "t": "h2",
+    "text": "Your first twelve weeks"
+   },
+   {
+    "t": "steps",
+    "title": "From day one to week twelve",
+    "items": [
+     {
+      "title": "Weeks 1 to 2",
+      "text": "Learn the moves on your plan with light loads. Fix your training days and keep them."
+     },
+     {
+      "title": "Weeks 3 to 6",
+      "text": "Add a rep or a little weight each week while your form holds. Log every session. Reach your protein target on most days."
+     },
+     {
+      "title": "Weeks 7 to 8",
+      "text": "Check your progress: your logged lifts, your weight trend and your waist. Take a lighter week if tiredness has built up."
+     },
+     {
+      "title": "Weeks 9 to 12",
+      "text": "Keep progressing. At week twelve, review your goal, days and equipment, and update your plan."
+     }
+    ]
+   },
+   {
+    "t": "h2",
+    "text": "How to tell it is working"
+   },
+   {
+    "t": "compare",
+    "do": {
+     "title": "Signs it is working",
+     "items": [
+      "Your logged lifts go up over a month",
+      "Your weight trend moves toward your goal at your plan's pace",
+      "You recover between sessions",
+      "You keep most planned sessions"
+     ]
+    },
+    "dont": {
+     "title": "Signs to change something",
+     "items": [
+      "No lift has moved in three to four weeks",
+      "Your weight trend goes the wrong way for three weeks",
+      "You feel sore or drained before every session",
+      "You miss more sessions than you keep"
+     ]
+    }
+   },
+   {
+    "t": "p",
+    "text": "One bad week means nothing. Look at the trend over a month before you change anything, and change one thing at a time."
    },
    {
     "t": "h2",
@@ -15863,6 +15918,26 @@
      "Review at the end of each block, and reduce when fatigue says so.",
      "Consistency over years beats perfection over weeks."
     ]
+   },
+   {
+    "t": "h2",
+    "text": "Where to go from here"
+   },
+   {
+    "t": "list",
+    "items": [
+     "**Ask Levlofit AI.** It reads your plan and your log, and answers from this Handbook.",
+     "**Come back to a chapter when you need it.** The book is a reference, not something to finish once.",
+     "**Review your plan every block.** Your goal, your days and your equipment will change, and your plan should follow."
+    ]
+   },
+   {
+    "t": "h2",
+    "text": "The last word"
+   },
+   {
+    "t": "p",
+    "text": "You do not need the perfect programme, diet or supplement. You need a sensible plan, done most weeks, for a long time. Train with effort, add a little over time, eat for your goal, sleep, and keep going. Everything else in this book helps, but only on top of that."
    }
   ]
  }

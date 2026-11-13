@@ -38,7 +38,18 @@ void main() {
       home: Scaffold(body: Padding(padding: const EdgeInsets.all(16), child: ActivityHeatmap(minutes: {DateTime(2026, 11, 10): 45}, today: DateTime(2026, 11, 12)))),
     ));
     expect(tester.takeException(), isNull);
-    expect(find.textContaining('1 days'), findsOneWidget);
+    expect(find.textContaining('1 day '), findsOneWidget);
+  });
+
+  testWidgets('the heatmap starts the week the account was created', (tester) async {
+    final today = DateTime(2026, 11, 12); // a Thursday
+    expect(ActivityHeatmap.startFor(today, DateTime(2026, 10, 29)), DateTime(2026, 10, 26), reason: 'the Monday of the join week');
+    expect(ActivityHeatmap.startFor(today, null), DateTime(2025, 11, 10), reason: 'no join date: 52 weeks back');
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: Padding(padding: const EdgeInsets.all(16), child: ActivityHeatmap(minutes: {DateTime(2026, 9, 1): 30, DateTime(2026, 11, 10): 45}, today: today, since: DateTime(2026, 10, 29)))),
+    ));
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('1 day '), findsOneWidget, reason: 'training before the account existed is not counted');
   });
 
   test('workout choices: defaults, then saved and read back', () async {

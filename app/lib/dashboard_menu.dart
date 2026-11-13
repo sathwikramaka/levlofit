@@ -806,9 +806,10 @@ class _DietScreenState extends State<_DietScreen> {
       for (final l in suppLines) (line: l, ref: matchSupp(l.name)),
     ];
     final fats = [for (final m in dayMeals) m.items.fold(0.0, (s, i) => s + i.fat)];
+    final snacks = {for (var i = 0; i < dayMeals.length; i++) if (dayMeals[i].name.toLowerCase().contains('snack')) i};
     final suppMeal = {
       for (final r in suppRef)
-        if (r.ref case final s?) r.line.name: mealFor(s.timing, fats, pre: training?.pre, post: training?.post),
+        if (r.ref case final s?) r.line.name: mealFor(s.timing, fats, pre: training?.pre, post: training?.post, snacks: snacks),
     };
     final hidden = () {
       try {
@@ -2397,9 +2398,9 @@ List<Widget> _progressBody(
     const SizedBox(height: 12),
     _Tile(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const _Label('ACTIVITY  ·  LAST 12 MONTHS'),
-        const SizedBox(height: 4),
-        ActivityHeatmap(minutes: minutesByDay(logs), today: _day(now)),
+        _Label(joinedDay() == null ? 'ACTIVITY  ·  LAST 12 MONTHS' : 'ACTIVITY  ·  SINCE YOU JOINED'),
+        const SizedBox(height: 8),
+        ActivityHeatmap(minutes: minutesByDay(logs), today: _day(now), since: joinedDay()),
       ]),
     ),
     const SizedBox(height: 12),
@@ -2613,74 +2614,103 @@ double? weightChange(List<({DateTime day, double kg})> weights, DateTime now, in
   return before == null ? null : weights.last.kg - before.kg;
 }
 
-/// A year of training as squares, one per day, Monday on top, darker for more minutes (0, under 20, under 40, under
-/// 60, 60 and over). The owner's reference app shows the same by time trained (2026-11-12).
+/// The local day the account was created, or null (signed out, or in tests).
+DateTime? joinedDay() {
+  try {
+    final d = DateTime.parse(supabase.auth.currentUser!.createdAt).toLocal();
+    return DateTime(d.year, d.month, d.day);
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Training since the account was created as squares, one per day, Monday on top, darker for more minutes (0, under
+/// 20, under 40, under 60, 60 and over). Without a join date, the last 52 weeks. Squares keep a readable size: a long
+/// history scrolls sideways, opening on this week.
 class ActivityHeatmap extends StatelessWidget {
-  const ActivityHeatmap({super.key, required this.minutes, required this.today});
+  const ActivityHeatmap({super.key, required this.minutes, required this.today, this.since});
   final Map<DateTime, int> minutes;
   final DateTime today;
+  final DateTime? since;
 
   static int level(int m) => m <= 0 ? 0 : m < 20 ? 1 : m < 40 ? 2 : m < 60 ? 3 : 4;
+
+  /// The Monday the grid starts on: the week of [since], or 52 weeks back.
+  static DateTime startFor(DateTime today, DateTime? since) {
+    final from = since != null && !since.isAfter(today) ? since : today.subtract(const Duration(days: 7 * 52));
+    return DateTime(from.year, from.month, from.day - (from.weekday - 1));
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
     final green = progressColor(context);
-    final start = today.subtract(Duration(days: 7 * 52 + today.weekday - 1)); // the Monday 52 weeks back
+    final start = startFor(today, since);
+    final weeks = DateTime(today.year, today.month, today.day).difference(start).inDays ~/ 7 + 1;
     final total = minutes.entries.where((e) => !e.key.isBefore(start)).fold<int>(0, (s, e) => s + e.value);
-    final active = minutes.keys.where((d) => !d.isBefore(start)).length;
+    final active = minutes.keys.where((d) => !d.isBefore(start) && !d.isAfter(today)).length;
+    final label = monoLabel(context).copyWith(fontSize: 10);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Semantics(
-        label: 'Trained on $active days in the last 12 months, about ${total ~/ 60} hours.',
+        label: 'Trained on $active ${active == 1 ? 'day' : 'days'} since ${since == null ? 'the last 12 months' : 'you joined'}, about ${total ~/ 60} hours.',
         excludeSemantics: true,
-        child: AspectRatio(
-          aspectRatio: 53 / 8.2,
-          child: CustomPaint(painter: _HeatPainter(minutes: minutes, start: start, today: today, empty: c.surfaceContainerHighest, on: green, ring: c.tertiary, month: monoLabel(context).copyWith(fontSize: 9))),
-        ),
+        child: LayoutBuilder(builder: (context, box) {
+          final cell = (box.maxWidth / weeks).clamp(12.0, 20.0);
+          final labelH = (TextPainter(text: TextSpan(text: 'Mg', style: label), textDirection: TextDirection.ltr)..layout()).height + 4;
+          final grid = CustomPaint(
+            size: Size(cell * weeks, labelH + cell * 7),
+            painter: _HeatPainter(minutes: minutes, start: start, weeks: weeks, cell: cell, labelH: labelH, today: today, empty: c.surfaceContainerHighest, on: green, ring: c.tertiary, month: label),
+          );
+          return cell * weeks <= box.maxWidth ? grid : SingleChildScrollView(scrollDirection: Axis.horizontal, reverse: true, child: grid);
+        }),
       ),
-      const SizedBox(height: 6),
+      const SizedBox(height: 8),
       Row(children: [
-        Expanded(child: Text('$active days  ·  ${total ~/ 60} h', style: monoLabel(context))),
-        Text('Less ', style: monoLabel(context).copyWith(fontSize: 9)),
+        Expanded(child: Text('$active ${active == 1 ? 'day' : 'days'}  ·  ${total ~/ 60} h', style: monoLabel(context))),
+        Text('Less', style: label),
+        const SizedBox(width: 4),
         for (var l = 0; l <= 4; l++)
           Container(
-            width: 9,
-            height: 9,
+            width: 10,
+            height: 10,
             margin: const EdgeInsets.only(left: 2),
             decoration: BoxDecoration(color: l == 0 ? c.surfaceContainerHighest : green.withValues(alpha: 0.25 + 0.1875 * l), borderRadius: BorderRadius.circular(2)),
           ),
-        Text(' More', style: monoLabel(context).copyWith(fontSize: 9)),
+        const SizedBox(width: 4),
+        Text('More', style: label),
       ]),
     ]);
   }
 }
 
 class _HeatPainter extends CustomPainter {
-  _HeatPainter({required this.minutes, required this.start, required this.today, required this.empty, required this.on, required this.ring, required this.month});
+  _HeatPainter({required this.minutes, required this.start, required this.weeks, required this.cell, required this.labelH, required this.today, required this.empty, required this.on, required this.ring, required this.month});
   final Map<DateTime, int> minutes;
   final DateTime start, today;
+  final int weeks;
+  final double cell, labelH;
   final Color empty, on, ring;
   final TextStyle month;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cell = size.width / 53, top = cell * 1.2, gap = cell * 0.18;
-    var lastMonth = start.month, labelEnd = double.negativeInfinity; // the first, partial month gets no label
-    for (var w = 0; w < 53; w++) {
+    final gap = cell * 0.18;
+    var lastMonth = -1, labelEnd = double.negativeInfinity;
+    for (var w = 0; w < weeks; w++) {
       for (var d = 0; d < 7; d++) {
-        final day = start.add(Duration(days: 7 * w + d));
+        final day = DateTime(start.year, start.month, start.day + 7 * w + d);
         if (day.isAfter(today)) continue;
+        // A month label sits in its own row above the squares, at the first week the month appears in.
         if (d == 0 && day.month != lastMonth) {
           lastMonth = day.month;
           final tp = TextPainter(text: TextSpan(text: _months[day.month - 1], style: month), textDirection: TextDirection.ltr)..layout();
-          // A label never overlaps the one before it or runs off the right edge.
-          if (w * cell >= labelEnd + 3 && w * cell + tp.width <= size.width) {
+          if (w * cell >= labelEnd + 4 && w * cell + tp.width <= size.width) {
             tp.paint(canvas, Offset(w * cell, 0));
             labelEnd = w * cell + tp.width;
           }
         }
         final l = ActivityHeatmap.level(minutes[day] ?? 0);
-        final r = RRect.fromRectAndRadius(Rect.fromLTWH(w * cell + gap / 2, top + d * cell + gap / 2, cell - gap, cell - gap), Radius.circular(cell * 0.2));
+        final r = RRect.fromRectAndRadius(Rect.fromLTWH(w * cell + gap / 2, labelH + d * cell + gap / 2, cell - gap, cell - gap), Radius.circular(cell * 0.2));
         canvas.drawRRect(r, Paint()..color = l == 0 ? empty : on.withValues(alpha: 0.25 + 0.1875 * l));
         if (day == today) {
           canvas.drawRRect(r, Paint()
@@ -2693,7 +2723,7 @@ class _HeatPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_HeatPainter old) => old.minutes != minutes || old.today != today || old.on != on;
+  bool shouldRepaint(_HeatPainter old) => old.minutes != minutes || old.today != today || old.on != on || old.cell != cell || old.weeks != weeks;
 }
 
 /// Body weight over a chosen range (1 month, 3 months, a year, all), with the person's goal weight as a line. The goal

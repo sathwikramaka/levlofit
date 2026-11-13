@@ -146,6 +146,8 @@ class _MoveDemoState extends State<MoveDemo> {
   }
 }
 
+final _catalogueId = RegExp(r'^[A-Za-z0-9]{7}$'); // an ExerciseDB V1 id
+
 const _bodyParts = ['chest', 'back', 'shoulders', 'upper arms', 'lower arms', 'upper legs', 'lower legs', 'waist', 'cardio', 'neck'];
 
 String _title(String s) => s.split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
@@ -160,7 +162,7 @@ class ExerciseGif extends StatelessWidget {
 
   /// The catalogue url (a blank one counts as none), else the ExerciseDB V1 media address for a catalogue id (same host and pattern), so a move
   /// still animates when its catalogue row has not loaded.
-  String? get _src => (url?.trim().isNotEmpty ?? false) ? url : (id != null && RegExp(r'^[A-Za-z0-9]{7}$').hasMatch(id!) ? 'https://static.exercisedb.dev/media/$id.gif' : null);
+  String? get _src => (url?.trim().isNotEmpty ?? false) ? url : (id != null && _catalogueId.hasMatch(id!) ? 'https://static.exercisedb.dev/media/$id.gif' : null);
 
   @override
   Widget build(BuildContext context) => Container(
@@ -540,7 +542,16 @@ class _FigureChoice extends StatelessWidget {
 Widget _guideOnly(BuildContext context, String id, MoveGuide guide, Widget footer) => ListView(
   padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
   children: [
-    if (moveVectorAnimations[id] != null || moveAnimations[id] != null || moveDrawings[id] != null) ...[
+    // A catalogue id has its animation on the media host even when the catalogue row is missing or did not load.
+    if (exerciseDbContent && _catalogueId.hasMatch(id)) ...[
+      Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: AspectRatio(aspectRatio: 1, child: Hero(tag: 'ex-$id', child: ExerciseGif(null, id: id))),
+        ),
+      ),
+      const SizedBox(height: 20),
+    ] else if (moveVectorAnimations[id] != null || moveAnimations[id] != null || moveDrawings[id] != null) ...[
       Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),

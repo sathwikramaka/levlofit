@@ -10,7 +10,7 @@ export type LlmResult =
   | { ok: true; text: string; usage: LlmUsage; attempts: number; provider: string; model: string }
   | { ok: false; kind: LlmErrorKind; upstreamStatus: number | null; attempts: number };
 
-export type LlmConfig = { provider: string; baseUrl: string; model: string; apiKey: string; timeoutMs: number; maxRetries: number };
+export type LlmConfig = { provider: string; baseUrl: string; model: string; apiKey: string; timeoutMs: number; maxRetries: number; tokenBudget?: number };
 
 /**
  * Known providers. Only Groq has a default model: it is the one the app has been run with. For the others the owner
@@ -45,7 +45,11 @@ export function configFromEnv(get: (k: string) => string | undefined): { ok: tru
   const timeoutMs = Number.isFinite(t) ? Math.min(Math.max(t, 100), 60000) : DEFAULT_TIMEOUT_MS;
   const r = Number(get('LLM_MAX_RETRIES') ?? 1);
   const maxRetries = Number.isInteger(r) ? Math.min(Math.max(r, 0), 2) : 1;
-  return { ok: true, config: { provider, baseUrl, model, apiKey, timeoutMs, maxRetries } };
+  // Tokens one request may ask for (prompt plus reply cap). Groq's free plan refuses any request over 8,000 tokens a
+  // minute outright, so a long question with a long history failed as "busy". LLM_TOKEN_BUDGET overrides it; 0 = none.
+  const tb = Number(get('LLM_TOKEN_BUDGET') ?? (provider === 'groq' ? 7600 : 0));
+  const tokenBudget = Number.isFinite(tb) && tb > 0 ? tb : undefined;
+  return { ok: true, config: { provider, baseUrl, model, apiKey, timeoutMs, maxRetries, ...(tokenBudget ? { tokenBudget } : {}) } };
 }
 
 /**
@@ -107,6 +111,26 @@ export type LlmDeps = {
 /** A chat request. [deadline] (epoch ms) is a request-wide limit shared by every call the handler makes. */
 export type LlmRequest = { system: string; turns: Turn[]; temperature?: number; maxTokens?: number; deadline?: number };
 
+/** Rough token count: about 3.5 characters a token for English, rounded up so the estimate errs high. */
+export const estimateTokens = (text: string) => Math.ceil(text.length / 3.5) + 4;
+
+/** Least reply tokens worth asking for; below this the oldest turns are dropped instead. */
+export const MIN_REPLY_TOKENS = 1200;
+
+/**
+ * Fits a request into [budget] tokens: drops the oldest turns (never the newest) until the reply can have at least
+ * MIN_REPLY_TOKENS, then caps max_tokens to what is left. Without a budget the request is unchanged.
+ * ponytail: character-based estimate, a real tokenizer if the margin proves too thin.
+ */
+export function fitRequest(req: LlmRequest, budget?: number): { turns: Turn[]; maxTokens: number } {
+  const want = req.maxTokens ?? 1400;
+  if (!budget) return { turns: req.turns, maxTokens: want };
+  const turns = [...req.turns];
+  const size = () => estimateTokens(req.system) + turns.reduce((n, t) => n + estimateTokens(t.content), 0);
+  while (turns.length > 1 && budget - size() < Math.min(want, MIN_REPLY_TOKENS)) turns.shift();
+  return { turns, maxTokens: Math.max(Math.min(want, budget - size()), 256) };
+}
+
 /** One chat completion within cfg.timeoutMs (and the request deadline) in total, across at most 1 + cfg.maxRetries attempts. */
 export async function complete(cfg: LlmConfig, req: LlmRequest, deps: LlmDeps = {}): Promise<LlmResult> {
   const doFetch = deps.fetch ?? fetch;
@@ -120,13 +144,20 @@ export async function complete(cfg: LlmConfig, req: LlmRequest, deps: LlmDeps = 
     log(JSON.stringify({ event: 'llm_error', provider: cfg.provider, model: cfg.model, ms: 0, kind: 'timeout', upstreamStatus: null, attempts: 0, retrying: false }), true);
     return { ok: false, kind: 'timeout', upstreamStatus: null, attempts: 0 };
   }
+  const fit = fitRequest(req, cfg.tokenBudget);
+  // A tight reply cap gets less reasoning, so the thinking cannot use up the tokens meant for the answer.
+  const tight = fit.maxTokens < (req.maxTokens ?? 1400);
+  const extra = extraParams(cfg);
   const body = JSON.stringify({
     model: cfg.model,
     temperature: req.temperature ?? 0.7,
-    max_tokens: req.maxTokens ?? 1400,
-    ...extraParams(cfg),
-    messages: [{ role: 'system', content: req.system }, ...req.turns],
+    max_tokens: fit.maxTokens,
+    ...(tight && 'reasoning_effort' in extra && extra.reasoning_effort !== 'none' ? { ...extra, reasoning_effort: 'low' } : extra),
+    messages: [{ role: 'system', content: req.system }, ...fit.turns],
   });
+  if (fit.turns.length < req.turns.length || tight) {
+    log(JSON.stringify({ event: 'llm_fit', provider: cfg.provider, dropped: req.turns.length - fit.turns.length, maxTokens: fit.maxTokens }), false);
+  }
   const record = (event: string, fields: Record<string, unknown>, error: boolean) =>
     log(JSON.stringify({ event, provider: cfg.provider, model: cfg.model, ms: now() - started, ...fields }), error);
 

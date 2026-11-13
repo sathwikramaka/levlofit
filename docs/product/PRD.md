@@ -1,6 +1,6 @@
 # Levlofit: Product Requirements Document
 
-Last updated: 2026-11-12, for release 1.1.1. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-13, for release 1.1.1. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Summary
 
@@ -59,7 +59,8 @@ through the web app. People with medical conditions are told to involve a doctor
   NIH, ICMR-NIN, ISSN, EFSA) in `assets/supplements.json`, shared with Levlofit AI. Diet shows when to take each one the
   person lists (tied to a meal), names supplements on their meal, and offers optional suggestions (vitamin D after a
   test, B12 for vegetarians, omega-3, creatine for strength goals) with Add and Not for me. A Supplement guide opens
-  from the Handbook and Diet. Training days get Before training and After training sections.
+  from the Handbook and Diet. Vitamin D goes with breakfast; omega-3 and other with-fat items go with lunch or dinner,
+  never a snack. Training days get Before training and After training sections.
 - Levlofit AI answers in full depth for how and why questions, uses the supplement reference with the person's own
   list, and its live research adds MedlinePlus (US National Library of Medicine) to Europe PMC and Wikipedia.
 - Plan sheets name each move's target muscles and up to three other moves for the same muscles (any one does the job).
