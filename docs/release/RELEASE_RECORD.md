@@ -2,6 +2,22 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one. Older entries name paths from before docs were sorted into folders (2026-11-07); see `docs/README.md`.
 
+## 2026-11-13: release 1.1.2, AI long-question fix, vitamin D timing, activity since sign-up, exercise GIFs, Handbook closing (owner-approved: APK, website, MIN_APP_BUILD secret, Handbook migration with backup, coach-chat deploy)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | dc893bf plus the version bump, built from the main folder with nothing uncommitted but the bump | git status before the build |
+| What changed | Levlofit AI requests fitted under Groq's 8K tokens a minute (long questions failed as "busy"); vitamin D with breakfast, with-fat supplements never on a snack; Progress activity map since sign-up with labels in their own row; exercise page shows the animation by id when the catalogue row is missing; Handbook chapter 77 "Putting it all together" with a closing | git log e3f8506..HEAD |
+| Checks before release | flutter analyze clean, 681 pass + 1 skip; functions node 289/0, offline eval 85/0 strict, tsc and deno check clean; website lint, tsc, build; book builder and register checks | tools/verify.sh |
+| Android APK | com.levlofit.app 1.1.2, build 17, 14,019,591 bytes | size of the live file |
+| APK SHA-256 | 6ec3ee4c7f075fcc676720dc1672b38f8887fec053df2680457710feffaf43e5, equal on the live download and /version.json | sha256sum of the live file |
+| Website | Cloudflare Pages deployment 7e16d6db; /version.json = 1.1.2 build 17, min_build 17; /handbook/building-a-week shows "Putting it all together" | curl |
+| Secret | MIN_APP_BUILD = 17, set by the release script | script output |
+| Backup | The 77 live `handbook_chapters` rows saved as JSON in the private folder before the migration (rollback: reload them, or re-apply 20261112100000_handbook_book_update.sql) | row count 77 in the file |
+| Migration | 20261113100000_handbook_book_closing (sha256 eec05b43...), one transaction through `supabase db query --linked`, after the app release; history not written. After: 77 rows, ids 1 to 77, every row has blocks, last is "Putting it all together" | read-only query after |
+| Function | coach-chat v47 ACTIVE (token budget, new supplement timing, closing passages); unauthenticated call 401 | supabase functions list, curl |
+| Not verified | Nothing on a real phone: activity map, exercise GIFs, supplement times; a long question to the live AI | - |
+
 ## 2026-11-12: release 1.1.1, Handbook 77 chapters with figures, healthy plate check (owner-approved: APK, website, MIN_APP_BUILD secret, Handbook migration with backup, coach-chat deploy, push)
 
 | What | Value | How checked |

@@ -1,6 +1,6 @@
 # Levlofit: Implementation Plan
 
-Last updated: 2026-11-13, for release 1.1.1. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-13, for release 1.1.2. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 Detail: `docs/PROGRESS.md` (log), `docs/release/RELEASE_RECORD.md` (what shipped), `docs/archive/ROADMAP_AUDIT_2026-11-03.md` (roadmap).
 
 Status labels are kept apart: Source, Automated, CI, Deployed, Production verified, Real device.
@@ -19,7 +19,7 @@ Status labels are kept apart: Source, Automated, CI, Deployed, Production verifi
 | Settings as its own row in More; notification when a new version is out; Handbook book (69 chapters) in app, coach and website | Deployed in 1.0.12, migration and coach-chat 2026-11-12 |
 | Habit features: personal bests, forgiving streak, level-up screen, nudges, share pictures, short starter, Today's read, photo reveal, home widget | Deployed in 1.0.11 |
 | Handbook update: 77 chapters with figures and the wiki's facts in own words, healthy plate check on Diet | Deployed in 1.1.1, migration applied and coach-chat v45 2026-11-12 |
-| Owner report 2026-11-13: long AI questions failed (Groq 8K-token limit; requests now fitted), vitamin D with breakfast, activity map since sign-up without overlapping labels, exercise animations for moves missing from the catalogue, a closing to the Handbook | In branch, not released: needs an app release, coach-chat deploy and migration `20261113100000_handbook_book_closing` (owner approval) |
+| Owner report 2026-11-13: long AI questions failed (Groq 8K-token limit; requests now fitted), vitamin D with breakfast, activity map since sign-up without overlapping labels, exercise animations for moves missing from the catalogue, a closing to the Handbook | Deployed in 1.1.2, migration applied and coach-chat v47 2026-11-13 |
 | Encrypted Storage backup job and restore drill | Source and drill only: **inactive, see below** |
 
 ## 2. Next, in order

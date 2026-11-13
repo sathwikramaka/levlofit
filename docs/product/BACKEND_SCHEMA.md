@@ -1,6 +1,6 @@
 # Levlofit: Backend Schema
 
-Last updated: 2026-11-12, read from the live project. Latest applied: `20261112100000_handbook_book_update` (2026-11-12: `handbook_chapters` holds the 77-chapter book, ids 1 to 77; data only, same table and columns). Latest migration: `20261113100000_handbook_book_closing` (2026-11-13, not applied: the same 77 rows, the last chapter retitled "Putting it all together" and given a closing; data only).
+Last updated: 2026-11-13, read from the live project. Latest applied: `20261113100000_handbook_book_closing` (2026-11-13: same 77 rows, the last chapter retitled "Putting it all together" with a closing; data only). Latest migration: the same.
 Keep current: see "Keeping these documents current" in `CLAUDE.md`; a test fails when a migration or table is missing here.
 Source of truth: `supabase/migrations/`. Never change the schema any other way.
 
