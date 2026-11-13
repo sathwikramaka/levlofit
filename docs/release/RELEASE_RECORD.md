@@ -16,6 +16,7 @@ One row per check of what users actually get. Add a new dated section for every 
 | Backup | The 77 live `handbook_chapters` rows saved as JSON in the private folder before the migration (rollback: reload them, or re-apply 20261112100000_handbook_book_update.sql) | row count 77 in the file |
 | Migration | 20261113100000_handbook_book_closing (sha256 eec05b43...), one transaction through `supabase db query --linked`, after the app release; history not written. After: 77 rows, ids 1 to 77, every row has blocks, last is "Putting it all together" | read-only query after |
 | Function | coach-chat v47 ACTIVE (token budget, new supplement timing, closing passages); unauthenticated call 401 | supabase functions list, curl |
+| Follow-up 2026-11-14 | Live logs showed a 413 with no history to drop (supplement question with both sheets). coach-chat v48 (84090dc) trims research, passages and sheets first; eval case big-context about 8,350 tokens before, 7,600 after. Owner-approved deploy; unauthenticated call 401 | query_logs, supabase functions list, curl |
 | Not verified | Nothing on a real phone: activity map, exercise GIFs, supplement times; a long question to the live AI | - |
 
 ## 2026-11-12: release 1.1.1, Handbook 77 chapters with figures, healthy plate check (owner-approved: APK, website, MIN_APP_BUILD secret, Handbook migration with backup, coach-chat deploy, push)

@@ -842,7 +842,7 @@ class _MuscleGuideState extends State<_MuscleGuide> {
           for (final (id, m) in moves)
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: SizedBox.square(dimension: 56, child: Hero(tag: 'ex-$id', child: ExerciseGif(null, id: id))),
+              leading: SizedBox.square(dimension: 56, child: ExerciseGif(null, id: id)),
               title: Text(m.name),
               subtitle: Text([
                 if (m.main.isEmpty) 'Conditioning: many muscles at once' else '${m.group == 'Mobility' ? 'Stretches ' : ''}${m.main.join('  ·  ')}',

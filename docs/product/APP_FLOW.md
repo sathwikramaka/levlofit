@@ -78,6 +78,7 @@ targets and protein foods ─> recipes with AI.
 
 - **Workout:** day picker (today first) ─> that day's plan sheet: warm-up list, moves with sets, reps and rest, Start
   (today) or View session; then goals and levels, edit goals, level check (a pass rebuilds the plan), "Your path" folded.
+- **Exercise library filters:** each matching move lists with its animation thumbnail, name, muscles, difficulty and equipment.
 - **Exercise page:** the move's animation by its catalogue id even when the catalogue row is missing, then the guide.
 - **Handbook chapter:** figures drawn in the page (no images); ends with Previous chapter and Next chapter, each naming its chapter.
 - **Diet:** the day's totals end with the healthy plate check (three bars by weight).
