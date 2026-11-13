@@ -1,6 +1,6 @@
 # Levlofit: Product Requirements Document
 
-Last updated: 2026-11-13, for release 1.1.2. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-14, for release 1.1.2. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Summary
 
@@ -87,7 +87,8 @@ through the web app. People with medical conditions are told to involve a doctor
 - Welcome-back card after 14 days away. No guilt wording anywhere.
 
 ### Levlofit AI
-- Coach chat with history, memory the person confirms, swaps and plan changes they must accept. Answers explain the stored
+- Coach chat with history, memory the person confirms, swaps and plan changes they must accept. Plan changes cover any
+  Protocol setting, the protein powder kind and adding or removing a supplement; each is checked and shown on a card first. Answers explain the stored
   plan and Handbook; it does not set calories or macros, or diagnose.
 - Works without AI: every core feature runs when the provider is down.
 

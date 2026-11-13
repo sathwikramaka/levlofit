@@ -30,7 +30,7 @@ import {
 } from '../_shared/swap.ts';
 import { checkMeal, diaryFoods, isMealLogTalk, loggableFoods, mealBlock, MEAL_LINE } from '../_shared/meal.ts';
 import { ASSESS_RULES, assessContext, type LadderRow, parseAssess, parseLevels, questionsAsked } from '../_shared/assess.ts';
-import { checkPlanChange, isPlanChangeTalk, PLAN_LINE, PLAN_REFUSAL, planChangeBlock } from '../_shared/plan-change.ts';
+import { checkPlanChange, isPlanChangeTalk, PLAN_LINE, PLAN_REFUSAL, planChangeBlock, type PlanField, settingWrite } from '../_shared/plan-change.ts';
 import { citeResearch, isResearchTalk, researchBlock, researchQuery, RESEARCH_RULES, searchResearch, type ResearchHit } from '../_shared/research.ts';
 
 const MAX_CHARS = 2000;
@@ -64,7 +64,7 @@ Memory: when the person tells you something durable about themselves that is not
 Swaps: only when TODAY'S SWAP OPTIONS is listed and the person asks to change a move in today's session, you may propose one swap: add a line at the very end, "SWAP: <move id> -> <replacement id>", copying both ids exactly from TODAY'S SWAP OPTIONS. Never propose a replacement that is not listed there, and when none is listed say so and suggest asking a trainer. The app checks it and asks the person; nothing changes unless they confirm, so never say it is done.
 Lighter day: only when TODAY'S SESSION CAN BE MADE LIGHTER is listed and the person asks for an easier day (tired, sore, low energy, poor sleep), you may propose it with a last line "LIGHTER". Pain, chest discomfort, dizziness or feeling ill is not a lighter day: tell them to rest and see a doctor, and do not propose it. The app asks the person; never say it is done.
 Moving a session: only when TODAY'S SESSION CAN MOVE TO is listed and the person asks to train on another day, you may propose one of the listed days with a last line "MOVE: <date>", copying the date exactly. The app asks the person; never say it is done.
-Plan changes: only when PLAN CHANGES THAT PASS THE APP'S CHECKS is listed and the person asks to change their body goal, diet pace or training days (or agrees after you suggest it), you may propose ONE of the listed changes with a last line "PLAN: <field>=<value>", copied exactly. Explain why in a sentence, using their records when PROGRESS is listed. Never state new calorie or protein numbers yourself and never propose anything not listed; when nothing fits, say the plan's checks do not allow it and why if you know. The app shows the change with the plan engine's numbers and asks the person; nothing changes unless they confirm, so never say it is done.
+Plan changes: only when PLAN CHANGES THAT PASS THE APP'S CHECKS is listed and the person asks to change any part of their protocol (body goal, pace, training days, session minutes, equipment, daily activity, diet type, training time, food budget, cooking time, water target, protein powder kind, or adding or removing a supplement by its id), or agrees after you suggest it, you may propose ONE of the listed changes with a last line "PLAN: <field>=<value>", copied exactly (for a list line "- field: a | b", write PLAN: field=b). When they ask for several, propose the most important one and say they can ask for the next after confirming. Something not listed (a food, a dose, a weekday, a region) cannot be changed from the chat: say where in the app they change it (Protocol, Build my plate, Supplements). Explain why in a sentence, using their records when PROGRESS is listed. Never state new calorie or protein numbers yourself and never propose anything not listed; when nothing fits, say the plan's checks do not allow it and why if you know. The app shows the change with the plan engine's numbers and asks the person; nothing changes unless they confirm, so never say it is done.
 Logging a meal: only when FOODS THEY CAN LOG is listed and the person asks to log what they ate, you may propose diary entries for one meal, one line per food at the very end: "MEAL: <breakfast|lunch|dinner|snack> <code> <grams>", codes copied exactly from FOODS THEY CAN LOG and grams as their best estimate (ask if unsure). Never use a food that is not listed. The app asks the person; never say it is logged.`;
 
 // Room for a full expert answer with tables (gpt-oss also spends some tokens reasoning); the llm default is 1,400.
@@ -231,15 +231,22 @@ async function confirmPlanChange(ctx: { supabase: Db; supabaseAdmin: Db; userCla
   if (!row) return fail(404, 'This change is no longer available.');
   const done = { planChanged: true, field: row.field, value: row.value };
   if (row.status === 'confirmed') return Response.json(done);
-  const latest = await ctx.supabase.from('generated_plans').select('input').eq('user_id', uid).order('created_at', { ascending: false }).limit(1).maybeSingle();
-  if (latest.error || !latest.data) return fail(503, 'Could not check this change. Try again in a moment.');
-  const check = checkPlanChange(latest.data.input, row.field, row.value);
+  const [latest, prof, diet] = await Promise.all([
+    ctx.supabase.from('generated_plans').select('input').eq('user_id', uid).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    ctx.supabase.from('profiles').select('water_target_ml').eq('id', uid).maybeSingle(),
+    ctx.supabase.from('dietary_profiles').select('budget_tier, cook_time, protein_powder, supplements, other_supplements').eq('user_id', uid).maybeSingle(),
+  ]);
+  if (latest.error || !latest.data || prof.error || diet.error) return fail(503, 'Could not check this change. Try again in a moment.');
+  const rows = { profile: prof.data as Record<string, unknown> | null, diet: diet.data as Record<string, unknown> | null };
+  const check = checkPlanChange(latest.data.input, row.field, row.value, rows);
   console.log(JSON.stringify({ event: 'plan_change_confirm', field: row.field, ok: check.ok, reason: check.ok ? null : check.reason }));
   if (!check.ok) return fail(409, PLAN_REFUSAL[check.reason], { reason: check.reason });
   if (check.from !== row.from_value) return fail(409, 'Your settings changed since this was suggested, so it was not made.', { reason: 'changed' });
-  const write = row.field === 'diet_pace'
-    ? await ctx.supabase.from('dietary_profiles').update({ diet_pace: row.value }).eq('user_id', uid)
-    : await ctx.supabase.from('profiles').update(row.field === 'weight_goal' ? { weight_goal: row.value } : { days_per_week: Number(row.value) }).eq('id', uid);
+  // Written with the person's own client (their row-level rights), like a save from Protocol.
+  const w = settingWrite(row.field as PlanField, row.value, rows);
+  const write = w.table === 'profiles'
+    ? await ctx.supabase.from('profiles').update(w.values).eq('id', uid)
+    : await ctx.supabase.from('dietary_profiles').update(w.values).eq('user_id', uid);
   if (write.error) return fail(500, 'The change could not be saved, try again');
   const upd = await ctx.supabaseAdmin.from('plan_changes').update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
     .eq('id', row.id).eq('user_id', uid).eq('status', 'proposed');
@@ -377,7 +384,7 @@ export default {
       // Optional: on a failed read (or before migration 20261023200000) the chat goes on without a summary.
       threadId ? ctx.supabase.from('coach_threads').select('summary, summary_upto').eq('id', threadId).maybeSingle() : Promise.resolve({ data: null, error: null }),
       ctx.supabase.from('coach_facts').select('id, category, fact, status').eq('user_id', uid).order('id', { ascending: true }).limit(500),
-      ctx.supabase.from('dietary_profiles').select('diet_type, restrictions, other_restrictions, budget_tier, budget_min_inr, budget_max_inr, health_conditions, whey_scoops, other_supplements, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals').eq('user_id', uid).maybeSingle(),
+      ctx.supabase.from('dietary_profiles').select('diet_type, restrictions, other_restrictions, budget_tier, budget_min_inr, budget_max_inr, health_conditions, whey_scoops, supplements, other_supplements, protein_powder, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals').eq('user_id', uid).maybeSingle(),
       ctx.supabase.from('workout_logs').select('performed_on, goal, duration_min').eq('user_id', uid).gte('performed_on', since).order('performed_on', { ascending: true }),
       ctx.supabase.from('handbook_chapters').select('title').order('id', { ascending: true }),
       // Food diary totals for food questions only (buildCoachContext decides). Optional: a failed read is reported to
@@ -457,7 +464,8 @@ export default {
         .then((r: { data: unknown; error: unknown }) => (r.error ? null : loggableFoods(diaryFoods((r.data ?? []) as Record<string, unknown>[]), terms)))
       : null;
     // Asking to change the body goal, pace or days: only options the plan engine accepts are listed (B5).
-    const planOffer = isPlanChangeTalk(message) && plan.data.input ? planChangeBlock(plan.data.input) : null;
+    const settings = { profile: profile.data as Record<string, unknown> | null, diet: diet.data as Record<string, unknown> | null };
+    const planOffer = isPlanChangeTalk(message) && plan.data.input ? planChangeBlock(plan.data.input, settings) : null;
     const swapText = (planOffer ? `\n\n${planOffer}` : '') + (today && rules ? `\n\n${swapBlock(swapOptions(today.ids, rules))}` : '') + (lighterDay ? `\n\n${LIGHTER_BLOCK}` : '') +
       (moveFrom ? `\n\n${moveBlock(moveFrom.restDays)}` : '') + (mealOffer ? `\n\n${mealBlock(mealOffer)}` : '');
 
@@ -491,6 +499,13 @@ export default {
     }
     if (cut) console.log(JSON.stringify({ event: 'context_trimmed', cuts: cut, tokens: estimateTokens(`${head}\n\n${first.text}`) }));
     let llm = await completeWithFallback(cfg, fallback, { system: `${head}\n\n${first.text}`, turns, deadline, maxTokens: REPLY_TOKENS });
+    if (!llm.ok && llm.upstreamStatus === 413) {
+      // The provider counts tokens its own way: still too large, so once more with every cut and only the question.
+      while (cut < cuts.length) cuts[cut++]();
+      ({ head, first } = assemble());
+      console.log(JSON.stringify({ event: 'context_trimmed', cuts: cut, retry413: true }));
+      llm = await completeWithFallback(cfg, fallback, { system: `${head}\n\n${first.text}`, turns: turns.slice(-1), deadline, maxTokens: REPLY_TOKENS });
+    }
     if (!llm.ok) {
       const status = statusForFailure(llm.kind);
       return fail(status, status === 504 ? 'Levlofit AI took too long, try again' : 'Assistant is busy, try again in a minute');
@@ -560,7 +575,7 @@ export default {
     // A plan line: kept only when options were listed, and checked again with the engine.
     const planAsk = [...raw.matchAll(PLAN_LINE)][0];
     raw = raw.replace(PLAN_LINE, '').trim();
-    const planCheck = planAsk ? (planOffer ? checkPlanChange(plan.data.input, planAsk[1], planAsk[2]) : null) : null;
+    const planCheck = planAsk ? (planOffer ? checkPlanChange(plan.data.input, planAsk[1], planAsk[2], settings) : null) : null;
     if (planAsk) console.log(JSON.stringify({ event: 'plan_change', ok: planCheck?.ok === true, reason: planCheck && !planCheck.ok ? planCheck.reason : planOffer ? null : 'not_offered' }));
 
     const learned = [...raw.matchAll(NOTE)].map((m) => m[1].trim()).filter(Boolean);

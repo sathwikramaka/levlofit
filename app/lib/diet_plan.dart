@@ -1520,6 +1520,7 @@ List<SupplementLine> supplementLines({
   required List<String> own,
   required int scoops,
   required bool plant,
+  String? powder,
 }) {
   String named(String part) => (advice.where((a) => (a['name'] as String).contains(part)).firstOrNull?['how'] as String?) ?? '';
   final creatine = named('Creatine');
@@ -1527,7 +1528,7 @@ List<SupplementLine> supplementLines({
   return [
     if (scoops > 0)
       (
-        name: plant ? 'Plant protein powder' : 'Whey protein',
+        name: powderName(powder, plant: plant),
         how: '$scoops ${scoops == 1 ? 'scoop' : 'scoops'} a day, about ${(scoopGrams * scoops).round()} g, in water. It is already in your meals above, '
             'after training on training days. Check your tub\'s label. Change it in Build my plate.',
       )
@@ -1553,11 +1554,18 @@ List<SupplementLine> supplementLines({
 /// [d], planned for the targets minus [scoops] shakes, with the shake added to the evening snack (after training for
 /// most people) and the day's totals and checks recomputed against the full [kcal] and [protein] targets.
 /// [plant]: dairy is excluded, so the shake is a plant protein.
-DayPlan addShake(DayPlan d, int scoops, {required double kcal, required double protein, required bool plant}) {
+/// The protein powder the person uses (dietary_profiles.protein_powder); without one, plant when dairy is excluded.
+const powderNames = {
+  'whey': 'Whey protein', 'plant': 'Plant protein powder', 'yeast': 'Yeast protein powder', 'soy': 'Soy protein powder',
+  'pea': 'Pea protein powder', 'egg': 'Egg white protein powder',
+};
+String powderName(String? kind, {required bool plant}) => powderNames[kind] ?? powderNames[plant ? 'plant' : 'whey']!;
+
+DayPlan addShake(DayPlan d, int scoops, {required double kcal, required double protein, required bool plant, String? powder}) {
   if (scoops <= 0) return d;
   final shake = (
-    code: plant ? 'supp:plant-protein' : 'supp:whey',
-    name: plant ? 'Plant protein powder' : 'Whey protein',
+    code: (powder ?? (plant ? 'plant' : 'whey')) == 'whey' ? 'supp:whey' : 'supp:plant-protein',
+    name: powderName(powder, plant: plant),
     grams: scoopGrams * scoops,
     unit: 'scoop',
     kcal: scoopKcal * scoops,

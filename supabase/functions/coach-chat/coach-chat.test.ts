@@ -1741,6 +1741,57 @@ test('B5 confirm: medical hold, stale settings and bad ids are refused and chang
   assert.equal((await post({ confirmPlanChange: 'drop table' })).status, 400);
 });
 
+test('protocol changes (2026-11-14): any setting, protein powder kind and supplements, each checked', async () => {
+  const { settingWrite, planChangeBlock } = await import('../_shared/plan-change.ts');
+  const rows = { profile: { water_target_ml: null }, diet: { budget_tier: 'medium', cook_time: 'plenty', protein_powder: null, supplements: ['protein_powder'], other_supplements: ['Vit D3 60k'] } };
+  // The owner's case: plant protein -> yeast protein.
+  const powder = checkPlanChange(b5Input, 'protein_powder', 'yeast', rows);
+  assert.ok(powder.ok && powder.preview === null && powder.from === null);
+  assert.deepEqual(settingWrite('protein_powder', 'yeast', rows), { table: 'dietary_profiles', values: { protein_powder: 'yeast' } });
+  // A powder the diet rules out is refused; egg for a vegetarian, whey for a vegan.
+  assert.equal((checkPlanChange(b5Input, 'protein_powder', 'egg', rows) as { reason: string }).reason, 'diet_conflict');
+  assert.equal((checkPlanChange(validateInput({ ...b5Input, diet: 'vegan' }), 'protein_powder', 'whey', rows) as { reason: string }).reason, 'diet_conflict');
+  // Engine settings carry the engine's numbers; plain settings do not.
+  const minutes = checkPlanChange(b5Input, 'minutes', '45', rows);
+  assert.ok(minutes.ok && minutes.preview !== null);
+  assert.deepEqual(settingWrite('session_minutes', '45'), { table: 'profiles', values: { session_minutes: 45 } });
+  assert.ok(checkPlanChange(b5Input, 'diet', 'non_vegetarian', rows).ok);
+  assert.deepEqual(settingWrite('water_target_ml', 'auto'), { table: 'profiles', values: { water_target_ml: null } });
+  assert.equal((checkPlanChange(b5Input, 'water', 'auto', rows) as { reason: string }).reason, 'unchanged');
+  assert.equal((checkPlanChange(b5Input, 'water', '9000', rows) as { reason: string }).reason, 'unknown');
+  assert.equal((checkPlanChange(b5Input, 'budget', 'medium', rows) as { reason: string }).reason, 'unchanged');
+  // Supplements: vitamin D is already on their own list (by name), omega-3 is not; creatine goes to the plan list.
+  assert.equal((checkPlanChange(b5Input, 'supplement_add', 'vitamin_d', rows) as { reason: string }).reason, 'unchanged');
+  assert.ok(checkPlanChange(b5Input, 'supplement_remove', 'vitamin_d', rows).ok);
+  assert.deepEqual(settingWrite('supplement_remove', 'vitamin_d', rows).values, { supplements: ['protein_powder'], other_supplements: [] });
+  assert.ok(checkPlanChange(b5Input, 'supplement_add', 'omega3', rows).ok);
+  assert.deepEqual(settingWrite('supplement_add', 'creatine', rows).values, { supplements: ['protein_powder', 'creatine'] });
+  assert.equal((checkPlanChange(b5Input, 'supplement_add', 'snake_oil', rows) as { reason: string }).reason, 'unknown');
+  // A medical hold allows shorter sessions, never longer ones.
+  const held = validateInput({ ...heldInput, sessionMinutes: 45 });
+  assert.equal((checkPlanChange(held, 'minutes', '60', rows) as { reason: string }).reason, 'medical_hold');
+  assert.ok(checkPlanChange(held, 'minutes', '30', rows).ok);
+  // The block lists every setting on one short line each.
+  const block = planChangeBlock(b5Input, rows)!;
+  assert.match(block, /- protein_powder: whey \| plant \| yeast \| soy \| pea/);
+  assert.doesNotMatch(block, /protein_powder:[^\n]*egg/);
+  assert.ok(block.length < 4000, `block is ${block.length} characters`);
+});
+
+test('protocol changes: the yeast protein request is proposed and, on confirm, written by the server', async () => {
+  useDb(tables({ generated_plans: planRow(b5Input), plan_changes: { data: null, nextId: 88 } }));
+  fakeLlm(['Yeast protein counts the same toward your protein target.\nPLAN: protein_powder=yeast']);
+  const res = await post({ message: "I'm not using plant protein, I'm using yeast protein, so change my protocol to yeast protein.", threadId: THREAD });
+  const out = await res.json();
+  assert.doesNotMatch(out.reply, /PLAN:/);
+  assert.equal(out.planChange.field, 'protein_powder');
+  assert.equal(out.planChange.value, 'yeast');
+  useDb(tables({ generated_plans: planRow(b5Input), plan_changes: { data: { id: 88, field: 'protein_powder', value: 'yeast', from_value: null, status: 'proposed' } } }));
+  const ok = await post({ confirmPlanChange: 88 });
+  assert.equal(ok.status, 200);
+  assert.deepEqual(ops.find((o: any) => o.table === 'dietary_profiles' && o.op === 'update')?.args, { protein_powder: 'yeast' });
+});
+
 test('B6: the coach knows when they can train and what they can cook (food talk only for the kitchen)', async () => {
   const { buildCoachContext } = await import('../_shared/coach-context.ts');
   const inputs = {

@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'food_diary.dart' show isoDay;
 import 'main.dart';
+import 'supplement_guide.dart' show suppGuide;
 import 'theme.dart';
 
 typedef SwapProposal = ({int id, String day, String fromId, String fromName, String toId, String toName});
@@ -190,12 +191,32 @@ PlanChangeProposal? planChangeFromJson(Object? j) {
   );
 }
 
-const planFieldNames = {'weight_goal': 'Body goal', 'diet_pace': 'Pace', 'days_per_week': 'Training days a week'};
+const planFieldNames = {
+  'weight_goal': 'Body goal', 'diet_pace': 'Pace', 'days_per_week': 'Training days a week', 'session_minutes': 'Minutes a session',
+  'equipment': 'Equipment', 'daily_activity': 'Daily activity', 'diet_type': 'Diet', 'training_time': 'When you train',
+  'budget_tier': 'Food budget', 'cook_time': 'Cooking time', 'water_target_ml': 'Daily water target', 'protein_powder': 'Protein powder',
+  'supplement_add': 'Add supplement', 'supplement_remove': 'Remove supplement',
+};
 const _planValueNames = {
   'cut': 'Cut (lose fat)', 'bulk': 'Bulk (gain muscle)', 'recomp': 'Recomposition', 'maintain': 'Maintain', 'general': 'General fitness',
   'easy': 'Easy', 'balanced': 'Balanced', 'hard': 'Hard',
+  'none': 'None', 'home': 'Home dumbbells', 'gym': 'Gym',
+  'sedentary': 'Mostly sitting', 'light': 'Light', 'active': 'On my feet', 'very_active': 'Very active',
+  'vegan': 'Vegan', 'vegetarian': 'Vegetarian', 'eggitarian': 'Eggitarian', 'non_vegetarian': 'Non-veg',
+  'early_morning': 'Early morning', 'morning': 'Morning', 'midday': 'Midday', 'evening': 'Evening', 'night': 'Night', 'varies': 'It varies',
+  'low': 'Under Rs 4,500 a month', 'medium': 'Rs 4,500 to 9,000 a month', 'high': 'Over Rs 9,000 a month',
+  'plenty': 'I can plan ahead', 'short': 'About 30 minutes', 'minimal': 'Under 10 minutes', 'auto': 'Auto',
+  'whey': 'Whey', 'plant': 'Plant', 'yeast': 'Yeast', 'soy': 'Soy', 'pea': 'Pea', 'egg': 'Egg white',
 };
-String planValueName(String field, String? v) => v == null ? 'not set' : field == 'days_per_week' ? '$v ${v == '1' ? 'day' : 'days'}' : _planValueNames[v] ?? v;
+String planValueName(String field, String? v) => v == null
+    ? (field == 'protein_powder' ? 'by your diet' : 'not set')
+    : switch (field) {
+        'days_per_week' => '$v ${v == '1' ? 'day' : 'days'}',
+        'session_minutes' => '$v min',
+        'water_target_ml' => v == 'auto' ? 'Auto' : '$v ml',
+        'supplement_add' || 'supplement_remove' => suppGuide.items.where((s) => s.id == v).firstOrNull?.name ?? v.replaceAll('_', ' '),
+        _ => _planValueNames[v] ?? v,
+      };
 
 /// Confirms on the server (which checks it again and writes the setting), then rebuilds the plan with generate-plan
 /// and refreshes the app. Null when done, else the reason to show.
@@ -234,7 +255,9 @@ class PlanChangeCard extends StatelessWidget {
     return _ActionCard(
       key: ValueKey('plan-change-${p.id}'),
       label: 'CHANGE YOUR PLAN?',
-      line: '${planFieldNames[p.field]}: ${planValueName(p.field, p.from)} → ${planValueName(p.field, p.value)}',
+      line: p.field.startsWith('supplement_')
+          ? '${planFieldNames[p.field]}: ${planValueName(p.field, p.value)}'
+          : '${planFieldNames[p.field]}: ${planValueName(p.field, p.from)} → ${planValueName(p.field, p.value)}',
       note: '${numbers.isEmpty ? '' : 'New plan: $numbers, worked out by the plan engine. '}Your plan is rebuilt only if you tap Change plan.',
       confirmText: 'Change plan',
       doneText: 'Done. Your plan is rebuilt.',

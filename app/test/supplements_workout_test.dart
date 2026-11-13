@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:levlo/diet_plan.dart';
 import 'package:levlo/diet_view.dart';
+import 'package:levlo/swaps.dart' show planChangeFromJson, planValueName;
 
 import 'diet_plan_test.dart' show foodsForTest;
 
@@ -18,6 +19,18 @@ void main() {
       expect(effectiveScoops(saved: 0, supplements: ['protein_powder'], conditions: ['kidney']), 0);
       expect(effectiveScoops(saved: 0, supplements: ['protein_powder'], conditions: ['pregnancy']), 0);
     });
+  });
+
+  test('protein powder kind names the shake and the supplement line; AI change cards read every protocol field', () {
+    expect(powderName('yeast', plant: true), 'Yeast protein powder');
+    expect(powderName(null, plant: true), 'Plant protein powder');
+    expect(powderName(null, plant: false), 'Whey protein');
+    expect(supplementLines(advice: [], chosen: [], own: [], scoops: 1, plant: true, powder: 'yeast').single.name, 'Yeast protein powder');
+    expect(planChangeFromJson({'id': 1, 'field': 'protein_powder', 'value': 'yeast', 'from': null}), isNotNull);
+    expect(planChangeFromJson({'id': 1, 'field': 'energy_kcal', 'value': '1200'}), isNull, reason: 'targets are never a change');
+    expect(planValueName('protein_powder', null), 'by your diet');
+    expect(planValueName('session_minutes', '45'), '45 min');
+    expect(planValueName('water_target_ml', 'auto'), 'Auto');
   });
 
   group('supplement lines', () {

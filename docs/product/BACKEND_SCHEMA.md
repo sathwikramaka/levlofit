@@ -1,6 +1,6 @@
 # Levlofit: Backend Schema
 
-Last updated: 2026-11-13, read from the live project. Latest applied: `20261113100000_handbook_book_closing` (2026-11-13: same 77 rows, the last chapter retitled "Putting it all together" with a closing; data only). Latest migration: the same.
+Last updated: 2026-11-13, read from the live project. Latest applied: `20261113100000_handbook_book_closing` (2026-11-13: same 77 rows, the last chapter retitled "Putting it all together" with a closing; data only). Latest migration: `20261114100000_protocol_changes` (2026-11-14, not applied: `plan_changes` takes every Protocol setting, `dietary_profiles.protein_powder` added).
 Keep current: see "Keeping these documents current" in `CLAUDE.md`; a test fails when a migration or table is missing here.
 Source of truth: `supabase/migrations/`. Never change the schema any other way.
 
@@ -16,7 +16,7 @@ Source of truth: `supabase/migrations/`. Never change the schema any other way.
 | Table | Columns | Notes |
 |---|---|---|
 | `profiles` | id, display_name, birth_year, sex, height_cm, weight_kg, weight_goal, equipment, equipment_items, onboarding_complete, created_at, body_type, waist_cm, days_per_week, session_minutes, daily_activity, sleep_hours, health_flags, injuries, water_target_ml, avatar, training_days, training_time | Own row. `onboarding_complete` only through `save_generated_plan` |
-| `dietary_profiles` | user_id, diet_type, restrictions, other_restrictions, supplements, other_supplements, budget_tier, budget_min_inr, budget_max_inr, diet_pace, cuisine_region, health_conditions, whey_scoops, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals | Own row. `supplements` is protein_powder or creatine; `other_supplements` is free text, 10 at most |
+| `dietary_profiles` | user_id, diet_type, restrictions, other_restrictions, supplements, other_supplements, protein_powder, budget_tier, budget_min_inr, budget_max_inr, diet_pace, cuisine_region, health_conditions, whey_scoops, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals | Own row. `supplements` is protein_powder or creatine; `other_supplements` is free text, 10 at most |
 | `user_goals` | user_id, goal, experience, priority | Own rows, 1 to 6. Replace through `replace_user_goals` |
 | `goal_levels` | user_id, goal, level, assessed_at | Own rows |
 | `reminder_prefs` | user_id, enabled, workout_at, water_every_h, water_from, water_to, weigh_in_weekday, updated_at | Own row |
@@ -27,7 +27,7 @@ Source of truth: `supabase/migrations/`. Never change the schema any other way.
 | Table | Columns | Notes |
 |---|---|---|
 | `generated_plans` | id, user_id, engine_version, input, plan, created_at | Read own; written by the server. History kept |
-| `plan_changes` | id, user_id, field, value, from_value, status, created_at, confirmed_at | Coach proposals; server-written |
+| `plan_changes` | id, user_id, field, value, from_value, status, created_at, confirmed_at | Coach proposals for any Protocol setting (goal, pace, days, minutes, equipment, activity, diet, training time, budget, cooking time, water, protein powder, supplement add or remove); server-written |
 | `exercise_swaps` | id, user_id, day, from_exercise, to_exercise, status, created_at, confirmed_at | Coach proposals |
 | `session_changes` | id, user_id, day, kind, to_day, status, created_at, confirmed_at | Lighter day, moved session |
 

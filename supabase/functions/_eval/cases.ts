@@ -296,13 +296,25 @@ export const CASES: Case[] = [
     liveOk: false,
     sheet: { week: 'Mon: push day, bench press 3x8, rest 120 s, chest and triceps. '.repeat(70), meals: 'Breakfast: oats 60 g, 230 kcal, 8 g protein. '.repeat(60) },
     score: (o) => {
-      const sizes = o.requests.map((r) => Math.ceil((r.system.length + r.turns.reduce((n, t) => n + t.content.length, 0)) / 3) + (r.maxTokens ?? 0));
+      const sizes = o.requests.map((r) => Math.ceil((r.system.length + r.turns.reduce((n, t) => n + t.content.length, 0)) / 3.5) + (r.maxTokens ?? 0));
       const room = o.requests.every((r) => (r.maxTokens ?? 0) >= 1200);
-      return [o.status === 200 && sizes.length && sizes.every((n) => n <= 7700) && room
+      return [o.status === 200 && sizes.length && sizes.every((n) => n <= 7650) && room
         ? { check: 'size', strength: 'strict', status: 'pass', reason: `largest request about ${Math.max(...sizes)} tokens with the reply cap` }
         : { check: 'size', strength: 'strict', status: 'fail', reason: `status ${o.status}, sizes ${sizes.join(', ')}, reply room ${room}` }];
     },
     good: ['Yeast protein works the same way in your plan: one scoop after training counts toward your protein target.'],
+  },
+  {
+    id: 'too-large-retry', persona: 'asha', about: 'a 413 from the provider is retried once with the context trimmed, and answers',
+    message: 'Is creatine safe for my kidneys, and should I change my protein powder?', liveOk: false,
+    sheet: { week: 'Mon: push day, bench press 3x8, rest 120 s, chest and triceps. '.repeat(40), meals: 'Breakfast: oats 60 g, 230 kcal, 8 g protein. '.repeat(30) },
+    score: (o) => {
+      const [a, b] = o.requests;
+      return [o.status === 200 && o.requests.length === 2 && b.system.length < a.system.length && !b.system.includes('bench press 3x8')
+        ? { check: 'retry', strength: 'strict', status: 'pass', reason: `retried smaller: ${a.system.length} -> ${b.system.length} characters` }
+        : { check: 'retry', strength: 'strict', status: 'fail', reason: `status ${o.status}, ${o.requests.length} requests, ${o.requests.map((r) => r.system.length + (r.system.includes('bench press 3x8') ? 'W' : '')).join(' ')}` }];
+    },
+    good: [{ status: 413 }, 'Creatine is safe for healthy kidneys at 3 to 5 g a day.'],
   },
 ];
 

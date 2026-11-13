@@ -1406,7 +1406,7 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
     try {
       final [p, d] = await Future.wait<dynamic>([
         supabase.from('profiles').select('days_per_week, session_minutes, equipment, weight_goal, daily_activity, water_target_ml, training_days, training_time').eq('id', _uid).single(),
-        supabase.from('dietary_profiles').select('diet_type, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, diet_pace, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals').eq('user_id', _uid).single(),
+        supabase.from('dietary_profiles').select('diet_type, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, diet_pace, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals, protein_powder').eq('user_id', _uid).single(),
       ]);
       if (!mounted) return;
       setState(() {
@@ -1601,6 +1601,8 @@ class _ProtocolScreenState extends State<_ProtocolScreen> {
         Text('FOOD', style: monoLabel(context)),
         const SizedBox(height: 10),
         _chips<String>('Diet', null, d['diet_type'] as String?, const [('vegan', 'Vegan'), ('vegetarian', 'Vegetarian'), ('eggitarian', 'Eggitarian'), ('non_vegetarian', 'Non-veg')], (v) => d['diet_type'] = v),
+        _chips<String?>('Protein powder', 'The kind on your tub; Diet names it. Scoops are set in Build my plate.', d['protein_powder'] as String?,
+            [(null, 'By my diet'), for (final e in powderNames.entries) (e.key, e.value.replaceAll(' powder', ''))], (v) => d['protein_powder'] = v),
         _chips<String>('Food budget', 'What you can spend on food in a month. The lowest band keeps to dals, grains, eggs, milk and seasonal produce; the middle adds paneer, chicken and fish.',
             d['budget_tier'] as String?, [for (final (k, title, _) in budgetOptions) (k, title), ('custom', 'My own amount')], (v) => d['budget_tier'] = v),
         AnimatedSize(

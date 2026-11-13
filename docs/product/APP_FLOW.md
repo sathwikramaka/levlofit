@@ -1,6 +1,6 @@
 # Levlofit: App Flow
 
-Last updated: 2026-11-13, for release 1.1.2. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-14, for release 1.1.2. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. First run
 
@@ -87,7 +87,7 @@ targets and protein foods ─> recipes with AI.
   where the phone supports them, then rank, rating and the 66-day challenge.
 - **Calendar:** tap a day to log or remove training, or edit its length, effort and pain.
 - **Protocol:** days, minutes, weekdays, time, equipment, goal, activity, water; saving rebuilds the plan.
-- **Coach:** chats, memory, edit and regenerate; proposals (swap, lighter day, moved session, plan change, meal log) apply
+- **Coach:** chats, memory, edit and regenerate; proposals (swap, lighter day, moved session, plan change for any Protocol setting or supplement, meal log) apply
   only after the person confirms.
 - **Food diary:** day, meal, search or barcode, grams with a raw-weight warning; edit, remove, recipes.
 - **Settings** (its own row in More, not inside Profile): theme, during a workout (screen on, rest, sound, flash, animations), Levlofit AI button, (light by default), support, feedback, glossary, notifications (with recap, check-in and meal switches), data use, privacy, licences.

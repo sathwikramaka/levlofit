@@ -203,9 +203,11 @@ v13, generate-plan v21, coach-chat v22, body-check v1 (last update 2026-10-28; s
 Because history is not recorded, `supabase db push` must never be run against production; apply new files with
 tools/apply_prod.ps1 or `apply_migration`, one at a time, after a backup.
 
-## Pending production items (0), updated 2026-11-13
+## Pending production items (1), updated 2026-11-14
 
-None.
+- 20261114100000_protocol_changes: widens the `plan_changes` field check to every Protocol setting, adds a value-format
+  check and `dietary_profiles.protein_powder`. Additive. Apply BEFORE the new coach-chat and app (both read the column).
+  Owner approval needed.
 
 Applied 2026-11-07 (kept for the record):
 

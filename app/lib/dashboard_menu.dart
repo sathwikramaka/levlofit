@@ -699,7 +699,7 @@ class _DietScreenState extends State<_DietScreen> {
     try {
       final [rows, diet] = await Future.wait<dynamic>([
         supabase.from('foods').select('code, name, tags, kcal, protein_g, carb_g, fat_g, fiber_g').inFilter('code', plannerCodes),
-        supabase.from('dietary_profiles').select('diet_type, diet_pace, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, restrictions, supplements, other_supplements, health_conditions, whey_scoops, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
+        supabase.from('dietary_profiles').select('diet_type, diet_pace, budget_tier, budget_min_inr, budget_max_inr, cuisine_region, restrictions, supplements, other_supplements, protein_powder, health_conditions, whey_scoops, kitchen, cook_time, kitchen_equipment, kitchen_other, mess_meals').eq('user_id', supabase.auth.currentUser!.id).maybeSingle(),
       ]);
       final tier = diet?['budget_tier'] as String?;
       final hi = diet?['budget_max_inr'] as int?;
@@ -777,7 +777,7 @@ class _DietScreenState extends State<_DietScreen> {
           const Padding(padding: EdgeInsets.only(top: 60), child: Center(child: LevloMark(size: 48, animate: true))),
       ]);
     }
-    final days = [for (final d in week) addShake(d, scoops, kcal: kcal, protein: protein, plant: excluded.contains('dairy'))];
+    final days = [for (final d in week) addShake(d, scoops, kcal: kcal, protein: protein, plant: excluded.contains('dairy'), powder: _choices['protein_powder'] as String?)];
     final plan = days[_day];
     final swaps = _swapsFor(key, _day);
     // A swapped meal is the same meal from another day of this week: same templates, diet, budget and kitchen rules.
@@ -798,6 +798,7 @@ class _DietScreenState extends State<_DietScreen> {
       own: ((_choices['other_supplements'] as List?) ?? const []).cast<String>(),
       scoops: scoops,
       plant: excluded.contains('dairy'),
+      powder: _choices['protein_powder'] as String?,
     );
     final dayMeals = training?.meals ?? meals;
     final own = ((_choices['other_supplements'] as List?) ?? const []).cast<String>();

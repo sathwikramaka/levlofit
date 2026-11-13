@@ -111,9 +111,9 @@ export type LlmDeps = {
 /** A chat request. [deadline] (epoch ms) is a request-wide limit shared by every call the handler makes. */
 export type LlmRequest = { system: string; turns: Turn[]; temperature?: number; maxTokens?: number; deadline?: number };
 
-/** Rough token count, erring high: 3 characters a token (prose runs near 3.8, the JSON context nearer 3.3; a 3.5
- * estimate let a 413 through on 2026-11-13). */
-export const estimateTokens = (text: string) => Math.ceil(text.length / 3) + 4;
+/** Rough token count: 3.5 characters a token (the live prompt runs near 3.8, JSON-heavy context nearer 3.3). A
+ * request the provider still finds too large (413) is retried once by coach-chat with its context trimmed. */
+export const estimateTokens = (text: string) => Math.ceil(text.length / 3.5) + 4;
 
 /** Least reply tokens worth asking for; below this the oldest turns are dropped instead. */
 export const MIN_REPLY_TOKENS = 1200;
