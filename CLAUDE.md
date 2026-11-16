@@ -2,7 +2,7 @@
 
 ## Android releases
 
-- Any app change that users should get ships with `tools/release_android.sh` (Git Bash, repo root): it bumps the version past the live `/version.json`, builds the signed APK, deploys the site, checks it, then sets the `MIN_APP_BUILD` secret so every older version is told to update (`MIN_BUILD=<n>` to keep older builds allowed). Deploying is outward-facing, so ask the owner before running it. Then commit the bump and add a dated section to `docs/release/RELEASE_RECORD.md`.
+- Any app change that users should get ships with `tools/release_android.sh` (Git Bash, repo root): it bumps the version past the live `/version.json`, builds the signed APK, deploys the site, checks it, then sets the `MIN_APP_BUILD` secret so every older version is told to update (`MIN_BUILD=<n>` to keep older builds allowed), commits the bump, pushes the branch and publishes the APK as GitHub release `vX.Y.Z`. Every release must be on GitHub too (owner rule 2026-11-16). Deploying is outward-facing, so ask the owner before running it. Then add a dated section to `docs/release/RELEASE_RECORD.md`.
 
 ## Keeping these documents current
 

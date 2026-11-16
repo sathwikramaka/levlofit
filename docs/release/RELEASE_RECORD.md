@@ -15,6 +15,7 @@ One row per check of what users actually get. Add a new dated section for every 
 | APK SHA-256 | e1617a87943c0a299b5c08413a75264c94801502051368cfa7eca5d43cbd1c86, equal on the live download and /version.json | sha256sum of the live file |
 | Website | Cloudflare Pages deployment 134422be; /version.json = 1.1.3 build 18, min_build 18 | curl |
 | Secret | MIN_APP_BUILD = 18, set by the release script | script output |
+| GitHub | Release v1.1.3 (Latest) on 2026-11-16 with levlofit-1.1.3.apk, digest sha256:e1617a87... equal to the site. The remote history had been rewritten (same contents, new hashes); the 1.1.2 and 1.1.3 commits were replayed on top of it with identical trees and pushed without force | gh release view |
 | Not verified | Nothing on a real phone: a protocol change through the chat card, the powder name on Diet, exercise thumbnails; the live model choosing the PLAN line | - |
 
 ## 2026-11-13: release 1.1.2, AI long-question fix, vitamin D timing, activity since sign-up, exercise GIFs, Handbook closing (owner-approved: APK, website, MIN_APP_BUILD secret, Handbook migration with backup, coach-chat deploy)

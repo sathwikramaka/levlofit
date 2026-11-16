@@ -80,8 +80,9 @@ Keep evidence labels apart: automated, CI, production, real device. Never claim 
 
 `tools/release_android.sh` (Git Bash, repo root) bumps past the live version, builds the signed APK, deploys the site,
 checks `/version.json`, sets `MIN_APP_BUILD` so older builds are told to update (`MIN_BUILD=<n>` to allow them).
-Build from a clean worktree when the folder holds uncommitted work. Then commit the bump and add a dated section to
-`docs/release/RELEASE_RECORD.md`. Order: migrations, then functions, then app.
+It then commits the bump, pushes the branch (never forced) and publishes the APK as GitHub release `vX.Y.Z` with
+`gh` (owner rule 2026-11-16). Build from a clean worktree when the folder holds uncommitted work. Then add a dated
+section to `docs/release/RELEASE_RECORD.md`. Order: migrations, then functions, then app.
 
 Production changes need the owner's approval each time (`CLAUDE.md`). Migrations only through `supabase/migrations/`.
 
