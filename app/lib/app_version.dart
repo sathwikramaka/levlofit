@@ -1,4 +1,4 @@
 // The app's version, kept equal to pubspec.yaml's `version:` (test/app_version_test.dart checks it). Used by the
 // update notice and error reports, without a plugin to read the installed package.
-const appVersion = '1.1.3';
-const appBuild = 18;
+const appVersion = '1.1.4';
+const appBuild = 19;
