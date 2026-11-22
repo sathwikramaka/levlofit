@@ -1,6 +1,6 @@
 # Levlofit: Technical Requirements Document
 
-Last updated: 2026-11-14, for release 1.1.3. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-22, for release 1.1.4. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. Architecture
 

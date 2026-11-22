@@ -2,6 +2,21 @@
 
 One row per check of what users actually get. Add a new dated section for every release; never edit an old one. Older entries name paths from before docs were sorted into folders (2026-11-07); see `docs/README.md`.
 
+## 2026-11-22: release 1.1.4, Workout animations, search as you type, AI equipment change fix (owner-approved: coach-chat deploy, APK, website, MIN_APP_BUILD secret, GitHub release)
+
+| What | Value | How checked |
+|---|---|---|
+| Source | dee257a and a04c6ab (website Next.js 16.4.6) plus the version bump d76e356 | git log |
+| What changed | Workout move list shows each move's animation; Handbook and Exercise library search as you type (no Enter), library drops pages from an older query; AI equipment change saves (1.1.3 wrote null into NOT NULL `equipment_items`); website Next.js 16.4.3 to 16.4.6 security patch (the build refused 16.4.3) | git log 03dda09..HEAD |
+| Checks before release | flutter analyze clean, 683 pass + 1 skip; functions node 289/0, offline eval 87/0 strict, tsc and deno check clean; website lint, tsc, build, npm audit 0 production vulnerabilities; API check on a throwaway stack (since deleted): sign-up, onboarding, plan, 13 protocol-change confirms, account deletion, feedback | tools/verify.sh, scripted API run |
+| Function | coach-chat v51 ACTIVE (v50 was deployed outside this session after 1.1.3); unauthenticated call 401 | supabase functions list, curl |
+| Android APK | com.levlofit.app 1.1.4, build 19, 14,021,635 bytes | size of the live file |
+| APK SHA-256 | 63956f7d179b255733ade5ee804a3ab65d9f1fae830563b44f9cd7c1f84ab444, equal on the live download, /version.json and the GitHub asset | sha256sum, gh release view |
+| Website | Cloudflare Pages deployment ea80a52b; /version.json = 1.1.4 build 19, min_build 19 | curl |
+| Secret | MIN_APP_BUILD = 19, set by the release script | script output |
+| GitHub | Release v1.1.4 (Latest) on d76e356, made by the release script | gh release list |
+| Not verified | Nothing on a real phone: Workout animations, search as you type, an equipment change through the chat card | - |
+
 ## 2026-11-14: release 1.1.3, Levlofit AI changes any protocol setting, protein powder kind, exercise thumbnails (owner-approved: migration, coach-chat deploy, APK, website, MIN_APP_BUILD secret)
 
 | What | Value | How checked |

@@ -1,6 +1,6 @@
 # Levlofit: Implementation Plan
 
-Last updated: 2026-11-22, for release 1.1.3. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-22, for release 1.1.4. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 Detail: `docs/PROGRESS.md` (log), `docs/release/RELEASE_RECORD.md` (what shipped), `docs/archive/ROADMAP_AUDIT_2026-11-03.md` (roadmap).
 
 Status labels are kept apart: Source, Automated, CI, Deployed, Production verified, Real device.
@@ -21,7 +21,7 @@ Status labels are kept apart: Source, Automated, CI, Deployed, Production verifi
 | Handbook update: 77 chapters with figures and the wiki's facts in own words, healthy plate check on Diet | Deployed in 1.1.1, migration applied and coach-chat v45 2026-11-12 |
 | Owner report 2026-11-13: long AI questions failed (Groq 8K-token limit; requests now fitted), vitamin D with breakfast, activity map since sign-up without overlapping labels, exercise animations for moves missing from the catalogue, a closing to the Handbook | Deployed in 1.1.2, migration applied and coach-chat v47 2026-11-13; context trimming coach-chat v48 2026-11-14 |
 | Owner request 2026-11-14: Levlofit AI may change any Protocol setting, protein powder kind (new column) and supplements, each confirmed on a card; Protocol shows the powder; 413 retried with context trimmed | Deployed in 1.1.3, migration applied and coach-chat v49 2026-11-14 |
-| Owner report 2026-11-22: Workout move list shows each move's animation; Handbook and Exercise library search as you type (library results no longer mixed from an older query); AI equipment change no longer fails to save (`equipment_items` is never null); full API check of every protocol change, account deletion and feedback on a throwaway stack | In branch, not released: coach-chat deploy and app release |
+| Owner report 2026-11-22: Workout move list shows each move's animation; Handbook and Exercise library search as you type (library results no longer mixed from an older query); AI equipment change no longer fails to save (`equipment_items` is never null); full API check of every protocol change, account deletion and feedback on a throwaway stack | Deployed in 1.1.4, coach-chat v51 2026-11-22 |
 | Encrypted Storage backup job and restore drill | Source and drill only: **inactive, see below** |
 
 ## 2. Next, in order
