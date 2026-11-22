@@ -1,6 +1,6 @@
 # Levlofit: App Flow
 
-Last updated: 2026-11-14, for release 1.1.3. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
+Last updated: 2026-11-22, for release 1.1.3. Keep current: see "Keeping these documents current" in `CLAUDE.md`.
 
 ## 1. First run
 
@@ -76,8 +76,9 @@ targets and protein foods ─> recipes with AI.
 
 ## 6. Other flows
 
-- **Workout:** day picker (today first) ─> that day's plan sheet: warm-up list, moves with sets, reps and rest, Start
+- **Workout:** day picker (today first) ─> that day's plan sheet: warm-up list, moves each with its animation (tap for the move's page), sets, reps and rest, Start
   (today) or View session; then goals and levels, edit goals, level check (a pass rebuilds the plan), "Your path" folded.
+- **Search:** Handbook and Exercise library search as you type (no Enter needed); the Handbook searches titles, summaries and chapter text on the phone.
 - **Exercise library filters:** each matching move lists with its animation thumbnail, name, muscles, difficulty and equipment.
 - **Exercise page:** the move's animation by its catalogue id even when the catalogue row is missing, then the guide.
 - **Handbook chapter:** figures drawn in the page (no images); ends with Previous chapter and Next chapter, each naming its chapter.

@@ -203,6 +203,8 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
   String? _part;
   String? _group; // muscle group open in the Levlofit moves guide
   bool _loading = false, _done = false, _failed = false;
+  int _gen = 0; // bumped on every new search or filter, so a page for an older one is dropped
+  Timer? _typing; // searches a moment after typing stops
 
   @override
   void initState() {
@@ -216,13 +218,17 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
 
   @override
   void dispose() {
+    _typing?.cancel();
     _search.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
   void _reset({String? query, String? part, bool clearPart = false}) {
+    _typing?.cancel();
+    _gen++;
     setState(() {
+      _loading = false;
       _query = query ?? _query;
       _part = clearPart ? null : (part ?? _part);
       _items.clear();
@@ -234,21 +240,22 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
 
   Future<void> _more() async {
     if (_loading || _done) return;
+    final gen = _gen;
     setState(() => _loading = true);
     try {
       var req = supabase.from('exercises').select('id, name, gif_url, target_muscles').eq('has_media', true);
       if (_part != null) req = req.contains('body_parts', [_part!]);
       if (_query.trim().isNotEmpty) req = req.textSearch('search', _query.trim(), config: 'english', type: TextSearchType.websearch);
       final rows = await req.order('name', ascending: true).range(_items.length, _items.length + _page - 1);
-      if (!mounted) return;
+      if (!mounted || gen != _gen) return; // the search or filter changed while this page loaded
       setState(() {
         _items.addAll(List<_Json>.from(rows));
         _done = rows.length < _page;
       });
     } catch (_) {
-      if (mounted) setState(() => _failed = true);
+      if (mounted && gen == _gen) setState(() => _failed = true);
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && gen == _gen) setState(() => _loading = false);
     }
   }
 
@@ -305,8 +312,12 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                 controller: _search,
                 textInputAction: TextInputAction.search,
                 onSubmitted: (v) => _reset(query: v),
+                // Results follow the typing, a moment after it stops (no need to press search).
                 onChanged: (v) {
-                  if (v.isEmpty && _query.isNotEmpty) _reset(query: '');
+                  _typing?.cancel();
+                  _typing = Timer(const Duration(milliseconds: 350), () {
+                    if (mounted && v.trim() != _query.trim()) _reset(query: v);
+                  });
                 },
                 decoration: InputDecoration(
                   hintText: 'Search: squat, biceps, dumbbell',

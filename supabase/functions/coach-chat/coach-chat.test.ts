@@ -1755,6 +1755,8 @@ test('protocol changes (2026-11-14): any setting, protein powder kind and supple
   const minutes = checkPlanChange(b5Input, 'minutes', '45', rows);
   assert.ok(minutes.ok && minutes.preview !== null);
   assert.deepEqual(settingWrite('session_minutes', '45'), { table: 'profiles', values: { session_minutes: 45 } });
+  // profiles.equipment_items is NOT NULL: a new equipment clears the kit list to empty, never to null (bug in 1.1.3).
+  assert.deepEqual(settingWrite('equipment', 'gym'), { table: 'profiles', values: { equipment: 'gym', equipment_items: [] } });
   assert.ok(checkPlanChange(b5Input, 'diet', 'non_vegetarian', rows).ok);
   assert.deepEqual(settingWrite('water_target_ml', 'auto'), { table: 'profiles', values: { water_target_ml: null } });
   assert.equal((checkPlanChange(b5Input, 'water', 'auto', rows) as { reason: string }).reason, 'unchanged');

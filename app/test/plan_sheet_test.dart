@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:levlo/dashboard.dart' show CoachFab;
 import 'package:levlo/diet_view.dart';
+import 'package:levlo/exercises.dart' show ExerciseGif;
 import 'package:levlo/main.dart' show prefs;
 import 'package:levlo/session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,6 +49,9 @@ void main() {
     expect(find.text('02'), findsOneWidget);
     expect(find.textContaining('rest 2 min'), findsOneWidget, reason: 'a main lift rests 120 s');
     expect(find.textContaining('rest 90 s'), findsOneWidget);
+    // Each move shows its animation beside its name (owner report 2026-11-22: names only), and opens its page.
+    expect(find.byType(ExerciseGif), findsNWidgets(2));
+    expect(find.bySemanticsLabel(RegExp(r'open how to do it')), findsNWidgets(2));
   });
 
   testWidgets('floating coach: a round icon with no text label, its name spoken and on long press', (tester) async {

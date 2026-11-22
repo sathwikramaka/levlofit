@@ -658,7 +658,8 @@ class SessionPlanList extends StatelessWidget {
     return FutureBuilder(
       future: loadMoves(check.ids),
       builder: (context, snap) {
-        final names = {for (final m in snap.data?.found ?? const <Map<String, dynamic>>[]) m['id'] as String: moveName(m)};
+        final found = {for (final m in snap.data?.found ?? const <Map<String, dynamic>>[]) m['id'] as String: m};
+        final names = {for (final e in found.entries) e.key: moveName(e.value)};
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('WARM-UP  ·  ABOUT 5 MIN', style: monoLabel(context)),
           const SizedBox(height: 6),
@@ -678,7 +679,21 @@ class SessionPlanList extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(border: i == 0 ? null : Border(top: BorderSide(color: c.outline))),
               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                SizedBox(width: 30, child: Text((i + 1).toString().padLeft(2, '0'), style: monoLabel(context).copyWith(color: c.tertiary))),
+                SizedBox(width: 26, child: Text((i + 1).toString().padLeft(2, '0'), style: monoLabel(context).copyWith(color: c.tertiary))),
+                // The move's animation, as in the session: tap for its page (steps, muscles, versions).
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Semantics(
+                    button: true,
+                    label: '${names[id] ?? moveGuide[id]?.name ?? 'Move'}, open how to do it',
+                    excludeSemantics: true,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ExerciseScreen(id: id))),
+                      child: SizedBox.square(dimension: 64, child: ExerciseGif(found[id]?['gif_url'] as String?, id: id)),
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(names[id] ?? moveGuide[id]?.name ?? 'Move', style: t.titleSmall),

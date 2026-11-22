@@ -141,7 +141,7 @@ export function settingWrite(field: PlanField, value: string, rows: SettingsRows
     case 'water_target_ml':
       return { table: 'profiles', values: { water_target_ml: value === 'auto' ? null : Number(value) } };
     case 'equipment':
-      return { table: 'profiles', values: { equipment: value, equipment_items: null } };
+      return { table: 'profiles', values: { equipment: value, equipment_items: [] } };
     case 'weight_goal':
     case 'daily_activity':
     case 'training_time':

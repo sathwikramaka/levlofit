@@ -7,7 +7,6 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'icons.dart';
 import 'main.dart';
@@ -35,18 +34,30 @@ class _HandbookScreenState extends State<HandbookScreen> {
   late Future<List<_Json>> _chapters = _load();
   String _query = '';
 
-  Future<List<_Json>> _load([String q = '']) async {
-    var req = supabase.from('handbook_chapters').select('id, part, part_title, title, summary, minutes');
-    if (q.trim().isNotEmpty) req = req.textSearch('search', q.trim(), config: 'english', type: TextSearchType.websearch);
-    return List<_Json>.from(await req.order('id', ascending: true)); // postgrest-dart defaults to descending
-  }
+  Map<int, String>? _text; // chapter text, read once on the first search (about 300 KB, so not on every open)
+  bool _textLoading = false;
+
+  /// The chapter list (77 rows); searching filters it on the phone as they type.
+  Future<List<_Json>> _load() async => List<_Json>.from(
+      await supabase.from('handbook_chapters').select('id, part, part_title, title, summary, minutes').order('id', ascending: true)); // postgrest-dart defaults to descending
 
   void _run(String q) {
     if (q == _query) return;
-    setState(() {
-      _query = q;
-      _chapters = _load(q);
-    });
+    setState(() => _query = q);
+    if (q.trim().isNotEmpty && _text == null && !_textLoading) _loadText();
+  }
+
+  /// The chapters' text for search. Until it arrives (or if it cannot load) titles and summaries are still searched.
+  Future<void> _loadText() async {
+    _textLoading = true;
+    try {
+      final rows = await supabase.from('handbook_chapters').select('id, body_md');
+      if (mounted) setState(() => _text = {for (final r in rows) r['id'] as int: r['body_md'] as String? ?? ''});
+    } catch (_) {
+      // Offline: title and summary matches only; the next search tries again.
+    } finally {
+      _textLoading = false;
+    }
   }
 
   @override
@@ -74,9 +85,7 @@ class _HandbookScreenState extends State<HandbookScreen> {
               controller: _search,
               textInputAction: TextInputAction.search,
               onSubmitted: _run,
-              onChanged: (v) {
-                if (v.isEmpty) _run('');
-              },
+              onChanged: _run,
               decoration: InputDecoration(
                 hintText: 'Search: protein, warm-up, creatine',
                 prefixIcon: const Icon(LvIcons.magnifyingGlass, size: 20),
@@ -115,12 +124,12 @@ class _HandbookScreenState extends State<HandbookScreen> {
                 return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   const ErrorLine('Could not load the Handbook. Check your connection.'),
                   const SizedBox(height: 12),
-                  OutlinedButton(onPressed: () => setState(() { _chapters = _load(_query); }), child: const Text('Try again')),
+                  OutlinedButton(onPressed: () => setState(() { _chapters = _load(); }), child: const Text('Try again')),
                 ]);
               }
               if (!snap.hasData) return const LinearProgressIndicator(minHeight: 4);
-              final rows = snap.data!;
-              if (rows.isEmpty) return Text('Nothing found for "$_query". Try a simpler word.', style: t.bodyMedium?.copyWith(color: muted));
+              final rows = searchChapters([for (final r in snap.data!) {...r, 'body_md': _text?[r['id']]}], _query);
+              if (rows.isEmpty) return Text('Nothing found for "${_query.trim()}". Try a simpler word.', style: t.bodyMedium?.copyWith(color: muted));
               final out = <Widget>[];
               String? part;
               for (final r in rows) {
@@ -141,6 +150,25 @@ class _HandbookScreenState extends State<HandbookScreen> {
       ),
     );
   }
+}
+
+/// Chapters matching every word of [query] in their title, summary or text, title matches first; all chapters, in
+/// order, for an empty query. Case and punctuation are ignored, and a word matches its start ("warm" finds "warm-up").
+List<Map<String, dynamic>> searchChapters(List<Map<String, dynamic>> rows, String query) {
+  String norm(Object? v) => ' ${(v as String? ?? '').toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ')} ';
+  final words = norm(query).split(' ').where((w) => w.isNotEmpty).toList();
+  if (words.isEmpty) return rows;
+  bool hasAll(String text) => words.every((w) => text.contains(' $w'));
+  final head = <Map<String, dynamic>>[], rest = <Map<String, dynamic>>[];
+  for (final r in rows) {
+    final top = norm('${r['title']} ${r['summary']}');
+    if (hasAll(top)) {
+      head.add(r);
+    } else if (hasAll('$top ${norm(r['body_md'])}')) {
+      rest.add(r);
+    }
+  }
+  return [...head, ...rest];
 }
 
 class _ChapterTile extends StatelessWidget {
